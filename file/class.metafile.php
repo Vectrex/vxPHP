@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.1 2011-11-23
+ * @version 0.3.1a 2011-12-07
  * 
  * @TODO merge rename() with commit()
  */
@@ -124,7 +124,7 @@ class MetaFile {
 			return $result;
 		}
 		else if(is_callable("self::$callBackSort")) {
-			usort($result, "self::$callBackSort");
+			usort($result, array(self, 'callBackSort'));
 			return $result;
 		}
 		else {
