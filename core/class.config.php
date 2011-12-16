@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.6.6 2011-11-23
+ * @version 0.6.7 2011-12-16
  */
 class Config {
 	public $site;
@@ -26,7 +26,7 @@ class Config {
 		'en' => array('en', 'en_GB', 'en_US', 'eng')
 	);
 
-	private static $instance = null;
+	private static $instance = NULL;
 	private $isLocalhost;
 	private $xmlFile;
 	private $xmlFileTS;
@@ -235,12 +235,9 @@ class Config {
 
 					if(!empty($a->auth)) {
 						$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
-
 						foreach($auth as &$priv) {
 							$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
 						}
-						unset($priv);
-
 						$collection[$doc][$id]->auth = $auth;
 					}
 				}
@@ -275,6 +272,14 @@ class Config {
 			isset($a->method)									? (string) $a->method	: NULL
 		);
 
+		if(isset($a->auth)) {
+			$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
+			foreach($auth as &$priv) {
+				$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
+			}
+			$m->setAuth($auth);
+		}
+
 		foreach($menu->children() as $entry) {
 			if($entry->getName() == 'menuentry') {
 				$a = $entry->attributes();
@@ -285,8 +290,17 @@ class Config {
 
 					if(!$local || isset($this->pages[$root][$page]) || isset($this->pages[$root]['default'])) {
 						$e = new MenuEntry((string) $a->page, $a, $local);
+
+						if(isset($a->auth)) {
+							$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
+							foreach($auth as &$priv) {
+								$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
+							}
+							$e->setAuth($auth);
+						}
+						
 						$m->appendEntry($e);
-	
+
 						if(isset($entry->menu)) {
 							$e->appendMenu($this->parseMenu($entry->menu));
 						}

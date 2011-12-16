@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.4.4 2011-11-08
+ * @version 0.4.5 2011-12-15
  */
 
 abstract class UserAbstract {
@@ -11,7 +11,8 @@ abstract class UserAbstract {
 	 * constants for different authentication levels, mirroring authentication_flags in db table
 	 */
 	const AUTH_PRIVILEGED			= 1;
-	const AUTH_OBSERVE_TABLE_ROW	= 2;
+	const AUTH_OBSERVE_TABLE		= 2;
+	const AUTH_OBSERVE_ROW			= 4;
 	const AUTH_SUPERADMIN			= 32768;
 
 	protected $id;

@@ -2,16 +2,16 @@
 /**
  * Menu class
  * manages a complete menu
- * @version 0.6.5 2011-11-23
+ * @version 0.6.6 2011-12-16
  * 
  * @todo a dynamic top-level menu won't be reset
- * @todo menuentry decorators must invoke MenuEntry::isAuthenticated()
  */
 class Menu {
 	protected	$id,
 				$script,
 				$type,
 				$method,
+				$auth,
 				$entries = array(),
 				$dynamicEntries = array(),
 				$selectedEntry,
@@ -148,7 +148,19 @@ class Menu {
 	public function clearSelectedEntry() {
 		$this->selectedEntry = NULL;
 	}
-	
+
+	public function getAuth() {
+		return $this->auth;
+	}
+
+	public function setAuth(Array $auth) {
+		$this->auth = $auth;
+	}
+
+	public function isAuthenticatedBy($privilege) {
+		return isset($this->auth) && in_array($privilege, $this->auth);
+	}
+
 	public function getForceActive() {
 		return !!$this->forceActive;
 	}
@@ -265,6 +277,7 @@ class MenuEntry {
 	private static		$href;
 	protected static	$count = 1;
 	protected			$menu,
+						$auth,
 						$attributes,
 						$id,
 						$page,
@@ -306,15 +319,17 @@ class MenuEntry {
 	}
 
 	public function getAuth() {
-		if(isset($this->attributes->auth)) {
-			return $this->attributes->auth;
-		}
+		return $this->auth;
 	}
 
-	public function setAuth($auth) {
-		$this->attributes->auth = $auth;
+	public function setAuth(Array $auth) {
+		$this->auth = $auth;
 	}
 
+	public function isAuthenticatedBy($privilege) {
+		return isset($this->auth) && in_array($privilege, $this->auth);
+	}
+	
 	public function select() {
 		$this->menu->setSelectedEntry($this);
 	}
@@ -331,23 +346,9 @@ class MenuEntry {
 		return $this->attributes;
 	}
 
-	/**
-	 * check for user and user group, if menu entry has auth attribute set
-	 * 
-	 * @return boolean $authenticated
-	 */
-	protected function isAuthenticated() {
-		if(!empty($this->attributes->auth)) {
-			if(!UserAbstract::getCurrentUser() || UserAbstract::getCurrentUser()->getAdmingroup() != $this->attributes->auth) {
-				return FALSE;
-			}
-		}
-		return TRUE;
-	}
-
 	public function render() {
 
-		if(isset($this->attributes->display) && $this->attributes->display == 'none' || !$this->isAuthenticated()) {
+		if(isset($this->attributes->display) && $this->attributes->display == 'none') {
 			return;
 		}
 

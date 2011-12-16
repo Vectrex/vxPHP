@@ -123,8 +123,8 @@ class MetaFile {
 			usort($result, $callBackSort);
 			return $result;
 		}
-		else if(is_callable("self::$callBackSort")) {
-			usort($result, array(self, 'callBackSort'));
+		else if(is_callable("Metafile::$callBackSort")) {
+			usort($result, "Metafile::$callBackSort");
 			return $result;
 		}
 		else {

@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.9.2 2011-11-24
+ * @version 1.10.0 2011-12-12
  * 
  */
 
@@ -209,9 +209,6 @@ abstract class Webpage {
 	 * @return string html
 	 */
 	public function mainMenu($id = NULL, $level = FALSE, $forceActiveMenu = NULL, $decorator = NULL, $renderArgs = NULL) {
-		if(is_null($forceActiveMenu)) {
-			$forceActiveMenu = $this->forceActiveMenu;
-		}
 
 		if(empty($id) && !isset($this->config->menus)) {
 			return '';
@@ -231,6 +228,15 @@ abstract class Webpage {
 		// get menu
 		$m = $this->config->menus[$id];
 		
+		// authenticate complete menu if necessary
+		if(!$this->authenticateMenu($m)) {
+			return '';
+		}
+
+		if(is_null($forceActiveMenu)) {
+			$forceActiveMenu = $this->forceActiveMenu;
+		}
+
 		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
 		if(!in_array($m, $this->primedMenus)) {
 
@@ -298,7 +304,13 @@ abstract class Webpage {
 			$sm = $e->getSubMenu();
 
 			if($e->getPage() === $this->currentPage) {
+				
+				// generate complete dynamic menus
+
 				if($sm && $sm->getType() == 'dynamic') {
+
+					// use either a specified method for building the menu or page::buildDynamicMenu()
+
 					$method = $sm->getMethod();
 					if(!$method) {
 						$method = 'buildDynamicMenu';
@@ -309,7 +321,8 @@ abstract class Webpage {
 					}
 				}
 				
-				// insert dynamic entries, modify entries, etc.
+				// postprocess menu: insert dynamic menu entries, modify entries, etc.
+
 				else if($sm && method_exists($this, 'reworkMenu')) {
 					$this->reworkMenu($sm);
 				}
@@ -498,12 +511,14 @@ abstract class Webpage {
 	}
 
 	/**
-	 * Authenticate
-	 * checks whether user/admin fulfills requirements defined in site.ini.xml
+	 * authenticate page
+	 * checks whether current user/admin fulfills requirements defined in site.ini.xml
 	 * 
 	 * Webpage::authenticateByTableRowAccess()
 	 * Webpage::authenticateByMiscRules()
 	 * should be implemented on a per-application level
+	 * 
+	 * @return boolean
 	 */
 	private function authenticate() {
 		if(!empty($this->pageConfigData->auth)) {
@@ -511,14 +526,14 @@ abstract class Webpage {
 			$admin = Admin::getInstance();
 
 			if(!$admin->isAuthenticated()) {
-				return false;
+				return FALSE;
 			}
 
 			if(in_array(UserAbstract::AUTH_SUPERADMIN, $this->pageConfigData->auth) && $admin->hasSuperAdminPrivileges()) {
-				return true;
+				return TRUE;
 			}
 			if(in_array(UserAbstract::AUTH_PRIVILEGED, $this->pageConfigData->auth) && $admin->hasPrivileges()) {
-				return true;
+				return TRUE;
 			}
 			if(in_array(UserAbstract::AUTH_OBSERVE_TABLE, $this->pageConfigData->auth) || in_array(UserAbstract::AUTH_OBSERVE_ROW, $this->pageConfigData->auth)) {
 				return $this->authenticateByTableRowAccess();
@@ -526,18 +541,61 @@ abstract class Webpage {
 			return $this->authenticateByMiscRules();
 		}
 		else {
-			return true;
+			return TRUE;
 		}
 	}
-	
+
 	protected function authenticateByTableRowAccess() {
-		return false;
+		return FALSE;
 	}
 
 	protected function authenticateByMiscRules() {
-		return false;
+		return FALSE;
 	}
-	
+
+	/**
+	 * authenticate complete page
+	 * checks whether current user/admin fulfills requirements defined in site.ini.xml
+	 *
+	 * @param Menu $m
+	 * @return boolean
+	 * 
+	 * Webpage::authenticateMenuByTableRowAccess(Menu $m)
+	 * Webpage::authenticateMenuByMiscRules(Menu $m)
+	 * should be implemented on a per-application level
+	 */
+	private function authenticateMenu(Menu $m) {
+
+		if(is_null($m->getAuth())) {
+			return TRUE;
+		}
+
+		$admin = Admin::getInstance();
+
+		if(!$admin->isAuthenticated()) {
+			return FALSE;
+		}
+		if($m->isAuthenticatedBy(UserAbstract::AUTH_SUPERADMIN) && $admin->hasSuperAdminPrivileges()) {
+			return TRUE;
+		}
+		if($m->isAuthenticatedBy(UserAbstract::AUTH_PRIVILEGED) && $admin->hasPrivileges()) {
+			return TRUE;
+		}
+		$auth = $m->getAuth();
+		if(in_array(UserAbstract::AUTH_OBSERVE_TABLE, $auth) || in_array(UserAbstract::AUTH_OBSERVE_ROW, $auth)) {
+			return $this->authenticateMenuByTableRowAccess($m);
+		}
+		return $this->authenticateMenuByMiscRules($m);
+	}
+
+	protected function authenticateMenuByTableRowAccess() {
+		return FALSE;
+	}
+
+	protected function authenticateMenuByMiscRules() {
+		return FALSE;
+	}
+
 	/**
 	 * validates request parameters
 	 * @param array Request
