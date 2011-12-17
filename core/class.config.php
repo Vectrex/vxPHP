@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.6.7 2011-12-16
+ * @version 0.6.8 2011-12-17
  */
 class Config {
 	public $site;
@@ -229,16 +229,21 @@ class Config {
 					}
 
 					// attributes stay the same
+
 					$collection[$doc][$id] = new stdClass;
 					$collection[$doc][$id]->class = (string) $a->class;
 					$collection[$doc][$id]->defaultRedirect = $red;
 
-					if(!empty($a->auth)) {
-						$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
-						foreach($auth as &$priv) {
-							$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
+					// set optional authentication level; if level is not defined, page is locked for everyone
+
+					if(isset($a->auth)) {
+						$auth = strtoupper(trim((string) $a->auth));
+						if(defined("UserAbstract::AUTH_$auth")) {
+							$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
 						}
-						$collection[$doc][$id]->auth = $auth;
+						else {
+							$collection[$doc][$id]->auth = -1;
+						} 
 					}
 				}
 			}
@@ -272,12 +277,16 @@ class Config {
 			isset($a->method)									? (string) $a->method	: NULL
 		);
 
+		// set optional authentication level; if level is not defined, menu is locked for everyone
+
 		if(isset($a->auth)) {
-			$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
-			foreach($auth as &$priv) {
-				$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
+			$auth = strtoupper(trim((string) $a->auth));
+			if(defined("UserAbstract::AUTH_$auth")) {
+				$m->setAuth(constant("UserAbstract::AUTH_$auth"));
 			}
-			$m->setAuth($auth);
+			else {
+				$m->setAuth(-1);
+			} 
 		}
 
 		foreach($menu->children() as $entry) {
@@ -289,16 +298,21 @@ class Config {
 					$local = strpos($page, DIRECTORY_SEPARATOR) !== 0 && !preg_match('~^[a-z]+://~', $page);
 
 					if(!$local || isset($this->pages[$root][$page]) || isset($this->pages[$root]['default'])) {
+
 						$e = new MenuEntry((string) $a->page, $a, $local);
 
+						// set optional authentication level; if level is not defined, entry is locked for everyone
+
 						if(isset($a->auth)) {
-							$auth = preg_split('/\s*,\s*/', trim((string) $a->auth));
-							foreach($auth as &$priv) {
-								$priv = constant('UserAbstract::AUTH_'.strtoupper($priv));
+							$auth = strtoupper(trim((string) $a->auth));
+							if(defined("UserAbstract::AUTH_$auth")) {
+								$e->setAuth(constant("UserAbstract::AUTH_$auth"));
 							}
-							$e->setAuth($auth);
+							else {
+								$e->setAuth(-1);
+							}
 						}
-						
+
 						$m->appendEntry($e);
 
 						if(isset($entry->menu)) {

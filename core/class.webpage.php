@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.10.0 2011-12-12
+ * @version 1.10.1 2011-12-17
  * 
  */
 
@@ -529,20 +529,20 @@ abstract class Webpage {
 				return FALSE;
 			}
 
-			if(in_array(UserAbstract::AUTH_SUPERADMIN, $this->pageConfigData->auth) && $admin->hasSuperAdminPrivileges()) {
-				return TRUE;
-			}
-			if(in_array(UserAbstract::AUTH_PRIVILEGED, $this->pageConfigData->auth) && $admin->hasPrivileges()) {
-				return TRUE;
-			}
-			if(in_array(UserAbstract::AUTH_OBSERVE_TABLE, $this->pageConfigData->auth) || in_array(UserAbstract::AUTH_OBSERVE_ROW, $this->pageConfigData->auth)) {
+			if($this->pageConfigData->auth === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
 				return $this->authenticateByTableRowAccess();
+			}
+			if($this->pageConfigData->auth === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
+				return $this->authenticateByTableRowAccess();
+			}
+
+			if($this->pageConfigData->auth >= $admin->getPrivilegeLevel()) {
+				return TRUE;
 			}
 			return $this->authenticateByMiscRules();
 		}
-		else {
-			return TRUE;
-		}
+
+		return TRUE;
 	}
 
 	protected function authenticateByTableRowAccess() {
@@ -554,7 +554,7 @@ abstract class Webpage {
 	}
 
 	/**
-	 * authenticate complete page
+	 * authenticate complete menu
 	 * checks whether current user/admin fulfills requirements defined in site.ini.xml
 	 *
 	 * @param Menu $m
@@ -575,24 +575,25 @@ abstract class Webpage {
 		if(!$admin->isAuthenticated()) {
 			return FALSE;
 		}
-		if($m->isAuthenticatedBy(UserAbstract::AUTH_SUPERADMIN) && $admin->hasSuperAdminPrivileges()) {
-			return TRUE;
-		}
-		if($m->isAuthenticatedBy(UserAbstract::AUTH_PRIVILEGED) && $admin->hasPrivileges()) {
-			return TRUE;
-		}
-		$auth = $m->getAuth();
-		if(in_array(UserAbstract::AUTH_OBSERVE_TABLE, $auth) || in_array(UserAbstract::AUTH_OBSERVE_ROW, $auth)) {
+
+		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
 			return $this->authenticateMenuByTableRowAccess($m);
 		}
+		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
+			return $this->authenticateMenuByTableRowAccess($m);
+		}
+		if($m->getAuth() >= $admin->getPrivilegeLevel()) {
+			return TRUE;
+		}
+
 		return $this->authenticateMenuByMiscRules($m);
 	}
 
-	protected function authenticateMenuByTableRowAccess() {
+	protected function authenticateMenuByTableRowAccess(Menu $m) {
 		return FALSE;
 	}
 
-	protected function authenticateMenuByMiscRules() {
+	protected function authenticateMenuByMiscRules(Menu $m) {
 		return FALSE;
 	}
 

@@ -3,17 +3,17 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.4.5 2011-12-15
+ * @version 0.5.0 2011-12-17
  */
 
 abstract class UserAbstract {
 	/*
 	 * constants for different authentication levels, mirroring authentication_flags in db table
 	 */
-	const AUTH_PRIVILEGED			= 1;
-	const AUTH_OBSERVE_TABLE		= 2;
-	const AUTH_OBSERVE_ROW			= 4;
-	const AUTH_SUPERADMIN			= 32768;
+	const AUTH_SUPERADMIN			= 1;
+	const AUTH_PRIVILEGED			= 16;
+	const AUTH_OBSERVE_TABLE		= 256;
+	const AUTH_OBSERVE_ROW			= 16384;
 
 	protected $id;
 	protected $adminid;
@@ -25,8 +25,8 @@ abstract class UserAbstract {
 
 	protected $groupid;
 	protected $group_alias;
-	protected $authentication_flags;
-	protected $authenticated = false;
+	protected $privilege_level;
+	protected $authenticated = FALSE;
 
 	protected $cachedNotifications;
 
@@ -53,6 +53,10 @@ abstract class UserAbstract {
 		return $this->group_alias;
 	}
 	
+	public function getPrivilegeLevel() {
+		return $this->privilege_level;
+	}
+
 	public function hasTableAccess($table) {
 		if(is_array($this->table_access)) {
 			return in_array(strtolower($table), $this->table_access);
@@ -66,13 +70,13 @@ abstract class UserAbstract {
 	}
 
 	public function hasSuperAdminPrivileges() {
-		return $this->authentication_flags & self::AUTH_SUPERADMIN;
+		return $this->privilege_level === self::AUTH_SUPERADMIN;
 	}
 
 	public function hasPrivileges() {
-		return $this->authentication_flags & self::AUTH_PRIVILEGED;
+		return $this->privilege_level === self::AUTH_PRIVILEGED;
 	}
-	
+
 	public function isAuthenticated() {
 		return $this->authenticated;
 	}
@@ -90,7 +94,7 @@ abstract class UserAbstract {
 			$rows = $GLOBALS['db']->doPreparedQuery("
 				SELECT
 					a.*,
-					ag.Authentication_Flags,
+					ag.Privilege_Level,
 					ag.admingroupsID as groupid,
 					LOWER(ag.Alias) as group_alias
 				FROM
@@ -363,5 +367,8 @@ abstract class UserAbstract {
 			return unserialize($_SESSION['user']);
 		}
 	}
+}
+
+class UserException extends Exception {
 }
 ?>

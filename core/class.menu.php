@@ -2,7 +2,7 @@
 /**
  * Menu class
  * manages a complete menu
- * @version 0.6.6 2011-12-16
+ * @version 0.6.7 2011-12-17
  * 
  * @todo a dynamic top-level menu won't be reset
  */
@@ -153,12 +153,12 @@ class Menu {
 		return $this->auth;
 	}
 
-	public function setAuth(Array $auth) {
+	public function setAuth($auth) {
 		$this->auth = $auth;
 	}
 
 	public function isAuthenticatedBy($privilege) {
-		return isset($this->auth) && in_array($privilege, $this->auth);
+		return isset($this->auth) && $privilege >= $this->auth;
 	}
 
 	public function getForceActive() {
@@ -322,12 +322,12 @@ class MenuEntry {
 		return $this->auth;
 	}
 
-	public function setAuth(Array $auth) {
+	public function setAuth($auth) {
 		$this->auth = $auth;
 	}
 
 	public function isAuthenticatedBy($privilege) {
-		return isset($this->auth) && in_array($privilege, $this->auth);
+		return isset($this->auth) && $privilege >= $this->auth;
 	}
 	
 	public function select() {
