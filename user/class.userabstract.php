@@ -13,7 +13,7 @@ abstract class UserAbstract {
 	const AUTH_SUPERADMIN			= 1;
 	const AUTH_PRIVILEGED			= 16;
 	const AUTH_OBSERVE_TABLE		= 256;
-	const AUTH_OBSERVE_ROW			= 16384;
+	const AUTH_OBSERVE_ROW			= 4096;
 
 	protected $id;
 	protected $adminid;
