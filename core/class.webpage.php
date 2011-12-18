@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.10.1 2011-12-17
+ * @version 1.10.2 2011-12-18
  * 
  */
 
@@ -25,8 +25,8 @@ abstract class Webpage {
 				$description,
 				$css				= array(),
 				$js					= array(),
-				$compressJS			= false,
-				$useTimestamps		= true,
+				$compressJS			= FALSE,
+				$useTimestamps		= TRUE,
 				$metaData			= array(),
 				$primedMenus		= array(),	// cache for menus, when shown several times on page
 				$forceActiveMenu;
@@ -67,7 +67,7 @@ abstract class Webpage {
 		}
 
 		if(!$this->authenticate()) {
-			$_SESSION['authViolatingUri'] = !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : NULL;
+			$_SESSION['authViolatingUri'] = !empty($_SERVER['REQUEST_URI']) ? ltrim($_SERVER['REQUEST_URI'], '/') : NULL;
 			$this->redirect();
 		}
 		$this->handleXHR();
@@ -715,8 +715,8 @@ abstract class Webpage {
 	 * shortened header call
 	 * @param string destination page
 	 */
-	protected function redirect($destPage = null) {
-		if($destPage === null) {
+	protected function redirect($destPage = NULL) {
+		if(is_null($destPage)) {
 			$script 	= $this->config->getDocument();
 			$page		= $this->config->pages[$script][$this->currentPage]->defaultRedirect;
 			$destPage	= empty($page) ? (defined('DEFAULT_REDIRECT') ? DEFAULT_REDIRECT : $script) : "$script?page=$page";
@@ -726,10 +726,10 @@ abstract class Webpage {
 		if($this->config->site->use_nice_uris && NiceURI::isPlainURI($destPage)) {
 			$destPage = NiceURI::toNice($destPage);
 		}
-		header('Location: http://'.$_SERVER['HTTP_HOST'].$destPage, true, 303);
+		header("Location: http://{$_SERVER['HTTP_HOST']}$destPage", TRUE, 303);
 		exit;
 	}
-	
+
 	/**
 	 * generate error and (optional) error page content
 	 * 

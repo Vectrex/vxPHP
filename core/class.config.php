@@ -211,7 +211,7 @@ class Config {
 
 			foreach($this->config->pages as $d) {
 				$doc = empty($d->attributes()->script) ? $this->site->root_document : (string) $d->attributes()->script; 
-				$red = empty($d->attributes()->default_redirect) ? null : (string) $d->attributes()->default_redirect;
+				$red = empty($d->attributes()->default_redirect) ? NULL : (string) $d->attributes()->default_redirect;
 
 				foreach($d->page as $p) {
 					$a = $p->attributes();
