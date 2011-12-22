@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.1a 2011-12-07
+ * @version 0.4.0 2011-12-23
  * 
  * @TODO merge rename() with commit()
  */
@@ -20,6 +20,7 @@ class MetaFile {
 
 	private	$metaFolder,
 			$id,
+			$isObscured,
 			$data;
 
 	public static function getInstance($path = NULL, $id = NULL) {
@@ -64,14 +65,13 @@ class MetaFile {
 
 		$result = array();
 
-		$files = self::$db->doPreparedQuery("SELECT * FROM files WHERE foldersID = ?", array((int) $folder->getId()));
+		$files = self::$db->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE fo.foldersID = ?", array((int) $folder->getId()));
 
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
 				$file = self::$instancesById[$f['filesID']];
 			}
 			else {
-				$f['FullPath'] = $folder->getFullPath().$f['File'];
 				$file = new self(NULL, NULL, $f);
 				self::$instancesById[$f['filesID']]							= $file;
 				self::$instancesByPath[$file->filesystemFile->getPath()]	= $file;
@@ -100,15 +100,13 @@ class MetaFile {
 
 		$result = array();
 
-		$files = self::$db->doPreparedQuery("SELECT f.*, fo.Path FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE referencedID = ? AND referenced_Table = ?", array((int) $referencedId, (string) $referencedTable));
+		$files = self::$db->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE referencedID = ? AND referenced_Table = ?", array((int) $referencedId, (string) $referencedTable));
 
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
 				$file = self::$instancesById[$f['filesID']];
 			}
 			else {
-				$f['FullPath'] = (substr($f['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $f['Path'] : rtrim($_SERVER['DOCUMENT_ROOT'],DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$f['Path']).$f['File'];
-				
 				$file = new self(NULL, NULL, $f);
 				self::$instancesById[$f['filesID']]							= $file;
 				self::$instancesByPath[$file->filesystemFile->getPath()]	= $file;
@@ -141,39 +139,46 @@ class MetaFile {
 	 */
 	private function __construct($path = NULL, $id = NULL, $dbEntry = NULL) {
 		if(isset($path)) {
-			$this->filesystemFile = FilesystemFile::getInstance($path);
-			$this->data = $this->getDbEntryByPath();
+			$this->data = $this->getDbEntryByPath($path);
 		}
 		else if(isset($id)) {
 			$this->data = $this->getDbEntryById($id);
-			$this->filesystemFile = FilesystemFile::getInstance($this->data['FullPath']);
 		}
 		else if(isset($dbEntry)) {
 			$this->data = $dbEntry;
-			$this->filesystemFile = FilesystemFile::getInstance($this->data['FullPath']);
 		}
 
-		$this->id			= $this->data['filesID']; 
-		$this->metaFolder	= MetaFolder::getInstance($this->filesystemFile->getFolder()->getPath());
+		$this->id				= $this->data['filesID'];
+		$this->filesystemFile	= FilesystemFile::getInstance($this->data['FullPath']);
+		$this->metaFolder		= MetaFolder::getInstance($this->filesystemFile->getFolder()->getPath());
+		
+		// when record features an obscured_filename, the FilesystemFile is bound to this obscured filename, while the metafile always references the non-obscured filename 
+
+		$this->isObscured		= $this->data['File'] !== $this->filesystemFile->getFilename();
 	}
 
-	private function getDbEntryByPath() {
+	private function getDbEntryByPath($path) {
+		$pathinfo = pathinfo($path);
 		$rows = self::$db->doPreparedQuery(
-			"SELECT f.* FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path = ? LIMIT 1",
-			array($this->filesystemFile->getFilename(), $this->filesystemFile->getFolder()->getPath())
+			"SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path IN(?, ?) LIMIT 1",
+			array(
+				$pathinfo['basename'],
+				$pathinfo['dirname'].DIRECTORY_SEPARATOR,
+				str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR, '', $pathinfo['dirname']).DIRECTORY_SEPARATOR
+			)
 		);
 
 		if(isset($rows[0])) {
 			return $rows[0];
 		}
 		else {
-			throw new Exception("MetaFile database entry for '{$this->filesystemFile->getFolder()->getPath()}{$this->filesystemFile->getFilename()}' not found.");
+			throw new Exception("MetaFile database entry for '$path' not found.");
 		}
 	}
 
 	private function getDbEntryById($id) {
 		$rows = self::$db->doPreparedQuery(
-			"SELECT f.*, CONCAT_WS('', fo.Path, f.File) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.filesID = ?",
+			"SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.filesID = ?",
 			array((int) $id)
 		);
 		
@@ -286,8 +291,13 @@ class MetaFile {
 	 * @param string $to new filename
 	 * @throws Exception
 	 */
-	public function rename($to) {
-		$this->filesystemFile->rename($to);
+	public function rename($to)	{
+		
+		// obscured files only need to rename the metadata
+
+		if(!$this->isObscured) {
+			$this->filesystemFile->rename($to);
+		}
 
 		$oldpath = $this->filesystemFile->getPath();
 		$newpath = $this->filesystemFile->getFolder()->getPath().$to;

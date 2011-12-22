@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.6 2011-11-16
+ * @version 0.4.7 2011-12-22
  *
  * @todo won't know about drive letters on windows systems
  * @todo delete()
@@ -24,6 +24,7 @@ class MetaFolder {
 	private	$id,
 			$data,
 			$level, $l, $r,
+			$obscure_files,
 			$metaFiles,
 			$metaFolders;
 
@@ -83,11 +84,12 @@ class MetaFolder {
 		}
 		$this->filesystemFolder = FilesystemFolder::getInstance($this->fullPath);
 
-		$this->id		= $this->data['foldersID'];
-		$this->level	= $this->data['level'];
-		$this->l		= $this->data['l'];
-		$this->r		= $this->data['r'];
-		$this->name		= basename($this->fullPath);
+		$this->id				= $this->data['foldersID'];
+		$this->level			= $this->data['level'];
+		$this->l				= $this->data['l'];
+		$this->r				= $this->data['r'];
+		$this->obscure_files	= (boolean) $this->data['Obscure_Files'];
+		$this->name				= basename($this->fullPath);
 	}
 
 	private function getDbEntryByPath($path) {
@@ -138,6 +140,9 @@ class MetaFolder {
 		$this->r		= $this->data['r'] = $rows[0]['r'];
 	}
 
+	/**
+	 * several getters
+	 */
 	public function getFullPath() {
 		return $this->fullPath;
 	}
@@ -157,6 +162,10 @@ class MetaFolder {
 	public function getFilesystemFolder() {
 		return $this->filesystemFolder;
 	}
+	
+	public function obscuresFiles() {
+		return $this->obscure_files;
+	}
 
 	/**
 	 * return all metafiles within this folder
@@ -164,7 +173,7 @@ class MetaFolder {
 	 * @param boolean $force forces re-reading of metafolder
 	 */
 	public function getMetaFiles($force = FALSE) {
-		if(!isset($this->metaFiles) || !$force) {
+		if(!isset($this->metaFiles) || $force) {
 			$this->metaFiles = array();
 			foreach(self::$db->doQuery("SELECT filesID FROM files WHERE foldersID = {$this->id}", true) as $f) {
 				$this->metaFiles[] = MetaFile::getInstance(NULL, $f['filesID']);
@@ -179,7 +188,7 @@ class MetaFolder {
 	 * @param boolean $force forces re-reading of metafolder
 	 */
 	public function getMetaFolders($force = FALSE) {
-		if(!isset($this->metaFolders) || !$force) {
+		if(!isset($this->metaFolders) || $force) {
 			$this->metaFolders = array();
 			foreach(self::$db->doQuery("SELECT foldersID from folders WHERE l > {$this->l} AND r < {$this->r} AND level = {$this->level} + 1", true) as $f) {
 				$this->metaFolders[] = self::getInstance(NULL, $f['foldersID']);
