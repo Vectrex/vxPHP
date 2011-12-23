@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.0 2011-12-23
+ * @version 0.4.1 2011-12-23
  * 
  * @TODO merge rename() with commit()
  */
@@ -327,6 +327,25 @@ class MetaFile {
 		else {
 			throw new Exception("Delete of metafile '{$this->filesystemFile->getPath()}' failed.");
 		}
+	}
+	
+	/**
+	 * obscure filename
+	 * renames filesystem file, then updates metafile data in db and sets isObscured flag
+	 * 
+	 * @param string $obscuredFilename
+	 */
+	public function obscureTo($obscuredFilename) {
+
+		// rename filesystem file
+
+		$this->filesystemFile->rename($obscuredFilename);
+
+		// set metafile db attributes
+		$this->setMetaData(array('Obscured_Filename' => $obscuredFilename));
+
+		// set isObscured flag
+		$this->isObscured = TRUE;
 	}
 
 	/**
