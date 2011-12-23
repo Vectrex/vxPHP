@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.1 2011-12-23
+ * @version 0.4.2 2011-12-23
  * 
  * @TODO merge rename() with commit()
  */
@@ -266,6 +266,14 @@ class MetaFile {
 	 */
 	public function getFilename() {
 		return $this->filesystemFile->getFilename();
+	}
+
+	/**
+	 * retrieves metafile name of file
+	 * differs from physical filename, when file is obscured 
+	 */
+	public function getMetaFilename() {
+		return $this->data['File'];
 	}
 
 	/**
