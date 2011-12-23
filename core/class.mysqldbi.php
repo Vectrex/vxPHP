@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.6.1 2011-11-15
+ * @version 4.6.2 2011-12-23
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -237,22 +237,35 @@ class Mysqldbi extends mysqli {
 	 * @return int insert id | bool false
 	 */
 	public function insertRecord($table, $insert) {
-		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) { return false; }
+		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) {
+			return FALSE;
+		}
 
+		$insert = array_change_key_case($insert, CASE_LOWER);
+		
 		$fields = $this->queryResult->fetch_fields();
 		
 	    foreach($fields as $f) {
-			if (isset($insert[$f->name])) {
-				$names[] = $f->name;
-				$v = $this->maskField($f, $insert[$f->name]);
-				if($v === false) { return false; }
+
+	    	$name = strtolower($f->name);
+
+			if (isset($insert[$name])) {
+				$names[] = $name;
+				$v = $this->maskField($f, $insert[$name]);
+
+				if($v === FALSE) {
+					return FALSE;
+				}
+
 				$values[] = $v;
 			}
-			else if($f->name == $this->updateField) {
+
+			else if($name == $this->updateField) {
 				$names[]	= $this->updateField;
 				$values[]	= 'NULL';
 			}
-			else if($f->name == $this->createField) {
+
+			else if($name == $this->createField) {
 				$names[]	= $this->createField;
 				$values[]	= 'NOW()';
 			}
@@ -261,7 +274,10 @@ class Mysqldbi extends mysqli {
 		$sqlnames	= implode(',',$names);
 		$sqlvalues	= implode(',',$values);
 
-		if(!$this->execute("insert into $table ($sqlnames) values ($sqlvalues)")) { return false; }
+		if(!$this->execute("INSERT INTO $table ($sqlnames) VALUES ($sqlvalues)")) {
+			return FALSE;
+		}
+
 		return $this->insert_id;
 	}
 
@@ -274,33 +290,48 @@ class Mysqldbi extends mysqli {
 	 * @return bool Result
 	 **/
 	public function updateRecord($table, $id, $update) {
-		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) { return false; }
+		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) {
+			return FALSE;
+		}
+
+		$update = array_change_key_case($update, CASE_LOWER);
 
 		$fields = $this->queryResult->fetch_fields();
 
 	    foreach($fields as $f) {
-	    	if($f->flags & MYSQLI_PRI_KEY_FLAG) { $primaryKey = $f->name; }
+	    	$name = strtolower($f->name);
 
-			if (isset($update[$f->name])) {
-				$v = $this->maskField($f, $update[$f->name]);
-				if($v === false) { return false; }
-				$parm[] = $f->name.'='.$v;
+	    	if($f->flags & MYSQLI_PRI_KEY_FLAG) {
+	    		$primaryKey = $name;
+	    	}
+
+			if (isset($update[$name])) {
+				$v = $this->maskField($f, $update[$name]);
+
+				if($v === FALSE) {
+					return FALSE;
+				}
+
+				$parm[] = "$name=$v";
 			}
-			else if($f->name == $this->updateField) {
+
+			else if($name == $this->updateField) {
 				$parm[]	= $this->updateField.'=NULL';
 			}
 		}
 
-		if(empty($parm)) { return null; }
+		if(empty($parm)) {
+			return NULL;
+		}
 
 		if(!is_array($id)) {
-			return $this->execute("update $table set ".implode(',', $parm)." where $primaryKey = $id");
+			return $this->execute("UPDATE $table SET ".implode(',', $parm)." WHERE $primaryKey = $id");
 		}
 
 		foreach($id as $k => $v) {
 			$where[] = "$k = $v";
 		}
-		return $this->execute("update $table set ".implode(',', $parm)." where ".implode(' and ', $where));
+		return $this->execute("UPDATE $table SET ".implode(',', $parm)." WHERE ".implode(' AND ', $where));
 	}
 
 	/**
@@ -327,15 +358,15 @@ class Mysqldbi extends mysqli {
 		}
 
 		if(!is_array($id)) {
-			return $this->preparedExecute("delete from $table where {$this->getPrimaryKey($table)} = ?", (int) $id);
+			return $this->preparedExecute("DELETE FROM $table WHERE {$this->getPrimaryKey($table)} = ?", (int) $id);
 		}
 		else {
 			foreach($id as $key => $val) {
 				$fields[] = "$key=?";
 				$vals[] = $val;
 			}
-			$where = implode(' and ', $fields);
-			return $this->preparedExecute("delete from $table where $where", $vals);
+			$where = implode(' AND ', $fields);
+			return $this->preparedExecute("DELETE FROM $table WHERE $where", $vals);
 		}
 	}
 
