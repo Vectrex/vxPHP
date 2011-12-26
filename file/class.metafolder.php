@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.7 2011-12-22
+ * @version 0.4.8 2011-12-26
  *
  * @todo won't know about drive letters on windows systems
  * @todo delete()
@@ -71,6 +71,7 @@ class MetaFolder {
 	 */
 	private function __construct($path = NULL, $id = NULL, $dbEntry = NULL) {
 		if(isset($path)) {
+			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 			$this->fullPath = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
 			$this->data = $this->getDbEntryByPath($path);
 		}
