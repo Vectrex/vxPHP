@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.7 2011-11-16
+ * @version 0.2.8 2011-12-26
  *
  */
 
@@ -19,15 +19,17 @@ class FilesystemFolder {
 	private $relPath;
 
 	public static function getInstance($path) {
+		$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
 		}
 		return self::$instances[$path];
 	}
-	
+
 	private function __construct($path) {
 		if(is_dir($path)) {
-			$this->path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$this->path = $path; 
 		}
 		else {
 			throw new FileSystemFolderException("Directory $path does not exist or is no directory.");

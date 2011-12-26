@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.10 2011-11-23
+ * @version 0.3.2 2011-12-26
  * 
  * @todo deal with 10.04 Ubuntu bug
  */
@@ -24,6 +24,12 @@ class FilesystemFile {
 		return self::$instances[$path];
 	}
 	
+	/**
+	 * constructs mapper for filesystem files
+	 * 
+	 * @param string $path
+	 * @throws FilesystemFileException
+	 */
 	private function __construct($path) {
 		if(file_exists($path)) {
 			$this->fileInfo	= new SplFileInfo($path);
@@ -38,7 +44,7 @@ class FilesystemFile {
 			$this->folder = FilesystemFolder::getInstance($realPath);
 		}
 		else {
-			throw new Exception("File $path does not exist!");
+			throw new FilesystemFileException("File $path does not exist!", FilesystemFileException::FILE_DOES_NOT_EXIST);
 		}
 	}
 
@@ -112,7 +118,7 @@ class FilesystemFile {
 	 * rename file
 	 * 
 	 * @param string $to new filename
-	 * @throws Exception
+	 * @throws FilesystemFileException
 	 */
 	public function rename($to) {
 		$from		= $this->filename;
@@ -127,7 +133,7 @@ class FilesystemFile {
 		}
 
 		else {
-			throw new Exception("Rename from '$oldpath' to '$newpath' failed.");
+			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
 		}
 	}
 
@@ -162,7 +168,7 @@ class FilesystemFile {
 
 	/**
 	 * deletes file and removes instance from lookup array
-	 * @throws Exception
+	 * @throws FilesystemFileException
 	 */
 	public function delete() {
 		if(@unlink($this->getPath())) {
@@ -170,7 +176,7 @@ class FilesystemFile {
 			$this->deleteCacheEntries();
 		}
 		else {
-			throw new Exception("Delete of file '{$this->getPath()}' failed.");
+			throw new FilesystemFileException("Delete of file '{$this->getPath()}' failed.", FilesystemFileException::FILE_DELETE_FAILED);
 		}
 	}
 	
@@ -233,7 +239,7 @@ class FilesystemFile {
 	/**
 	 * creates a meta file based on filesystem file
 	 * @return MetaFile
-	 * @throws Exception
+	 * @throws FilesystemFileException
 	 */
 	public function createMetaFile() {
 		global $db;
@@ -248,7 +254,7 @@ class FilesystemFile {
 			"SELECT f.filesID FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path IN (?, ?) LIMIT 1",
 			array($this->filename, $relPath, $this->folder->getPath())
 		))) {
-			throw new Exception("Metafile '{$this->filename}' in '{$relPath}' already exists.");
+			throw new FilesystemFileException("Metafile '{$this->filename}' in '{$relPath}' already exists.", FilesystemFileException::METAFILE_ALREADY_EXISTS);
 		}
 
 		$mf = $this->folder->createMetaFolder();
@@ -258,11 +264,89 @@ class FilesystemFile {
 			'File'		=> $this->filename,
 			'Mimetype'	=> $this->getMimetype()
 		)))) {
-			throw new Exception("Could not create metafile for '{$this->filename}'.");
+			throw new FilesystemFileException("Could not create metafile for '{$this->filename}'.", FilesystemFileException::METAFILE_CREATION_FAILED);
 		}
 		else {
 			return MetaFile::getInstance(NULL, $filesID);
 		}
 	}
+
+	/**
+	 * uploads file from $_FILES[$fileInputName] to $dir
+	 * if $name is omitted, the filename of the uploaded file is kept
+	 * filename is sanitized 
+	 * 
+	 * @param string $fileInputName
+	 * @param FilesystemFolder $dir
+	 * @param string $name
+	 * @return NULL|boolean|FilesystemFile
+	 */
+	public static function uploadFile($fileInputName, FilesystemFolder $dir, $name = NULL) {
+
+		// no upload
+	
+		if($_FILES[$fileInputName]['error'] == 4) {
+			return NULL;
+		}
+	
+		// other error
+	
+		if($_FILES[$fileInputName]['error'] != 0) {
+			return FALSE;
+		}
+
+		if(is_null($name) || trim($name) === '') {
+			$name = $_FILES[$fileInputName]['name'];
+		}
+
+		$fn = self::sanitizeFilename($name, $dir);
+
+		if(!move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $dir->getPath().$fn)) {
+			return FALSE;
+		}
+	
+		return self::getInstance($dir->getPath().$fn);
+	}
+
+	/**
+	 * clean up $filename and avoid doublettes within folder $dir
+	 *
+	 * @param string $filename
+	 * @param FilesystemFolder $dir
+	 * @param integer $starting_index used in renamed file
+	 * @return string
+	 */
+	private static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
+	
+		$filename = str_replace(
+			array(' ', 'ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'),
+			array('_', 'ae', 'oe', 'ue', 'Ae', 'Oe', 'Ue', 'ss'),
+			$filename);
+
+		$filename = preg_replace('/[^0-9a-z_#,;\-\.\(\)]/i', '_', $filename);
+
+		if(!file_exists($dir->getPath().$filename)) {
+			return $filename;
+		}
+
+		$pathinfo = pathinfo($filename);
+
+		if(!empty($pathinfo['extension'])) {
+			$pathinfo['extension'] = '.'.$pathinfo['extension'];
+		}
+		while(file_exists($dir->getPath().sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
+			++$ndx;
+		}
+
+		return sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']);
+	}
+}
+
+class FilesystemFileException extends Exception {
+	const	FILE_DOES_NOT_EXIST			= 1;
+	const	FILE_RENAME_FAILED			= 2;
+	const	FILE_DELETE_FAILED			= 3;
+	const	METAFILE_CREATION_FAILED	= 4;
+	const	METAFILE_ALREADY_EXISTS		= 5;
 }
 ?>

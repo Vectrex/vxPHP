@@ -4,7 +4,7 @@
  * in particular uploads of images according to ini-settings
  * 
  * @author Gregor Kofler
- * @version 0.3.9 2011-04-01
+ * @version 0.3.10 2012-12-24
  * 
  */
 class Filesystem {
@@ -146,55 +146,76 @@ class Filesystem {
 	 * @return string new filename
 	 */
 	static function uploadFile($input, $name = NULL, $dir = '') {
-		if($_FILES[$input]['error'] == 4)		{ return null; }		// no upload
-		if($_FILES[$input]['error'] != 0)		{ return false; }		// other error
+
+		// no upload
+
+		if($_FILES[$input]['error'] == 4) {
+			return NULL;
+		}
+
+		// other error
+
+		if($_FILES[$input]['error'] != 0) {
+			return FALSE;
+		}		
 		
 		if($dir !== '') {
-			$dir = rtrim($dir, '/').'/';
+			$dir = rtrim($dir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 		}
-		
-		if (!is_dir($dir)) {
-			if (!mkdir($dir,0777))				{ return false; }
+
+		if(!is_dir($dir)) {
+			if(!mkdir($dir,0777)) {
+				return FALSE;
+			}
 		}
+
 		if(!isset($name) || trim($name) === '') {
 			$name = $_FILES[$input]['name'];
 		}
+
 		$fn = self::checkFileName($name, $dir);
 		
 		if(!move_uploaded_file($_FILES[$input]['tmp_name'], $dir.$fn)) {
-			return false;
+			return FALSE;
 		}
+
 		return $fn;
 	}
 	
 	/**
 	 * Check filename and avoid doublettes
 	 * 
-	 * @param string wanted filename
-	 * @param string path
+	 * @param string $wanted_filename
+	 * @param string $path
+	 * @param integer $starting_index used in renamed file
+	 * 
 	 * @return string cleared filename
 	 */
-	public static function checkFileName($filename, $path) {
+	public static function checkFileName($filename, $path, $ndx = 2) {
 
 		$filename = str_replace(
 			array(' ', 'ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'),
 			array('_', 'ae', 'oe', 'ue', 'Ae', 'Oe', 'Ue', 'ss'),
 			$filename);
-		
-		$filename = preg_replace('/[^0-9a-z_\.#,;-]/i', '_', $filename);
-		
-		$path = rtrim($path, '/').'/';
 
-		if(file_exists($path.$filename)) {
-			$q = 2;
-			$ins = strrpos($filename, '.') ? strrpos($filename, '.') : strlen($filename);
+		$filename = preg_replace('/[^0-9a-z_#,;\-\.\(\)]/i', '_', $filename);
 
-			while(file_exists($path.substr($filename,0,$ins)."($q)".substr($filename, $ins))) {
-				++$q;
-			}
-			$filename = substr($filename, 0, $ins)."($q)".substr($filename, $ins);
+		$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+		if(!file_exists($path.$filename)) {
+			return $filename;
 		}
-		return $filename;
+
+		$pathinfo = pathinfo($filename);
+
+		if(!empty($pathinfo['extension'])) {
+			$pathinfo['extension'] = '.'.$pathinfo['extension'];
+		}
+		while(file_exists($path.sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
+			++$ndx;
+		}
+
+		return sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']);
 	}
 
 	/**

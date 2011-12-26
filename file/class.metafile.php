@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.2 2011-12-23
+ * @version 0.4.4 2011-12-25
  * 
  * @TODO merge rename() with commit()
  */
@@ -93,7 +93,7 @@ class MetaFile {
 	 * @return array metafiles
 	 * 
 	 */
-		public static function getFilesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
+	public static function getFilesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
 		if(!isset(self::$db)) {
 			self::$db = $GLOBALS['db'];
 		}
@@ -128,6 +128,29 @@ class MetaFile {
 		else {
 			throw new MetaFileException("'$callBackSort' is not callable.");
 		}
+	}
+
+	/**
+	 * check whether $filename is already taken by a metafile in folder $f
+	 * 
+	 * @param string $filename
+	 * @param MetaFolder $f
+	 * @return boolean is_available
+	 */
+	public static function isFilenameAvailable($filename, MetaFolder $f) {
+		if(!isset(self::$db)) {
+			self::$db = $GLOBALS['db'];
+		}
+
+		// $filename is not available, if metafile with $filename is already instantiated
+
+		if(isset(self::$instancesByPath[$f->getFullPath().$filename])) {
+			return FALSE;
+		}
+		
+		// check whether $filename is found in database entries
+
+		return count(self::$db->doPreparedQuery("SELECT filesID FROM files WHERE foldersID = ? AND ( File LIKE ? OR Obscured_Filename LIKE ? )", array((int) $f->getId(), (string) $filename, (string) $filename))) === 0;
 	}
 
 	/**
