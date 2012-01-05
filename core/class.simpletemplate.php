@@ -2,11 +2,11 @@
 /**
  * A simple template system
  * 
- * @version 0.7.8 2011-11-23
+ * @version 0.7.8a 2012-01-05
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
- * @todo rework fiter regexp
- * @todo check text2links returned matches with http-links (index 9 instead of 4?)
+ * @todo rework filter regexp
+ * @todo check text2links
  * @todo imgcachecallback to use filefolder-methods
  */
 
@@ -231,11 +231,11 @@ class SimpleTemplate {
 
 	private function hrefCallback($matches) {
 		if(trim($matches[0]) != '') {
-			return $matches[0];
+			//return $matches[0];
 		}
 
-		return	"<a class='link_http' href='{$matches[2]}{$matches[3]}'>".
-				(self::$showProtocol ? $matches[2] : '')."{$matches[3]}</a>";
+		return	"{$matches[1]}<a class='link_http' href='{$matches[2]}{$matches[3]}{$matches[6]}'>".
+				(self::$showProtocol ? $matches[2] : '')."{$matches[3]}{$matches[6]}</a>{$matches[9]}";
 	}
 
 	private function encodeEmailCallback($matches) {
