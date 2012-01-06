@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.6.2 2011-12-23
+ * @version 4.6.3 2012-01-06
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -244,11 +244,11 @@ class Mysqldbi extends mysqli {
 		$insert = array_change_key_case($insert, CASE_LOWER);
 		
 		$fields = $this->queryResult->fetch_fields();
-		
+
 	    foreach($fields as $f) {
 
 	    	$name = strtolower($f->name);
-
+	    	
 			if (isset($insert[$name])) {
 				$names[] = $name;
 				$v = $this->maskField($f, $insert[$name]);
@@ -260,12 +260,12 @@ class Mysqldbi extends mysqli {
 				$values[] = $v;
 			}
 
-			else if($name == $this->updateField) {
+			else if($name == strtolower($this->updateField)) {
 				$names[]	= $this->updateField;
 				$values[]	= 'NULL';
 			}
 
-			else if($name == $this->createField) {
+			else if($name == strtolower($this->createField)) {
 				$names[]	= $this->createField;
 				$values[]	= 'NOW()';
 			}
@@ -315,7 +315,7 @@ class Mysqldbi extends mysqli {
 				$parm[] = "$name=$v";
 			}
 
-			else if($name == $this->updateField) {
+			else if($name == strtolower($this->updateField)) {
 				$parm[]	= $this->updateField.'=NULL';
 			}
 		}
