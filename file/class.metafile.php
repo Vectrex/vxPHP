@@ -7,9 +7,10 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.4 2011-12-25
+ * @version 0.4.5pre 2012-01-18
  * 
  * @TODO merge rename() with commit()
+ * @TODO cleanup getImagesForReference()
  */
 class MetaFile {
 	private static	$instancesById		= array();
@@ -88,7 +89,8 @@ class MetaFile {
 	 * 
 	 * @param int $referencedId
 	 * @param string $referencedTable
-	 * @param function $callBackSort
+	 * @param callback $callBackSort
+	 * @throws MetaFileException
 	 * 
 	 * @return array metafiles
 	 * 
@@ -114,6 +116,64 @@ class MetaFile {
 			$result[] = $file;  
 		}
 
+		if(is_null($callBackSort)) {
+			return $result;
+		}
+		else if(is_callable($callBackSort)) {
+			usort($result, $callBackSort);
+			return $result;
+		}
+		else if(is_callable("Metafile::$callBackSort")) {
+			usort($result, "Metafile::$callBackSort");
+			return $result;
+		}
+		else {
+			throw new MetaFileException("'$callBackSort' is not callable.");
+		}
+	}
+
+	/**
+	 * @param int $referencedId
+	 * @param string $referencedTable
+	 * @param callback $callBackSort
+	 * @throws MetaFileException
+	 * 
+	 * @return array metafiles with mimetype 'image/jpeg', 'image/png', 'image/gif'
+	 */
+	public static function getImagesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
+		if(!isset(self::$db)) {
+			self::$db = $GLOBALS['db'];
+		}
+
+		$result = array();
+
+		$mimeTypes = array('image/jpeg', 'image/png', 'image/gif');
+
+		$files = self::$db->doPreparedQuery("
+			SELECT
+				f.*,
+				CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
+			FROM
+				files f
+				INNER JOIN folders fo ON f.foldersID = fo.foldersID
+			WHERE
+				referencedID = ? AND
+				referenced_Table = ? AND
+				Mimetype IN ('".implode("','", $mimeTypes)."')
+				", array((int) $referencedId, (string) $referencedTable));
+
+		foreach($files as &$f) {
+			if(isset(self::$instancesById[$f['filesID']])) {
+				$file = self::$instancesById[$f['filesID']];
+			}
+			else {
+				$file = new self(NULL, NULL, $f);
+				self::$instancesById[$f['filesID']]							= $file;
+				self::$instancesByPath[$file->filesystemFile->getPath()]	= $file;
+			}
+			$result[] = $file;
+		}
+		
 		if(is_null($callBackSort)) {
 			return $result;
 		}
