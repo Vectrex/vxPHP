@@ -8,7 +8,7 @@
  * @TODO configurable imagemagick support
  * 
  * @author Gregor Kofler
- * @version 0.4.1 2011-11-16
+ * @version 0.4.2 2012-01-20
  *
  */
 class ImageEdit {
@@ -214,25 +214,60 @@ class ImageEdit {
 		$src = array_shift($args);
 
 		// width and/or height given
-		if(count($args) >= 2) {
-			$width	= (int) $args[0];
-			$height	= (int) $args[1];
 
-			if($width != 0 || $height != 0) {
-				if($height == 0) {
-					$height = round($width / $src->width * $src->height);
+		if(count($args) >= 2) {
+			
+			// max limit for width?
+
+			if(preg_match('/max_([1-9]\d*)/i', $args[0], $matches)) {
+
+				$maxWidth	= $matches[1];
+				$height		= (int) $args[1];
+				$width		= round($height / $src->height * $src->width);
+
+				if($width > $maxWidth) {
+					$width	= $maxWidth;
+					$height	= round($width / $src->width * $src->height);
 				}
-				if($width == 0) {
+			}
+
+			// max limit for height?
+
+			else if(preg_match('/max_([1-9]\d*)/i', $args[1], $matches)) {
+
+				$maxHeight	= $matches[1];
+				$width		= (int) $args[0];
+				$height		= round($width / $src->width * $src->height);
+
+				if($height > $maxHeight) {
+					$height	= $maxHeight;
 					$width = round($height / $src->height * $src->width);
 				}
 			}
 
+			// no limit
+
 			else {
-				throw new Exception("Invalid dimension(s) for do_resize(): $width, $height");
+				$width	= (int) $args[0];
+				$height	= (int) $args[1];
+
+				if($width != 0 || $height != 0) {
+					if($height == 0) {
+						$height = round($width / $src->width * $src->height);
+					}
+					if($width == 0) {
+						$width = round($height / $src->height * $src->width);
+					}
+				}
+				
+				else {
+					throw new Exception("Invalid dimension(s) for do_resize(): $width, $height");
+				}
 			}
 		}
 
 		// single float value given
+
 		else if(count($args) == 1) {
 			if(!is_numeric($args[0]) || $args[0] == 0) {
 				throw new Exception("Invalid dimension(s) for do_resize(): {$args[0]}");
@@ -271,7 +306,6 @@ class ImageEdit {
 
 	/**
 	 * performs "watermark"-command
-	 * 
 	 */
 	private function do_watermark() {
 		$args = func_get_args();

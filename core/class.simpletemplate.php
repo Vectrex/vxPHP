@@ -2,7 +2,7 @@
 /**
  * A simple template system
  * 
- * @version 0.7.8a 2012-01-05
+ * @version 0.7.8b 2012-01-20
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -356,11 +356,11 @@ class SimpleTemplate {
 			$actions	= $matches[4];
 		}
 
-		$dest		= "{$pi['dirname']}/".FilesystemFolder::CACHE_PATH."/{$pi['filename']}.{$pi['extension']}@$actions.{$pi['extension']}";
-		$path		= rtrim($_SERVER['DOCUMENT_ROOT'], '/').'/'.ltrim($dest, '/');
+		$dest	= $pi['dirname'].DIRECTORY_SEPARATOR.FilesystemFolder::CACHE_PATH.DIRECTORY_SEPARATOR."{$pi['filename']}.{$pi['extension']}@$actions.{$pi['extension']}";
+		$path	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.ltrim($dest, DIRECTORY_SEPARATOR);
 
 		if(!file_exists($path)) {
-			$cachePath	= rtrim($_SERVER['DOCUMENT_ROOT'], '/').'/'.ltrim($pi['dirname'],'/').'/'.FilesystemFolder::CACHE_PATH;
+			$cachePath	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.ltrim($pi['dirname'],DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.FilesystemFolder::CACHE_PATH;
 			
 			if(!file_exists($cachePath)) {
 				if(!@mkdir($cachePath)) {
@@ -371,7 +371,7 @@ class SimpleTemplate {
 	
 			// create cachefile
 			$actions	= explode('|', $actions);
-			$imgEdit	= new ImageEdit(rtrim($_SERVER['DOCUMENT_ROOT'], '/')."/{$pi['dirname']}/{$pi['basename']}");
+			$imgEdit	= new ImageEdit(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$pi['dirname'].DIRECTORY_SEPARATOR.$pi['basename']);
 				
 			foreach($actions as $a) {
 				$params = preg_split('~\s+~', $a);
