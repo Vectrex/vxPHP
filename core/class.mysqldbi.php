@@ -6,10 +6,11 @@
  * 
  * @extends mysqli
  * 
- * @version 4.6.3 2012-01-06
+ * @version 4.7.0 2012-01-20
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
+ * @todo avoid required $GLOBALS['config']
  */
 
 class Mysqldbi extends mysqli {
@@ -33,7 +34,12 @@ class Mysqldbi extends mysqli {
 	private	$queryString;
 
 	private $preparedQueryString;
-	private $statement;	
+	private $statement;
+	
+	private	$charsetMap = array(
+				'utf-8'			=> 'utf8',
+				'iso-8859-15'	=> 'latin1'
+			);
 
 	public	$queryResult;
 	public	$numRows,
@@ -60,8 +66,16 @@ class Mysqldbi extends mysqli {
 			throw new MysqldbiException(sprintf('Mysqldbi Error: %s (%s)', mysqli_connect_error(), mysqli_connect_errno()));
 		}
 
-		if(defined('DEFAULT_ENCODING') && strtolower(DEFAULT_ENCODING) == 'utf-8') {
-			$this->execute('set names \'utf8\'');
+		if(defined('DEFAULT_ENCODING')) {
+			if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
+				$this->set_charset($this->charsetMap[strtolower(DEFAULT_ENCODING)]);
+			}
+			else {
+				throw new MysqldbiException("Character set '".DEFAULT_ENCODING."' not mapped or supported.");
+			}
+		}
+		else {
+			$this->set_charset('utf8');
 		}
 	}
 	
