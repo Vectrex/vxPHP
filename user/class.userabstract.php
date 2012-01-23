@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.0 2011-12-17
+ * @version 0.5.1 2012-01-23
  */
 
 abstract class UserAbstract {
@@ -70,11 +70,11 @@ abstract class UserAbstract {
 	}
 
 	public function hasSuperAdminPrivileges() {
-		return $this->privilege_level === self::AUTH_SUPERADMIN;
+		return $this->privilege_level <= self::AUTH_SUPERADMIN;
 	}
 
 	public function hasPrivileges() {
-		return $this->privilege_level === self::AUTH_PRIVILEGED;
+		return $this->privilege_level <= self::AUTH_PRIVILEGED;
 	}
 
 	public function isAuthenticated() {
