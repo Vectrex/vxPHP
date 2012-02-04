@@ -2,11 +2,11 @@
 /**
  * A simple template system
  * 
- * @version 0.7.8b 2012-01-20
+ * @version 0.7.8c 2012-02-04
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
- * @todo check text2links
+ * @todo improve text2links
  * @todo imgcachecallback to use filefolder-methods
  */
 
@@ -107,8 +107,8 @@ class SimpleTemplate {
 			'text2links' =>
 				array(
 					array(
-						'~(^|\s|(?:<a[^>]*>\s*))'.Rex::URI_STRICT.'(\s|$)~i',
-						'~(<a[^>]*>.*?|)('.Rex::EMAIL.')([^<]*</a>|)~i',
+						'~(^|\s|>|(?:<a [^>]*?>.*?))'.Rex::URI_STRICT.'(<|\s|$)~i',
+						'~(<a [^>]*?>.*?|)('.Rex::EMAIL.')([^<]*</a>|)~i',
 					),
 					array(
 						'hrefCallback',
@@ -230,8 +230,8 @@ class SimpleTemplate {
 	}
 
 	private function hrefCallback($matches) {
-		if(trim($matches[0]) != '') {
-			//return $matches[0];
+		if(substr($matches[1], 0, 2) == '<a') {
+			return $matches[0];
 		}
 
 		return	"{$matches[1]}<a class='link_http' href='{$matches[2]}{$matches[3]}{$matches[6]}'>".
