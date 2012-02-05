@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.0 2012-01-20
+ * @version 4.7.0a 2012-02-05
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -392,12 +392,16 @@ class Mysqldbi extends mysqli {
 	 * @return array Values | bool error
 	 */
 	public function getEnumValues($table, $column) {
-		if(!$this->doQuery("SHOW COLUMNS FROM $table LIKE '$column'")) { return false; }
+		if(!$this->doQuery("SHOW COLUMNS FROM $table LIKE '$column'")) {
+			return FALSE;
+		}
 
 		$rec = $this->queryResult->fetch_assoc();
-		$val = explode("','", preg_replace("/(set|enum)\('(.+?)'\)/", "\\2", $rec['Type']));
+		$val = explode("','", preg_replace("~(set|enum)\('(.+?)'\)~", "\\2", $rec['Type']));
 
-		if(empty($val))	{ return false; }
+		if(empty($val))	{
+			return FALSE;
+		}
 		return $val;
 	}
 
