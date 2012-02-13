@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.6.8 2011-12-17
+ * @version 0.7.0 2012-02-13
  */
 class Config {
 	public $site;
@@ -50,7 +50,7 @@ class Config {
 
 		$this->xmlFile = $xmlFile ? $xmlFile : 'ini/site.ini.xml';
 		if(!$this->config = simplexml_load_file($this->xmlFile)) {
-			throw new Exception('Missing or malformed "site.ini.xml"!');
+			throw new ConfigException('Missing or malformed "site.ini.xml"!');
 		}
 		$this->xmlFileTS = filemtime($this->xmlFile);
 
@@ -80,183 +80,217 @@ class Config {
 
 	private function parseConfig() {
 		try {
-			// "context" specific settings
+
+			// first prepare for context specific settings
 
 			$this->isLocalhost = !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
-			$context = $this->isLocalhost ? 'local' : 'remote';
-			
-			// DBs
-			$d = $this->config->xpath("//db_connection[@context='$context']");
-			if(empty($d)) {
-				$d = $this->config->xpath("//db_connection[not(@context)]");
-			}
-			if(!empty($d)) { 
-				$this->db = new stdClass;
+			$this->parseDbSettings();
 
-				foreach($d[0]->children() as $k => $v) {
-					$this->db->$k = ($k != 'pass' || $this->storePasswords == true) ? (string) $v : null;
-				}
-			}
+			// return if only db settings are required (e.g. cronjob scripts)
 
 			if($this->dbOnly) {
 				return;
 			}
 
-			// Binaries
-			$b = $this->config->xpath("//binaries[@context='$context']");
-			if(empty($b)) {
-				$b = $this->config->xpath("//binaries[not(@context)]");
-			}
-
-			if(!empty($b)) {
-				$p = $b[0]->path;
-				if(empty($p)) {
-					throw new Exception('Malformed "site.ini.xml"! Missing path for binaries.');
-				}
-
-				$this->binaries = new stdClass;
-				$this->binaries->path = rtrim((string) $p[0], '/').'/';
-				$e = $b[0]->xpath('executable');
-
-				foreach($b[0]->executable as $v) {
-					$id = (string) $v->attributes()->id;
-					foreach($v->attributes() as $k => $v) {
-						$this->binaries->executables[$id][$k] = (string) $v;
-					}
-				}
-			}
-
-			// Site
-			$s = $this->config->site;
-			if(empty($s)) {
-				throw new Exception('Malformed "site.ini.xml"! Site data missing.');
-			}
-
-			$this->site = new stdClass;
-
-			foreach($s[0] as $k => $v) {
-				if($k != 'locales') {
-					$this->site->$k = trim((string) $v);
-				}
-			}
-
-			if(isset($this->config->site->locales)) {
-				$this->site->locales = array();
-				$l = $this->config->site->locales;
-				foreach($l[0] as $locale) {
-					array_push($this->site->locales, (string) $locale->attributes()->value);
-					if(!empty($locale->attributes()->default)) {
-						$this->site->default_locale = (string) $locale->attributes()->value;
-					}
-				}
-				if(isset($this->site->default_locale)) {
-					$this->site->current_locale = $this->site->default_locale;
-				}
-				else {
-					$this->site->current_locale = $this->site->locales[0];
-				}
-			}
-
-			// Upload parameters
-			$u = $this->config->upload_parameters;
-			if(isset($u->images->group)) {
-				foreach($u->images->group as $g) {
-					$id = (string) $g->attributes()->id;
-					$this->uploadImages[$id]->allowedTypes = explode('|', strtolower((string) $g->attributes()->types));
-					$this->uploadImages[$id]->sizes = array();
-
-					foreach($g->size as $s) {
-						$a = $s->attributes();
-						$o = new stdClass;
-
-						if((string) $a->width === 'original' || (string) $a->height === 'original') {
-							$o->width = 'original';
-							$o->height = 'original';
-						}
-						else {
-							$o->width	= (int) $a->width;
-							$o->height	= (int) $a->height;
-						}
-						// @TODO clean up path issues
-						$o->path = trim((string) $a->path, '/').'/';
-						$this->uploadImages[$id]->sizes[] = $o;
-					}
-				}
-			}
-
-			// Paths
-			if(!empty($this->config->paths)) {
-				foreach($this->config->paths->children() as $p) {
-
-					$a = $p->attributes();
-					$p = trim((string) $a->subdir, '/').'/';
-
-					if(substr($p, 0, 1) == '/') {
-						$this->paths[(string) $a->id]['subdir']		= $p;
-						$this->paths[(string) $a->id]['absolute']	= true;
-					}
-					else {
-						$this->paths[(string) $a->id]['subdir']		= "/$p";
-						$this->paths[(string) $a->id]['absolute']	= false;
-						
-					}
-					$this->paths[(string) $a->id]['access'] = empty($a->access) ? 'r' : (string) $a->access;
-				}
-			}
-
+			$this->parseBinarySettings();
+			$this->parseSiteSettings();
+			$this->parseUploadParametersSettings();
+			$this->parsePathSettings();
+			$this->parsePages();
+			
 			// Pages
 			$this->pages			= array();
 			$this->wildcardPages	= array();
 
-			foreach($this->config->pages as $d) {
-				$doc = empty($d->attributes()->script) ? $this->site->root_document : (string) $d->attributes()->script; 
-				$red = empty($d->attributes()->default_redirect) ? NULL : (string) $d->attributes()->default_redirect;
-
-				foreach($d->page as $p) {
-					$a = $p->attributes();
-					$id = (string) $a->id;
-
-					// so-called wildcard pages end up in their own collection
-					if(substr($id, -1) == '*') {
-						$id = substr($id, 0, -1);
-						$collection = &$this->wildcardPages;
-					}
-					
-					// otherwise we have standard pages
-					else {
-						$collection = &$this->pages;
-					}
-
-					// attributes stay the same
-
-					$collection[$doc][$id] = new stdClass;
-					$collection[$doc][$id]->class = (string) $a->class;
-					$collection[$doc][$id]->defaultRedirect = $red;
-
-					// set optional authentication level; if level is not defined, page is locked for everyone
-
-					if(isset($a->auth)) {
-						$auth = strtoupper(trim((string) $a->auth));
-						if(defined("UserAbstract::AUTH_$auth")) {
-							$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
-						}
-						else {
-							$collection[$doc][$id]->auth = -1;
-						} 
-					}
-				}
-			}
+			$this->parsePages();
 
 			// Menus
 			foreach ($this->config->menus->menu as $m) {
 				$tmp = $this->parseMenu($m);
 				$this->menus[$tmp->getId()] = $tmp; 
 			}
+
+			$this->parsePlugins();
 		}
 
-		catch(Exception $e) {
+		catch(ConfigException $e) {
 			throw $e;
+		}
+	}
+
+	private function parseDbSettings() {
+
+		$context = $this->isLocalhost ? 'local' : 'remote';
+
+		$d = $this->config->xpath("//db_connection[@context='$context']");
+		if(empty($d)) {
+			$d = $this->config->xpath("//db_connection[not(@context)]");
+		}
+		if(!empty($d)) {
+			$this->db = new stdClass;
+		
+			foreach($d[0]->children() as $k => $v) {
+				$this->db->$k = ($k != 'pass' || $this->storePasswords == TRUE) ? (string) $v : NULL;
+			}
+		}
+	}
+	
+	private function parseBinarySettings() {
+
+		$context = $this->isLocalhost ? 'local' : 'remote';
+
+		$b = $this->config->xpath("//binaries[@context='$context']");
+		if(empty($b)) {
+			$b = $this->config->xpath("//binaries[not(@context)]");
+		}
+
+		if(!empty($b)) {
+			$p = $b[0]->path;
+			if(empty($p)) {
+				throw new ConfigException('Malformed "site.ini.xml"! Missing path for binaries.');
+			}
+		
+			$this->binaries = new stdClass;
+			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$e = $b[0]->xpath('executable');
+		
+			foreach($b[0]->executable as $v) {
+				$id = (string) $v->attributes()->id;
+				foreach($v->attributes() as $k => $v) {
+					$this->binaries->executables[$id][$k] = (string) $v;
+				}
+			}
+		}
+	}
+	
+	private function parseSiteSettings() {
+
+		$s = $this->config->site;
+		if(empty($s)) {
+			throw new ConfigException('Malformed "site.ini.xml"! Site data missing.');
+		}
+
+		$this->site = new stdClass;
+
+		foreach($s[0] as $k => $v) {
+			if($k != 'locales') {
+				$this->site->$k = trim((string) $v);
+			}
+		}
+
+		if(isset($this->config->site->locales)) {
+			$this->site->locales = array();
+			$l = $this->config->site->locales;
+			foreach($l[0] as $locale) {
+				array_push($this->site->locales, (string) $locale->attributes()->value);
+				if(!empty($locale->attributes()->default)) {
+					$this->site->default_locale = (string) $locale->attributes()->value;
+				}
+			}
+			if(isset($this->site->default_locale)) {
+				$this->site->current_locale = $this->site->default_locale;
+			}
+			else {
+				$this->site->current_locale = $this->site->locales[0];
+			}
+		}
+	}
+
+	private function parseUploadParametersSettings() {
+		
+		$u = $this->config->upload_parameters;
+		if(isset($u->images->group)) {
+			foreach($u->images->group as $g) {
+				$id = (string) $g->attributes()->id;
+				$this->uploadImages[$id]->allowedTypes = explode('|', strtolower((string) $g->attributes()->types));
+				$this->uploadImages[$id]->sizes = array();
+		
+				foreach($g->size as $s) {
+					$a = $s->attributes();
+					$o = new stdClass;
+		
+					if((string) $a->width === 'original' || (string) $a->height === 'original') {
+						$o->width = 'original';
+						$o->height = 'original';
+					}
+					else {
+						$o->width	= (int) $a->width;
+						$o->height	= (int) $a->height;
+					}
+					// @TODO clean up path issues
+					$o->path = trim((string) $a->path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+					$this->uploadImages[$id]->sizes[] = $o;
+				}
+			}
+		}
+	}
+	
+	private function parsePathSettings() {
+		
+		if(!empty($this->config->paths)) {
+			foreach($this->config->paths->children() as $p) {
+		
+				$a = $p->attributes();
+				$p = trim((string) $a->subdir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+				if(substr($p, 0, 1) == '/') {
+					$this->paths[(string) $a->id]['subdir']		= $p;
+					$this->paths[(string) $a->id]['absolute']	= TRUE;
+				}
+				else {
+					$this->paths[(string) $a->id]['subdir']		= "/$p";
+					$this->paths[(string) $a->id]['absolute']	= FALSE;
+		
+				}
+				$this->paths[(string) $a->id]['access'] = empty($a->access) ? 'r' : (string) $a->access;
+			}
+		}
+	}
+	
+	private function parsePlugins() {
+		
+	}
+	
+	private function parsePages() {
+
+		foreach($this->config->pages as $d) {
+			$doc = empty($d->attributes()->script) ? $this->site->root_document : (string) $d->attributes()->script;
+			$red = empty($d->attributes()->default_redirect) ? NULL : (string) $d->attributes()->default_redirect;
+		
+			foreach($d->page as $p) {
+				$a = $p->attributes();
+				$id = (string) $a->id;
+		
+				// so-called wildcard pages end up in their own collection
+				if(substr($id, -1) == '*') {
+					$id = substr($id, 0, -1);
+					$collection = &$this->wildcardPages;
+				}
+					
+				// otherwise we have standard pages
+				else {
+					$collection = &$this->pages;
+				}
+		
+				// attributes stay the same
+		
+				$collection[$doc][$id] = new stdClass;
+				$collection[$doc][$id]->class = (string) $a->class;
+				$collection[$doc][$id]->defaultRedirect = $red;
+		
+				// set optional authentication level; if level is not defined, page is locked for everyone
+		
+				if(isset($a->auth)) {
+					$auth = strtoupper(trim((string) $a->auth));
+					if(defined("UserAbstract::AUTH_$auth")) {
+						$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
+					}
+					else {
+						$collection[$doc][$id]->auth = -1;
+					}
+				}
+			}
 		}
 	}
 
@@ -524,5 +558,8 @@ class Config {
 		}
 		$this->server['max_upload_filesize'] = $mult ? (float) (substr($fs, 0, -1)) * $mult : (int) $fs;
 	}
+}
+
+class ConfigException extends Exception {
 }
 ?>
