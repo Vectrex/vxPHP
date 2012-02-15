@@ -26,12 +26,14 @@ class Config {
 		'en' => array('en', 'en_GB', 'en_US', 'eng')
 	);
 
-	private static $instance = NULL;
-	private $isLocalhost;
-	private $xmlFile;
-	private $xmlFileTS;
-	private $config;
-	private $document;
+	private static $instance;
+
+	private	$isLocalhost,
+			$xmlFile,
+			$xmlFileTS,
+			$config,
+			$document,
+			$plugins = array();
 
 	/**
 	 * parse only database information
@@ -43,7 +45,7 @@ class Config {
 	 * store passwords automatically or add them via addPasswords()
 	 * @var boolean
 	 */
-	private $storePasswords	= false;
+	private $storePasswords	= FALSE;
 
 	private function __construct($xmlFile, $dbonly) {
 		$this->dbOnly = $dbonly;
@@ -63,7 +65,7 @@ class Config {
 
 	private function __clone() {}
 
-	public static function getInstance($xmlFile = null, $dbonly = false) {
+	public static function getInstance($xmlFile = NULL, $dbonly = FALSE) {
 		if(
 			isset($_SESSION['CONFIG']->xmlFileTS) &&
 			$_SESSION['CONFIG']->xmlFileTS == filemtime($xmlFile ? $xmlFile : 'ini/site.ini.xml')
@@ -71,7 +73,7 @@ class Config {
 			self::$instance = $_SESSION['CONFIG'];
 			return self::$instance;
 		}
-		if(self::$instance === null) {
+		if(is_null(self::$instance)) {
 			self::$instance = new Config($xmlFile, $dbonly);
 		}
 		$_SESSION['CONFIG'] = self::$instance;
@@ -249,9 +251,14 @@ class Config {
 	}
 	
 	private function parsePlugins() {
-		
+		if(!empty($this->config->plugins)) {
+			foreach($this->config->plugins->plugin as $p) {
+				$a = $p->attributes();
+				$this->plugins[(string) $a->class] = preg_split('~\s*,\s*~', (string) $a->listens_to);
+			}
+		}
 	}
-	
+
 	private function parsePages() {
 
 		foreach($this->config->pages as $d) {
@@ -467,53 +474,6 @@ class Config {
 	}
 
 	/**
-	 * checks for availability of requested page (considering an optional script file)
-	 * fallbacks are either a default page or the first page listed in config file
-	 *
-	 * @param string $p page id
-	 * @param string $doc script name for which page id is searched
-	 * 
-	 * @return string page class name
-	 */
-	private function requestPage($p, $doc = NULL) {
-		if(!isset($doc)) {
-			$doc = $this->site->root_document;
-		}
-
-		// just stored for misc later use
-		$this->document = $doc;
-		
-		// if no page given try to get the first from list
-		if(!isset($p) && isset($this->pages[$doc])) {
-			$ndx = array_keys($this->pages[$doc]);
-			$p = $ndx[0];
-		}
-
-		// page class for "normal" pages
-		if(isset($this->pages[$doc]) && $p !== null && in_array($p ,array_keys($this->pages[$doc]))) {
-			return new $this->pages[$doc][$p]->class;
-		}
-		
-		// page class for wildcard pages
-		if(isset($this->wildcardPages[$doc]) && $p !== null) {
-			foreach(array_keys($this->wildcardPages[$doc]) as $pattern) {
-				if(strpos($p, $pattern) === 0) {
-					return new $this->wildcardPages[$doc][$pattern]->class;
-				}
-			}
-		}
-		
-		// default page class, if available
-		if(isset($this->pages[$doc]) && in_array('default', array_keys($this->pages[$doc]))) {
-			return new $this->pages[$doc]['default']->class;
-		}
-
-		// first page class assigned to root document
-		$ndx = array_keys($this->pages[$this->site->root_document]);
-		return new $this->pages[$this->site->root_document][$ndx[0]]->class;
-	}
-
-	/**
 	 * returns currently used document (e.g. index.php, admin.php)
 	 *
 	 * @return used document
@@ -536,6 +496,64 @@ class Config {
 			}
 		}
 		return $paths;
+	}
+
+	/**
+	 * attaches all in config file declared event listeners
+	 */
+	public function attachPlugins() {
+		foreach($this->plugins as $ListenerClass => $eventTypes) {
+			foreach($eventTypes as $eventType) {
+				EventDispatcher::getInstance()->attach(new $ListenerClass, $eventType);
+			}
+		}
+	}
+
+	/**
+	 * checks for availability of requested page (considering an optional script file)
+	 * fallbacks are either a default page or the first page listed in config file
+	 *
+	 * @param string $p page id
+	 * @param string $doc script name for which page id is searched
+	 *
+	 * @return string page class name
+	 */
+	private function requestPage($p, $doc = NULL) {
+		if(!isset($doc)) {
+			$doc = $this->site->root_document;
+		}
+	
+		// just stored for misc later use
+		$this->document = $doc;
+	
+		// if no page given try to get the first from list
+		if(!isset($p) && isset($this->pages[$doc])) {
+			$ndx = array_keys($this->pages[$doc]);
+			$p = $ndx[0];
+		}
+	
+		// page class for "normal" pages
+		if(isset($this->pages[$doc]) && $p !== null && in_array($p ,array_keys($this->pages[$doc]))) {
+			return new $this->pages[$doc][$p]->class;
+		}
+	
+		// page class for wildcard pages
+		if(isset($this->wildcardPages[$doc]) && $p !== null) {
+			foreach(array_keys($this->wildcardPages[$doc]) as $pattern) {
+				if(strpos($p, $pattern) === 0) {
+					return new $this->wildcardPages[$doc][$pattern]->class;
+				}
+			}
+		}
+	
+		// default page class, if available
+		if(isset($this->pages[$doc]) && in_array('default', array_keys($this->pages[$doc]))) {
+			return new $this->pages[$doc]['default']->class;
+		}
+	
+		// first page class assigned to root document
+		$ndx = array_keys($this->pages[$this->site->root_document]);
+		return new $this->pages[$this->site->root_document][$ndx[0]]->class;
 	}
 	
 	/**

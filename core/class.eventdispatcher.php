@@ -2,42 +2,66 @@
 /**
  * simple dispatcher-listener implementation
  * 
- * @version 0.0.1 2012-02-12
+ * @version 0.0.3 2012-02-15
  * @author Gregor Kofler
  *
  */
 class EventDispatcher {
 
-	private static $listeners = array();
+	private $listeners = array(),
+			$lastEvent,
+			$lastSubject;
+
+	private static $instance; 
 	
 	private function __construct() {
 	}
-
-	public static function attach(EventListener $listener, $eventType) {
-		if(isset(self::$listeners[spl_object_hash($listener)])) {
-			self::$listeners[spl_object_hash($listener)] = array();
+	private function __clone() {
+	}
+	
+	public static function getInstance() {
+		if(is_null(self::$instance)) {
+			self::$instance = new EventDispatcher();
 		}
-		self::$listeners[spl_object_hash($listener)][$eventType] = TRUE;
+		return self::$instance;
 	}
 
-	public static function detach(EventListener $listener, $eventType) {
-		unset(self::$listeners[spl_object_hash($listener)][$eventType]);
-		if(!count(self::$listeners[spl_object_hash($listener)])) {
-			unset(self::$listeners[spl_object_hash($listener)]);
+	public function attach(EventListener $listener, $eventType) {
+		if(!isset($this->listeners[spl_object_hash($listener)])) {
+			$this->listeners[spl_object_hash($listener)] = array();
+			$this->listeners[spl_object_hash($listener)]['__instance__'] = $listener;
 		}
+		$this->listeners[spl_object_hash($listener)][$eventType] = TRUE;
 	}
 
-	public static function notify(stdClass $subject, $eventType) {
-		foreach(self::$listeners as $listener) {
+	public function detach(EventListener $listener, $eventType) {
+		unset($this->listeners[spl_object_hash($listener)][$eventType]);
+	}
+
+	public function notify(Subject $subject, $eventType) {
+		$this->lastEvent = $eventType;
+		$this->lastSubject = $subject;
+
+		foreach($this->listeners as $listener) {
 			if(isset($listener[$eventType])) {
-				$listener->update($subject);
+				$listener['__instance__']->update($subject);
 			}
 		}
 	}
 
+	public function getEventType() {
+		return $this->lastEvent;
+	}
+
+	public function getSubject() {
+		return $this->lastSubject;
+	}
 }
 
 interface EventListener {
-	public function update();
+	public function update(Subject $subject);
+}
+
+interface Subject {
 }
 ?>

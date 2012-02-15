@@ -1,8 +1,6 @@
 <?php
-abstract class Plugin {
+abstract class Plugin implements EventListener {
 	public function __construct() {
 	}
-
-	public abstract function notify(StdClass $subject, $eventType) {
-	}
 }
+?>
