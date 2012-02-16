@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.0 2012-02-13
+ * @version 0.7.2 2012-02-16
  */
 class Config {
 	public $site;
@@ -155,7 +155,6 @@ class Config {
 		
 			$this->binaries = new stdClass;
 			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-			$e = $b[0]->xpath('executable');
 		
 			foreach($b[0]->executable as $v) {
 				$id = (string) $v->attributes()->id;
@@ -254,7 +253,7 @@ class Config {
 		if(!empty($this->config->plugins)) {
 			foreach($this->config->plugins->plugin as $p) {
 				$a = $p->attributes();
-				$this->plugins[(string) $a->class] = preg_split('~\s*,\s*~', (string) $a->listens_to);
+				$this->plugins[] = array ('class' => (string) $a->class, 'eventTypes' => preg_split('~\s*,\s*~', (string) $a->listens_to), 'configXML' => $p->asXML());
 			}
 		}
 	}
@@ -502,9 +501,15 @@ class Config {
 	 * attaches all in config file declared event listeners
 	 */
 	public function attachPlugins() {
-		foreach($this->plugins as $ListenerClass => $eventTypes) {
-			foreach($eventTypes as $eventType) {
-				EventDispatcher::getInstance()->attach(new $ListenerClass, $eventType);
+		foreach($this->plugins as $plugin) {
+			foreach($plugin['eventTypes'] as $eventType) {
+				$pluginInstance = new $plugin['class'];
+
+				if(method_exists($pluginInstance, 'configure')) {
+					$pluginInstance->configure(simplexml_load_string($plugin['configXML']));
+				}
+
+				EventDispatcher::getInstance()->attach($pluginInstance, $eventType);
 			}
 		}
 	}

@@ -57,11 +57,4 @@ class EventDispatcher {
 		return $this->lastSubject;
 	}
 }
-
-interface EventListener {
-	public function update(Subject $subject);
-}
-
-interface Subject {
-}
 ?>

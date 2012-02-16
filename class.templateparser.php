@@ -17,11 +17,6 @@ class TemplateParser {
 	}
 }
 
-interface templateSpecifics {
-	public function setSource($source);
-	public function parse();
-}
-
 class HtmlTemplateParser extends TemplateParser implements templateSpecifics {
 	public function setSource($source) {
 		$this->source = $source;

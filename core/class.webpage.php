@@ -740,14 +740,4 @@ abstract class Webpage {
 		exit();
 	}
 }
-
-/**
- * Website specific methods,
- * which have to be defined individually
- */
-interface siteSpecifics {
-	public function pageHeader();
-	public function pageFooter();
-	public function content();
-}
 ?>
