@@ -7,12 +7,12 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.5pre 2012-01-18
+ * @version 0.4.5 2012-02-16
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
  */
-class MetaFile {
+class MetaFile implements Subject {
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
 	private static	$db;
