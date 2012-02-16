@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.0.9, 2012-02-16
+ * @version 0.1.0, 2012-02-16
  * @author Gregor Kofler
  */
 
@@ -14,6 +14,7 @@ class PdfExtract extends Plugin implements EventListener {
 	private	$table = 'pdfndx',
 			$tmpDir,
 
+			$observedFolders = array(),
 			$hasThumb = TRUE,
 			$thumbOfPage = 0,
 			$thumbType = 'jpg',
@@ -51,7 +52,9 @@ class PdfExtract extends Plugin implements EventListener {
 			throw new PdfExtractException("Executable $file not found!");
 		}
 
-		$tmpDir	= defined('TMP_PATH') ? TMP_PATH : $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR;
+		$tmpDir	=	defined('TMP_PATH') ?
+					(rtrim(TMP_PATH, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR) :
+					rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR;
 
 		if(!is_dir($tmpDir)) {
 			if(!mkdir($tmpDir, 0777)) {
@@ -80,11 +83,20 @@ class PdfExtract extends Plugin implements EventListener {
 	}
 	
 	public function configure(SimpleXMLElement $configXML) {
+
 		foreach($configXML->children() as $name => $value) {
 			$pName = preg_replace_callback('/_([a-z])/', function ($match) { return strtoupper($match[1]); }, $name);
 			if(property_exists($this, $pName)) {
-				$this->$pName = (string) $value;
+				if(is_array($this->$pName)) {
+					$this->$pName = preg_split('~\s*[,;:]\s*~', (string) $value);
+				}
+				else {
+					$this->$pName = (string) $value;
+				}
 			}
+		}
+		foreach($this->observedFolders as &$f) {
+			$f = rtrim($f, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 		}
 	}
 
@@ -93,7 +105,19 @@ class PdfExtract extends Plugin implements EventListener {
 	 * extract and index single pages
 	 */
 	public function update(Subject $file) {
-		switch($this->eventDispatcher->getEvent()) {
+
+		if($file->getMimeType() != 'application/pdf') {
+			return;
+		}
+
+		if(
+			!in_array($file->getMetaFolder()->getFullPath(), $this->observedFolders) &&
+			!in_array($file->getMetaFolder()->getRelativePath(), $this->observedFolders)
+		) {
+			return;
+		}
+
+		switch($this->eventDispatcher->getEventType()) {
 			case 'afterUpload':
 				$this->extract($file);
 				if($this->hasThumb) {
@@ -163,16 +187,16 @@ class PdfExtract extends Plugin implements EventListener {
 	 * 
 	 * @param int $metafilesID
 	 * @param int $pageNdx
-	 * @param string $temporaryFilesname
+	 * @param string $temporaryFilename
 	 * 
 	 * @return Boolean success
 	 */
-	private function createDbEntry($metafilesID, $pageNdx, $temporaryFilesname) {
+	private function createDbEntry($metafilesID, $pageNdx, $temporaryFilename) {
 		return $this->db->insertRecord($this->table,
 			array(
 				'metafilesID'	=> $metafilesID,
 				'Page'			=> $pageNdx,
-				'Content'		=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilesname)),
+				'Content'		=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilename)),
 			));
 	}
 }
