@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.8 2011-12-26
+ * @version 0.4.9 2012-02-16
  *
  * @todo won't know about drive letters on windows systems
  * @todo delete()
@@ -168,6 +168,14 @@ class MetaFolder {
 		return $this->obscure_files;
 	}
 
+	/**
+	 * returns path relative to DOCUMENT_ROOT
+	 * @param boolean $force
+	 */
+	public function getRelativePath($force = FALSE) {
+		return $this->filesystemFolder->getRelativePath($force);
+	}
+	
 	/**
 	 * return all metafiles within this folder
 	 * 
