@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.2 2011-12-26
+ * @version 0.3.3 2012-02-17
  * 
  * @todo deal with 10.04 Ubuntu bug
  */
@@ -267,7 +267,9 @@ class FilesystemFile {
 			throw new FilesystemFileException("Could not create metafile for '{$this->filename}'.", FilesystemFileException::METAFILE_CREATION_FAILED);
 		}
 		else {
-			return MetaFile::getInstance(NULL, $filesID);
+			$mf = MetaFile::getInstance(NULL, $filesID);
+			EventDispatcher::getInstance()->notify($mf, 'metafileCreated');
+			return $mf;
 		}
 	}
 
