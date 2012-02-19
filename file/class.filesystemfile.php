@@ -268,7 +268,7 @@ class FilesystemFile {
 		}
 		else {
 			$mf = MetaFile::getInstance(NULL, $filesID);
-			EventDispatcher::getInstance()->notify($mf, 'metafileCreated');
+			EventDispatcher::getInstance()->notify($mf, 'afterMetafileCreate');
 			return $mf;
 		}
 	}

@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.5 2012-02-16
+ * @version 0.4.6 2012-02-17
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -410,6 +410,8 @@ class MetaFile implements Subject {
 	 * @throws Exception
 	 */
 	public function delete() {
+		EventDispatcher::getInstance()->notify($this, 'beforeMetafileDelete');
+
 		if(self::$db->deleteRecord('files', $this->id)) {
 			$this->filesystemFile->delete();
 			unset(self::$instancesById[$this->id]);
