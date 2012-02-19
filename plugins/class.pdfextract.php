@@ -178,7 +178,8 @@ class PdfExtract extends Plugin implements EventListener {
 			array(
 				'filesID'	=> $metafilesID,
 				'Page'		=> $pageNdx,
-				'Content'	=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilename)),
+				'Content'	=> file_get_contents($temporaryFilename)
+				//'Content'	=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilename))
 			));
 	}
 	
