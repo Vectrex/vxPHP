@@ -3,17 +3,17 @@
  * mapper class for notifications
  * 
  * @author Gregor Kofler
- * @version 0.1.0 2011-10-09
+ * @version 0.1.1 2012-02-19
  */
 class Notification {
-	private $id;
-	private $alias;
-	private $info;
-	private $subject;
-	private $message;
-	private $attachment;
-	private $signature;
-	private $group_alias;
+	private	$id,
+			$alias,
+			$subject,
+			$message,
+			$description,
+			$attachment,
+			$signature,
+			$group_alias;
 
 	private static $cachedNotificationData;
 
@@ -49,7 +49,7 @@ class Notification {
 		$result = array();
 
 		foreach(self::$cachedNotificationData as $k => $v) {
-			if(!isset($groupAlias) || $v['group_alias'] == $groupAlias) {
+			if(!isset($groupAlias) || strtoupper($v['group_alias']) == strtoupper($groupAlias)) {
 				$n = new Notification($v['Alias']);
 				$result[(string) $n] = $n;
 			}
@@ -63,7 +63,7 @@ class Notification {
 			SELECT
 				notificationsID as id,
 				n.Alias,
-				IFNULL(Description, n.Alias) AS Info,
+				IFNULL(Description, n.Alias) AS Description,
 				Subject,
 				Message,
 				Signature,
