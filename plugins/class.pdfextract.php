@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.1.0, 2012-02-16
+ * @version 0.1.1, 2012-02-19
  * @author Gregor Kofler
  */
 
@@ -11,18 +11,18 @@ class PdfExtract extends Plugin implements EventListener {
 	 * default values
 	 * overwritten by plugin configuration
 	 */
-	private	$table = 'pdfndx',
-			$tmpDir,
+	protected	$table = 'pdfndx',
+				$tmpDir,
+	
+				$observedFolders = array(),
+				$hasThumb = TRUE,
+				$thumbOfPage = 0,
+				$thumbType = 'jpg',
+				$thumbWidth = 150;
 
-			$observedFolders = array(),
-			$hasThumb = TRUE,
-			$thumbOfPage = 0,
-			$thumbType = 'jpg',
-			$thumbWidth = 150;
-
-	private $db,
-			$config,
-			$eventDispatcher;
+	private		$db,
+				$config,
+				$eventDispatcher;
 
 	/**
 	 * constructor
@@ -68,11 +68,12 @@ class PdfExtract extends Plugin implements EventListener {
 			$this->db->execute("
 				CREATE TABLE IF NOT EXISTS {$this->table} (
 		  			`pdfndxID` int(11) NOT NULL AUTO_INCREMENT,
+					`filesID` int(11) NOT NULL,
 					`Page` int(11) DEFAULT NULL,
 					`Content` mediumtext,
 		  			first_created timestamp NOT NULL,
 					PRIMARY KEY (`pdfndxID`),
-					KEY `metafilesID` (`metafilesID`),
+					KEY `filesID` (`filesID`),
 					FULLTEXT KEY `Content` (`Content`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8");
 		}
@@ -83,18 +84,8 @@ class PdfExtract extends Plugin implements EventListener {
 	}
 	
 	public function configure(SimpleXMLElement $configXML) {
+		parent::configure($configXML);
 
-		foreach($configXML->children() as $name => $value) {
-			$pName = preg_replace_callback('/_([a-z])/', function ($match) { return strtoupper($match[1]); }, $name);
-			if(property_exists($this, $pName)) {
-				if(is_array($this->$pName)) {
-					$this->$pName = preg_split('~\s*[,;:]\s*~', (string) $value);
-				}
-				else {
-					$this->$pName = (string) $value;
-				}
-			}
-		}
 		foreach($this->observedFolders as &$f) {
 			$f = rtrim($f, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 		}
@@ -118,14 +109,15 @@ class PdfExtract extends Plugin implements EventListener {
 		}
 
 		switch($this->eventDispatcher->getEventType()) {
-			case 'afterUpload':
+
+			case 'afterMetafileCreate':
 				$this->extract($file);
-				if($this->hasThumb) {
+				if($this->hasThumb == 1) {
 					$this->createThumb($file);
 				}
 				break;
 
-			case 'beforeDelete':
+			case 'beforeMetafileDelete':
 				$this->doPurge($file);
 				break;
 		}
@@ -173,17 +165,7 @@ class PdfExtract extends Plugin implements EventListener {
 	}
 
 	/**
-	 * create thumbnail of a single page of PDF file $file
-	 * 
-	 * @param MetaFile $file
-	 */
-	public function createThumb(MetaFile $file) {
-		$f = pathinfo($file->getMetaFilename(), PATHINFO_FILENAME);
-		exec("{$this->config->binaries->path}{$this->config->binaries->executables['convert']['file']} -resize $this->thumbWidth -quality 90 -colorspace RGB '{$file->getFilename()}'[$this->thumbOfPage] '{$file->getMetaFolder()->getFilesystemFolder()->createCache()}$f.{$this->thumbType}'");
-	}
-
-	/**
-	 * create DB entry
+	 * create single db entry of indexed page
 	 * 
 	 * @param int $metafilesID
 	 * @param int $pageNdx
@@ -194,10 +176,29 @@ class PdfExtract extends Plugin implements EventListener {
 	private function createDbEntry($metafilesID, $pageNdx, $temporaryFilename) {
 		return $this->db->insertRecord($this->table,
 			array(
-				'metafilesID'	=> $metafilesID,
-				'Page'			=> $pageNdx,
-				'Content'		=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilename)),
+				'filesID'	=> $metafilesID,
+				'Page'		=> $pageNdx,
+				'Content'	=> iconv('ISO-8859-15', 'UTF-8', file_get_contents($temporaryFilename)),
 			));
+	}
+	
+	/**
+	 * create thumbnail of a single page of PDF file $file
+	 * 
+	 * @param MetaFile $file
+	 */
+	public function createThumb(MetaFile $file) {
+		$thumbFilename = $file->getMetaFolder()->getFilesystemFolder()->createCache().$file->getMetaFilename()."@page_{$this->thumbOfPage}.{$this->thumbType}";
+		exec("{$this->config->binaries->path}{$this->config->binaries->executables['convert']['file']} -resize $this->thumbWidth -quality 90 -colorspace RGB '{$file->getPath()}'[$this->thumbOfPage] '$thumbFilename'");
+	}
+
+	/**
+	 * purges all db entries in table indexing file
+	 *  
+	 * @param MetaFile $file
+	 */
+	private function doPurge(MetaFile $file) {
+		$this->db->deleteRecord($this->table, array('filesID' => $file->getId()));
 	}
 }
 
