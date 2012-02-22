@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.0a 2012-02-05
+ * @version 4.7.1 2012-02-22
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -838,24 +838,23 @@ class Mysqldbi extends mysqli {
 	 * 
 	 * @return string alias
 	 */
-	public function getAlias($text, $table, $id = NULL) {
+	public function getAlias($text, $table, $id = 0) {
 		$replaceFrom	= array('~(ä|&auml;)~', '~(ö|&ouml;)~', '~(ü|&uuml;)~', '~(ß|&szlig;)~', '~\W+~', '~(^_+|_+$)~');
 		$replaceTo		= array('ae', 'oe', 'ue', 'ss', '_', '');
 		$alias			= preg_replace($replaceFrom, $replaceTo, strtolower($text));
+		$sql			= "SELECT {$table}ID FROM $table WHERE LOWER(Alias) = ? AND {$table}ID != ?";
 
-		if(isset($id)) {
-			if(($rows = $this->doPreparedQuery("SELECT {$table}ID FROM $table WHERE LOWER(Alias) = ? AND {$table}ID != ?", array($alias, (int) $id)))) {
-				return $alias .= "_$id";
-			}
-		}
-		else {
-			$i = 1;
-			while(($rows = $this->doPreparedQuery("SELECT {$table}ID FROM $table WHERE LOWER(Alias) = ?", array($alias)))) {
-				$alias .= ++$i;
-			}
+		if(!($rows = $this->doPreparedQuery($sql, array($alias, (int) $id)))) {
+			return $alias;
 		}
 
-		return $alias;
+		$ndx = 2;
+
+		while(($rows = $this->doPreparedQuery($sql, array("{$alias}_{$ndx}", (int) $id)))) {
+			++$ndx;
+		}
+
+		return "{$alias}_{$ndx}";
 	}
 }
 
