@@ -2,7 +2,7 @@
 /**
  * classes for form elements
  *  
- * @version 0.3.3 2011-11-18
+ * @version 0.3.4 2012-02-24
  * @author Gregor Kofler
  * 
  * @todo allow callbacks as validators and filters
@@ -633,7 +633,7 @@ class SelectElement extends FormElementWithOptions {
 
 class MultipleSelectElement extends SelectElement {
 
-	public function __construct($name, Array $value = array()) {
+	public function __construct($name, Array $value = NULL) {
 		parent::__construct($name, $value);
 	}
 
@@ -641,9 +641,14 @@ class MultipleSelectElement extends SelectElement {
 
 		$this->options[] = $option;
 		$option->setParentElement($this);
+		
+		$v = $this->getValue();
 
-		if(in_array($option->getValue(), $this->getValue())) {
+		if(is_array($v) && in_array($o->getValue(), $v)) {
 			$option->select();
+		}
+		else {
+			$option->unselect();
 		}
 	}
 
@@ -655,7 +660,10 @@ class MultipleSelectElement extends SelectElement {
 		}
 
 		foreach($this->options as $o) {
-			if(in_array($o->getValue(), $this->getValue())) {
+
+			$v = $this->getValue();
+
+			if(is_array($v) && in_array($o->getValue(), $v)) {
 				$o->select();
 			}
 			else {

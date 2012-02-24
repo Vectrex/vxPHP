@@ -409,11 +409,7 @@ class HtmlForm {
 			if(isset($this->request[$name])) {
 				$e->setValue($this->request[$name]);
 			}
-			elseif(isset($this->initFormValues[$name]) && (
-					$e instanceof MultipleSelectElement && !count($e->getValue()) ||
-					is_null($e->getValue())
-				)
-			) {
+			elseif(isset($this->initFormValues[$name]) && is_null($e->getValue())) {
 				$e->setValue($this->initFormValues[$name]);
 			}
 		}
