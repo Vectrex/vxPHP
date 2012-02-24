@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Engine for Forms
- * @version 1.1.6 2012-02-21
+ * @version 1.1.7 2012-02-24
  * @author Gregor Kofler
  * 
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -409,7 +409,11 @@ class HtmlForm {
 			if(isset($this->request[$name])) {
 				$e->setValue($this->request[$name]);
 			}
-			elseif(is_null($e->getValue()) && isset($this->initFormValues[$name])) {
+			elseif(isset($this->initFormValues[$name]) && (
+					$e instanceof MultipleSelectElement && !count($e->getValue()) ||
+					is_null($e->getValue())
+				)
+			) {
 				$e->setValue($this->initFormValues[$name]);
 			}
 		}
