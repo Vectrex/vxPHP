@@ -371,6 +371,12 @@ class Config {
 		return $m;
 	}
 
+	// refresh config by re-parsing XML file
+
+	public function refresh() {
+		
+	}
+
 	/**
 	 * init application
 	 * 
