@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.1 2012-02-22
+ * @version 4.7.2 2012-03-24
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -533,13 +533,13 @@ class Mysqldbi extends mysqli {
 		switch($locale) {
 			case 'de':
 				$tmp[2] = substr(date('Y'), 0, 4-strlen($tmp[2])).$tmp[2];
-				return $tmp[2].'-'.$tmp[1].'-'.$tmp[0];
+				return sprintf('%04d-%02d-%02d', $tmp[2], $tmp[1], $tmp[0]); 
 			case 'us':
 				$tmp[2] = substr(date('Y'), 0, 4-strlen($tmp[2])).$tmp[2];
-				return $tmp[2].'-'.$tmp[0].'-'.$tmp[1];
+				return sprintf('%04d-%02d-%02d', $tmp[2], $tmp[0], $tmp[1]); 
 			case 'iso':
 				$tmp[0] = substr(date('Y'), 0, 4-strlen($tmp[0])).$tmp[0];
-				return $tmp[0].'-'.$tmp[1].'-'.$tmp[2];
+				return sprintf('%04d-%02d-%02d', $tmp[0], $tmp[1], $tmp[2]); 
 			default:
 				return '';
 		}
