@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.1 2012-01-23
+ * @version 0.5.2 2012-04-04
  */
 
 abstract class UserAbstract {
@@ -20,8 +20,8 @@ abstract class UserAbstract {
 	protected $name;
 	protected $email;
 	protected $pwd;
-	protected $table_access;
-	protected $row_access;
+	protected $table_access = array();
+	protected $row_access = array();
 
 	protected $groupid;
 	protected $group_alias;
@@ -67,6 +67,14 @@ abstract class UserAbstract {
 		if(is_array($this->row_access)) {
 			return in_array(strtolower($row), $this->row_access);
 		}
+	}
+
+	public function getRowAccess() {
+		return $this->row_access;
+	}
+
+	public function getTableAccess() {
+		return $this->table_access;
 	}
 
 	public function hasSuperAdminPrivileges() {
@@ -141,10 +149,10 @@ abstract class UserAbstract {
 	}
 	
 	/**
-	 * Allows update of non-critical user data, i.e. Name, Email, Password
+	 * allow update of non-critical user data, i.e. Name, Email, Password
 	 * 
 	 * @param array $data
-	 * @return boolean
+	 * @return success
 	 */
 	public function restrictedUpdate(Array $data) {
 		$set = array();
@@ -155,15 +163,27 @@ abstract class UserAbstract {
 			}
 		}
 		
-		if($GLOBALS['db']->updateRecord('admin', $this->adminid, $set)) {
+		try {
+			$GLOBALS['db']->updateRecord('admin', $this->adminid, $set);
 			foreach($set as $k => $v) {
 				$k = strtolower($k);
 				$this->$k = $v;
 			}
 			$this->id = $this->email;
-			return true;
+			return TRUE;
 		}
-		return false;
+		catch(MysqldbiException $e) {
+			return FALSE;
+		}
+	}
+	
+	/**
+	 * delete user, removes user from database
+	 * 
+	 * @return sucess
+	 */
+	public function delete() {
+		return $GLOBALS['db']->deleteRecord('admin', $this->adminid);
 	}
 
 	/**
