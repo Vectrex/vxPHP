@@ -2,7 +2,7 @@
 /**
  * A simple template system
  * 
- * @version 0.7.8c 2012-02-04
+ * @version 0.7.9 2012-04-10
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -639,11 +639,11 @@ class SimpleTemplate {
 	 * @param string miscstr additional string with attributes or handlers
 	 * @param string $counted add code for counting clicks on link
 	 */
-	public static function a($link, $text = '', $img = '', $class = false, $miscstr = false, $counted = false) {
+	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE, $counted = FALSE) {
 		if (empty($link)) { return false; }
 
 		$mail	= self::checkMail($link);
-		$ext	= !$mail ? self::checkExternal($link) : true;
+		$ext	= !$mail ? self::checkExternal($link) : TRUE;
 
 		if($mail) {
 			$enc = 'mailto:';
@@ -653,6 +653,7 @@ class SimpleTemplate {
 			}
 			$link = $enc;
 		}
+
 		else {
 			if(!$ext && $GLOBALS['config']->site->use_nice_uris) {
 				$link = NiceURI::toNice($link);
@@ -663,18 +664,22 @@ class SimpleTemplate {
 			$link = htmlspecialchars($link);
 		}
 
-		$text =		($text == '' && $img == '') ? preg_replace('/^\s*[a-z]+(\/\/)?:/i', '', $link) : $text;
+		$text = ($text == '' && $img == '') ? preg_replace('~^\s*[a-z]+:(//)?~i', '', $link) : $text;
 
-		$html =		self::checkExternal($link)
-					?
-					EXTERNAL_LINK_GFX
-					:
-					'';
-		$html .=	'<a '.($class ? "class='$class'" : '')."href='$link'";
-		$html .=	$miscstr ? " $miscstr>" : '>';
-		$html .=	$img != '' ? "<img src='$img' alt='$text'>" : $text;
-		$html .=	'</a>';
-		return $html;
+		$class = $class ? array($class) : array();
+		if(self::checkExternal($link)) {
+			$class[] = 'external';
+		}
+
+		$html = array(
+			'<a',
+			!empty($class) ? ' class="'.implode(' ', $class).'"' : '',
+			" href='$link'",
+			$miscstr ? " $miscstr>" : '>',
+			$img != '' ? "<img src='$img' alt='$text'>" : $text,
+			'</a>'
+		);
+		return implode('', $html);
 	}
 
 	public static function checkExternal($link) {
