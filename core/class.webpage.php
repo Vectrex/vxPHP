@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.10.2 2011-12-18
+ * @version 1.12.0 2012-04-11
  * 
  */
 
@@ -298,7 +298,11 @@ abstract class Webpage {
 	 * 
 	 */
 	private function walkMenuTree(Menu $m) {
-		
+
+		if(($e = $m->getSelectedEntry())) {
+			return $e;
+		}
+
 		foreach($m->getEntries() as $e) {
 
 			$sm = $e->getSubMenu();
