@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.12.0 2012-04-11
+ * @version 1.13.0 2012-04-14
  * 
  */
 
@@ -299,16 +299,36 @@ abstract class Webpage {
 	 */
 	private function walkMenuTree(Menu $m) {
 
+		// return when matching entry in current menu
+
 		if(($e = $m->getSelectedEntry())) {
 			return $e;
 		}
+
+		// if current menu is dynamic - generate it and return selected entry
+
+		if($m->getType() == 'dynamic') {
+		
+			$method = $m->getMethod();
+			if(!$method) {
+				$method = 'buildDynamicMenu';
+			}
+		
+			if(method_exists($this, $method) && ($addedMenu = $this->$method($m))) {
+				return $addedMenu->getSelectedEntry();
+			}
+		}
+
+		// search current menu entries
 
 		foreach($m->getEntries() as $e) {
 
 			$sm = $e->getSubMenu();
 
+			// when matching entry is found, build submenu of this entry then return entry
+
 			if($e->getPage() === $this->currentPage) {
-				
+
 				// generate complete dynamic menus
 
 				if($sm && $sm->getType() == 'dynamic') {
@@ -349,6 +369,7 @@ abstract class Webpage {
 				else {
 
 					// insert dynamic entries, modify entries, etc.
+
 					if(method_exists($this, 'reworkMenu')) {
 						$this->reworkMenu($sm);
 					}
