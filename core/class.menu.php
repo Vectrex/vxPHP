@@ -1,10 +1,9 @@
 <?php
 /**
  * Menu class
- * manages a complete menu
- * @version 0.6.7 2011-12-17
  * 
- * @todo a dynamic top-level menu won't be reset
+ * manages a complete menu
+ * @version 0.6.8 2012-04-14
  */
 class Menu {
 	protected	$id,
@@ -27,14 +26,20 @@ class Menu {
 	}
 
 	public function __destruct() {
-		foreach($this->entries as $k => &$e) {
-			if($e instanceOf DynamicMenuEntry) {
-				array_splice($this->entries, $k, 1);
-				$e = NULL;
-			}
+		if($this->type == 'dynamic') {
+			$this->clearSelectedEntry();
+			$this->purgeEntries();
 		}
 
-		$this->dynamicEntries = array();
+		else {
+			foreach($this->entries as $k => &$e) {
+				if($e instanceOf DynamicMenuEntry) {
+					array_splice($this->entries, $k, 1);
+					$e = NULL;
+				}
+			}
+			$this->dynamicEntries = array();
+		}
 	}
 
 	protected function insertEntry(MenuEntry $entry, $ndx = NULL) {
@@ -300,8 +305,7 @@ class MenuEntry {
 	
 	public function __destruct() {
 		if($this->subMenu && $this->subMenu->getType() == 'dynamic') {
-			$this->subMenu->purgeEntries();
-			$this->subMenu->clearSelectedEntry();
+			$this->subMenu->__destruct();
 		}
 	}
 
