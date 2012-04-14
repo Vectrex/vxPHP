@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.2 2012-04-04
+ * @version 0.5.3 2012-04-14
  */
 
 abstract class UserAbstract {
@@ -120,6 +120,9 @@ abstract class UserAbstract {
 						$this->$k = $v;
 					}
 				}
+			}
+			else {
+				throw new UserException("User '$dataOrId' does not exist.");
 			}
 		}
 
