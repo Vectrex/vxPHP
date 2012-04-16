@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.3 2012-04-14
+ * @version 0.5.5 2012-04-16
  */
 
 abstract class UserAbstract {
@@ -266,22 +266,30 @@ abstract class UserAbstract {
 
 	/**
 	 * submits notification to user, when notification is assigned to user
+	 * when $overridePreferences is set to true, notification is sent, ignoring user preferences or admin group assignments
 	 * 
 	 * @param string $alias
 	 * @param array $varData
+	 * @param boolean $overridePreferences
 	 * 
 	 * @return boolean success
 	 */
-	public function notify($alias, Array $varData = array()) {
-		if(!$this->getsNotified($alias)) {
-			return true;
+	public function notify($alias, Array $varData = array(), $overridePreferences = FALSE) {
+		if($overridePreferences) {
+			$notification = new Notification($alias);
+		}
+		else {
+			if(!$this->getsNotified($alias)) {
+				return TRUE;
+			}
+	
+			$notification = $this->cachedNotifications[$alias];
 		}
 
-		$notification = $this->cachedNotifications[$alias];
 		$txt = $notification->fillMessage($varData); 
 
 		if(empty($txt)) {
-			return true;
+			return TRUE;
 		}
 
 		$m = new Email();
@@ -299,9 +307,9 @@ abstract class UserAbstract {
 
 		if($m->send()) {
 			$this->logNotification($notification);
-			return true;
+			return TRUE;
 		}
-		return false;
+		return FALSE;
 	}
 
 	private function logNotification(Notification $notification) {
