@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.6 2012-02-17
+ * @version 0.4.7 2012-04-17
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -55,11 +55,12 @@ class MetaFile implements Subject {
 	 * return all metafile instances within a certain metafolder
 	 * 
 	 * @param MetaFolder $folder
+	 * @param callback $callBackSort
 	 * 
 	 * @return array metafiles
 	 * 
 	 */
-	public static function getMetaFilesInFolder(MetaFolder $folder) {
+	public static function getMetaFilesInFolder(MetaFolder $folder, $callBackSort = NULL) {
 		if(!isset(self::$db)) {
 			self::$db = $GLOBALS['db'];
 		}
@@ -80,7 +81,20 @@ class MetaFile implements Subject {
 			$result[] = $file;  
 		}
 
-		return $result;
+		if(is_null($callBackSort)) {
+			return $result;
+		}
+		else if(is_callable($callBackSort)) {
+			usort($result, $callBackSort);
+			return $result;
+		}
+		else if(is_callable("Metafile::$callBackSort")) {
+			usort($result, "Metafile::$callBackSort");
+			return $result;
+		}
+		else {
+			throw new MetaFileException("'$callBackSort' is not callable.");
+		}
 	}
 	
 	/**
