@@ -603,6 +603,12 @@ abstract class Webpage {
 		if(!$admin->isAuthenticated()) {
 			return FALSE;
 		}
+		
+		// unhide all menu entries
+
+		foreach($m->getEntries() as $e) {
+			$e->setAttribute('display', NULL);
+		}
 
 		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
 			if($this->authenticateMenuByTableRowAccess($m)) {
