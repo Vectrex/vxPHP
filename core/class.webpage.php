@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.13.0 2012-04-14
+ * @version 1.14.0 2012-04-19
  * 
  */
 
@@ -581,6 +581,9 @@ abstract class Webpage {
 	/**
 	 * authenticate complete menu
 	 * checks whether current user/admin fulfills requirements defined in site.ini.xml
+	 * 
+	 * if a menu needs authentication and admin meets the required authentication level the menu entries are checked
+	 * if single entries require a higher authentication level, they are hidden by setting their display-property to "none"
 	 *
 	 * @param Menu $m
 	 * @return boolean
@@ -602,11 +605,33 @@ abstract class Webpage {
 		}
 
 		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
-			return $this->authenticateMenuByTableRowAccess($m);
+			if($this->authenticateMenuByTableRowAccess($m)) {
+				foreach($m->getEntries() as $e) {
+					if(!$this->authenticateMenuEntry($e)) {
+						$e->setAttribute('display', 'none');
+					}
+				}				
+				return TRUE;
+			}
+			else {
+				return FALSE;
+			}
 		}
+
 		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
-			return $this->authenticateMenuByTableRowAccess($m);
+			if($this->authenticateMenuByTableRowAccess($m)) {
+				foreach($m->getEntries() as $e) {
+					if(!$this->authenticateMenuEntry($e)) {
+						$e->setAttribute('display', 'none');
+					}
+				}				
+				return TRUE;
+			}
+			else {
+				return FALSE;
+			}
 		}
+
 		if($m->getAuth() >= $admin->getPrivilegeLevel()) {
 			return TRUE;
 		}
@@ -614,12 +639,56 @@ abstract class Webpage {
 		return $this->authenticateMenuByMiscRules($m);
 	}
 
+	/**
+	 * fallback method for authenticating menu access on observe_table/observe_row level
+	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
+	 * 
+	 * @param Menu $m
+	 * @return isAuthenticated
+	 */
 	protected function authenticateMenuByTableRowAccess(Menu $m) {
+		$p = $m->getAuthParameters();
+
+		if(empty($p)) {
+			return FALSE;
+		}
+
+		$tables = preg_split('/\s*,\s*/', trim($p));
+		$admin = Admin::getInstance();
+		
+		$matching = array_intersect($tables, $admin->getTableAccess());
+		return !empty($matching);
+	}
+
+	/**
+	 * fallback method for a proprietary authentication method
+	 * 
+	 * @param Menu $m
+	 * @return isAuthenticated
+	 */
+	protected function authenticateMenuByMiscRules(Menu $m) {
 		return FALSE;
 	}
 
-	protected function authenticateMenuByMiscRules(Menu $m) {
-		return FALSE;
+	/**
+	 * fallback method for authenticating single menu entry access on observe_table/observe_row level
+	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
+	 * 
+	 * @param MenuEntry $e
+	 * @return isAuthenticated
+	 */
+	protected function authenticateMenuEntry(MenuEntry $e) {
+		$p = $e->getAuthParameters();
+
+		if(empty($p)) {
+			return FALSE;
+		}
+
+		$tables = preg_split('/\s*,\s*/', trim($p));
+		$admin = Admin::getInstance();
+		
+		$matching = array_intersect($tables, $admin->getTableAccess());
+		return !empty($matching);
 	}
 
 	/**

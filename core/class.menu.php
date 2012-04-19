@@ -3,7 +3,7 @@
  * Menu class
  * 
  * manages a complete menu
- * @version 0.6.8 2012-04-14
+ * @version 0.6.9 2012-04-19
  */
 class Menu {
 	protected	$id,
@@ -11,6 +11,7 @@ class Menu {
 				$type,
 				$method,
 				$auth,
+				$authParameters,
 				$entries = array(),
 				$dynamicEntries = array(),
 				$selectedEntry,
@@ -162,6 +163,14 @@ class Menu {
 		$this->auth = $auth;
 	}
 
+	public function getAuthParameters() {
+		return $this->authParameters;
+	}
+
+	public function setAuthParameters($authParameters) {
+		$this->authParameters = $authParameters;
+	}
+
 	public function isAuthenticatedBy($privilege) {
 		return isset($this->auth) && $privilege >= $this->auth;
 	}
@@ -279,10 +288,11 @@ class MenuDecoratorAllowMarkup extends MenuDecorator {
  * manages a single menu entry
  */
 class MenuEntry {
-	private static		$href;
+	private static		$href, $admin;
 	protected static	$count = 1;
 	protected			$menu,
 						$auth,
+						$authParameters,
 						$attributes,
 						$id,
 						$page,
@@ -330,6 +340,14 @@ class MenuEntry {
 		$this->auth = $auth;
 	}
 
+	public function getAuthParameters() {
+		return $this->authParameters;
+	}
+	
+	public function setAuthParameters($authParameters) {
+		$this->authParameters = $authParameters;
+	}
+
 	public function isAuthenticatedBy($privilege) {
 		return isset($this->auth) && $privilege >= $this->auth;
 	}
@@ -350,18 +368,24 @@ class MenuEntry {
 		return $this->attributes;
 	}
 
+	public function setAttribute($attr, $value) {
+		$this->attributes->$attr = $value;
+	}
+
 	public function render() {
 
-		if(isset($this->attributes->display) && $this->attributes->display == 'none') {
-			return;
-		}
+		// check display attribute
 
+		if(isset($this->attributes->display) && $this->attributes->display == 'none') {
+			return FALSE;
+		}
+		
 		if(!isset(self::$href)) {
 			self::$href = "{$this->menu->getScript()}?page=";
 		}
-
+	
 		$sel = $this->menu->getSelectedEntry();
-
+	
 		if(isset($this->attributes->text)) {
 			if(!isset($sel) || $sel !== $this) {
 				$markup = sprintf(

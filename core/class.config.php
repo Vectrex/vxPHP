@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.2 2012-02-16
+ * @version 0.7.3 2012-04-19
  */
 class Config {
 	public $site;
@@ -317,16 +317,22 @@ class Config {
 			isset($a->method)									? (string) $a->method	: NULL
 		);
 
-		// set optional authentication level; if level is not defined, menu is locked for everyone
-
 		if(isset($a->auth)) {
+
+			// set optional authentication level; if level is not defined, menu is locked for everyone
+			// if auth level is defined, additional authentication parameters can be set
+
 			$auth = strtoupper(trim((string) $a->auth));
 			if(defined("UserAbstract::AUTH_$auth")) {
 				$m->setAuth(constant("UserAbstract::AUTH_$auth"));
+
+				if(isset($a->auth_parameters)) {
+					$m->setAuthParameters((string) $a->auth_parameters);
+				}
 			}
 			else {
 				$m->setAuth(-1);
-			} 
+			}
 		}
 
 		foreach($menu->children() as $entry) {
@@ -341,12 +347,18 @@ class Config {
 
 						$e = new MenuEntry((string) $a->page, $a, $local);
 
-						// set optional authentication level; if level is not defined, entry is locked for everyone
-
 						if(isset($a->auth)) {
+
+							// set optional authentication level; if level is not defined, entry is locked for everyone
+							// if auth level is defined, additional authentication parameters can be set
+
 							$auth = strtoupper(trim((string) $a->auth));
 							if(defined("UserAbstract::AUTH_$auth")) {
 								$e->setAuth(constant("UserAbstract::AUTH_$auth"));
+
+								if(isset($a->auth_parameters)) {
+									$e->setAuthParameters((string) $a->auth_parameters);
+								}
 							}
 							else {
 								$e->setAuth(-1);
