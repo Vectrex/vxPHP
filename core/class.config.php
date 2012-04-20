@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.3 2012-04-19
+ * @version 0.7.4 2012-04-20
  */
 class Config {
 	public $site;
@@ -291,6 +291,10 @@ class Config {
 					$auth = strtoupper(trim((string) $a->auth));
 					if(defined("UserAbstract::AUTH_$auth")) {
 						$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
+						
+						if(isset($a->auth_parameters)) {
+							$collection[$doc][$id]->auth_parameters = trim((string) $a->auth_parameters);
+						}
 					}
 					else {
 						$collection[$doc][$id]->auth = -1;

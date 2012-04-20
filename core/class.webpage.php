@@ -570,8 +570,23 @@ abstract class Webpage {
 		return TRUE;
 	}
 
+	/**
+	 * fallback method for authenticating page access on observe_table/observe_row level
+	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
+	 *
+	 * @return isAuthenticated
+	 */
 	protected function authenticateByTableRowAccess() {
-		return FALSE;
+
+		if(empty($this->pageConfigData->auth_parameters)) {
+			return FALSE;
+		}
+
+		$tables = preg_split('/\s*,\s*/', trim($this->pageConfigData->auth_parameters));
+		$admin = Admin::getInstance();
+	
+		$matching = array_intersect($tables, $admin->getTableAccess());
+		return !empty($matching);
 	}
 
 	protected function authenticateByMiscRules() {
