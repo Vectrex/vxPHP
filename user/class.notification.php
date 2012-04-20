@@ -3,17 +3,18 @@
  * mapper class for notifications
  * 
  * @author Gregor Kofler
- * @version 0.1.1 2012-02-19
+ * @version 0.1.2 2012-04-20
  */
 class Notification {
-	private	$id,
-			$alias,
-			$subject,
-			$message,
-			$description,
-			$attachment,
-			$signature,
-			$group_alias;
+	private		$id,
+				$alias,
+				$subject,
+				$message,
+				$description,
+				$attachment,
+				$signature,
+				$group_alias,
+				$not_displayed;
 
 	private static $cachedNotificationData;
 
@@ -68,6 +69,7 @@ class Notification {
 				Message,
 				Signature,
 				Attachment,
+				Not_Displayed,
 				ag.Alias as group_alias
 			FROM
 				notifications n
