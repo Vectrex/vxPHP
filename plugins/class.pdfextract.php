@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.1.1, 2012-02-19
+ * @version 0.1.2, 2012-04-23
  * @author Gregor Kofler
  */
 
@@ -20,9 +20,8 @@ class PdfExtract extends Plugin implements EventListener {
 				$thumbType = 'jpg',
 				$thumbWidth = 150;
 
-	private		$db,
-				$config,
-				$eventDispatcher;
+	private		$pdfToTextCommand,
+				$convertCommand;
 
 	/**
 	 * constructor
@@ -33,23 +32,19 @@ class PdfExtract extends Plugin implements EventListener {
 	 * @throws PdfExtractException
 	 */
   	public function __construct() {
-		$this->config			= &$GLOBALS['config'];
-		$this->db				= &$GLOBALS['db'];
-		$this->eventDispatcher	= &$GLOBALS['eventDispatcher'];
-
-		if(!isset($this->config->binaries)) {
+		if(!isset($GLOBALS['config']->binaries)) {
 			throw new PdfExtractException('Binaries not configured!');
 		}
-		if(!isset($this->config->binaries->executables['pdf_to_text']) || !isset($this->config->binaries->executables['convert'])) {
+		if(!isset($GLOBALS['config']->binaries->executables['pdf_to_text']) || !isset($GLOBALS['config']->binaries->executables['convert'])) {
 			throw new PdfExtractException('Executables not configured!');
 		}
-		$file = $this->config->binaries->path.$this->config->binaries->executables['pdf_to_text']['file'];
-		if(!file_exists($file)) {
-			throw new PdfExtractException("Executable $file not found!");
+		$this->pdfToTextCommand = $GLOBALS['config']->binaries->path.$GLOBALS['config']->binaries->executables['pdf_to_text']['file'];
+		if(!file_exists($this->pdfToTextCommand)) {
+			throw new PdfExtractException("Executable {$this->pdfToTextCommand} not found!");
 		}
-		$file = $this->config->binaries->path.$this->config->binaries->executables['convert']['file'];
-		if(!file_exists($file)) {
-			throw new PdfExtractException("Executable $file not found!");
+		$this->convertCommand = $GLOBALS['config']->binaries->path.$GLOBALS['config']->binaries->executables['convert']['file'];
+		if(!file_exists($this->convertCommand)) {
+			throw new PdfExtractException("Executable {$this->convertCommand} not found!");
 		}
 
 		$tmpDir	=	defined('TMP_PATH') ?
@@ -108,7 +103,7 @@ class PdfExtract extends Plugin implements EventListener {
 			return;
 		}
 
-		switch($this->eventDispatcher->getEventType()) {
+		switch($GLOBALS['eventDispatcher']->getEventType()) {
 
 			case 'afterMetafileCreate':
 				$this->extract($file);
@@ -142,7 +137,7 @@ class PdfExtract extends Plugin implements EventListener {
 
 		while($page++ < 200) {
 
-			exec("{$this->config->binaries->path}{$this->config->binaries->executables['pdf_to_text']['file']} -f $page -l $page '$filename' {$dest}_{$page}.txt");
+			exec("{$this->pdfToTextCommand} -f $page -l $page '$filename' {$dest}_{$page}.txt");
 			clearstatcache();
 
 			// EOF reached
@@ -174,7 +169,7 @@ class PdfExtract extends Plugin implements EventListener {
 	 * @return Boolean success
 	 */
 	private function createDbEntry($metafilesID, $pageNdx, $temporaryFilename) {
-		return $this->db->insertRecord($this->table,
+		return $GLOBALS['db']->insertRecord($this->table,
 			array(
 				'filesID'	=> $metafilesID,
 				'Page'		=> $pageNdx,
@@ -190,7 +185,7 @@ class PdfExtract extends Plugin implements EventListener {
 	 */
 	public function createThumb(MetaFile $file) {
 		$thumbFilename = $file->getMetaFolder()->getFilesystemFolder()->createCache().$file->getMetaFilename()."@page_{$this->thumbOfPage}.{$this->thumbType}";
-		exec("{$this->config->binaries->path}{$this->config->binaries->executables['convert']['file']} -resize $this->thumbWidth -quality 90 -colorspace RGB '{$file->getPath()}'[$this->thumbOfPage] '$thumbFilename'");
+		exec("{$this->convertCommand} -resize $this->thumbWidth -quality 90 -colorspace RGB '{$file->getPath()}'[$this->thumbOfPage] '$thumbFilename'");
 	}
 
 	/**
@@ -199,7 +194,7 @@ class PdfExtract extends Plugin implements EventListener {
 	 * @param MetaFile $file
 	 */
 	private function doPurge(MetaFile $file) {
-		$this->db->deleteRecord($this->table, array('filesID' => $file->getId()));
+		$GLOBALS['db']->deleteRecord($this->table, array('filesID' => $file->getId()));
 	}
 }
 
