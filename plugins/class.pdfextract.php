@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.1.2, 2012-04-23
+ * @version 0.1.3, 2012-04-24
  * @author Gregor Kofler
  */
 
@@ -185,7 +185,7 @@ class PdfExtract extends Plugin implements EventListener {
 	 */
 	public function createThumb(MetaFile $file) {
 		$thumbFilename = $file->getMetaFolder()->getFilesystemFolder()->createCache().$file->getMetaFilename()."@page_{$this->thumbOfPage}.{$this->thumbType}";
-		exec("{$this->convertCommand} -resize $this->thumbWidth -quality 90 -colorspace RGB '{$file->getPath()}'[$this->thumbOfPage] '$thumbFilename'");
+		exec("{$this->convertCommand} -resize $this->thumbWidth -quality 90 -colorspace RGB -flatten -background white '{$file->getPath()}'[$this->thumbOfPage] '$thumbFilename'");
 	}
 
 	/**
