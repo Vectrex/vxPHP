@@ -247,9 +247,9 @@ class MenuDecoratorMultiColumn extends MenuDecorator {
 
 		$entriesMarkup = array();
 		foreach ($this->menu->getEntries() as $e) {
-			$markup = $e->render();
-			if($markup) {
-				$entriesMarkup[] = $markup;
+			$m = $e->render();
+			if($m) {
+				$entriesMarkup[] = $m;
 			}
 		}
 
