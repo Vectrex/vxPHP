@@ -3,7 +3,7 @@
  * Menu class
  * 
  * manages a complete menu
- * @version 0.6.9 2012-04-19
+ * @version 0.6.10 2012-04-27
  */
 class Menu {
 	protected	$id,
@@ -244,21 +244,28 @@ class MenuDecoratorMultiColumn extends MenuDecorator {
 
 		$markup = '';
 		$cnt = 0;
-		$entries = $this->menu->getEntries(); 
 
-		foreach($entries as $e) {
+		$entriesMarkup = array();
+		foreach ($this->menu->getEntries() as $e) {
+			$markup = $e->render();
+			if($markup) {
+				$entriesMarkup[] = $markup;
+			}
+		}
+
+		foreach($entriesMarkup as $m) {
 			if(!($cnt % $entriesPerColumn)) {
 				if(!$cnt) {
 					$markup .= '<div class="firstColumn"><ul>';
 				}
-				else if(count($entries) <= $cnt + $entriesPerColumn) {
+				else if(count($entriesMarkup) <= $cnt + $entriesPerColumn) {
 					$markup .= '</ul></div><div class="lastColumn"><ul>';
 				}
 				else {
 					$markup .= '</ul></div><div class="nextColumn"><ul>';
 				}
 			}
-			$markup .= $e->render();
+			$markup .= $m;
 			++$cnt;
 		}
 
