@@ -1,7 +1,7 @@
 <?php
 /**
  * Einfache Klasse zum verschicken von Mails per mail()
- * @version 0.2.4 2011-01-10
+ * @version 0.2.5 2012-05-06
  */
 
 if(!defined('MAIL_CRLF')) {
@@ -19,7 +19,7 @@ class Email {
 	private $htmlMail;
 	private $headers;
 	private $attachments = array();
-	private $debug = false;
+	private $debug = TRUE;
 
 
 	public function __construct($receiver = null, $subject = '(Kein Betreff)', $mailText = '', $sender = null, $bcc = '', $sig = '', $htmlMail = false) {
@@ -31,7 +31,7 @@ class Email {
 		$this->sig		= $sig;
 		$this->htmlMail	= $htmlMail;
 		
-		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'iso-8859-15'; 
+		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8'; 
 	}
 	
 	public function setDebug($state) {
