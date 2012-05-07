@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.14.1 2012-05-07
+ * @version 1.15.0 2012-05-08
  * 
  */
 
@@ -497,42 +497,30 @@ abstract class Webpage {
 			return '';
 		}
 
-		$path	= isset($this->config->paths['js_path']['subdir']) ? $this->config->paths['js_path']['subdir'] : '';
-		$fname	= '_'.basename($this->config->getDocument(), '.php').'.js';
+		$path = isset($this->config->paths['js_path']['subdir']) ? ($this->config->paths['js_path']['subdir']) : '/';
 
-		$jsStart	= "<script type='text/javascript' src='$path";
-		$jsStop		= "'></script>\r\n";
-		
 		if(!$this->compressJS) {
+			$jsStart	= "<script type='text/javascript' src='$path";
+			$jsStop		= "'></script>\r\n";
 			return $jsStart.implode($jsStop.$jsStart, $js).$jsStop;
 		}
 
-		if(!file_exists($path.$fname)) {
+		$fn = md5(implode('', $js)).'.js';
 
-			$ajax = array_search('xhr.js', $js);
-			if($ajax !== false) {
-				unset($js[$ajax]);
-				array_unshift($js, 'xhr.js');
-			}
+		$tmpRelPath = defined('TMP_PATH') ? TMP_PATH : '/tmp/';
+		$tmpAbsPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).$tmpRelPath;
 
-			$core = array_search('core.js', $js);
-			if($core !== false) {
-				unset($js[$core]);
-				array_unshift($js, 'core.js');
-			}
-
+		if(!file_exists($tmpAbsPath.$fn)) {
 			$jsIn = '';
 			while(($file = array_shift($js))) {
-				if(!empty($file)) {
-					$jsIn .= @file_get_contents($path.$file);
-				}
+				$jsIn .= @file_get_contents(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).$path.$file);
 			}
 
 			$jsOut = JSMin::minify($jsIn);
-			file_put_contents($path.$fname, $jsOut);
+			file_put_contents($tmpAbsPath.$fn, $jsOut);
 		}
 
-		return $jsStart.$fname.$jsStop;
+		return "<script type='text/javascript' src='{$tmpRelPath}{$fn}'></script>";
 	}
 
 	/**
