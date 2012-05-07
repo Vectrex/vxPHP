@@ -2,7 +2,7 @@
 /**
  * A simple template system
  * 
- * @version 0.7.9 2012-04-10
+ * @version 0.8.0 2012-05-07
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -11,17 +11,18 @@
  */
 
 class SimpleTemplate {
-	private static $showProtocol = false;
+	private static	$showProtocol = FALSE,
+					$suppressLocales = FALSE;
 	
-	private	$file,
-			$dir,
-			$contents,
-			$filterExpr,
-			$locale,
-			$filters = array();
-	private static $suppressLocales = FALSE;
+	private		$file,
+				$rawContent,
+				$dir,
+				$contents,
+				$filterExpr,
+				$locale,
+				$filters = array();
 
-	public	$error;
+	public		$error;
 
 	public function __construct($file) {
 		$file = preg_replace('~^[^a-z0-9_]+~', '', $file);
@@ -39,15 +40,20 @@ class SimpleTemplate {
 			$this->error = 'Template file does not exist.';
 			return;
 		}
+		$this->rawContent = file_get_contents($this->file);	
 		$this->initFilters();
 	}
 
 	public function showLocaleDummies() {
-		self::$suppressLocales = true;
+		self::$suppressLocales = TRUE;
 	}
 
 	public function hideLocaleDummies() {
-		self::$suppressLocales = false;
+		self::$suppressLocales = FALSE;
+	}
+
+	public function containsPHP() {
+		return preg_match('~<\\?(php)?.*?\\?>~', $this->rawContent);
 	}
 
 	public function display() {
@@ -277,7 +283,7 @@ class SimpleTemplate {
 	private function fillBuffer() {
 		$tpl = $this;
 		ob_start();
-		include($this->file);		
+		eval("?>{$this->rawContent}");
 		$this->contents = ob_get_contents();
 		ob_end_clean();
 	}
