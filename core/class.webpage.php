@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.14.0 2012-04-19
+ * @version 1.14.1 2012-05-07
  * 
  */
 
@@ -852,6 +852,7 @@ abstract class Webpage {
 	 */
 	protected function generateHttpError($errorCode = 404) {
 		header("{$_SERVER['SERVER_PROTOCOL']} 404 Not Found");
+		echo "<h1>Error $errorCode</h1>";
 		exit();
 	}
 }
