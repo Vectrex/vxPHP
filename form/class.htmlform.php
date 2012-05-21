@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Engine for Forms
- * @version 1.1.9 2012-05-21
+ * @version 1.1.10 2012-05-21
  * @author Gregor Kofler
  * 
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -279,8 +279,11 @@ class HtmlForm {
 		foreach($values as $name => $value) {
 			if(isset($this->elements[$name]) && $this->elements[$name] instanceof FormElement) {
 				if($this->elements[$name] instanceof CheckboxElement) {
-					if($this->elements[$name]->getValue() == $value) {
-						$this->elements[$name]->setChecked(TRUE);
+					if(empty($this->request)) {
+						$this->elements[$name]->setChecked($this->elements[$name]->getValue() == $value);
+					}
+					else {
+						$this->elements[$name]->setChecked(isset($this->request[$name]));
 					}
 				}
 				else if(is_null($this->elements[$name]->getValue())) {
