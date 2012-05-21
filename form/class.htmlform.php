@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Engine for Forms
- * @version 1.1.8 2012-04-02
+ * @version 1.1.9 2012-05-21
  * @author Gregor Kofler
  * 
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -334,8 +334,10 @@ class HtmlForm {
 		$this->formErrors = array();
 
 		foreach($this->elements as $name => $e) {
-			if($e instanceof FormElement && !$e->isValid()) {
-				$this->formErrors[$name] = TRUE;
+			if($e instanceof FormElement) {
+				if(!$e->isValid()) {
+					$this->formErrors[$name] = TRUE;
+				}
 			}
 
 			else {
