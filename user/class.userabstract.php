@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.5 2012-04-16
+ * @version 0.5.6 2012-06-04
  */
 
 abstract class UserAbstract {
@@ -367,9 +367,12 @@ abstract class UserAbstract {
 	 * get list of users belonging to given admingroup
 	 * 
 	 * @param string $admingroup_alias
+ 	 * @param callback $callBackSort
+	 * @throws UserException
+	 *
 	 * @return array users
 	 */
-	public static function getUsersBelongingToGroup($admingroup_alias) {
+	public static function getUsersBelongingToGroup($admingroup_alias, $callBackSort = NULL) {
 		$users = array();
 		$rows = $GLOBALS['db']->doPreparedQuery('
 			SELECT
@@ -385,7 +388,21 @@ abstract class UserAbstract {
 			$u->setUser($r['Email']);
 			$users[] = $u;
 		}
-		return $users;
+
+		if(is_null($callBackSort)) {
+			return $users;
+		}
+		else if(is_callable($callBackSort)) {
+			usort($users, $callBackSort);
+			return $users;
+		}
+		else if(is_callable("UserAbstract::$callBackSort")) {
+			usort($users, "UserAbstract::$callBackSort");
+			return $users;
+		}
+		else {
+			throw new UserException("'$callBackSort' is not callable.");
+		}
 	}
 
 	/**
@@ -397,6 +414,16 @@ abstract class UserAbstract {
 		if(isset($_SESSION['user'])) {
 			return unserialize($_SESSION['user']);
 		}
+	}
+
+	/**
+	 * various callback functions for sorting user instances
+	 */
+	private static function sortByName($a, $b) {
+		$dA = $a->getName();
+		$dB = $b->getName();
+	
+		return $dA < $dB ? -1 : 1;
 	}
 }
 
