@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.8 2011-12-26
+ * @version 0.2.9 2012-06-06
  *
  */
 
@@ -73,10 +73,15 @@ class FilesystemFolder {
 	 * @return array of FilesystemFolder instances
 	 */
 	public function getFolders() {
-		$result = array(); 
-		foreach(glob($this->path.'*', GLOB_ONLYDIR) as $f) {
-			$result[] = self::getInstance($f);
+		$result = array();
+		$files = glob($this->path.'*', GLOB_ONLYDIR);
+
+		if($files) {
+			foreach($files as $f) {
+				$result[] = self::getInstance($f);
+			}
 		}
+
 		return $result;
 	}
 
