@@ -3,7 +3,7 @@
  * Menu class
  * 
  * manages a complete menu
- * @version 0.6.10 2012-04-27
+ * @version 0.6.11 2012-06-13
  */
 class Menu {
 	protected	$id,
@@ -358,6 +358,10 @@ class MenuEntry {
 	public function isAuthenticatedBy($privilege) {
 		return isset($this->auth) && $privilege >= $this->auth;
 	}
+
+	public function refersLocalPage() {
+		return $this->localPage;
+	}
 	
 	public function select() {
 		$this->menu->setSelectedEntry($this);
@@ -476,7 +480,7 @@ class MenuEntryDecoratorTagWrap extends MenuEntryDecorator {
 		$page 		= $this->menuEntry->getPage();
 		$subMenu	= $this->menuEntry->getSubmenu();
 		$attr		= $this->menuEntry->getAttributes();
-		$localPage	= $this->menuEntry->isLocalPage();
+		$localPage	= $this->menuEntry->refersLocalPage();
 
 		if(!isset(self::$href)) {
 			self::$href = "{$menu->getScript()}?page=";
@@ -530,7 +534,7 @@ class MenuEntryDecoratorAllowMarkup extends MenuEntryDecorator {
 		$page 		= $this->menuEntry->getPage();
 		$subMenu	= $this->menuEntry->getSubmenu();
 		$attr		= $this->menuEntry->getAttributes();
-		$localPage	= $this->menuEntry->isLocalPage();
+		$localPage	= $this->menuEntry->refersLocalPage();
 
 		if(!isset(self::$href)) {
 			self::$href = "{$this->menu->getScript()}?page=";
