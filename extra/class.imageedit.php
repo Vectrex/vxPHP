@@ -8,7 +8,7 @@
  * @TODO configurable imagemagick support
  * 
  * @author Gregor Kofler
- * @version 0.4.2 2012-01-20
+ * @version 0.4.3 2012-06-26
  *
  */
 class ImageEdit {
@@ -16,7 +16,7 @@ class ImageEdit {
 			$destinationBuffer,
 			$bufferNdx = 0,
 			$queue,
-			$imageWasAltered = false,
+			$imageWasAltered = FALSE,
 			$mimeType,
 			$supportedFormats = array('jpeg', 'gif', 'png'),
 			$file,
@@ -134,18 +134,21 @@ class ImageEdit {
 
 		$src = array_shift($args);
 
+		$srcAspectRatio = $src->width / $src->height;
+		
 		// single float value given, represents aspect ratio of cropped image
 		if(count($args) == 1) {
 			if(!is_numeric($args[0]) || $args[0] <= 0) {
 				throw new Exception("Invalid dimension(s) for do_crop(): {$args[0]}");
 			}
 
-			$originalAR = $src->width / $src->height;
-
-			if($originalAR <= $args[0]) {
+			if($srcAspectRatio <= $args[0]) {
 				// width determines
-				$left	= $right	= 0;
-				$top	= $bottom	= round(($src->height - $src->width / $args[0]) / 2);
+				$left = $right = 0;
+				
+				// choose upper portion
+				$top	= round(($src->height - $src->width / $args[0]) / 3);
+				$bottom	= round(($src->height - $src->width / $args[0]) * 2 / 3);
 			}
 			else {
 				// height determines
@@ -160,8 +163,17 @@ class ImageEdit {
 			$height	= (int) $args[1];
 
 			if($width > 0 && $height > 0) {
-				$top	= $bottom	= round(($src->height - $height) / 2);
-				$left	= $right	= round(($src->width - $width) / 2);
+				$left = $right = round(($src->width - $width) / 2);
+
+				if($srcAspectRatio >= 1) {
+					// landscape
+					$top = $bottom = round(($src->height - $height) / 2);
+				}
+				else {
+					// portrait
+					$top	= round(($src->height - $height) / 3);
+					$bottom	= round(($src->height - $height) * 2 / 3);
+				}
 			}
 
 			else {
