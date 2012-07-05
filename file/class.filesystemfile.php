@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.3 2012-02-17
+ * @version 0.3.4 2012-07-05
  * 
  * @todo deal with 10.04 Ubuntu bug
  */
@@ -34,11 +34,22 @@ class FilesystemFile {
 		if(file_exists($path)) {
 			$this->fileInfo	= new SplFileInfo($path);
 			$this->filename	= $this->fileInfo->getFilename();
-			$realPath = $this->fileInfo->getPathInfo()->getRealPath();
 
-			// workaround for bug in PHP 5.3 on Ubuntu 10.04
-			if($realPath == $this->fileInfo->getRealPath()) {
-				$realPath = dirname($realPath); 
+			if(!$this->fileInfo->getPathInfo()->isLink()) {
+				$realPath = $this->fileInfo->getPathInfo()->getRealPath();
+	
+				// workaround for bug in PHP 5.3 on Ubuntu 10.04
+				if($realPath == $this->fileInfo->getRealPath()) {
+					$realPath = dirname($realPath); 
+				}
+			}
+
+			else {
+				$realPath = $this->fileInfo->getPathInfo()->getPath();
+
+				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
+					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
+				}
 			}
 
 			$this->folder = FilesystemFolder::getInstance($realPath);
