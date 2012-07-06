@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.4 2012-07-05
+ * @version 0.3.5 2012-07-06
  * 
  * @todo deal with 10.04 Ubuntu bug
  */
@@ -45,7 +45,7 @@ class FilesystemFile {
 			}
 
 			else {
-				$realPath = $this->fileInfo->getPathInfo()->getPath();
+				$realPath = $this->fileInfo->getPath();
 
 				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
 					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
