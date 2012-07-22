@@ -4,9 +4,9 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.5 2012-07-06
+ * @version 0.3.6 2012-07-22
  * 
- * @todo deal with 10.04 Ubuntu bug
+ * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
 
 class FilesystemFile {
@@ -23,7 +23,7 @@ class FilesystemFile {
 		}
 		return self::$instances[$path];
 	}
-	
+
 	/**
 	 * constructs mapper for filesystem files
 	 * 
@@ -31,29 +31,35 @@ class FilesystemFile {
 	 * @throws FilesystemFileException
 	 */
 	private function __construct($path) {
+
 		if(file_exists($path)) {
 			$this->fileInfo	= new SplFileInfo($path);
 			$this->filename	= $this->fileInfo->getFilename();
 
-			if(!$this->fileInfo->getPathInfo()->isLink()) {
-				$realPath = $this->fileInfo->getPathInfo()->getRealPath();
-	
-				// workaround for bug in PHP 5.3 on Ubuntu 10.04
-				if($realPath == $this->fileInfo->getRealPath()) {
-					$realPath = dirname($realPath); 
+			// workaround for bugs in PHP 5.3.2 on Ubuntu 10.04 (isLink(), getRealPath())
+
+			if(version_compare(PHP_VERSION, '5.3.2') > 0) {
+
+				if(!$this->fileInfo->getPathInfo()->isLink()) {
+					$realPath = $this->fileInfo->getPathInfo()->getRealPath();
+				}
+				
+				else {
+					$realPath = $this->fileInfo->getPath();
+				
+					if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
+						$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
+					}
 				}
 			}
 
 			else {
-				$realPath = $this->fileInfo->getPath();
-
-				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
-					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
-				}
+				$realPath = dirname($realPath); 
 			}
 
 			$this->folder = FilesystemFolder::getInstance($realPath);
 		}
+
 		else {
 			throw new FilesystemFileException("File $path does not exist!", FilesystemFileException::FILE_DOES_NOT_EXIST);
 		}
