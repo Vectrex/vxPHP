@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.7 2012-04-17
+ * @version 0.4.9 2012-07-26
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -116,7 +116,17 @@ class MetaFile implements Subject {
 
 		$result = array();
 
-		$files = self::$db->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE referencedID = ? AND referenced_Table = ?", array((int) $referencedId, (string) $referencedTable));
+		$files = self::$db->doPreparedQuery("
+			SELECT
+				f.*,
+				CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) AS FullPath
+			FROM
+				files f
+				INNER JOIN folders fo ON f.foldersID = fo.foldersID
+			WHERE
+				referencedID = ? AND
+				referenced_Table = ?
+				", array((int) $referencedId, (string) $referencedTable));
 
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
@@ -421,13 +431,19 @@ class MetaFile implements Subject {
 
 	/**
 	 * deletes both filesystem file and metafile and removes instance from lookup array
+	 * filesystem file will be kept when $keepFilesystemFile is TRUE
+	 * 
+	 * @param boolean $keepFilesystemFile
+	 * 
 	 * @throws Exception
 	 */
-	public function delete() {
+	public function delete($keepFilesystemFile = FALSE) {
 		EventDispatcher::getInstance()->notify($this, 'beforeMetafileDelete');
 
 		if(self::$db->deleteRecord('files', $this->id)) {
-			$this->filesystemFile->delete();
+			if(!$keepFilesystemFile) {
+				$this->filesystemFile->delete();
+			}
 			unset(self::$instancesById[$this->id]);
 			unset(self::$instancesByPath[$this->filesystemFile->getPath()]);
 		}
@@ -472,7 +488,7 @@ class MetaFile implements Subject {
 	 */
 	private function commit() {
 		if(!self::$db->updateRecord('files', $this->id, $this->data)) {
-			throw new Exception("Data commit of file '{$this->filesystemFile->getFilename()}' failed.");
+			throw new MetaFileException("Data commit of file '{$this->filesystemFile->getFilename()}' failed.");
 		}
 	}
 

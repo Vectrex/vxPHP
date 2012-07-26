@@ -4,8 +4,9 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.9 2012-06-06
+ * @version 0.3.2 2012-07-26
  *
+ * @todo test delete()
  */
 
 class FilesystemFolder {
@@ -27,6 +28,12 @@ class FilesystemFolder {
 		return self::$instances[$path];
 	}
 
+	public static function unsetInstance($path) {
+		if(isset(self::$instances[$path])) {
+			unset(self::$instances[$path]);
+		}
+	}
+
 	private function __construct($path) {
 		if(is_dir($path)) {
 			$this->path = $path; 
@@ -45,6 +52,7 @@ class FilesystemFolder {
 
 	/**
 	 * returns path relative to DOCUMENT_ROOT
+	 * 
 	 * @param boolean $force
 	 * @return boolean FALSE when path not within DOCUMENT_ROOT, relative path otherwise
 	 */
@@ -57,7 +65,8 @@ class FilesystemFolder {
 	}
 
 	/**
-	 * returns all files in folder
+	 * returns all FilesystemFile instances in folder
+	 * 
 	 * @return array of FilesystemFile instances
 	 */
 	public function getFiles() {
@@ -69,8 +78,9 @@ class FilesystemFolder {
 	}
 	
 	/**
-	 * returns all folders in folder
-	 * @return array of FilesystemFolder instances
+	 * returns all FilesystemFolder instances in folder
+	 * 
+	 * @return Array
 	 */
 	public function getFolders() {
 		$result = array();
@@ -103,7 +113,7 @@ class FilesystemFolder {
 	 * returns path to subfolder when folder exists, undefined otherwise
 	 * 
 	 * @param boolean $force
-	 * @return string path
+	 * @return path
 	 */
 	public function getCachePath($force = FALSE) {
 		if($this->hasCache($force)) {
@@ -112,22 +122,95 @@ class FilesystemFolder {
 	}
 
 	/**
+	 * create a new subdirectory
+	 * returns newly created FilesystemFolder object
+	 * 
+	 * @param string $folderName
+	 * @return FilesystemFolder
+	 * @throws FileSystemFolderException
+	 */	
+	public function createFolder($folderName) {
+		if(!@mkdir($this->path.$folderName)) {
+			throw new FileSystemFolderException("Folder ".$this->path.DIRECTORY_SEPARATOR.$folderName." could not be created!");
+		}
+		else {
+			chmod($this->path.$folderName, 0777);
+		}
+		return self::getInstance($this->path.$folderName);
+	}	
+	
+	/**
 	 * tries to create a FilesystemFolder::CACHE_PATH subfolder
-	 * return path
-	 * @throws Exception
+	 * 
+	 * @return path
+	 * @throws FileSystemFolderException
 	 */
 	public function createCache() {
 		if($this->hasCache(TRUE)) {
 			return $this->path.self::CACHE_PATH.DIRECTORY_SEPARATOR;
 		}
-		
-		if(!mkdir($this->path.self::CACHE_PATH)) {
+
+		if(!@mkdir($this->path.self::CACHE_PATH)) {
 			throw new FileSystemFolderException("Cache folder ".$this->path.self::CACHE_PATH." could not be created!");
 		}
 		else {
 			chmod($this->path.self::CACHE_PATH, 0777);
 			return $this->path.self::CACHE_PATH.DIRECTORY_SEPARATOR;
 		}
+	}
+
+	/**
+	 * empties the cache when found
+	 * 
+	 * @param boolean $force
+	 * @throws FileSystemFolderException
+	 */
+	public function purgeCache($force = FALSE) {
+		if(($path = $this->getCachePath($force))) {
+			foreach(glob($path. '*') as $f) {
+				if(!unlink($f)) {
+					throw new FileSystemFolderException("Cache folder ".$this->path.self::CACHE_PATH." could not be purged!");
+				}
+			}
+		}
+	}
+
+	/**
+	 * empties folder
+	 * removes all files in folder and subfolders (including any cache folders)
+	 * 
+	 * @throws FileSystemFolderException
+	 */
+	public function purge() {
+		// remove instances
+		foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->path), RecursiveIteratorIterator::CHILD_FIRST) as $f){
+
+			if ($f->isDir()) {
+				if(!@rmdir($f->getRealPath())) {
+					throw new FileSystemFolderException("Filesystem folder {$f->path} could not be deleted!");
+				}
+				self::unsetInstance($f->getRealPath());
+			}
+		    else {
+		    	if(!@unlink($f->getRealPath())) {
+		    		throw new FileSystemFolderException("Filesystem file {$f->path} could not be deleted!");
+		    	}
+		    	FilesystemFile::unsetInstance($f->getRealPath());
+			}
+		}
+	}
+
+	/**
+	 * deletes folder (and any contained files and folders)
+	 *  
+	 * @throws FileSystemFolderException
+	 */
+	public function delete() {
+		$this->purge();
+		if(!@rmdir($this->path)) {
+			throw new FileSystemFolderException("Filesystem folder {$this->path} could not be deleted!");
+		}
+		self::unsetInstance($this->path);		
 	}
 
 	/**

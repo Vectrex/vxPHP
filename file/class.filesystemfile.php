@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.6 2012-07-22
+ * @version 0.3.7 2012-07-26
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -24,6 +24,12 @@ class FilesystemFile {
 		return self::$instances[$path];
 	}
 
+	public static function unsetInstance($path) {
+		if(isset(self::$instances[$path])) {
+			unset(self::$instances[$path]);
+		}
+	} 
+
 	/**
 	 * constructs mapper for filesystem files
 	 * 
@@ -38,23 +44,16 @@ class FilesystemFile {
 
 			// workaround for bugs in PHP 5.3.2 on Ubuntu 10.04 (isLink(), getRealPath())
 
-			if(version_compare(PHP_VERSION, '5.3.2') > 0) {
-
-				if(!$this->fileInfo->getPathInfo()->isLink()) {
-					$realPath = $this->fileInfo->getPathInfo()->getRealPath();
-				}
-				
-				else {
-					$realPath = $this->fileInfo->getPath();
-				
-					if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
-						$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
-					}
-				}
+			if(!$this->fileInfo->getPathInfo()->isLink() && version_compare(PHP_VERSION, '5.3.2') <= 0) {
+				$realPath = $this->fileInfo->getPathInfo()->getRealPath();
 			}
-
+			
 			else {
-				$realPath = dirname($realPath); 
+				$realPath = $this->fileInfo->getPath();
+
+				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
+					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
+				}
 			}
 
 			$this->folder = FilesystemFolder::getInstance($realPath);
@@ -189,14 +188,14 @@ class FilesystemFile {
 	 */
 	public function delete() {
 		if(@unlink($this->getPath())) {
-			unset(self::$instances[$this->getPath()]);
 			$this->deleteCacheEntries();
+			self::unsetInstance($this->getPath());
 		}
 		else {
 			throw new FilesystemFileException("Delete of file '{$this->getPath()}' failed.", FilesystemFileException::FILE_DELETE_FAILED);
 		}
 	}
-	
+
 	/**
 	 * cleans up cache entries associated with
 	 * "original" file

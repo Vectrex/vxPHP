@@ -7,10 +7,9 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.9 2012-02-16
+ * @version 0.5.1 2012-07-26
  *
  * @todo won't know about drive letters on windows systems
- * @todo delete()
  */
 class MetaFolder {
 	private static	$instancesById		= array();
@@ -219,10 +218,46 @@ class MetaFolder {
 	}
 
 	/**
-	 * deletes the metafolder from database, removes instance from lookup array
-	 * does not empty or delete the filesystemfolder
+	 * create a new subdirectory
+	 * returns newly created MetaFolder object
+	 *
+	 * @param string $folderName
+	 * @return MetaFolder
 	 */
-	public function delete() {
+	public function createFolder($path) {
+		return self::create($this->filesystemFolder->createFolder($path));
+	}
+	
+	public function purge() {
+		
+	}
+
+	/**
+	 * deletes metafolder
+	 * 
+	 * if $keepFilesystemFiles is TRUE, only metadata entry of folder and contained files and folders is removed from database
+	 * otherwise filesystem files and folders will be deleted
+	 * 
+	 * @param boolean $keepFilesystemFiles
+	 */
+	public function delete($keepFilesystemFiles = FALSE) {
+
+		foreach($this->getMetaFiles() as $f) {
+			$f->delete($keepFilesystemFiles);
+		}
+
+		foreach($this->getMetaFolders() as $f) {
+			$f->delete($keepFilesystemFiles);
+		}
+		
+		if(!$keepFilesystemFiles) {
+			// delete fs files without prior metadata entries
+			
+			// delete fs folders without prior metadata entries
+			
+			// delete folder itself
+			$this->filesystemFolder->delete();
+		}
 	}
 
 	/**
