@@ -349,9 +349,8 @@ class FilesystemFile {
 
 		$pathinfo = pathinfo($filename);
 
-		if(!empty($pathinfo['extension'])) {
-			$pathinfo['extension'] = '.'.$pathinfo['extension'];
-		}
+		$pathinfo['extension'] = !empty($pathinfo['extension']) ? '.'.$pathinfo['extension'] : '';
+
 		while(file_exists($dir->getPath().sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
 			++$ndx;
 		}
