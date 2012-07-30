@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.5.1 2012-07-26
+ * @version 0.5.3 2012-07-30
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -30,6 +30,8 @@ class MetaFolder {
 	/**
 	 * retrieve metafolder instance by either primary key of db entry
 	 * or path - both relative and absolute paths are allowed
+	 * 
+	 * @return MetaFolder
 	 */
 	public static function getInstance($path = NULL, $id = NULL) {
 		if(!isset(self::$db)) {
@@ -154,11 +156,21 @@ class MetaFolder {
 	public function getName() {
 		return $this->name;
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getNestingInformation() {
+		return array('l' => $this->l, 'r' => $this->r, 'level' => $this->level);
+	}
 	
 	public function getMetaData() {
 		return $this->data;
 	}
 
+	/**
+	 * @return FilesystemFolder
+	 */
 	public function getFilesystemFolder() {
 		return $this->filesystemFolder;
 	}
@@ -170,6 +182,8 @@ class MetaFolder {
 	/**
 	 * returns path relative to DOCUMENT_ROOT
 	 * @param boolean $force
+	 * 
+	 * @return string
 	 */
 	public function getRelativePath($force = FALSE) {
 		return $this->filesystemFolder->getRelativePath($force);
@@ -179,11 +193,13 @@ class MetaFolder {
 	 * return all metafiles within this folder
 	 * 
 	 * @param boolean $force forces re-reading of metafolder
+	 * 
+	 * @return array
 	 */
 	public function getMetaFiles($force = FALSE) {
 		if(!isset($this->metaFiles) || $force) {
 			$this->metaFiles = array();
-			foreach(self::$db->doQuery("SELECT filesID FROM files WHERE foldersID = {$this->id}", true) as $f) {
+			foreach(self::$db->doQuery("SELECT filesID FROM files WHERE foldersID = {$this->id}", TRUE) as $f) {
 				$this->metaFiles[] = MetaFile::getInstance(NULL, $f['filesID']);
 			}
 		}
@@ -194,11 +210,13 @@ class MetaFolder {
 	 * return all metafolders within this folder
 	 * 
 	 * @param boolean $force forces re-reading of metafolder
+	 * 
+	 * @return array
 	 */
 	public function getMetaFolders($force = FALSE) {
 		if(!isset($this->metaFolders) || $force) {
 			$this->metaFolders = array();
-			foreach(self::$db->doQuery("SELECT foldersID from folders WHERE l > {$this->l} AND r < {$this->r} AND level = {$this->level} + 1", true) as $f) {
+			foreach(self::$db->doQuery("SELECT foldersID from folders WHERE l > {$this->l} AND r < {$this->r} AND level = {$this->level} + 1", TRUE) as $f) {
 				$this->metaFolders[] = self::getInstance(NULL, $f['foldersID']);
 			}
 		}
@@ -242,20 +260,27 @@ class MetaFolder {
 	 */
 	public function delete($keepFilesystemFiles = FALSE) {
 
+		foreach($this->getMetaFolders() as $f) {
+			$f->delete($keepFilesystemFiles);
+			$this->refreshNesting();
+		}
+
 		foreach($this->getMetaFiles() as $f) {
 			$f->delete($keepFilesystemFiles);
 		}
 
-		foreach($this->getMetaFolders() as $f) {
-			$f->delete($keepFilesystemFiles);
-		}
+		self::$db->autocommit(FALSE);
+
+		self::$db->deleteRecord('folders', $this->id);
+		self::$db->execute("UPDATE folders SET r = r - 2 WHERE r > {$this->r}");
+
+		self::$db->commit();
+		self::$db->autocommit(TRUE);
 		
+		unset(self::$instancesById[$this->id]);
+		unset(self::$instancesByPath[$this->filesystemFolder->getPath()]);
+
 		if(!$keepFilesystemFiles) {
-			// delete fs files without prior metadata entries
-			
-			// delete fs folders without prior metadata entries
-			
-			// delete folder itself
 			$this->filesystemFolder->delete();
 		}
 	}

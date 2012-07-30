@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.9 2012-07-26
+ * @version 0.4.9 2012-07-29
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -53,12 +53,12 @@ class MetaFile implements Subject {
 
 	/**
 	 * return all metafile instances within a certain metafolder
+	 * faster than Metafolder::getMetafiles()
 	 * 
 	 * @param MetaFolder $folder
 	 * @param callback $callBackSort
 	 * 
-	 * @return array metafiles
-	 * 
+	 * @return Array metafiles
 	 */
 	public static function getMetaFilesInFolder(MetaFolder $folder, $callBackSort = NULL) {
 		if(!isset(self::$db)) {
@@ -441,11 +441,12 @@ class MetaFile implements Subject {
 		EventDispatcher::getInstance()->notify($this, 'beforeMetafileDelete');
 
 		if(self::$db->deleteRecord('files', $this->id)) {
+			unset(self::$instancesById[$this->id]);
+			unset(self::$instancesByPath[$this->filesystemFile->getPath()]);
+
 			if(!$keepFilesystemFile) {
 				$this->filesystemFile->delete();
 			}
-			unset(self::$instancesById[$this->id]);
-			unset(self::$instancesByPath[$this->filesystemFile->getPath()]);
 		}
 		else {
 			throw new Exception("Delete of metafile '{$this->filesystemFile->getPath()}' failed.");
