@@ -2,7 +2,7 @@
 /**
  * A simple template system
  * 
- * @version 0.8.0 2012-05-07
+ * @version 0.8.1 2012-07-31
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -361,6 +361,8 @@ class SimpleTemplate {
 			$pi			= pathinfo($matches[3]);
 			$actions	= $matches[4];
 		}
+		
+		$pi['extension'] = isset($pi['extension']) ? ".{$pi['extension']}" : '';
 
 		$dest	= $pi['dirname'].DIRECTORY_SEPARATOR.FilesystemFolder::CACHE_PATH.DIRECTORY_SEPARATOR."{$pi['filename']}.{$pi['extension']}@$actions.{$pi['extension']}";
 		$path	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.ltrim($dest, DIRECTORY_SEPARATOR);
