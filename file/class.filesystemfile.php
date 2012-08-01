@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.7 2012-07-26
+ * @version 0.3.8 2012-08-01
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -301,12 +301,18 @@ class FilesystemFile {
 	 */
 	public static function uploadFile($fileInputName, FilesystemFolder $dir, $name = NULL) {
 
+		// no $_FILES array (file too large)
+
+		if(!isset($_FILES[$fileInputName])) {
+			return FALSE;
+		}
+
 		// no upload
-	
+
 		if($_FILES[$fileInputName]['error'] == 4) {
 			return NULL;
 		}
-	
+
 		// other error
 	
 		if($_FILES[$fileInputName]['error'] != 0) {
