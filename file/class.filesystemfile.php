@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.8 2012-08-01
+ * @version 0.3.9 2012-08-09
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -32,13 +32,16 @@ class FilesystemFile {
 
 	/**
 	 * constructs mapper for filesystem files
+	 * if folder is provided a bulk generation is assumed and certain checks are omitted
 	 * 
 	 * @param string $path
+	 * @param FilesystemFolder $folder
+	 * 
 	 * @throws FilesystemFileException
 	 */
-	private function __construct($path) {
+	private function __construct($path, FilesystemFolder $folder = NULL) {
 
-		if(file_exists($path)) {
+		if($folder || file_exists($path)) {
 			$this->fileInfo	= new SplFileInfo($path);
 			$this->filename	= $this->fileInfo->getFilename();
 
@@ -56,7 +59,7 @@ class FilesystemFile {
 				}
 			}
 
-			$this->folder = FilesystemFolder::getInstance($realPath);
+			$this->folder = $folder ? $folder : FilesystemFolder::getInstance($realPath);
 		}
 
 		else {
@@ -287,6 +290,29 @@ class FilesystemFile {
 			EventDispatcher::getInstance()->notify($mf, 'afterMetafileCreate');
 			return $mf;
 		}
+	}
+
+	/**
+	 * return all filesystem files instances within a certain folder
+	 * 
+	 * @param FilesystemFolder $folder
+	 * @return Array filesystem files
+	 */
+	public static function getFilesystemFilesInFolder(FilesystemFolder $folder) {
+
+		$path = $folder->getPath();
+		$files = array();
+
+		foreach(glob($path.'*', GLOB_NOSORT) as $f) {
+			if(!is_dir($f)) {
+				if(!isset(self::$instances[$path.$f])) {
+					self::$instances[$path.$f] = new self($path.$f, $folder);
+				}
+				$files[] = self::$instances[$path.$f];
+			}
+		}
+
+		return $files;
 	}
 
 	/**

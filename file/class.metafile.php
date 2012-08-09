@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.9 2012-07-29
+ * @version 0.4.10 2012-08-09
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -64,6 +64,10 @@ class MetaFile implements Subject {
 		if(!isset(self::$db)) {
 			self::$db = $GLOBALS['db'];
 		}
+
+		// instance all filesystem files in folder, to speed up things
+
+		FilesystemFile::getFilesystemFilesInFolder($folder->getFilesystemFolder());
 
 		$result = array();
 
