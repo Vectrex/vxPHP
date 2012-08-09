@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.15.0 2012-05-08
+ * @version 1.15.1 2012-08-09
  * 
  */
 
@@ -507,7 +507,7 @@ abstract class Webpage {
 
 		$fn = md5(implode('', $js)).'.js';
 
-		$tmpRelPath = defined('TMP_PATH') ? TMP_PATH : '/tmp/';
+		$tmpRelPath = defined('TMP_PATH') ? TMP_PATH : DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR;
 		$tmpAbsPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).$tmpRelPath;
 
 		if(!file_exists($tmpAbsPath.$fn)) {
@@ -519,6 +519,8 @@ abstract class Webpage {
 			$jsOut = JSMin::minify($jsIn);
 			file_put_contents($tmpAbsPath.$fn, $jsOut);
 		}
+
+		$tmpRelPath = str_replace('\\', '/', $tmpRelPath);
 
 		return "<script type='text/javascript' src='{$tmpRelPath}{$fn}'></script>";
 	}

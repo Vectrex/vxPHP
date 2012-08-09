@@ -2,7 +2,7 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.4 2012-04-20
+ * @version 0.7.5 2012-08-09
  */
 class Config {
 	public $site;
@@ -233,7 +233,7 @@ class Config {
 			foreach($this->config->paths->children() as $p) {
 		
 				$a = $p->attributes();
-				$p = trim((string) $a->subdir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+				$p = trim((string) $a->subdir, '/').'/';
 
 				if(substr($p, 0, 1) == '/') {
 					$this->paths[(string) $a->id]['subdir']		= $p;
@@ -345,7 +345,7 @@ class Config {
 
 				if(isset($a->page)) {
 					$page = (string) $a->page;
-					$local = strpos($page, DIRECTORY_SEPARATOR) !== 0 && !preg_match('~^[a-z]+://~', $page);
+					$local = strpos($page, '/') !== 0 && !preg_match('~^[a-z]+://~', $page);
 
 					if(!$local || isset($this->pages[$root][$page]) || isset($this->pages[$root]['default'])) {
 
