@@ -28,12 +28,12 @@ class Config {
 
 	private static $instance;
 
-	private	$isLocalhost,
-			$xmlFile,
-			$xmlFileTS,
-			$config,
-			$document,
-			$plugins = array();
+	private		$isLocalhost,
+				$xmlFile,
+				$xmlFileTS,
+				$config,
+				$document,
+				$plugins = array();
 
 	/**
 	 * parse only database information
@@ -390,7 +390,6 @@ class Config {
 	// refresh config by re-parsing XML file
 
 	public function refresh() {
-		
 	}
 
 	/**
