@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.10 2012-08-09
+ * @version 0.4.11 2012-08-24
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -507,7 +507,13 @@ class MetaFile implements Subject {
 		if($dA['customSort'] === $dB['customSort']) {
 			return $dA['firstCreated'] < $dB['firstCreated'] ? -1 : 1;
 		}
-		return !is_null($dA['customSort']) && $dA['customSort'] < $dB['customSort'] ? -1 : 1;
+		if(is_null($dA['customSort'])) {
+			return 1;
+		}
+		if(is_null($dB['customSort'])) {
+			return -1;
+		}
+		return $dA['customSort'] < $dB['customSort'] ? -1 : 1;
 	}
 }
 
