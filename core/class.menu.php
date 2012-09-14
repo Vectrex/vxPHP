@@ -3,7 +3,7 @@
  * Menu class
  * 
  * manages a complete menu
- * @version 0.6.11 2012-06-13
+ * @version 0.6.12 2012-09-14
  */
 class Menu {
 	protected	$id,
@@ -409,7 +409,7 @@ class MenuEntry {
 			else {
 				if((!isset($this->subMenu) || is_null($this->subMenu->getSelectedEntry())) && !$this->menu->getForceActive()) {
 					$markup = sprintf(
-						'<li class="active %s">%s',
+						'<li class="active %s"><span>%s</span>',
 						preg_replace('~[^\w]~', '_', $this->page),
 						htmlspecialchars($this->attributes->text)
 					);
