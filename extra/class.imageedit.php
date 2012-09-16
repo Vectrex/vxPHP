@@ -8,7 +8,7 @@
  * @TODO configurable imagemagick support
  * 
  * @author Gregor Kofler
- * @version 0.4.3 2012-06-26
+ * @version 0.4.5 2012-09-16
  *
  */
 class ImageEdit {
@@ -123,6 +123,18 @@ class ImageEdit {
 		$todo->method		= __FUNCTION__;
 		$todo->parameters	= func_get_args();
 
+		$this->queue->append($todo);
+	}
+
+	/**
+	 * turns image into b/w
+	 */
+	public function greyscale() {
+		$todo = new stdClass();
+		
+		$todo->method		= __FUNCTION__;
+		$todo->parameters	= func_get_args();
+		
 		$this->queue->append($todo);
 	}
 
@@ -313,6 +325,12 @@ class ImageEdit {
 			$src->width, $src->height
 		);
 
+		imageconvolution($dst->resource, array(
+			array(-1, -0.8, -1),
+			array(-0.8, 16, -0.8),
+			array(-1, -0.8, -1)
+		), 16 - 7.2, 0);
+
 		return $dst;
 	}
 
@@ -351,6 +369,24 @@ class ImageEdit {
 		return $dst;
 	}
 
+	/**
+	 * performs "bw"-command
+	 */
+	private function do_greyscale() {
+		$args = func_get_args();
+		
+		$src = array_shift($args);
+
+		$dst = new stdClass();
+		$dst->resource	= imagecreatetruecolor($src->width, $src->height);
+		$dst->width		= $src->width;
+		$dst->height	= $src->height;
+
+		imagecopy($dst->resource, $src->resource, 0, 0, 0, 0, $src->width, $src->height);
+		imagefilter($dst->resource, IMG_FILTER_GRAYSCALE);
+		return $dst;
+	}
+
 	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity) {
 		$cut = imagecreatetruecolor($srcW, $srcH);
 		imagecopy($cut, $dst, 0, 0, $dstX, $dstY, $srcW, $srcH);
@@ -381,7 +417,7 @@ class ImageEdit {
 				continue;
 			}
 			else {
-				$this->imageWasAltered = true;
+				$this->imageWasAltered = TRUE;
 			}
 
 			$src = $this->destinationBuffer[$this->bufferNdx];
