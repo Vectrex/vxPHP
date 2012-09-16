@@ -2,7 +2,7 @@
 /**
  * A simple template system
  * 
- * @version 0.8.2 2012-08-03
+ * @version 0.8.2a 2012-09-16
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -289,7 +289,7 @@ class SimpleTemplate {
 	}
 
 	/**
-	 * replaces cropped, resized images with cached resources
+	 * replaces cropped, resized, greyscaled etc. images with cached resources
 	 * e.g.	<img src="pic.png#crop 1|resize 0 30" ...> (in this case the 0 in the resize transformation means "auto")
 	 * 		<img src="pic.png" width="20" height="10" ...>
 	 * 		<img src="pic.png" style="width:200px; ... height: 100px; ..." ...>
@@ -626,7 +626,7 @@ class SimpleTemplate {
 	 * @param string class css class
 	 * @param boolean timestamp add source "parameter" to force refresh
 	 */
-	public static function img($src, $alt = null, $title = null, $class = null, $timestamp = false) {
+	public static function img($src, $alt = NULL, $title = NULL, $class = NULL, $timestamp = FALSE) {
 		if(empty($alt)) {
 			$alt = explode('.', basename($alt));
 			array_pop($alt);
@@ -648,7 +648,9 @@ class SimpleTemplate {
 	 * @param string $counted add code for counting clicks on link
 	 */
 	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE, $counted = FALSE) {
-		if (empty($link)) { return false; }
+		if (empty($link)) {
+			return FALSE;
+		}
 
 		$mail	= self::checkMail($link);
 		$ext	= !$mail ? self::checkExternal($link) : TRUE;
