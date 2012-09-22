@@ -1,7 +1,7 @@
 <?php
 /**
  * Einfache Klasse zum verschicken von Mails per mail()
- * @version 0.2.5 2012-05-06
+ * @version 0.2.6 2012-09-22
  */
 
 if(!defined('MAIL_CRLF')) {
@@ -19,6 +19,7 @@ class Email {
 	private $htmlMail;
 	private $headers;
 	private $attachments = array();
+
 	private $debug = TRUE;
 
 
@@ -38,23 +39,45 @@ class Email {
 		$this->debug = (boolean) $state;
 	}
 
-	public function setReceiver($parm)	{ $this->receiver = $parm; }
-	public function setSender($parm)	{ $this->sender = $parm; }
-	public function setMailText($parm)	{ $this->mailText = $parm; }
-	public function setSig($parm)		{ $this->sig = $parm; }
-	public function setSubject($parm)	{ $this->subject = $parm; }
-	public function setBcc($parm)		{ $this->bcc = $parm; }
-	public function setHtmlMail($parm)	{ $this->htmlMail = $parm; }
-	
-	public function addAttachment($file) {
+	public function setReceiver($parm) {
+		$this->receiver = $parm;
+	}
+
+	public function setSender($parm) {
+		$this->sender = $parm;
+	}
+
+	public function setMailText($parm) {
+		$this->mailText = $parm;
+	}
+
+	public function setSig($parm) {
+		$this->sig = $parm;
+	}
+
+	public function setSubject($parm) {
+		$this->subject = $parm;
+	}
+
+	public function setBcc($parm) {
+		$this->bcc = $parm;
+	}
+
+	public function setHtmlMail($parm) {
+		$this->htmlMail = $parm;
+	}
+
+	public function addAttachment($file, $filename = NULL) {
 		if(file_exists($file)) {
-			$this->attachments[] = $file;
+			$this->attachments[] = array('path' => $file, 'filename' => $filename);
 		}
 	}
 
 	public function send()	{
-		if(!$this->buildMsg()) { return false; }
-		
+		if(!$this->buildMsg()) {
+			return FALSE;
+		}
+
 		if (is_array($this->receiver)) {
 			foreach ($this->receiver as $r) {
 				if($this->debug) {
@@ -77,7 +100,7 @@ class Email {
 					mail($this->receiver, $this->subject, $this->msg, $this->headers);
 				}
 		}
-		return true;
+		return TRUE;
 	}
 
 	private function buildMsg() {
@@ -111,11 +134,13 @@ class Email {
 		$this->msg .=	empty($this->sig) || $this->htmlMail ? MAIL_CRLF : MAIL_CRLF.MAIL_CRLF.'-- '.MAIL_CRLF.$this->sig.MAIL_CRLF;
 
 		foreach($this->attachments as $f) {
+			$filename = empty($f['filename']) ? basename($f['path']) : $f['filename'];
+
 			$this->msg .= '--'.$boundary.MAIL_CRLF;
-			$this->msg .= 'Content-Type: application/octet-stream; name="'.basename($f).'"'.MAIL_CRLF;
-			$this->msg .= 'Content-Disposition: attachment; filename="'.basename($f).'"'.MAIL_CRLF;
+			$this->msg .= 'Content-Type: application/octet-stream; name="'.$filename.'"'.MAIL_CRLF;
+			$this->msg .= 'Content-Disposition: attachment; filename="'.$filename.'"'.MAIL_CRLF;
 			$this->msg .= 'Content-Transfer-Encoding: base64'.MAIL_CRLF.MAIL_CRLF;
-			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f)),72,MAIL_CRLF));
+			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,MAIL_CRLF));
 		}
 
 		return true;
