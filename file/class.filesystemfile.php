@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.9 2012-08-09
+ * @version 0.3.10 2012-09-24
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -302,13 +302,18 @@ class FilesystemFile {
 
 		$path = $folder->getPath();
 		$files = array();
+		
+		$glob = glob($path.'*', GLOB_NOSORT);
 
-		foreach(glob($path.'*', GLOB_NOSORT) as $f) {
-			if(!is_dir($f)) {
-				if(!isset(self::$instances[$path.$f])) {
-					self::$instances[$path.$f] = new self($path.$f, $folder);
+		if($glob !== FALSE) {
+
+			foreach($glob as $f) {
+				if(!is_dir($f)) {
+					if(!isset(self::$instances[$path.$f])) {
+						self::$instances[$path.$f] = new self($path.$f, $folder);
+					}
+					$files[] = self::$instances[$path.$f];
 				}
-				$files[] = self::$instances[$path.$f];
 			}
 		}
 
