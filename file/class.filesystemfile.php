@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.10 2012-09-24
+ * @version 0.3.11 2012-10-26
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -143,6 +143,10 @@ class FilesystemFile {
 		$from		= $this->filename;
 		$oldpath	= $this->folder->getPath().$from;
 		$newpath	= $this->folder->getPath().$to;
+
+		if(file_exists($newpath)) {
+			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
+		}
 
 		if(@rename($oldpath, $newpath)) {
 			self::$instances[$newpath] = $this;
