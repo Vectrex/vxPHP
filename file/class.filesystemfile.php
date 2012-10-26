@@ -144,6 +144,12 @@ class FilesystemFile {
 		$oldpath	= $this->folder->getPath().$from;
 		$newpath	= $this->folder->getPath().$to;
 
+		// name is unchanged, nothing to do
+
+		if($oldpath === $newpath) {
+			return;
+		}
+
 		if(file_exists($newpath)) {
 			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
 		}

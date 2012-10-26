@@ -414,14 +414,17 @@ class MetaFile implements Subject {
 		
 		// obscured files only need to rename the metadata
 
-		if(!$this->isObscured) {
-			$this->filesystemFile->rename($to);
-		}
-
 		$oldpath = $this->filesystemFile->getPath();
 		$newpath = $this->filesystemFile->getFolder()->getPath().$to;
-		self::$instancesByPath[$newpath] = $this;
-		unset(self::$instancesByPath[$oldpath]);
+
+		if(!$this->isObscured) {
+			try {
+				$this->filesystemFile->rename($to);
+			}
+			catch(FilesystemFileException $e) {
+				throw new MetaFileException("Rename from '$oldpath' to '$newpath' failed. '$oldpath' already exists.");
+			}
+		}
 
 		try {
 			self::$db->preparedExecute("UPDATE files SET File = ? WHERE filesID = {$this->id}", array($to));
@@ -429,8 +432,11 @@ class MetaFile implements Subject {
 		}
 
 		catch(Exception $e) {
-			throw new Exception("Rename from '$oldpath' to '$newpath' failed.");
+			throw new MetaFileException("Rename from '$oldpath' to '$newpath' failed.");
 		}
+
+		self::$instancesByPath[$newpath] = $this;
+		unset(self::$instancesByPath[$oldpath]);
 	}
 
 	/**
