@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.2 2012-03-24
+ * @version 4.7.3 2012-11-03
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -771,56 +771,7 @@ class Mysqldbi extends mysqli {
 	}
 
 	/**
-	 * Administration and handling of a nested set
-	 */
-	public function getParentNodes($tbl, $id, $fields = null) {
-		if(is_array($fields)) {
-			for($i = 0; $i < count($fields); $i++) {
-				$fields[$i] = 'a.'.$fields[$i];
-			}
-			$fields = implode(',', $fields);
-		}
-		else {
-			$fields = 'a.*';
-		}
-		$pk = $this->getPrimaryKey($tbl);
-		$sql = "
-			select
-				$fields
-			from
-				$tbl a, $tbl b
-		    WHERE a.l <= b.l AND a.r >= b.r and b.$pk = $id and a.parent is not null";
-
-		return($this->doQuery($sql));
-	}
-
-	public function getSubTree($tbl, $id = null, $fields = null) {
-		if(is_array($fields)) {
-			for($i = 0; $i < count($fields); $i++) {
-				$fields[$i] = 'a.'.$fields[$i];
-			}
-			$fields = implode(',', $fields);
-		}
-		else {
-			$fields = 'a.*';
-		}
-		
-		$where = empty($id) ? 'a.level > 0' : "b.$pk = $id";
-		$pk = $this->getPrimaryKey($tbl);
-		$sql = "
-			select distinct
-				$fields
-			from
-				$tbl a, $tbl b
-			where
-				a.l BETWEEN b.l AND b.r and $where
-			order by a.l";
-
-		return($this->doQuery($sql));
-	}
-
-	/**
-	 * overloads native prepare method
+	 * overwrites native prepare method
 	 * 
 	 * @param string $query
 	 */
