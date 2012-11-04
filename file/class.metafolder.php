@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.5.3 2012-07-30
+ * @version 0.5.4 2012-11-04
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -269,14 +269,9 @@ class MetaFolder {
 			$f->delete($keepFilesystemFiles);
 		}
 
-		self::$db->autocommit(FALSE);
-
 		self::$db->deleteRecord('folders', $this->id);
 		self::$db->execute("UPDATE folders SET r = r - 2 WHERE r > {$this->r}");
 
-		self::$db->commit();
-		self::$db->autocommit(TRUE);
-		
 		unset(self::$instancesById[$this->id]);
 		unset(self::$instancesByPath[$this->filesystemFolder->getPath()]);
 
@@ -320,7 +315,6 @@ class MetaFolder {
 		}
 
 		catch(MetaFolderException $e) {
-			self::$db->autocommit(FALSE);
 
 			if(strpos($f->getPath(), $_SERVER['DOCUMENT_ROOT']) === 0) {
 				$metaData['Path'] = trim(substr($f->getPath(), strlen($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
@@ -379,9 +373,6 @@ class MetaFolder {
 			foreach(array_keys(self::$instancesById) as $id) {
 				self::getInstance(NULL, $id)->refreshNesting();
 			}
-
-			self::$db->commit();
-			self::$db->autocommit(TRUE);
 
 			return self::getInstance($f->getPath());
 		}
