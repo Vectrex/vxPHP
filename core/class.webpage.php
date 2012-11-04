@@ -5,7 +5,7 @@
  * handles xmlHttpRequests of clients
  * 
  * @author Gregor Kofler
- * @version 1.15.1 2012-08-09
+ * @version 1.15.2 2012-11-03
  * 
  */
 
@@ -57,7 +57,8 @@ abstract class Webpage {
 				$this->generateHttpError();
 				return;
 			}
-			$this->currentPage = array_shift(array_keys($this->config->pages[$this->config->getDocument()]));
+			$pageKeys = array_keys($this->config->pages[$this->config->getDocument()]);
+			$this->currentPage = array_shift($pageKeys);
 		}
 		if(isset($this->config->pages[$this->config->getDocument()][$this->currentPage])) {
 			$this->pageConfigData = $this->config->pages[$this->config->getDocument()][$this->currentPage];
