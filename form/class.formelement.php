@@ -2,7 +2,7 @@
 /**
  * classes for form elements
  *  
- * @version 0.3.4 2012-02-24
+ * @version 0.3.5 2012-11-03
  * @author Gregor Kofler
  * 
  * @todo allow callbacks as validators and filters
@@ -644,7 +644,7 @@ class MultipleSelectElement extends SelectElement {
 		
 		$v = $this->getValue();
 
-		if(is_array($v) && in_array($o->getValue(), $v)) {
+		if(is_array($v) && in_array($option->getValue(), $v)) {
 			$option->select();
 		}
 		else {
