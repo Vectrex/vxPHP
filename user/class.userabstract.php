@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.6 2012-06-04
+ * @version 0.5.7 2012-11-05
  */
 
 abstract class UserAbstract {
@@ -122,7 +122,7 @@ abstract class UserAbstract {
 				}
 			}
 			else {
-				throw new UserException("User '$dataOrId' does not exist.");
+				throw new UserException("User '$dataOrId' does not exist.", UserException::USER_DOES_NOT_EXIST);
 			}
 		}
 
@@ -401,7 +401,7 @@ abstract class UserAbstract {
 			return $users;
 		}
 		else {
-			throw new UserException("'$callBackSort' is not callable.");
+			throw new UserException("'$callBackSort' is not callable.", UserException::SORT_CALLBACK_NOT_CALLABLE);
 		}
 	}
 
@@ -428,5 +428,7 @@ abstract class UserAbstract {
 }
 
 class UserException extends Exception {
+	const USER_DOES_NOT_EXIST			= 1;
+	const SORT_CALLBACK_NOT_CALLABLE	= 2;
 }
 ?>
