@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.2 2012-07-26
+ * @version 0.3.3 2012-11-08
  *
  * @todo test delete()
  */
@@ -182,18 +182,24 @@ class FilesystemFolder {
 	 * @throws FileSystemFolderException
 	 */
 	public function purge() {
-		// remove instances
-		foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->path), RecursiveIteratorIterator::CHILD_FIRST) as $f){
+
+		foreach(
+			new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator(
+					$this->path,
+					FilesystemIterator::SKIP_DOTS
+				),
+				RecursiveIteratorIterator::CHILD_FIRST) as $f) {
 
 			if ($f->isDir()) {
 				if(!@rmdir($f->getRealPath())) {
-					throw new FileSystemFolderException("Filesystem folder {$f->path} could not be deleted!");
+					throw new FileSystemFolderException("Filesystem folder {$f->getRealPath()} could not be deleted!");
 				}
 				self::unsetInstance($f->getRealPath());
 			}
 		    else {
 		    	if(!@unlink($f->getRealPath())) {
-		    		throw new FileSystemFolderException("Filesystem file {$f->path} could not be deleted!");
+		    		throw new FileSystemFolderException("Filesystem file {$f->getRealPath()} could not be deleted!");
 		    	}
 		    	FilesystemFile::unsetInstance($f->getRealPath());
 			}

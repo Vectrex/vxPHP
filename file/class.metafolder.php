@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.5.4 2012-11-04
+ * @version 0.5.5 2012-11-08
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -134,12 +134,12 @@ class MetaFolder {
 	 */
 	private function refreshNesting() {
 		$rows = self::$db->doPreparedQuery(
-			"SELECT l, r, level FROM folders WHERE foldersID = ? LIMIT 1",
+			"SELECT l, r, level FROM folders WHERE foldersID = ?",
 			array((int) $this->id)
 		);
-		$this->level	= $this->data['level'] = $rows[0]['level'];
-		$this->l		= $this->data['l'] = $rows[0]['l'];
-		$this->r		= $this->data['r'] = $rows[0]['r'];
+		$this->level	= $this->data['level']	= $rows[0]['level'];
+		$this->l		= $this->data['l']		= $rows[0]['l'];
+		$this->r		= $this->data['r']		= $rows[0]['r'];
 	}
 
 	/**
@@ -260,23 +260,32 @@ class MetaFolder {
 	 */
 	public function delete($keepFilesystemFiles = FALSE) {
 
-		foreach($this->getMetaFolders() as $f) {
-			$f->delete($keepFilesystemFiles);
-			$this->refreshNesting();
-		}
-
 		foreach($this->getMetaFiles() as $f) {
 			$f->delete($keepFilesystemFiles);
 		}
 
+		foreach($this->getMetaFolders() as $f) {
+			$f->delete($keepFilesystemFiles);
+		}
+
+		$this->refreshNesting();
+
 		self::$db->deleteRecord('folders', $this->id);
-		self::$db->execute("UPDATE folders SET r = r - 2 WHERE r > {$this->r}");
+		
+		self::$db->preparedExecute("UPDATE folders SET r = r - 2 WHERE r > ?", array((int) $this->r));
+		self::$db->preparedExecute("UPDATE folders SET l = l - 2 WHERE l > ?", array((int) $this->r));
 
 		unset(self::$instancesById[$this->id]);
 		unset(self::$instancesByPath[$this->filesystemFolder->getPath()]);
 
 		if(!$keepFilesystemFiles) {
 			$this->filesystemFolder->delete();
+		}
+
+		// refresh nesting for every already instantiated (parent and neighboring) folders
+
+		foreach(self::$instancesById as $f) {
+			$f->refreshNesting();
 		}
 	}
 
@@ -349,17 +358,21 @@ class MetaFolder {
 				try {
 					$parent = self::getInstance(implode(DIRECTORY_SEPARATOR, $tree).DIRECTORY_SEPARATOR);
 
-					// parent Dir
-					$rows = self::$db->doQuery("SELECT r, l, level FROM folders WHERE foldersID = {$parent->getId()}", TRUE);
-					self::$db->execute("UPDATE folders SET r = r + 2 WHERE r >= {$rows[0]['r']}");
-					self::$db->execute("UPDATE folders SET l = l + 2 WHERE l > {$rows[0]['r']}");
+					// has parent directory
+
+					$rows = self::$db->doPreparedQuery("SELECT r, l, level FROM folders WHERE foldersID = ?", array($parent->getId()));
+
+					self::$db->preparedExecute("UPDATE folders SET r = r + 2 WHERE r >= ?", array((int) $rows[0]['r']));
+					self::$db->preparedExecute("UPDATE folders SET l = l + 2 WHERE l > ?", array((int) $rows[0]['r']));
+
 					$metaData['l'] = $rows[0]['r'];
 					$metaData['r'] = $rows[0]['r'] + 1;
 					$metaData['level'] = $rows[0]['level'] + 1;
 
 				} catch(MetaFolderException $e) {
 
-					// no parent
+					// no parent directory
+
 					$rows = $this->db->doQuery("SELECT MAX(r) + 1 AS l FROM folders", TRUE);
 					$metaData['l'] = !isset($rows[0]['l']) ? 0 : $rows[0]['l'];
 					$metaData['r'] = $rows[0]['l'] + 1;
@@ -368,8 +381,9 @@ class MetaFolder {
 			}
 
 			$id = self::$db->insertRecord('folders', $metaData);
-			
+
 			// refresh nesting for all active metafolder instances
+
 			foreach(array_keys(self::$instancesById) as $id) {
 				self::getInstance(NULL, $id)->refreshNesting();
 			}
