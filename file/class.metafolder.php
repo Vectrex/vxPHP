@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.5.5 2012-11-08
+ * @version 0.5.6 2012-11-11
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -35,7 +35,7 @@ class MetaFolder {
 	 */
 	public static function getInstance($path = NULL, $id = NULL) {
 		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
+			self::$db = &$GLOBALS['db'];
 		}
 
 		if(isset($path)) {
@@ -59,7 +59,7 @@ class MetaFolder {
 			return self::$instancesById[$id];
 		}
 		else {
-			throw new MetaFolderException("Either folder id or path required!");
+			throw new MetaFolderException("Either folder id or path required.", MetaFolderException::ID_OR_PATH_REQUIRED);
 		}
 	}
 
@@ -87,9 +87,9 @@ class MetaFolder {
 		$this->filesystemFolder = FilesystemFolder::getInstance($this->fullPath);
 
 		$this->id				= $this->data['foldersID'];
-		$this->level			= $this->data['level'];
-		$this->l				= $this->data['l'];
-		$this->r				= $this->data['r'];
+		$this->level			= (int) $this->data['level'];
+		$this->l				= (int) $this->data['l'];
+		$this->r				= (int) $this->data['r'];
 		$this->obscure_files	= (boolean) $this->data['Obscure_Files'];
 		$this->name				= basename($this->fullPath);
 	}
@@ -111,7 +111,7 @@ class MetaFolder {
 			return $rows[0];
 		}
 		else {
-			throw new MetaFolderException("MetaFolder database entry for '{$this->fullPath} ($path)' not found.");
+			throw new MetaFolderException("MetaFolder database entry for '{$this->fullPath} ($path)' not found.", MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
 		}
 	}
 
@@ -125,7 +125,7 @@ class MetaFolder {
 			return $rows[0];
 		}
 		else {
-			throw new MetaFolderException("MetaFolder database entry for id ($id) not found.");
+			throw new MetaFolderException("MetaFolder database entry for id ($id) not found.", MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
 		}
 	}
 
@@ -137,9 +137,9 @@ class MetaFolder {
 			"SELECT l, r, level FROM folders WHERE foldersID = ?",
 			array((int) $this->id)
 		);
-		$this->level	= $this->data['level']	= $rows[0]['level'];
-		$this->l		= $this->data['l']		= $rows[0]['l'];
-		$this->r		= $this->data['r']		= $rows[0]['r'];
+		$this->level	= $this->data['level']	= (int) $rows[0]['level'];
+		$this->l		= $this->data['l']		= (int) $rows[0]['l'];
+		$this->r		= $this->data['r']		= (int) $rows[0]['r'];
 	}
 
 	/**
@@ -297,9 +297,9 @@ class MetaFolder {
 	 */
 	public static function instantiateAllExistingMetaFolders($force = FALSE) {
 		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
+			self::$db = &$GLOBALS['db'];
 		}
-		$rows = self::$db->doQuery("SELECT * FROM folders", true);
+		$rows = self::$db->doQuery("SELECT * FROM folders", TRUE);
 
 		foreach($rows as $r) {
 			if($force || !isset(self::$instancesById[$r['foldersID']])) {
@@ -308,6 +308,33 @@ class MetaFolder {
 				self::$instancesById[$r['foldersID']]		= $f;
 			}
 		}
+	}
+	
+	/**
+	 * retrieve all folders with level 0
+	 * 
+	 * @throws MetaFolderException
+	 * @return array rootFolders
+	 */
+
+	public static function getRootFolders() {
+
+		self::instantiateAllExistingMetaFolders();
+
+		$roots = array();
+
+		foreach(self::$instancesById as $f) {
+			$nestingInfo = $f->getNestingInformation();
+			if($nestingInfo['level'] === 0) {
+				$roots[] = $f;
+			}
+		}
+
+		if(count($roots) < 1) {
+			throw new MetaFolderException("No properly defined root folders found.", MetaFolderException::NO_ROOT_FOLDER_FOUND);
+		}
+
+		return $roots;
 	}
 
 	/**
@@ -391,11 +418,15 @@ class MetaFolder {
 			return self::getInstance($f->getPath());
 		}
 
-		throw new MetaFolderException("Metafolder for {$f->getPath()} already exists.");
+		throw new MetaFolderException("Metafolder for {$f->getPath()} already exists.", MetaFolderException::METAFOLDER_ALREADY_EXISTS);
 	}
 }
 
 class MetaFolderException extends Exception {
+	const METAFOLDER_DOES_NOT_EXIST	= 1;
+	const METAFOLDER_ALREADY_EXISTS	= 2;
+	const ID_OR_PATH_REQUIRED		= 3;
+	const NO_ROOT_FOLDER_FOUND		= 4;
 }
 
 ?>
