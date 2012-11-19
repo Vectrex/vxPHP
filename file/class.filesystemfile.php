@@ -4,7 +4,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.3.11 2012-10-26
+ * @version 0.4.0 2012-11-19
  * 
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -155,14 +155,46 @@ class FilesystemFile {
 		}
 
 		if(@rename($oldpath, $newpath)) {
-			self::$instances[$newpath] = $this;
-			unset(self::$instances[$oldpath]);
 			$this->renameCacheEntries($to);
 			$this->filename = $to;
+
+			self::$instances[$newpath] = $this;
+			unset(self::$instances[$oldpath]);
 		}
 
 		else {
 			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+		}
+	}
+
+	/**
+	 * move file into new folder,
+	 * orphaned cache entries are deleted, new cache entries are not generated
+	 * 
+	 * @param FilesystemFolder $destination
+	 * @throws FilesystemFileException
+	 */	
+	public function move(FilesystemFolder $destination) {
+		
+		// already in destination folder, nothing to do
+
+		if($destination === $this->folder) {
+			return;
+		}
+
+		$oldpath	= $this->folder->getPath().$this->filename;
+		$newpath	= $destination->getPath().$this->filename;
+
+		if(@rename($oldpath, $newpath)) {
+			$this->clearCacheEntries();
+			$this->folder = $destination;
+
+			self::$instances[$newpath] = $this;
+			unset(self::$instances[$oldpath]);
+		}
+
+		else {
+			throw new FilesystemFileException("Moving from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
 		}
 	}
 

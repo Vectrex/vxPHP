@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.4.11 2012-08-24
+ * @version 0.5.0 2012-11-19
  * 
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -283,7 +283,7 @@ class MetaFile implements Subject {
 			return $rows[0];
 		}
 		else {
-			throw new Exception("MetaFile database entry for '$path' not found.");
+			throw new MetaFileException("MetaFile database entry for '$path' not found.");
 		}
 	}
 
@@ -297,7 +297,7 @@ class MetaFile implements Subject {
 			return $rows[0];
 		}
 		else {
-			throw new Exception("MetaFile database entry for id ($id) not found.");
+			throw new MetaFileException("MetaFile database entry for id ($id) not found.");
 		}
 	}
 
@@ -427,16 +427,56 @@ class MetaFile implements Subject {
 		}
 
 		try {
-			self::$db->preparedExecute("UPDATE files SET File = ? WHERE filesID = {$this->id}", array($to));
-			$this->data['File'] = $to;
+			self::$db->preparedExecute("UPDATE files SET File = ? WHERE filesID = ?", array($to, $this->id));
 		}
 
 		catch(Exception $e) {
 			throw new MetaFileException("Rename from '$oldpath' to '$newpath' failed.");
 		}
 
+		$this->data['File'] = $to;
+
 		self::$instancesByPath[$newpath] = $this;
 		unset(self::$instancesByPath[$oldpath]);
+	}
+
+	/**
+	 * move file to a new folder
+	 * 
+	 * @param MetaFolder $destination
+	 * @throws MetaFileException
+	 */
+	public function move(MetaFolder $destination) {
+
+		// nothing to do
+
+		if($destination === $this->metaFolder) {
+			return;
+		}
+
+		// move filesystem file first
+
+		try {
+			$this->filesystemFile->move($destination->getFilesystemFolder());
+		}
+		catch(FilesystemFileException $e) {
+			throw new MetaFileException("Moving '{$this->getFilename()}' to '{$destination->getFullPath()}' failed.");
+		}
+
+		// update reference in db
+
+		try {
+			self::$db->preparedExecute("UPDATE files SET foldersID = ? WHERE filesID = ?", array($destination->getId(), $this->id));
+		}
+		catch(Exception $e) {
+			throw new MetaFileException("Moving '{$this->getFilename()}' to '{$destination->getFullPath()}' failed.");
+		}
+
+		// update instance lookup
+
+		unset(self::$instancesByPath[$this->getPath()]);
+		$this->metaFolder = $destination;
+		self::$instancesByPath[$this->getPath()] = $this;
 	}
 
 	/**
