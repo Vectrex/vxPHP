@@ -1,4 +1,11 @@
 <?php
+/**
+ * Mapper class for articlecategories, stored in table `articlecategories`
+ * 
+ * @author Gregor Kofler
+ * @version 0.1.0 2012-11-30
+ */
+
 class ArticleCategory {
 	private			$id,
 					$alias,
@@ -191,7 +198,7 @@ class ArticleCategory {
 
 		$cat = array();
 
-		foreach($GLOBALS['db']->doQuery("SELECT articlecategoriesID FROM articles", TRUE) as $r) {
+		foreach($GLOBALS['db']->doQuery("SELECT articlecategoriesID FROM articlecategories", TRUE) as $r) {
 			$cat[] = self::getInstance($r['articlecategoriesID']);
 		}
 
