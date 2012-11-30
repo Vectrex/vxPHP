@@ -3,7 +3,7 @@
  * Mapper class for articles, stored in table `articles`
  * 
  * @author Gregor Kofler
- * @version 0.6.2 2012-11-09
+ * @version 0.6.4 2012-11-30
  */
 
 class Article implements Subject {
@@ -358,6 +358,87 @@ class Article implements Subject {
 	}
 
 	/**
+	 * create Article instance from data supplied in $articleData
+	 * 
+	 * @param array $articleData
+	 * @return Article
+	 */
+	private static function createInstance(array $articleData) {
+
+		$article = new self();
+		
+		// set identification
+		
+		$article->alias		= $articleData['Alias'];
+		$article->id		= $articleData['articlesID'];
+		
+		// set category
+		
+		$article->category	= ArticleCategory::getInstance($articleData['articlecategoriesID']);
+		
+		// set admin information
+		
+		try {
+			$article->createdBy = new User();
+			$article->createdBy->setUser($articleData['createdBy']);
+		}
+		catch(UserException $e) {}
+			
+		try {
+			$article->updatedBy = new User();
+			$article->updatedBy->setUser($articleData['updatedBy']);
+		}
+		catch(UserException $e) {}
+		
+		// set date information
+		
+		if(!empty($articleData['Display_from'])) {
+			$article->displayFrom = new DateTime($articleData['Display_from']);
+		}
+		
+		if(!empty($articleData['Display_until'])) {
+			$article->displayUntil = new DateTime($articleData['Display_until']);
+		}
+		
+		if(!empty($articleData['Article_Date'])) {
+			$article->articleDate = new DateTime($articleData['Article_Date']);
+		}
+		
+		if(!empty($articleData['firstCreated'])) {
+			$article->firstCreated = new DateTime($articleData['firstCreated']);
+		}
+		
+		if(!empty($articleData['lastUpdated'])) {
+			$article->lastUpdated = new DateTime($articleData['lastUpdated']);
+		}
+		
+		// flags and sort
+		
+		$article->customFlags	= $articleData['customFlags'];
+		$article->customSort	= $articleData['customSort'];
+		
+		// set various text fields
+		
+		$article->setHeadline($articleData['Headline']);
+		$article->setData($articleData);
+		
+		// backup values to check whether record was changed
+		
+		$article->previouslySavedValues = new StdClass;
+		
+		$article->previouslySavedValues->headline		= $article->headline;
+		$article->previouslySavedValues->category		= $article->category;
+		$article->previouslySavedValues->data			= $article->data;
+		$article->previouslySavedValues->displayFrom	= $article->displayFrom;
+		$article->previouslySavedValues->displayUntil	= $article->displayUntil;
+		$article->previouslySavedValues->articleDate	= $article->articleDate;
+		$article->previouslySavedValues->customFlags	= $article->customFlags;
+		$article->previouslySavedValues->customSort		= $article->customSort;
+		
+		return $article;
+	}
+
+	/**
 	 * returns article instance identified by numeric id or alias
 	 * 
 	 * @param mixed $id
@@ -396,88 +477,42 @@ class Article implements Subject {
 			throw new ArticleException("Article with $col '$id' does not exist.", ArticleException::ARTICLE_DOES_NOT_EXIST);
 		}
 
-		$row  = $rows[0];
-
-		$article = new self();
-
-		// set identification
-
-		$article->alias		= $row['Alias'];
-		$article->id		= $row['articlesID'];
+		// generate and store instance
 		
-		// set category
-
-		$article->category	= ArticleCategory::getInstance($row['articlecategoriesID']);
-
-		// set admin information
-
-		try {
-			$article->createdBy = new User();
-			$article->createdBy->setUser($row['createdBy']);
-		}
-		catch(UserException $e) {}
-			
-		try {
-			$article->updatedBy = new User();
-			$article->updatedBy->setUser($row['updatedBy']);
-		}
-		catch(UserException $e) {}
-
-		// set date information
-		
-		if(!empty($row['Display_from'])) {
-			$article->displayFrom = new DateTime($row['Display_from']);
-		}
-
-		if(!empty($row['Display_until'])) {
-			$article->displayUntil = new DateTime($row['Display_until']);
-		}
-
-		if(!empty($row['Article_Date'])) {
-			$article->articleDate = new DateTime($row['Article_Date']);
-		}
-
-		if(!empty($row['firstCreated'])) {
-			$article->firstCreated = new DateTime($row['firstCreated']);
-		}
-
-		if(!empty($row['lastUpdated'])) {
-			$article->lastUpdated = new DateTime($row['lastUpdated']);
-		}
-
-		// flags and sort
-		
-		$article->customFlags	= $row['customFlags'];
-		$article->customSort	= $row['customSort'];
-
-		// set various text fields
-
-		$article->setHeadline($row['Headline']);
-		$article->setData($row);
-
-		// store instance
+		$article = self::createInstance($rows[0]);
 
 		self::$instancesByAlias[$article->alias]	= $article;
 		self::$instancesById[$article->id]			= $article;
-
-		// backup values to check whether record was changed
-
-		$article->previouslySavedValues = new StdClass;
 		
-		$article->previouslySavedValues->headline		= $article->headline;
-		$article->previouslySavedValues->category		= $article->category;
-		$article->previouslySavedValues->data			= $article->data;
-		$article->previouslySavedValues->displayFrom	= $article->displayFrom;
-		$article->previouslySavedValues->displayUntil	= $article->displayUntil;
-		$article->previouslySavedValues->articleDate	= $article->articleDate;
-		$article->previouslySavedValues->customFlags	= $article->customFlags;
-		$article->previouslySavedValues->customSort		= $article->customSort;
-
 		return $article;
 	}
 
+	/**
+	 * get all articles assigned to given $category 
+	 * 
+	 * @param ArticleCategory $category
+	 * @return Array
+	 */
 	public static function getArticlesForCategory(ArticleCategory $category) {
+		$articles = array();
 
+		$rows = $GLOBALS['db']->doPreparedQuery('SELECT * FROM articles WHERE articlecategoriesID = ?', array($category->getId()));
+
+		foreach($rows as $r) {
+			if(isset(self::$instancesById[$r['articlesID']])) {
+
+				// create Article instance if it does not yet exist
+
+				$article = self::createInstance($r);
+
+				self::$instancesByAlias[$article->alias]	= $article;
+				self::$instancesById[$article->id]			= $article;
+			}
+
+			$articles[] = self::$instancesById[$r['articlesID']];
+		}
+
+		return $articles;
 	}
 }
 
