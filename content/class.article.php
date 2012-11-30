@@ -499,7 +499,7 @@ class Article implements Subject {
 		$rows = $GLOBALS['db']->doPreparedQuery('SELECT * FROM articles WHERE articlecategoriesID = ?', array($category->getId()));
 
 		foreach($rows as $r) {
-			if(isset(self::$instancesById[$r['articlesID']])) {
+			if(!isset(self::$instancesById[$r['articlesID']])) {
 
 				// create Article instance if it does not yet exist
 
