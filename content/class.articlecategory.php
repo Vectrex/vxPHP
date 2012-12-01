@@ -12,7 +12,8 @@ class ArticleCategory {
 					$level, $l, $r,
 					$title,
 					$parentCategory,
-					$customSort;
+					$customSort,
+					$articles;
 
 	private static	$instancesById		= array(),
 					$instancesByAlias	= array();
@@ -106,6 +107,18 @@ class ArticleCategory {
 
 	public function setCustomSort($ndx) {
 		$this->customSort = (int) $ndx;
+	}
+
+	/**
+	 * retrieves all articles assigned to this article category 
+	 * 
+	 * @return array
+	 */
+	public function getArticles() {
+		if(is_null($this->articles)) {
+			$this->articles = Article::getArticlesForCategory($this);
+		}
+		return $this->articles;
 	}
 
 	public function setParent(ArticleCategory $parent) {
