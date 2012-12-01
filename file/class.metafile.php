@@ -24,6 +24,15 @@ class MetaFile implements Subject {
 			$isObscured,
 			$data;
 
+	/**
+	 * returns MetaFile instance alternatively identified by its path or its primary key in the database 
+	 * 
+	 * @param string $path
+	 * @param integer $id
+	 * @throws MetaFileException
+	 * 
+	 * @return MetaFile
+	 */
 	public static function getInstance($path = NULL, $id = NULL) {
 		if(!isset(self::$db)) {
 			self::$db = $GLOBALS['db'];
@@ -58,7 +67,7 @@ class MetaFile implements Subject {
 	 * @param MetaFolder $folder
 	 * @param callback $callBackSort
 	 * 
-	 * @return Array metafiles
+	 * @return array metafiles
 	 */
 	public static function getMetaFilesInFolder(MetaFolder $folder, $callBackSort = NULL) {
 		if(!isset(self::$db)) {
@@ -268,6 +277,14 @@ class MetaFile implements Subject {
 		$this->isObscured		= $this->data['File'] !== $this->filesystemFile->getFilename();
 	}
 
+	/**
+	 * retrieves file metadata stored in database 
+	 * 
+	 * @param string $path
+	 * @throws MetaFileException
+	 * 
+	 * @return array
+	 */
 	private function getDbEntryByPath($path) {
 		$pathinfo = pathinfo($path);
 		$rows = self::$db->doPreparedQuery(
@@ -303,6 +320,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * get id of metafile
+	 * 
+	 * @return integer
 	 */
 	public function getId() {
 		return $this->id;
@@ -310,6 +329,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * get any data stored with metafile in database entry
+	 * 
+	 * @return array
 	 */
 	public function getData() {
 		return $this->data;		
@@ -317,6 +338,7 @@ class MetaFile implements Subject {
 
 	/**
 	 * get referenced table stored with metafile in database entry
+	 * 
 	 * @return string table
 	 */
 	public function getReferencedTable() {
@@ -325,7 +347,8 @@ class MetaFile implements Subject {
 	
 	/**
 	 * get referenced id stored with metafile in database entry
-	 * @return integer id
+	 * 
+	 * @return integer
 	 */
 	public function getReferencedId() {
 		return $this->data['referencedID'];		
@@ -335,6 +358,7 @@ class MetaFile implements Subject {
 	 * retrieve mime type
 	 *  
 	 * @param bool $force forces re-read of mime type
+	 * @return string
 	 */
 	public function getMimetype($force = false) {
 		return $this->filesystemFile->getMimetype($force);
@@ -345,6 +369,7 @@ class MetaFile implements Subject {
 	 * (i.e. image/jpeg, image/gif, image/png)
 	 *  
 	 * @param bool $force forces re-read of mime type
+	 * @return boolean
 	 */
 	public function isWebImage($force = false) {
 		return $this->filesystemFile->isWebImage($force);
@@ -352,6 +377,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * retrieve file info
+	 * 
+	 * @return SplFileInfo
 	 */
 	public function getFileInfo() {
 		return $this->filesystemFile->getFileInfo();
@@ -359,6 +386,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * retrieves physical path of file
+	 * 
+	 * @return string
 	 */
 	public function getPath() {
 		return $this->filesystemFile->getPath();
@@ -366,7 +395,9 @@ class MetaFile implements Subject {
 
 	/**
 	 * returns path relative to DOCUMENT_ROOT
+	 * 
 	 * @param boolean $force
+	 * @return string
 	 */
 	public function getRelativePath($force = FALSE) {
 		return $this->filesystemFile->getRelativePath($force);
@@ -374,6 +405,8 @@ class MetaFile implements Subject {
 	
 	/**
 	 * retrieves physical filename of file
+	 * 
+	 * @return string
 	 */
 	public function getFilename() {
 		return $this->filesystemFile->getFilename();
@@ -381,7 +414,9 @@ class MetaFile implements Subject {
 
 	/**
 	 * retrieves metafile name of file
-	 * differs from physical filename, when file is obscured 
+	 * differs from physical filename, when file is obscured
+	 *  
+	 * @return string
 	 */
 	public function getMetaFilename() {
 		return $this->data['File'];
@@ -389,6 +424,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * return metafolder of metafile
+	 * 
+	 * @return MetaFolder
 	 */
 	public function getMetaFolder() {
 		return $this->metaFolder;
@@ -396,6 +433,8 @@ class MetaFile implements Subject {
 
 	/**
 	 * returns filesystemfile of metafile
+	 * 
+	 * @return FilesystemFile
 	 */
 	public function getFilesystemFile() {
 		return $this->filesystemFile;
