@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.7 2012-11-05
+ * @version 0.5.8 2012-12-10
  */
 
 abstract class UserAbstract {
@@ -93,12 +93,15 @@ abstract class UserAbstract {
 	 * get user data
 	 * 
 	 * if $dataOrId is an associative array, array values become user data
-	 * otherwise user data is retrieved from database
+	 * otherwise user data is retrieved from database and id can be either a primary key or unique user id (the email)
 	 * 
 	 * @param mixed $dataOrId
 	 */
 	public function setUser($dataOrId) {
 		if(!is_array($dataOrId)) {
+
+			$idColumn = is_int($dataOrId) ? 'adminID' : 'Email';
+
 			$rows = $GLOBALS['db']->doPreparedQuery("
 				SELECT
 					a.*,
@@ -109,11 +112,11 @@ abstract class UserAbstract {
 					admin a
 					INNER JOIN admingroups ag on a.admingroupsID = ag.admingroupsID
 				WHERE
-					Email = ?", array((string) $dataOrId));
+					$idColumn = ?", array($dataOrId));
 
 			if(!empty($rows[0])) {
-				$this->id = $dataOrId;
-				
+				$this->id = $rows[0]['Email'];
+
 				foreach($rows[0] as $k => $v) {
 					$k = strtolower($k);
 					if(property_exists($this, $k)) {
