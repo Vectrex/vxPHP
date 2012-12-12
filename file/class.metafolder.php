@@ -7,7 +7,7 @@
  * 
  * @author Gregor Kofler
  * 
- * @version 0.5.6 2012-11-11
+ * @version 0.5.7 2012-12-12
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -400,7 +400,7 @@ class MetaFolder {
 
 					// no parent directory
 
-					$rows = $this->db->doQuery("SELECT MAX(r) + 1 AS l FROM folders", TRUE);
+					$rows = self::$db->doQuery("SELECT MAX(r) + 1 AS l FROM folders", TRUE);
 					$metaData['l'] = !isset($rows[0]['l']) ? 0 : $rows[0]['l'];
 					$metaData['r'] = $rows[0]['l'] + 1;
 					$metaData['level'] = 0;
