@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.8 2012-12-10
+ * @version 0.5.9 2012-12-12
  */
 
 abstract class UserAbstract {
@@ -100,7 +100,15 @@ abstract class UserAbstract {
 	public function setUser($dataOrId) {
 		if(!is_array($dataOrId)) {
 
-			$idColumn = is_int($dataOrId) ? 'adminID' : 'Email';
+			if(is_int($dataOrId)) {
+				$idColumn = 'adminID';
+			}
+			elseif(is_string($dataOrId)) {
+				$idColumn = 'Email';
+			}
+			else {
+				throw new UserException("User '$dataOrId' does not exist.", UserException::USER_DOES_NOT_EXIST);
+			}
 
 			$rows = $GLOBALS['db']->doPreparedQuery("
 				SELECT
