@@ -3,7 +3,7 @@
  * Mapper class for articles, stored in table `articles`
  * 
  * @author Gregor Kofler
- * @version 0.6.4 2012-11-30
+ * @version 0.6.4.1 2012-12-13
  */
 
 class Article implements Subject {
@@ -164,7 +164,7 @@ class Article implements Subject {
 
 			// unlink referenced files
 
-			foreach($this->getreferencingFiles() as $f) {
+			foreach($this->getReferencingFiles() as $f) {
 				$f->setMetaData(array('referenced_Table' => '', 'referencedID' => ''));
 			}
 
@@ -350,7 +350,7 @@ class Article implements Subject {
 	 * 
 	 * @return array
 	 */
-	public function getreferencingFiles() {
+	public function getReferencingFiles() {
 		if(!is_null($this->id) && is_null($this->referencingFiles)) {
 			$this->referencingFiles = MetaFile::getFilesForReference($this->id, 'articles', 'sortByCustomSort');
 		}
