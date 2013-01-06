@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.3 2012-11-03
+ * @version 4.7.4 2012-11-03
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -14,26 +14,28 @@
  */
 
 class Mysqldbi extends mysqli {
+
+	const	UPDATE_FIELD	= 'lastUpdated';
+	const	CREATE_FIELD	= 'firstCreated';
+	const	SORT_FIELD		= 'customSort';
+
 	private	$host,
 			$user,
 			$pass,
 			$dbname;
 
-	private $handleErrors	= true,
-			$logErrors		= true,
-			$logtype		= null;
+	private $handleErrors	= TRUE,
+			$logErrors		= TRUE,
+			$logtype		= NULL;
 
 	private $lastErrno,
 			$lastError;
 
-	private	$createField	= 'firstCreated',
-			$updateField	= 'lastUpdated',
-			$sortField		= 'CustomSort',
-			$primaryKeys;
+	private	$primaryKeys;
 
-	private	$queryString;
+	private	$queryString,
+			$preparedQueryString;
 
-	private $preparedQueryString;
 	private $statement;
 	
 	private	$charsetMap = array(
@@ -274,13 +276,8 @@ class Mysqldbi extends mysqli {
 				$values[] = $v;
 			}
 
-			else if($name == strtolower($this->updateField)) {
-				$names[]	= $this->updateField;
-				$values[]	= 'NULL';
-			}
-
-			else if($name == strtolower($this->createField)) {
-				$names[]	= $this->createField;
+			else if($name == strtolower(self::CREATE_FIELD)) {
+				$names[]	= self::CREATE_FIELD;
 				$values[]	= 'NOW()';
 			}
 		}
@@ -327,10 +324,6 @@ class Mysqldbi extends mysqli {
 				}
 
 				$parm[] = "$name=$v";
-			}
-
-			else if($name == strtolower($this->updateField)) {
-				$parm[]	= $this->updateField.'=NULL';
 			}
 		}
 
@@ -474,34 +467,34 @@ class Mysqldbi extends mysqli {
 	 }
 	 
 	 /**
-	  * Sort row by $sortField up or down
+	  * Sort row by Mysqldbi::SORT_FIELD up or down
 	  * 
 	  * @param string table
 	  * @param integer id
 	  * @param string direction 'up' | 'dn'
 	  * @param string filter additional attribute incorporated in sort
 	  */
-	public function customSort($table, $id, $direction, $filter = null) {
+	public function customSort($table, $id, $direction, $filter = NULL) {
 
 		$dirOp		= $direction == 'up' ? '<' : '>';
-		$dirSort	= $direction == 'up' ? 'desc' : '';
+		$dirSort	= $direction == 'up' ? 'DESC' : '';
 
-		$sql =	'start transaction;';
+		$sql =	'START TRANSACTION;';
 
 		if(!empty($filter)) {
-			$sql .=	"select {$this->sortField}, $filter from $table where {$table}ID = $id into @oldPos, @filter;";
-			$sql .=	"select {$this->sortField}, {$table}ID from $table where {$this->sortField} $dirOp @oldPos and $filter = @filter order by CustomSort $dirSort limit 1 into @newPos, @swappedID;";
+			$sql .=	"SELECT ".self::SORT_FIELD.", $filter FROM $table WHERE {$table}ID = $id INTO @oldPos, @filter;";
+			$sql .=	"SELECT ".self::SORT_FIELD.", {$table}ID FROM $table WHERE ".self::SORT_FIELD." $dirOp @oldPos AND $filter = @filter ORDER BY CustomSort $dirSort LIMIT 1 INTO @newPos, @swappedID;";
 		}
 		else {
-			$sql .=	"select {$this->sortField} from $table where {$table}ID = $id into @oldPos;";
-			$sql .=	"select {$this->sortField}, {$table}ID from $table where {$this->sortField} $dirOp @oldPos order by CustomSort $dirSort limit 1 into @newPos, @swappedID;";
+			$sql .=	"SELECT ".self::SORT_FIELD." FROM $table WHERE {$table}ID = $id INTO @oldPos;";
+			$sql .=	"SELECT ".self::SORT_FIELD.", {$table}ID FROM $table WHERE ".self::SORT_FIELD." $dirOp @oldPos ORDER BY CustomSort $dirSort LIMIT 1 INTO @newPos, @swappedID;";
 		}
 
-		$sql .= "update $table set {$this->sortField} = @oldPos where @swappedID is not null and {$table}ID = @swappedID;";
-		$sql .= "update $table set {$this->sortField} = @newPos where @swappedID is not null and {$table}ID = $id;";
-		$sql .= 'commit';
+		$sql .= "UPDATE $table SET ".self::SORT_FIELD." = @oldPos WHERE @swappedID IS NOT NULL AND {$table}ID = @swappedID;";
+		$sql .= "UPDATE $table SET ".self::SORT_FIELD." = @newPos WHERE @swappedID IS NOT NULL AND {$table}ID = $id;";
+		$sql .= 'COMMIT';
 
-		$this->execute($sql, true);
+		$this->execute($sql, TRUE);
 	}
 
 	/**
