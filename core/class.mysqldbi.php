@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.7.4 2012-11-03
+ * @version 4.8.0 2013-01-07
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -24,9 +24,10 @@ class Mysqldbi extends mysqli {
 			$pass,
 			$dbname;
 
-	private $handleErrors	= TRUE,
-			$logErrors		= TRUE,
-			$logtype		= NULL;
+	private $handleErrors		= TRUE,
+			$logErrors			= TRUE,
+			$logtype			= NULL,
+			$touchLastUpdated	= TRUE;
 
 	private $lastErrno,
 			$lastError;
@@ -90,6 +91,21 @@ class Mysqldbi extends mysqli {
 	}
 
 	/**
+	 * ignore lastUpdated attribute when creating or updating record
+	 * leaves setting value of this field to MySQL mechanisms
+	 */
+	public function ignoreLastUpdated() {
+		$this->touchLastUpdated = FALSE;
+	}
+
+	/**
+	 * set lastUpdated attribute when creating or updating record
+	 */
+	public function updateLastUpdated() {
+		$this->touchLastUpdated = TRUE;
+	}
+	
+	/**
 	 * execute (select) query
 	 * 
 	 * @param string $querystrstring
@@ -97,17 +113,17 @@ class Mysqldbi extends mysqli {
 	 * @param mixed $callbacks, callback functions to be executed prior to result returning 
   	 * @return mixed result
 	 **/
-	public function doQuery($querystr, $processRessource = false, $callbacks = null) {
+	public function doQuery($querystr, $processRessource = FALSE, $callbacks = NULL) {
 		$this->queryString = $querystr;
 
 		if(!$this->queryResult = @$this->query($querystr)) {
 			$this->setError();
-			return false;
+			return FALSE;
 		}
 		$this->numRows = $this->queryResult->num_rows;
 
 		if(!$processRessource) {
-			return true;
+			return TRUE;
 		}
 		
 		$result = array();
@@ -124,11 +140,11 @@ class Mysqldbi extends mysqli {
 	 * executes a prepared (select) query and returns result in array
 	 * a previously executed statement is stored for (immediate) reuse
 	 *
-	 * @param string $statement, the query statement; when null re-use previous statement
+	 * @param string $statement, the query statement; when NULL re-use previous statement
 	 * @param array $parameters, array with parameters; datatype of parameter determines binding
 	 * @return array $result
 	 */
-	public function doPreparedQuery($statement, array $parameters = array(), $callbacks = null) {
+	public function doPreparedQuery($statement, array $parameters = array(), $callbacks = NULL) {
 		if(empty($statement) && empty($this->preparedQueryString)) {
 			return array();
 		}
@@ -155,12 +171,12 @@ class Mysqldbi extends mysqli {
 
 		if(!empty($parameters)) {
 			if(!@call_user_func_array(array($this->statement, 'bind_param'), $paramByRef)) {
-				$this->setError(true, array_merge((array) $type, $parameters));
+				$this->setError(TRUE, array_merge((array) $type, $parameters));
 				return FALSE;
 			}
 		}
 		if(!$this->statement->execute()) {
-			$this->setError(true, array_merge((array) $type, $parameters));
+			$this->setError(TRUE, array_merge((array) $type, $parameters));
 			return FALSE;
 		}
 
@@ -182,7 +198,7 @@ class Mysqldbi extends mysqli {
 	 * @param boolean split multiple SQL commands before processing
   	 * @return bool status
 	 **/
-	public function execute($querystr, $multi = false) {
+	public function execute($querystr, $multi = FALSE) {
 		if($multi) {
 			$queries = explode(';', $querystr);
 		}
@@ -193,11 +209,11 @@ class Mysqldbi extends mysqli {
 		foreach($queries as $this->queryString) {
     		if(!$this->queryResult = @$this->query($this->queryString)) {
 				$this->setError();
-				return false;
+				return FALSE;
 			}
 		}
 		$this->affectedRows = $this->affected_rows;
-		return true;
+		return TRUE;
 	}
 
 	/**
@@ -232,16 +248,17 @@ class Mysqldbi extends mysqli {
 
 		if(!empty($parameters)) {
 			if(!@call_user_func_array(array($this->statement, 'bind_param'), $paramByRef)) {
-				$this->setError(true, array_merge((array) $type, $parameters));
-				return false;
+				$this->setError(TRUE, array_merge((array) $type, $parameters));
+				return FALSE;
 			}
 		}
 		if(!$this->statement->execute()) {
-			$this->setError(true); return false;
+			$this->setError(TRUE);
+			return FALSE;
 		}
 
 		$this->affectedRows = $this->statement->affected_rows;
-		return true;
+		return TRUE;
 	}
 
 	
@@ -250,7 +267,7 @@ class Mysqldbi extends mysqli {
 	 * 
 	 * @param string table
 	 * @param array Data
-	 * @return int insert id | bool false
+	 * @return int insert id | bool FALSE
 	 */
 	public function insertRecord($table, $insert) {
 		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) {
@@ -274,6 +291,11 @@ class Mysqldbi extends mysqli {
 				}
 
 				$values[] = $v;
+			}
+
+			else if($name == strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
+				$names[]	= self::UPDATE_FIELD;
+				$values[]	= 'NULL';
 			}
 
 			else if($name == strtolower(self::CREATE_FIELD)) {
@@ -308,6 +330,8 @@ class Mysqldbi extends mysqli {
 		$update = array_change_key_case($update, CASE_LOWER);
 
 		$fields = $this->queryResult->fetch_fields();
+		
+		$assignedValues = array();
 
 	    foreach($fields as $f) {
 	    	$name = strtolower($f->name);
@@ -323,22 +347,26 @@ class Mysqldbi extends mysqli {
 					return FALSE;
 				}
 
-				$parm[] = "$name=$v";
+				$assignedValues[] = "$name=$v";
 			}
-		}
 
-		if(empty($parm)) {
+			else if($name == strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
+				$assignedValues[] = self::UPDATE_FIELD."=NULL";
+			}
+	    }
+
+		if(empty($assignedValues)) {
 			return NULL;
 		}
 
 		if(!is_array($id)) {
-			return $this->execute("UPDATE $table SET ".implode(',', $parm)." WHERE $primaryKey = $id");
+			return $this->execute("UPDATE $table SET ".implode(',', $assignedValues)." WHERE $primaryKey = $id");
 		}
 
 		foreach($id as $k => $v) {
 			$where[] = "$k = $v";
 		}
-		return $this->execute("UPDATE $table SET ".implode(',', $parm)." WHERE ".implode(' AND ', $where));
+		return $this->execute("UPDATE $table SET ".implode(',', $assignedValues)." WHERE ".implode(' AND ', $where));
 	}
 
 	/**
@@ -350,7 +378,7 @@ class Mysqldbi extends mysqli {
 	 * 
 	 * @return int affected_rows
 	 **/
-	public function deleteRecord($table, $id, $usePreparedStatement = false) {
+	public function deleteRecord($table, $id, $usePreparedStatement = FALSE) {
 		if(!$usePreparedStatement) {
 			if(!is_array($id)) {
 		    	$where = "{$this->getPrimaryKey($table)} = $id";
@@ -429,10 +457,14 @@ class Mysqldbi extends mysqli {
 	 * @return string
 	 */
 	 public function getDefaultFieldValue($table, $column) {
-		if(!$this->doQuery("SHOW COLUMNS FROM $table LIKE '$column'")) { return false; }
+
+	 	if(!$this->doQuery("SHOW COLUMNS FROM $table LIKE '$column'")) {
+			return FALSE;
+		}
+
 		$rec = $this->queryResult->fetch_assoc();
 		return $rec['Default'];
-	 }
+	}
 
 	/**
 	 * retrieve primary key field(s) of specified table
@@ -440,23 +472,27 @@ class Mysqldbi extends mysqli {
 	 * @param bool force re-analyzing of table
 	 * @return string
 	 */
-	 public function getPrimaryKey($table, $force = false) {
+	 public function getPrimaryKey($table, $force = FALSE) {
 	 	if(isset($this->primaryKeys[$table]) && !$force) {
 	 		return $this->primaryKeys[$table];
 	 	}
 
 	 	$pri = array();
 
-	 	if(!$this->doQuery("SHOW COLUMNS FROM $table")) { return false; }
+	 	if(!$this->doQuery("SHOW COLUMNS FROM $table")) {
+	 		return FALSE;
+	 	}
+
 	 	while($rec = $this->queryResult->fetch_assoc()) {
 	 		if($rec['Key'] == 'PRI') {
 	 			array_push($pri, $rec['Field']);
 	 		}
 	 	}
+
 	 	switch (count($pri)) {
 	 		case 0:
-	 			$this->primaryKeys[$table] = null;
-	 			return null;
+	 			$this->primaryKeys[$table] = NULL;
+	 			return NULL;
 	 		case 1:
 	 			$this->primaryKeys[$table] = $pri[0];
 	 			return $pri[0];
@@ -515,11 +551,13 @@ class Mysqldbi extends mysqli {
 	 * 
 	 * @return string reformated datestring 
 	 */
-	public function formatDate($dat, $locale = null) {
+	public function formatDate($dat, $locale = NULL) {
 
-		if(empty($dat)){ return ''; }
-		
-		$locale = $locale == null ? (!defined('SITE_LOCALE') ? 'de' : SITE_LOCALE) : $locale;
+		if(empty($dat)) {
+			return '';
+		}
+
+		$locale = !isset($locale) ? (!defined('SITE_LOCALE') ? 'de' : SITE_LOCALE) : $locale;
 
 		$tmp = preg_split('/( |\.|\/|-)/', $dat);
 
@@ -545,7 +583,7 @@ class Mysqldbi extends mysqli {
 	 */
 	public function formatDecimal($dec) {
 		if(trim($dec) == ''){
-			return null;
+			return NULL;
 		}
 		if(substr($dec, 0, 1) == '+') { $dec = substr($dec, 1); }
 
@@ -595,7 +633,7 @@ class Mysqldbi extends mysqli {
 				return $v ? 1 : 0;
 			}
 			if(!empty($v) && !is_numeric($v) && strtoupper($v) !== 'NULL') {
-				return false;
+				return FALSE;
 			}
 			$v = ($v === '') ? 'NULL' : $v;
 		}
@@ -609,14 +647,14 @@ class Mysqldbi extends mysqli {
 	 * disable error handling
 	 */
 	public function disableErrorHandling() {
-		$this->handleErrors = false;
+		$this->handleErrors = FALSE;
 	}
 
 	/**
 	 * enable error handling
 	 */
 	public function enableErrorHandling() {
-		$this->handleErrors = true;
+		$this->handleErrors = TRUE;
 	}
 	
 	
@@ -714,7 +752,7 @@ class Mysqldbi extends mysqli {
 
 			$tmp = tempnam(defined('MYSQL_LOG_PATH') ? MYSQL_LOG_PATH : '', 'tmp_');
 	
-			if ($tmp !== false && ($handle = fopen($tmp, 'w'))) {
+			if ($tmp !== FALSE && ($handle = fopen($tmp, 'w'))) {
 				flock($handle, LOCK_EX);
 				fwrite($handle, implode('', $logtext));
 				flock($handle, LOCK_UN);
@@ -735,7 +773,7 @@ class Mysqldbi extends mysqli {
 		/*
 		 * logfile plain style
 		 */
-		if ($handle = fopen($logfile, 'a+b', true)) {
+		if ($handle = fopen($logfile, 'a+b', TRUE)) {
 			$err = array_reverse(debug_backtrace());
 			array_pop($err);
 			foreach($err as $v) {
@@ -807,7 +845,7 @@ class Mysqldbi extends mysqli {
  */
 class MysqldbiStatement extends mysqli_stmt {
 	
-	protected $varsBound = false;
+	protected $varsBound = FALSE;
 	protected $results;
 
 	/**
@@ -823,7 +861,7 @@ class MysqldbiStatement extends mysqli_stmt {
 	/**
 	 * provides fetch_assoc() for prepared statements
 	 *
-	 * @return null or associative array
+	 * @return NULL or associative array
 	 */
 	public function fetch_assoc() {
 		if(!$this->varsBound) {
@@ -832,14 +870,19 @@ class MysqldbiStatement extends mysqli_stmt {
 				$varsToBind[] = &$this->results[$col->name];
 			}
 			call_user_func_array(array($this, 'bind_result'), $varsToBind);
-			$this->varsBound = true;
+			$this->varsBound = TRUE;
 		}
 
-		if($this->fetch() === null) {return null; }
+		if($this->fetch() === NULL) {
+			return NULL;
+		}
+
+		$r = array();
 
 		foreach($this->results as $k => $v) {
 			$r[$k] = $v;
 		}
+
 		return $r;
 	}
 }
