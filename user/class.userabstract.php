@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.9 2012-12-12
+ * @version 0.5.10 2013-01-10
  */
 
 abstract class UserAbstract {
@@ -15,20 +15,23 @@ abstract class UserAbstract {
 	const AUTH_OBSERVE_TABLE		= 256;
 	const AUTH_OBSERVE_ROW			= 4096;
 
-	protected $id;
-	protected $adminid;
-	protected $name;
-	protected $email;
-	protected $pwd;
-	protected $table_access = array();
-	protected $row_access = array();
+	protected	$id,
+				$adminid,
+				$name,
+				$email,
+				$pwd,
+				$misc_data,
 
-	protected $groupid;
-	protected $group_alias;
-	protected $privilege_level;
-	protected $authenticated = FALSE;
+				$table_access = array(),
+				$row_access = array(),
 
-	protected $cachedNotifications;
+				$groupid,
+				$group_alias,
+
+				$privilege_level,
+				$authenticated = FALSE,
+
+				$cachedNotifications;
 
 	/*
 	 * various getters
@@ -41,12 +44,31 @@ abstract class UserAbstract {
 		return $this->id;
 	}
 
+	/**
+	 * return primary key of user record
+	 * 
+	 * @return integer
+	 */
 	public function getAdminId() {
 		return $this->adminid;
 	}
 
+	/**
+	 * return name of user
+	 * 
+	 * @return string
+	 */
 	public function getName() {
 		return $this->name;
+	}
+
+	/**
+	 * return optional data stored with user record
+	 *
+	 * @return string
+	 */
+	public function getMiscData() {
+		return $this->misc_data;
 	}
 
 	public function getAdmingroup() {
@@ -57,6 +79,12 @@ abstract class UserAbstract {
 		return $this->privilege_level;
 	}
 
+	/**
+	 * check whether user is allowed to access $table
+	 * 
+	 * @param string $table
+	 * @return boolean
+	 */
 	public function hasTableAccess($table) {
 		if(is_array($this->table_access)) {
 			return in_array(strtolower($table), $this->table_access);
@@ -69,10 +97,20 @@ abstract class UserAbstract {
 		}
 	}
 
+	/**
+	 * return all rows the user is allowed to access
+	 * 
+	 * @return array
+	 */
 	public function getRowAccess() {
 		return $this->row_access;
 	}
 
+	/**
+	 * return all tables the user is allowed to access
+	 * 
+	 * @return array
+	 */
 	public function getTableAccess() {
 		return $this->table_access;
 	}
@@ -172,7 +210,7 @@ abstract class UserAbstract {
 		$set = array();
 
 		foreach($data as $k => $v) {
-			if(in_array($k, array('PWD', 'Email', 'Name'))) {
+			if(in_array($k, array('PWD', 'Email', 'Name', 'misc_data'))) {
 				$set[$k] = $v;
 			}
 		}
