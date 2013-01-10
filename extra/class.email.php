@@ -1,7 +1,8 @@
 <?php
 /**
- * Einfache Klasse zum verschicken von Mails per mail()
- * @version 0.2.6 2012-09-22
+ * simple wrapper class for sending emails via mail()
+ * 
+ * @version 0.2.7 2013-01-10
  */
 
 if(!defined('MAIL_CRLF')) {
@@ -20,7 +21,7 @@ class Email {
 	private $headers;
 	private $attachments = array();
 
-	private $debug = TRUE;
+	private static $debug = FALSE;
 
 
 	public function __construct($receiver = null, $subject = '(Kein Betreff)', $mailText = '', $sender = null, $bcc = '', $sig = '', $htmlMail = false) {
@@ -35,8 +36,8 @@ class Email {
 		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8'; 
 	}
 	
-	public function setDebug($state) {
-		$this->debug = (boolean) $state;
+	public static function setDebug($state) {
+		self::$debug = (boolean) $state;
 	}
 
 	public function setReceiver($parm) {
@@ -80,7 +81,7 @@ class Email {
 
 		if (is_array($this->receiver)) {
 			foreach ($this->receiver as $r) {
-				if($this->debug) {
+				if(self::$debug) {
 					echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
 					echo implode(', ', $this->receiver), '<hr>', nl2br($this->headers), '<hr>', nl2br($this->msg);
 					echo '</div>';
@@ -91,7 +92,7 @@ class Email {
 			}
 		}
 		else {
-				if($this->debug) {
+				if(self::$debug) {
 					echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
 					echo $this->receiver.'<hr>'.nl2br($this->headers).'<hr>'.nl2br(htmlspecialchars($this->msg));
 					echo '</div>';
