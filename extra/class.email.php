@@ -24,7 +24,7 @@ class Email {
 	private static $debug = FALSE;
 
 
-	public function __construct($receiver = null, $subject = '(Kein Betreff)', $mailText = '', $sender = null, $bcc = '', $sig = '', $htmlMail = false) {
+	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, $bcc = '', $sig = '', $htmlMail = false) {
 		$this->receiver	= $receiver;
 		$this->subject	= $subject;
 		$this->mailText	= $mailText;
@@ -108,7 +108,9 @@ class Email {
 		if (empty($this->receiver) || empty($this->sender) || empty ($this->mailText)) { return false; }
 
 		$this->headers =	'From: '.$this->sender.MAIL_CRLF;
+		$this->headers .=	'Return-Path: '.$this->sender.MAIL_CRLF;
 		$this->headers .=	'Reply-To: '.$this->sender.MAIL_CRLF;
+		$this->headers =	'X-Mailer: PHP'.phpversion().MAIL_CRLF;
 
 		if(!empty($this->bcc)) {
 			$this->headers .= 'BCC: '.(is_array($this->bcc) ? implode(', ', $this->bcc) : $this->bcc).MAIL_CRLF;
@@ -144,7 +146,11 @@ class Email {
 			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,MAIL_CRLF));
 		}
 
-		return true;
+		return TRUE;
+	}
+
+	private function smtpMail() {
+		
 	}
 }
 ?>
