@@ -150,7 +150,6 @@ class Email {
 	}
 
 	private function smtpMail() {
-		
 	}
 }
 ?>
