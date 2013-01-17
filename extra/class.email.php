@@ -174,6 +174,7 @@ class Email {
 			'Return-Path'	=> $this->sender,
 			'Reply-To'		=> $this->sender,
 			'Date'			=> date('r'),
+			'Message-ID'	=> '<'.sha1(microtime()).'@'.substr($this->sender, strpos($this->sender, '@') + 1).'>',
 			'User-Agent'	=> 'vxPHP SmtpMailer',
 			'X-Mailer'		=> 'PHP'.phpversion(),
 			'MIME-Version'	=> '1.0'
