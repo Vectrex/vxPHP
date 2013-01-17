@@ -3,7 +3,7 @@
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.0 2013-01-17
+ * @version 0.1.1 2013-01-17
  *
  */
 class SmtpMailer implements Mailer {
@@ -66,7 +66,9 @@ class SmtpMailer implements Mailer {
 	 * close connection
 	 */
 	public function close() {
-		fclose($this->socket);
+		if($this->socket) {
+			fclose($this->socket);
+		}
 	}
 
 	/**
@@ -81,10 +83,10 @@ class SmtpMailer implements Mailer {
 	public function setCredentials($user, $pwd, $type = 'LOGIN') {
 		$this->user = $user;
 		$this->pwd = $pwd;
-		if(!in_array($type, $this->authTypes)) {
+		if(!in_array(strtoupper($type), $this->authTypes)) {
 			throw new SmtpMailerException("Invalid authentication type '$type'.", SmtpMailerException::INVALID_AUTH_TYPE);
 		}
-		$this->type = $type;
+		$this->type = strtoupper($type);
 	}
 
 	/**
@@ -93,7 +95,10 @@ class SmtpMailer implements Mailer {
 	 * @param string $from
 	 */
 	public function setFrom($from) {
-		$this->from = $from;
+		$this->from = trim($from);
+		if(!preg_match('~.*?<.*?>$~', $this->from)) {
+			$this->from = '<'.$this->from.'>';
+		}
 	}
 	
 	/**
@@ -102,9 +107,12 @@ class SmtpMailer implements Mailer {
 	 * @param string $to
 	 */
 	public function setTo($to) {
-		$this->to = $to;
+		$this->to = trim($to);
+		if(!preg_match('~.*?<.*?>$~', $this->to)) {
+			$this->to = '<'.$this->to.'>';
+		}
 	}
-	
+
 	/**
 	 * set additional headers with associative array
 	 * 

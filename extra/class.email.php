@@ -5,27 +5,26 @@
  * @version 0.2.7 2013-01-10
  */
 
-if(!defined('MAIL_CRLF')) {
-	define('MAIL_CRLF', "\n");
-	
-}
-
 class Email {
-	private $sender;
-	private $subject;
-	private $bcc;
-	private $receiver;
-	private $mailText;
-	private $sig;
-	private $htmlMail;
-	private $headers;
-	private $attachments = array();
+	const CRLF = "\n";
+
+	private	$mailer,
+			$sender,
+			$subject,
+			$bcc,
+			$receiver,
+			$mailText,
+			$sig,
+			$htmlMail,
+			$boundary,
+			$headers = array(),
+			$attachments = array();
 
 	private static $debug = FALSE;
 
 
 	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, $bcc = '', $sig = '', $htmlMail = false) {
-		$this->receiver	= $receiver;
+		$this->receiver	= (array) $receiver;
 		$this->subject	= $subject;
 		$this->mailText	= $mailText;
 		$this->sender	= !empty($sender) ? $sender : (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
@@ -40,32 +39,32 @@ class Email {
 		self::$debug = (boolean) $state;
 	}
 
-	public function setReceiver($parm) {
-		$this->receiver = $parm;
+	public function setReceiver($receiver) {
+		$this->receiver = (array) $receiver;
 	}
 
-	public function setSender($parm) {
-		$this->sender = $parm;
+	public function setSender($sender) {
+		$this->sender = $sender;
 	}
 
-	public function setMailText($parm) {
-		$this->mailText = $parm;
+	public function setMailText($text) {
+		$this->mailText = $text;
 	}
 
-	public function setSig($parm) {
-		$this->sig = $parm;
+	public function setSig($signature) {
+		$this->sig = $signature;
 	}
 
-	public function setSubject($parm) {
-		$this->subject = $parm;
+	public function setSubject($subject) {
+		$this->subject = $subject;
 	}
 
-	public function setBcc($parm) {
-		$this->bcc = $parm;
+	public function setBcc($bcc) {
+		$this->bcc = array($bcc);
 	}
 
-	public function setHtmlMail($parm) {
-		$this->htmlMail = $parm;
+	public function setHtmlMail($flag) {
+		$this->htmlMail = $flag;
 	}
 
 	public function addAttachment($file, $filename = NULL) {
@@ -75,81 +74,144 @@ class Email {
 	}
 
 	public function send()	{
-		if(!$this->buildMsg()) {
-			return FALSE;
+		$this->buildMsg();
+
+		if (!self::$debug) {
+			return $this->sendMail();
 		}
 
-		if (is_array($this->receiver)) {
-			foreach ($this->receiver as $r) {
-				if(self::$debug) {
-					echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-					echo implode(', ', $this->receiver), '<hr>', nl2br($this->headers), '<hr>', nl2br($this->msg);
-					echo '</div>';
-				}
-				else {
-					mail($r, $this->subject, $this->msg, $this->headers);
-				}
+		foreach ($this->receiver as $r) {
+			if(self::$debug) {
+				echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
+				echo implode(', ', $this->receiver), '<hr>', nl2br($this->headers), '<hr>', nl2br($this->msg);
+				echo '</div>';
 			}
 		}
-		else {
-				if(self::$debug) {
-					echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-					echo $this->receiver.'<hr>'.nl2br($this->headers).'<hr>'.nl2br(htmlspecialchars($this->msg));
-					echo '</div>';
-				}
-				else {
-					mail($this->receiver, $this->subject, $this->msg, $this->headers);
-				}
-		}
+
 		return TRUE;
 	}
 
-	private function buildMsg() {
-		if (empty($this->receiver) || empty($this->sender) || empty ($this->mailText)) { return false; }
+	private function sendMail() {
 
-		$this->headers =	'From: '.$this->sender.MAIL_CRLF;
-		$this->headers .=	'Return-Path: '.$this->sender.MAIL_CRLF;
-		$this->headers .=	'Reply-To: '.$this->sender.MAIL_CRLF;
-		$this->headers =	'X-Mailer: PHP'.phpversion().MAIL_CRLF;
+		// check for configured mailer
+
+		if(is_null($this->mailer) && isset($GLOBALS['config']->mail->mailer)) {
+			$mailer = $GLOBALS['config']->mail->mailer;
+			$reflection = new ReflectionClass($mailer->class);
+			$this->mailer = $reflection->newInstanceArgs(array($mailer->host, $mailer->port));
+
+			if(isset($mailer->auth_type)) {
+				$this->mailer->setCredentials($mailer->user, $mailer->pass, $mailer->auth_type);
+			}
+			else {
+				$this->mailer->setCredentials($mailer->user, $mailer->pass);
+			} 
+		}
+
+		if(is_null($this->mailer)) {
+
+			// plain mail() function
+
+			$headers = array();
+
+			foreach(array_keys($this->headers) as $k) {
+				$headers[] = "$k: {$this->headers[$k]}";
+			} 
+
+			foreach ($this->receiver as $r) {
+				if(!mail($r, $this->subject, $this->msg, implode(self::CRLF, $headers))) {
+					return FALSE;
+				}
+
+				return TRUE;
+			}
+		}
+
+		else {
+
+			// send mail with configured mailer
+
+			try {
+				$this->mailer->connect();
+
+				foreach($this->receiver as $r) {
+					$this->mailer->setFrom($this->sender);
+					$this->mailer->setTo($r);
+					$this->mailer->setHeaders(array_merge(
+						array('Subject' => $this->subject),
+						$this->headers
+					));
+					$this->mailer->setMessage($this->msg);
+					$this->mailer->send();
+				}
+
+				$this->mailer->close();
+				return TRUE;
+			}
+			catch(Exception $e) {
+				$this->mailer->close();
+				return FALSE;
+			}
+		}
+	}
+
+	/**
+	 * explicitly set mailer
+	 * 
+	 * @param Mailer $mailer
+	 */
+	public function setMailer(Mailer $mailer) {
+		$this->mailer = $mailer;
+	}
+
+	/**
+	 * fill headers array
+	 */
+	private function buildHeaders() {
+		$this->headers = array(
+			'From'			=> $this->sender,
+			'Return-Path'	=> $this->sender,
+			'Reply-To'		=> $this->sender,
+			'X-Mailer'		=> 'PHP'.phpversion(),
+			'MIME-Version'	=> '1.0'
+		);
 
 		if(!empty($this->bcc)) {
-			$this->headers .= 'BCC: '.(is_array($this->bcc) ? implode(', ', $this->bcc) : $this->bcc).MAIL_CRLF;
+			$this->headers['BCC'] = implode(', ', $this->bcc);
 		}
-
-		$this->headers .= 'MIME-Version: 1.0'.MAIL_CRLF;
 
 		if(count($this->attachments) > 0) {
-			$boundary = '!!!@snip@here@!!!';
-			$this->headers .= 'Content-type: multipart/mixed; boundary="'.$boundary.'"'.MAIL_CRLF;
-		}
-
-		if(isset($boundary)) {
-			$this->msg = '--'.$boundary.MAIL_CRLF;
-			$this->msg .= 'Content-type: text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}".MAIL_CRLF;
-			$this->msg .= 'Content-Transfer-Encoding: 8bit'.MAIL_CRLF.MAIL_CRLF;
+			$this->boundary = '!!!@snip@here@!!!';
+			$this->headers['Content-type'] = 'multipart/mixed; boundary="'.$boundary.'"';
 		}
 		else {
-			$this->headers .= 'Content-type: text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}".MAIL_CRLF;
+			$this->headers['Content-type'] = 'text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}";
+		}
+		
+	}
+	private function buildMsg() {
+
+		if(isset($this->boundary)) {
+			$this->msg = '--'.$this->boundary.self::CRLF;
+			$this->msg .= 'Content-type: text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}".self::CRLF;
+			$this->msg .= 'Content-Transfer-Encoding: 8bit'.self::CRLF.self::CRLF;
+		}
+		else {
 			$this->msg = '';
 		}
 
-		$this->msg .=	$this->mailText.MAIL_CRLF;
-		$this->msg .=	empty($this->sig) || $this->htmlMail ? MAIL_CRLF : MAIL_CRLF.MAIL_CRLF.'-- '.MAIL_CRLF.$this->sig.MAIL_CRLF;
+		$this->msg .=	$this->mailText.self::CRLF;
+		$this->msg .=	empty($this->sig) || $this->htmlMail ? self::CRLF : self::CRLF.self::CRLF.'-- '.self::CRLF.$this->sig.self::CRLF;
 
 		foreach($this->attachments as $f) {
 			$filename = empty($f['filename']) ? basename($f['path']) : $f['filename'];
 
-			$this->msg .= '--'.$boundary.MAIL_CRLF;
-			$this->msg .= 'Content-Type: application/octet-stream; name="'.$filename.'"'.MAIL_CRLF;
-			$this->msg .= 'Content-Disposition: attachment; filename="'.$filename.'"'.MAIL_CRLF;
-			$this->msg .= 'Content-Transfer-Encoding: base64'.MAIL_CRLF.MAIL_CRLF;
-			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,MAIL_CRLF));
+			$this->msg .= '--'.$this->boundary.self::CRLF;
+			$this->msg .= 'Content-Type: application/octet-stream; name="'.$filename.'"'.self::CRLF;
+			$this->msg .= 'Content-Disposition: attachment; filename="'.$filename.'"'.self::CRLF;
+			$this->msg .= 'Content-Transfer-Encoding: base64'.self::CRLF.self::CRLF;
+			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,self::CRLF));
 		}
-
-		return TRUE;
-	}
-
-	private function smtpMail() {
 	}
 }
 ?>

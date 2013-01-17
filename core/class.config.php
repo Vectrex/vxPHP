@@ -2,11 +2,12 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.5 2012-08-09
+ * @version 0.7.6 2013-01-17
  */
 class Config {
 	public $site;
 	public $db;
+	public $mail;
 	public $paths;
 	public $binaries;
 	public $uploadImages;
@@ -95,6 +96,7 @@ class Config {
 				return;
 			}
 
+			$this->parseMailSettings();
 			$this->parseBinarySettings();
 			$this->parseSiteSettings();
 			$this->parseUploadParametersSettings();
@@ -134,6 +136,27 @@ class Config {
 		
 			foreach($d[0]->children() as $k => $v) {
 				$this->db->$k = ($k != 'pass' || $this->storePasswords == TRUE) ? (string) $v : NULL;
+			}
+		}
+	}
+
+	/**
+	 * parses all (optional) mail settings
+	 */
+	private function parseMailSettings() {
+		if(!empty($this->config->mail) && !empty($this->config->mail->mailer[0])) {
+
+			$mailer = $this->config->mail->mailer[0];
+
+			$this->mail = new stdClass();
+			$this->mail->mailer = new stdClass();
+
+			$attr = $mailer->attributes();
+
+			$this->mail->mailer->class = (string) $attr['class'];
+
+			foreach($mailer->children() as $k => $v) {
+				$this->mail->mailer->$k = (string) $mailer->$k;
 			}
 		}
 	}
