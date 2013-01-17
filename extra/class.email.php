@@ -2,11 +2,11 @@
 /**
  * simple wrapper class for sending emails via mail()
  * 
- * @version 0.2.7 2013-01-10
+ * @version 0.2.8 2013-01-17
  */
 
 class Email {
-	const CRLF = "\n";
+	const CRLF = "\r\n";
 
 	private	$mailer,
 			$sender,
@@ -74,6 +74,7 @@ class Email {
 	}
 
 	public function send()	{
+		$this->buildHeaders();
 		$this->buildMsg();
 
 		if (!self::$debug) {
@@ -172,6 +173,8 @@ class Email {
 			'From'			=> $this->sender,
 			'Return-Path'	=> $this->sender,
 			'Reply-To'		=> $this->sender,
+			'Date'			=> date('r'),
+			'User-Agent'	=> 'vxPHP SmtpMailer',
 			'X-Mailer'		=> 'PHP'.phpversion(),
 			'MIME-Version'	=> '1.0'
 		);
