@@ -2,7 +2,7 @@
 /**
  * simple wrapper class for sending emails via mail()
  * 
- * @version 0.2.8 2013-01-17
+ * @version 0.2.9 2013-01-17
  */
 
 class Email {
@@ -83,8 +83,13 @@ class Email {
 
 		foreach ($this->receiver as $r) {
 			if(self::$debug) {
+				$headers = array();
+				foreach($this->headers as $k => $v) {
+					$headers[] = "$k: $v";
+				}
 				echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-				echo implode(', ', $this->receiver), '<hr>', nl2br($this->headers), '<hr>', nl2br($this->msg);
+				echo implode(', ', $this->receiver), '<hr>';
+				echo implode('<br>', $headers), '<hr>', nl2br($this->msg);
 				echo '</div>';
 			}
 		}
@@ -115,8 +120,8 @@ class Email {
 
 			$headers = array();
 
-			foreach(array_keys($this->headers) as $k) {
-				$headers[] = "$k: {$this->headers[$k]}";
+			foreach($this->headers as $k => $v) {
+				$headers[] = "$k: $v";
 			} 
 
 			foreach ($this->receiver as $r) {
@@ -186,7 +191,7 @@ class Email {
 
 		if(count($this->attachments) > 0) {
 			$this->boundary = '!!!@snip@here@!!!';
-			$this->headers['Content-type'] = 'multipart/mixed; boundary="'.$boundary.'"';
+			$this->headers['Content-type'] = 'multipart/mixed; boundary="'.$this->boundary.'"';
 		}
 		else {
 			$this->headers['Content-type'] = 'text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}";
