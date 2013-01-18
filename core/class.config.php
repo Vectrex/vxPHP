@@ -2,19 +2,23 @@
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
- * @version 0.7.6 2013-01-17
+ * 
+ * @version 0.8.0 2013-01-18
+ * 
+ * @todo refresh() method
  */
 class Config {
-	public $site;
-	public $db;
-	public $mail;
-	public $paths;
-	public $binaries;
-	public $uploadImages;
-	public $pages;
-	public $wildcardPages;
-	public $menus;
-	public $server;
+
+	public	$site,
+			$db,
+			$mail,
+			$paths,
+			$binaries,
+			$uploadImages,
+			$pages,
+			$wildcardPages,
+			$menus,
+			$server;
 
 	/**
 	 * takes up all $_GET parameters,
@@ -32,29 +36,28 @@ class Config {
 	private		$isLocalhost,
 				$xmlFile,
 				$xmlFileTS,
+				$sections = array(),
 				$config,
 				$document,
 				$plugins = array();
 
 	/**
-	 * parse only database information
-	 * @var boolean
-	 */	
-	private $dbOnly;
-
-	/**
-	 * store passwords automatically or add them via addPasswords()
-	 * @var boolean
+	 * create config instance
+	 * if section is specified, only certain sections of the config file are parsed
+	 * 
+	 * @param string $xmlFile
+	 * @param array $sections
+	 * @throws ConfigException
 	 */
-	private $storePasswords	= FALSE;
+	private function __construct($xmlFile, array $sections) {
 
-	private function __construct($xmlFile, $dbonly) {
-		$this->dbOnly = $dbonly;
+		$this->xmlFile	= $xmlFile;
+		$this->sections	= $sections;
 
-		$this->xmlFile = $xmlFile ? $xmlFile : 'ini/site.ini.xml';
 		if(!$this->config = simplexml_load_file($this->xmlFile)) {
-			throw new ConfigException('Missing or malformed "site.ini.xml"!');
+			throw new ConfigException("Missing or malformed '$xmlFile'!");
 		}
+
 		$this->xmlFileTS = filemtime($this->xmlFile);
 
 		$this->parseConfig();
@@ -66,56 +69,50 @@ class Config {
 
 	private function __clone() {}
 
-	public static function getInstance($xmlFile = NULL, $dbonly = FALSE) {
+	public static function getInstance($xmlFile, array $sections = array()) {
 		if(
+			false && 
 			isset($_SESSION['CONFIG']->xmlFileTS) &&
-			$_SESSION['CONFIG']->xmlFileTS == filemtime($xmlFile ? $xmlFile : 'ini/site.ini.xml')
+			$_SESSION['CONFIG']->xmlFileTS == filemtime($xmlFile)
 		) {
 			self::$instance = $_SESSION['CONFIG'];
 			return self::$instance;
 		}
 		if(is_null(self::$instance)) {
-			self::$instance = new Config($xmlFile, $dbonly);
+			self::$instance = new Config($xmlFile, $sections);
 		}
 		$_SESSION['CONFIG'] = self::$instance;
 		return self::$instance;
 	}
 
 	private function parseConfig() {
+
+		$this->pages			= array();
+		$this->wildcardPages	= array();
+
 		try {
 
-			// first prepare for context specific settings
+			// determine server context
 
 			$this->isLocalhost = !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
-			$this->parseDbSettings();
-
-			// return if only db settings are required (e.g. cronjob scripts)
-
-			if($this->dbOnly) {
-				return;
-			}
-
-			$this->parseMailSettings();
-			$this->parseBinarySettings();
-			$this->parseSiteSettings();
-			$this->parseUploadParametersSettings();
-			$this->parsePathSettings();
-			$this->parsePages();
+			// allow parsing of specific sections
 			
-			// Pages
-			$this->pages			= array();
-			$this->wildcardPages	= array();
+			foreach($this->config->children() as $section) {
+				$sectionName = $section->getName();
 
-			$this->parsePages();
+				if(empty($this->sections) || in_array($sectionName, $this->sections)) {
 
-			// Menus
-			foreach ($this->config->menus->menu as $m) {
-				$tmp = $this->parseMenu($m);
-				$this->menus[$tmp->getId()] = $tmp; 
+					$methodName =	'parse'.
+									ucfirst(
+										preg_replace_callback('/_([a-z])/', function($match) { return strtoupper($match[1]); }, $sectionName)
+									).'Settings';
+
+					if(method_exists($this, $methodName)) {
+						call_user_func(array($this, $methodName), $section);
+					}
+				}
 			}
-
-			$this->parsePlugins();
 		}
 
 		catch(ConfigException $e) {
@@ -123,30 +120,39 @@ class Config {
 		}
 	}
 
-	private function parseDbSettings() {
+	/**
+	 * parse db settings
+	 * 
+	 * @param SimpleXMLElement $db
+	 */
+	private function parseDbSettings(SimpleXMLElement $db) {
 
 		$context = $this->isLocalhost ? 'local' : 'remote';
 
-		$d = $this->config->xpath("//db_connection[@context='$context']");
+		$d = $db->xpath("db_connection[@context='$context']");
+		
 		if(empty($d)) {
-			$d = $this->config->xpath("//db_connection[not(@context)]");
+			$d = $db->xpath('db_connection');
 		}
+
 		if(!empty($d)) {
 			$this->db = new stdClass;
 		
 			foreach($d[0]->children() as $k => $v) {
-				$this->db->$k = ($k != 'pass' || $this->storePasswords == TRUE) ? (string) $v : NULL;
+				$this->db->$k = (string) $v;
 			}
 		}
 	}
 
 	/**
 	 * parses all (optional) mail settings
+	 * 
+	 * @param SimpleXMLElement $mail
 	 */
-	private function parseMailSettings() {
-		if(!empty($this->config->mail) && !empty($this->config->mail->mailer[0])) {
+	private function parseMailSettings(SimpleXMLElement $mail) {
+		if(!empty($mail->mailer[0])) {
 
-			$mailer = $this->config->mail->mailer[0];
+			$mailer = $mail->mailer[0];
 
 			$this->mail = new stdClass();
 			$this->mail->mailer = new stdClass();
@@ -160,18 +166,25 @@ class Config {
 			}
 		}
 	}
-	
-	private function parseBinarySettings() {
+
+	/**
+	 * parse settings for binaries
+	 * 
+	 * @param SimpleXmlElement $binaries
+	 * @throws ConfigException
+	 */
+	private function parseBinariesSettings(SimpleXmlElement $binaries) {
 
 		$context = $this->isLocalhost ? 'local' : 'remote';
 
-		$b = $this->config->xpath("//binaries[@context='$context']");
-		if(empty($b)) {
-			$b = $this->config->xpath("//binaries[not(@context)]");
+		$e = $binaries->xpath("executables[@context='$context']");
+
+		if(empty($e)) {
+			$e = $binaries->xpath('executables');
 		}
 
-		if(!empty($b)) {
-			$p = $b[0]->path;
+		if(!empty($e)) {
+			$p = $e[0]->path;
 			if(empty($p)) {
 				throw new ConfigException('Malformed "site.ini.xml"! Missing path for binaries.');
 			}
@@ -179,7 +192,7 @@ class Config {
 			$this->binaries = new stdClass;
 			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 		
-			foreach($b[0]->executable as $v) {
+			foreach($e[0]->executable as $v) {
 				$id = (string) $v->attributes()->id;
 				foreach($v->attributes() as $k => $v) {
 					$this->binaries->executables[$id][$k] = (string) $v;
@@ -187,25 +200,25 @@ class Config {
 			}
 		}
 	}
-	
-	private function parseSiteSettings() {
 
-		$s = $this->config->site;
-		if(empty($s)) {
-			throw new ConfigException('Malformed "site.ini.xml"! Site data missing.');
-		}
+	/**
+	 * parse general website settings
+	 * 
+	 * @param SimpleXMLElement $site
+	 */
+	private function parseSiteSettings(SimpleXMLElement $site) {
 
 		$this->site = new stdClass;
 
-		foreach($s[0] as $k => $v) {
+		foreach($site[0] as $k => $v) {
 			if($k != 'locales') {
 				$this->site->$k = trim((string) $v);
 			}
 		}
 
-		if(isset($this->config->site->locales)) {
+		if(isset($site->locales)) {
 			$this->site->locales = array();
-			$l = $this->config->site->locales;
+			$l = $site->locales;
 			foreach($l[0] as $locale) {
 				array_push($this->site->locales, (string) $locale->attributes()->value);
 				if(!empty($locale->attributes()->default)) {
@@ -221,11 +234,15 @@ class Config {
 		}
 	}
 
-	private function parseUploadParametersSettings() {
+	/**
+	 * parse various upload parameter settings
+	 * 
+	 * @param SimpleXMLElement $uploadParameters
+	 */
+	private function parseUploadParametersSettings(SimpleXMLElement $uploadParameters) {
 		
-		$u = $this->config->upload_parameters;
-		if(isset($u->images->group)) {
-			foreach($u->images->group as $g) {
+		if(isset($uploadParameters->images->group)) {
+			foreach($uploadParameters->images->group as $g) {
 				$id = (string) $g->attributes()->id;
 				$this->uploadImages[$id]->allowedTypes = explode('|', strtolower((string) $g->attributes()->types));
 				$this->uploadImages[$id]->sizes = array();
@@ -250,88 +267,113 @@ class Config {
 		}
 	}
 	
-	private function parsePathSettings() {
+	/**
+	 * parse various path setting
+	 * 
+	 * @param SimpleXMLElement $paths
+	 */
+	private function parsePathsSettings(SimpleXMLElement $paths) {
 		
-		if(!empty($this->config->paths)) {
-			foreach($this->config->paths->children() as $p) {
+		foreach($paths->children() as $p) {
 		
-				$a = $p->attributes();
-				$p = trim((string) $a->subdir, '/').'/';
+			$a = $p->attributes();
+			$p = trim((string) $a->subdir, '/').'/';
 
-				if(substr($p, 0, 1) == '/') {
-					$this->paths[(string) $a->id]['subdir']		= $p;
-					$this->paths[(string) $a->id]['absolute']	= TRUE;
-				}
-				else {
-					$this->paths[(string) $a->id]['subdir']		= "/$p";
-					$this->paths[(string) $a->id]['absolute']	= FALSE;
-		
-				}
-				$this->paths[(string) $a->id]['access'] = empty($a->access) ? 'r' : (string) $a->access;
+			if(substr($p, 0, 1) == '/') {
+				$this->paths[(string) $a->id]['subdir']		= $p;
+				$this->paths[(string) $a->id]['absolute']	= TRUE;
 			}
-		}
-	}
+			else {
+				$this->paths[(string) $a->id]['subdir']		= "/$p";
+				$this->paths[(string) $a->id]['absolute']	= FALSE;
 	
-	private function parsePlugins() {
-		if(!empty($this->config->plugins)) {
-			foreach($this->config->plugins->plugin as $p) {
-				$a = $p->attributes();
-				$this->plugins[] = array ('class' => (string) $a->class, 'eventTypes' => preg_split('~\s*,\s*~', (string) $a->listens_to), 'configXML' => $p->asXML());
 			}
+			$this->paths[(string) $a->id]['access'] = empty($a->access) ? 'r' : (string) $a->access;
 		}
 	}
 
-	private function parsePages() {
+	/**
+	 * parses settings for configured plugins
+	 * 
+	 * @param SimpleXMLElement $plugins
+	 */
+	private function parsePlugins(SimpleXMLElement $plugins) {
+		foreach($plugins->plugin as $p) {
+			$a = $p->attributes();
+			$this->plugins[] = array ('class' => (string) $a->class, 'eventTypes' => preg_split('~\s*,\s*~', (string) $a->listens_to), 'configXML' => $p->asXML());
+		}
+	}
 
-		foreach($this->config->pages as $d) {
-			$doc = empty($d->attributes()->script) ? $this->site->root_document : (string) $d->attributes()->script;
-			$red = empty($d->attributes()->default_redirect) ? NULL : (string) $d->attributes()->default_redirect;
-		
-			foreach($d->page as $p) {
-				$a = $p->attributes();
-				$id = (string) $a->id;
-		
-				// so-called wildcard pages end up in their own collection
-				if(substr($id, -1) == '*') {
-					$id = substr($id, 0, -1);
-					$collection = &$this->wildcardPages;
-				}
+	/**
+	 * parse page settings
+	 * called seperately for differing script attributes
+	 * 
+	 * @param SimpleXMLElement $pages
+	 */
+	private function parsePagesSettings(SimpleXMLElement $pages) {
+
+		$doc = empty($pages->attributes()->script) ? $this->site->root_document : (string) $pages->attributes()->script;
+		$red = empty($pages->attributes()->default_redirect) ? NULL : (string) $pages->attributes()->default_redirect;
+
+		foreach($pages->page as $page) {
+
+			$a = $page->attributes();
+			$id = (string) $a->id;
+
+			// so-called wildcard pages end up in their own collection
+
+			if(substr($id, -1) == '*') {
+				$id = substr($id, 0, -1);
+				$collection = &$this->wildcardPages;
+			}
+
+			// otherwise we have standard pages
+
+			else {
+				$collection = &$this->pages;
+			}
+
+			// attributes stay the same
+
+			$collection[$doc][$id] = new stdClass;
+			$collection[$doc][$id]->class = (string) $a->class;
+			$collection[$doc][$id]->defaultRedirect = $red;
+
+			// set optional authentication level; if level is not defined, page is locked for everyone
+	
+			if(isset($a->auth)) {
+				$auth = strtoupper(trim((string) $a->auth));
+				if(defined("UserAbstract::AUTH_$auth")) {
+					$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
 					
-				// otherwise we have standard pages
-				else {
-					$collection = &$this->pages;
+					if(isset($a->auth_parameters)) {
+						$collection[$doc][$id]->auth_parameters = trim((string) $a->auth_parameters);
+					}
 				}
-		
-				// attributes stay the same
-		
-				$collection[$doc][$id] = new stdClass;
-				$collection[$doc][$id]->class = (string) $a->class;
-				$collection[$doc][$id]->defaultRedirect = $red;
-		
-				// set optional authentication level; if level is not defined, page is locked for everyone
-		
-				if(isset($a->auth)) {
-					$auth = strtoupper(trim((string) $a->auth));
-					if(defined("UserAbstract::AUTH_$auth")) {
-						$collection[$doc][$id]->auth = constant("UserAbstract::AUTH_$auth");
-						
-						if(isset($a->auth_parameters)) {
-							$collection[$doc][$id]->auth_parameters = trim((string) $a->auth_parameters);
-						}
-					}
-					else {
-						$collection[$doc][$id]->auth = -1;
-					}
+				else {
+					$collection[$doc][$id]->auth = -1;
 				}
 			}
 		}
 	}
 
 	/**
-	 * Parse XML menu entries
+	 * parse menu tree
+	 * 
+	 * @param SimpleXMLElement $menus
+	 */
+	private function parseMenusSettings(SimpleXMLElement $menus) {
+		foreach ($menus->menu as $menu) {
+			$menuInstance = $this->parseMenu($menu);
+			$this->menus[$menuInstance->getId()] = $menuInstance;
+		}
+	}
+
+	/**
+	 * Parse XML menu entries and creates menu instance
 	 *
 	 * @param simpleXmlElement $menu
-	 * @return object menu entries
+	 * @return Menu
 	 */
 	private function parseMenu(SimpleXMLElement $menu) {
 		$a			= $menu->attributes();
@@ -460,22 +502,6 @@ class Config {
 		setlocale(LC_ALL, $this->locales[$this->site->default_locale]);
 	}
 
-	/**
-	 * add passwords information to config
-	 */
-	public function addPasswords() {
-		if(isset($this->db->pass)) { return; }
-
-		$context = $this->isLocalhost ? 'local' : 'remote';
-		$config = simplexml_load_file($this->xmlFile);
-		$pwd = $config->xpath("//db_connection[@context='$context']/pass");
-		if(count($pwd) == 0) {
-			$pwd = $config->xpath("//db_connection[not(@context)]/pass");
-			if(count($pwd) == 0) { return; }
-		}
-		$this->db->pass = (string)$pwd[0];
-	}
-	
 	public function createConst() {
 		$arr = get_object_vars($this);
 
@@ -485,8 +511,6 @@ class Config {
 				if(!defined("DB$k")) { define("DB$k", $v); }
 			}
 		}
-		
-		if($this->dbOnly) { return; }
 
 		foreach($arr['site'] as $k => $v) {
 			if(is_scalar($v)) {
@@ -513,7 +537,6 @@ class Config {
 				}
 			}
 		}
-		
 	}
 
 	/**
