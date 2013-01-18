@@ -71,7 +71,6 @@ class Config {
 
 	public static function getInstance($xmlFile, array $sections = array()) {
 		if(
-			false && 
 			isset($_SESSION['CONFIG']->xmlFileTS) &&
 			$_SESSION['CONFIG']->xmlFileTS == filemtime($xmlFile)
 		) {
