@@ -3,7 +3,7 @@
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.1 2013-01-17
+ * @version 0.1.1a 2013-01-19
  *
  */
 class SmtpMailer implements Mailer {
@@ -251,7 +251,7 @@ class SmtpMailer implements Mailer {
 		}
 
 		if(!$this->check(self::RFC_AUTH_SUCCESSFUL)) {
-			throw new SmtpMailerException('Authentification failed.', SmtpMailerException::AUTH_FAILED);
+			throw new SmtpMailerException('Authentication failed.', SmtpMailerException::AUTH_FAILED);
 		}
 	}
 
