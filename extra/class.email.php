@@ -2,7 +2,7 @@
 /**
  * simple wrapper class for sending emails via mail()
  * 
- * @version 0.2.9 2013-01-17
+ * @version 0.2.10 2013-02-04
  */
 
 class Email {
@@ -23,7 +23,7 @@ class Email {
 	private static $debug = FALSE;
 
 
-	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, $bcc = '', $sig = '', $htmlMail = false) {
+	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, array $bcc = array(), $sig = '', $htmlMail = false) {
 		$this->receiver	= (array) $receiver;
 		$this->subject	= $subject;
 		$this->mailText	= $mailText;
@@ -59,8 +59,8 @@ class Email {
 		$this->subject = $subject;
 	}
 
-	public function setBcc($bcc) {
-		$this->bcc = array($bcc);
+	public function setBcc(array $bcc) {
+		$this->bcc = $bcc;
 	}
 
 	public function setHtmlMail($flag) {
