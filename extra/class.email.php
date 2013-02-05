@@ -1,8 +1,9 @@
 <?php
 /**
  * simple wrapper class for sending emails via mail()
+ * or SmtpMailer
  * 
- * @version 0.2.10 2013-02-04
+ * @version 0.2.12 2013-02-05
  */
 
 class Email {
@@ -12,6 +13,7 @@ class Email {
 			$sender,
 			$subject,
 			$bcc,
+			$cc,
 			$receiver,
 			$mailText,
 			$sig,
@@ -23,11 +25,13 @@ class Email {
 	private static $debug = FALSE;
 
 
-	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, array $bcc = array(), $sig = '', $htmlMail = false) {
-		$this->receiver	= (array) $receiver;
+	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, array $cc = array(), array $bcc = array(), $sig = '', $htmlMail = FALSE) {
+
+		$this->receiver	= $receiver;
 		$this->subject	= $subject;
 		$this->mailText	= $mailText;
 		$this->sender	= !empty($sender) ? $sender : (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
+		$this->cc		= $cc;
 		$this->bcc		= $bcc;
 		$this->sig		= $sig;
 		$this->htmlMail	= $htmlMail;
@@ -40,7 +44,7 @@ class Email {
 	}
 
 	public function setReceiver($receiver) {
-		$this->receiver = (array) $receiver;
+		$this->receiver = $receiver;
 	}
 
 	public function setSender($sender) {
@@ -63,6 +67,10 @@ class Email {
 		$this->bcc = $bcc;
 	}
 
+	public function setCc(array $cc) {
+		$this->cc = $cc;
+	}
+	
 	public function setHtmlMail($flag) {
 		$this->htmlMail = $flag;
 	}
@@ -81,18 +89,14 @@ class Email {
 			return $this->sendMail();
 		}
 
-		foreach ($this->receiver as $r) {
-			if(self::$debug) {
-				$headers = array();
-				foreach($this->headers as $k => $v) {
-					$headers[] = "$k: $v";
-				}
-				echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-				echo implode(', ', $this->receiver), '<hr>';
-				echo implode('<br>', $headers), '<hr>', nl2br($this->msg);
-				echo '</div>';
-			}
+		$headers = array();
+		foreach($this->headers as $k => $v) {
+			$headers[] = "$k: $v";
 		}
+		echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
+		echo $this->receiver, '<hr>';
+		echo implode('<br>', $headers), '<hr>', nl2br($this->msg);
+		echo '</div>';
 
 		return TRUE;
 	}
@@ -124,13 +128,7 @@ class Email {
 				$headers[] = "$k: $v";
 			} 
 
-			foreach ($this->receiver as $r) {
-				if(!mail($r, $this->subject, $this->msg, implode(self::CRLF, $headers))) {
-					return FALSE;
-				}
-
-				return TRUE;
-			}
+			return mail($this->receiver, $this->subject, $this->msg, implode(self::CRLF, $headers));
 		}
 
 		else {
@@ -140,20 +138,22 @@ class Email {
 			try {
 				$this->mailer->connect();
 
-				foreach($this->receiver as $r) {
-					$this->mailer->setFrom($this->sender);
-					$this->mailer->setTo($r);
-					$this->mailer->setHeaders(array_merge(
-						array('Subject' => $this->subject),
-						$this->headers
-					));
-					$this->mailer->setMessage($this->msg);
-					$this->mailer->send();
-				}
+				$this->mailer->setFrom($this->sender);
+				$this->mailer->setTo($this->receiver);
+				$this->mailer->setHeaders(array_merge(
+					array(
+						'To'		=> $this->receiver, 
+						'Subject'	=> $this->subject
+					),
+					$this->headers
+				));
+				$this->mailer->setMessage($this->msg);
+				$this->mailer->send();
 
 				$this->mailer->close();
 				return TRUE;
 			}
+
 			catch(Exception $e) {
 				$this->mailer->close();
 				return FALSE;
@@ -176,6 +176,7 @@ class Email {
 	private function buildHeaders() {
 		$this->headers = array(
 			'From'			=> $this->sender,
+			'CC'			=> 'office@gregorkofler.com',
 			'Return-Path'	=> $this->sender,
 			'Reply-To'		=> $this->sender,
 			'Date'			=> date('r'),
@@ -185,8 +186,12 @@ class Email {
 			'MIME-Version'	=> '1.0'
 		);
 
+		if(!empty($this->cc)) {
+			$this->headers['CC'] = implode(',', $this->cc);
+		}
+
 		if(!empty($this->bcc)) {
-			$this->headers['BCC'] = implode(', ', $this->bcc);
+			$this->headers['BCC'] = implode(',', $this->bcc);
 		}
 
 		if(count($this->attachments) > 0) {
