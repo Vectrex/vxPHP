@@ -3,7 +3,7 @@
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.1a 2013-01-19
+ * @version 0.1.2 2013-02-05
  *
  */
 class SmtpMailer implements Mailer {
@@ -24,7 +24,7 @@ class SmtpMailer implements Mailer {
 			$type,
 			$timeout,
 			$from = '',
-			$to = '',
+			$to,
 			$headers = array(),
 			$message,
 			$authTypes = array('LOGIN', 'PLAIN', 'CRAM-MD5'),
@@ -104,12 +104,23 @@ class SmtpMailer implements Mailer {
 	/**
 	 * sets receiver
 	 *
-	 * @param string $to
+	 * @param mixed $to
 	 */
 	public function setTo($to) {
-		$this->to = trim($to);
-		if(!preg_match('~.*?<.*?>$~', $this->to)) {
-			$this->to = '<'.$this->to.'>';
+		if(!is_array($to)) {
+			$to = array($to);
+		}
+		$this->to = array();
+		
+		foreach($to as $receiver) { 
+			$receiver = trim($receiver);
+
+			if(!preg_match('~.*?<.*?>$~', $receiver)) {
+				$this->to[] = "<$receiver>";
+			}
+			else {
+				$this->to[] = $receiver;
+			}
 		}
 	}
 
@@ -145,10 +156,15 @@ class SmtpMailer implements Mailer {
 			throw new SmtpMailerException('Failed to send addressor.', SmtpMailerException::ADDRESSOR_SEND_FAILED);
 		}
 		
-		$this->put('RCPT TO:'.$this->to.self::CRLF);
-		
-		if(!$this->check(self::RFC_REQUEST_OK)) {
+		if(empty($this->to)) {
 			throw new SmtpMailerException('Failed to send recipient.', SmtpMailerException::RCPT_SEND_FAILED);
+		}
+		foreach ($this->to as $receiver) {
+			$this->put('RCPT TO:'.$receiver.self::CRLF);
+			
+			if(!$this->check(self::RFC_REQUEST_OK)) {
+				throw new SmtpMailerException("Failed to send recipient $receiver.", SmtpMailerException::RCPT_SEND_FAILED);
+			}
 		}
 
 		$this->put('DATA'.self::CRLF);
