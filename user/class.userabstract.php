@@ -3,7 +3,7 @@
  * abstract base class for for admins and members
  * 
  * @author Gregor Kofler
- * @version 0.5.10 2013-01-10
+ * @version 0.5.10a 2013-02-05
  */
 
 abstract class UserAbstract {
@@ -354,7 +354,7 @@ abstract class UserAbstract {
 			}
 		}
 
-		if($m->send()) {
+		if($m->send() === TRUE) {
 			$this->logNotification($notification);
 			return TRUE;
 		}
