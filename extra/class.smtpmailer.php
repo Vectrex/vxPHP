@@ -3,7 +3,7 @@
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.2 2013-02-05
+ * @version 0.1.3 2013-02-05
  *
  */
 class SmtpMailer implements Mailer {
@@ -108,7 +108,7 @@ class SmtpMailer implements Mailer {
 	 */
 	public function setTo($to) {
 		if(!is_array($to)) {
-			$to = array($to);
+			$to = (array) $to;
 		}
 		$this->to = array();
 		
@@ -176,7 +176,12 @@ class SmtpMailer implements Mailer {
 		$payload = array();
 
 		foreach(array_keys($this->headers) as $k) {
-			$payload[] = "$k: {$this->headers[$k]}";
+
+			// remove an optional bcc header
+
+			if(strtolower($k) !== 'bcc') {
+				$payload[] = "$k: {$this->headers[$k]}";
+			}
 		}
 
 		if(count($payload)) {
