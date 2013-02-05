@@ -35,7 +35,7 @@ class Email {
 		$this->bcc		= $bcc;
 		$this->sig		= $sig;
 		$this->htmlMail	= $htmlMail;
-		
+
 		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8'; 
 	}
 	
@@ -139,7 +139,7 @@ class Email {
 				$this->mailer->connect();
 
 				$this->mailer->setFrom($this->sender);
-				$this->mailer->setTo($this->receiver);
+				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
 				$this->mailer->setHeaders(array_merge(
 					array(
 						'To'		=> $this->receiver, 
@@ -154,9 +154,9 @@ class Email {
 				return TRUE;
 			}
 
-			catch(Exception $e) {
+			catch(SmtpMailerException $e) {
 				$this->mailer->close();
-				return FALSE;
+				return $e->getMessage();
 			}
 		}
 	}
