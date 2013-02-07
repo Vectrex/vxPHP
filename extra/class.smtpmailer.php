@@ -3,7 +3,7 @@
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.3 2013-02-05
+ * @version 0.1.4 2013-02-07
  *
  */
 class SmtpMailer implements Mailer {
@@ -27,7 +27,7 @@ class SmtpMailer implements Mailer {
 			$to,
 			$headers = array(),
 			$message,
-			$authTypes = array('LOGIN', 'PLAIN', 'CRAM-MD5'),
+			$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'),
 
 			$socket,
 			$response,
@@ -149,7 +149,7 @@ class SmtpMailer implements Mailer {
 
 		$this->sendEhlo();
 		$this->auth();
-		
+
 		$this->put('MAIL FROM:'.$this->from.self::CRLF);
 		
 		if(!$this->check(self::RFC_REQUEST_OK)) {
@@ -238,6 +238,10 @@ class SmtpMailer implements Mailer {
 	 * @throws SmtpMailerException
 	 */
 	private function auth() {
+
+		if($this->type == 'NONE') {
+			return;
+		}
 
 		$this->put("AUTH ".$this->type.self::CRLF);
 		$this->getResponse();
