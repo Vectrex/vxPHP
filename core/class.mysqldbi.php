@@ -6,7 +6,7 @@
  * 
  * @extends mysqli
  * 
- * @version 4.8.0 2013-01-07
+ * @version 4.8.1 2013-02-05
  * @author Gregor Kofler
  * 
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -64,7 +64,8 @@ class Mysqldbi extends mysqli {
 		$this->pass		= $dbpass != '' ? $dbpass : $c->db->pass;
 		$this->dbname	= $dbname != '' ? $dbname : $c->db->name;
 		
-		@parent::__construct($this->host,$this->user,$this->pass, $this->dbname);
+		@parent::__construct($this->host, $this->user, $this->pass, $this->dbname);
+
 		if (mysqli_connect_errno() !== 0) {
 			throw new MysqldbiException(sprintf('Mysqldbi Error: %s (%s)', mysqli_connect_error(), mysqli_connect_errno()));
 		}
@@ -161,8 +162,9 @@ class Mysqldbi extends mysqli {
 			switch (gettype($v)) {
 				case 'integer':	$type .= 'i'; break;
 				case 'double':	$type .= 'd'; break;
+				case 'NULL':
 				case 'string':	$type .= 's'; break;
-				default:		throw new MysqldbiException('Invalid datatypes for prepared query! Only string, integer and double are allowed.');
+				default:		throw new MysqldbiException('Invalid datatypes for prepared query! Only NULL, string, integer and double are allowed.');
 			}
 			$paramByRef[$k] = &$parameters[$k];
 		}
@@ -238,8 +240,9 @@ class Mysqldbi extends mysqli {
 			switch (gettype($v)) {
 				case 'integer':	$type .= 'i'; break;
 				case 'double':	$type .= 'd'; break;
+				case 'NULL':
 				case 'string':	$type .= 's'; break;
-				default:		throw new Exception('Invalid datatypes for prepared query! Only string, integer and double are allowed.');
+				default:		throw new MysqldbiException('Invalid datatypes for prepared query! Only NULL, string, integer and double are allowed.');
 			}
 			$paramByRef[$k] = &$parameters[$k];
 		}
