@@ -501,40 +501,51 @@ class Config {
 		setlocale(LC_ALL, $this->locales[$this->site->default_locale]);
 	}
 
+	/**
+	 * create constants for simple access to certain configuration settings
+	 */
 	public function createConst() {
-		$arr = get_object_vars($this);
+		$properties = get_object_vars($this);
 
-		foreach($arr['db'] as $k => $v) {
-			if(is_scalar($v)) {
-				$k = strtoupper($k);
-				if(!defined("DB$k")) { define("DB$k", $v); }
+		if(isset($properties['db'])) {
+			foreach($properties['db'] as $k => $v) {
+				if(is_scalar($v)) {
+					$k = strtoupper($k);
+					if(!defined("DB$k")) { define("DB$k", $v); }
+				}
 			}
 		}
 
-		foreach($arr['site'] as $k => $v) {
-			if(is_scalar($v)) {
-				$k = strtoupper($k);
-				if(!defined($k)) { define($k, $v); }
+		if(isset($properties['site'])) {
+			foreach($properties['site'] as $k => $v) {
+				if(is_scalar($v)) {
+					$k = strtoupper($k);
+					if(!defined($k)) { define($k, $v); }
+				}
 			}
 		}
 
-		foreach($arr['paths'] as $k => $v) {
-			$k = strtoupper($k);
-			if(!defined($k)) { define($k, $v['subdir']); }
+		if(isset($properties['paths'])) {
+			foreach($properties['paths'] as $k => $v) {
+				$k = strtoupper($k);
+				if(!defined($k)) { define($k, $v['subdir']); }
+			}
 		}
-		$locale = localeconv();
-		foreach($locale as $k => $v) {
-			$k = strtoupper($k);
-			if(!defined($k) && !is_array($v)) { define($k, $v); }
-		}
-
-		if(!empty($arr['uploadImages'])) {
-			foreach($arr['uploadImages'] as $k => $v) {
+		
+		if(isset($properties['uploadImages'])) {
+			foreach($properties['uploadImages'] as $k => $v) {
 				$k = strtoupper($k);
 				if(!defined("IMG_{$k}_PATH")) {
 					define("IMG_{$k}_PATH", $v->sizes[0]->path);
 				}
 			}
+		}
+
+		$locale = localeconv();
+
+		foreach($locale as $k => $v) {
+			$k = strtoupper($k);
+			if(!defined($k) && !is_array($v)) { define($k, $v); }
 		}
 	}
 
