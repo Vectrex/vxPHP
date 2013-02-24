@@ -176,7 +176,6 @@ class Email {
 	private function buildHeaders() {
 		$this->headers = array(
 			'From'			=> $this->sender,
-			'CC'			=> 'office@gregorkofler.com',
 			'Return-Path'	=> $this->sender,
 			'Reply-To'		=> $this->sender,
 			'Date'			=> date('r'),
