@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Engine for Forms
- * @version 1.1.11 2012-08-12
+ * @version 1.1.12 2013-02-24
  * @author Gregor Kofler
  * 
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -581,12 +581,19 @@ class HtmlForm {
 			return TRUE;
 		}
 
-		$path = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).(defined('FORMTEMPLATES_PATH') ? FORMTEMPLATES_PATH : '');
+		$path = '';
 
 		if(!file_exists($path.$this->tplFile)) {
-			throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.");
+
+			$path = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).(defined('FORMTEMPLATES_PATH') ? FORMTEMPLATES_PATH : '');
+
+			if(!file_exists($path.$this->tplFile)) {
+				throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.");
+			}
 		}
+
 		$this->template = @file_get_contents($path.$this->tplFile);
+		
 		return TRUE;
 	}
 
