@@ -1,9 +1,9 @@
 <?php
 /**
  * Template Engine for Forms
- * @version 1.1.12 2013-02-24
+ * @version 1.1.13 2013-03-06
  * @author Gregor Kofler
- * 
+ *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
  * @todo make addAntiSpam working with multiple forms
  * @todo relocate date and time validation to more appropriate class
@@ -34,7 +34,7 @@ class HtmlForm {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param string $template filename
 	 * @param string $action attribute
 	 * @param string $submit method
@@ -55,7 +55,7 @@ class HtmlForm {
 	/**
 	 * set submission method
 	 * 'GET' and 'POST' are the only allowed values
-	 * 
+	 *
 	 * @param string $method
 	 * @throws HtmlFormException
 	 */
@@ -65,12 +65,12 @@ class HtmlForm {
 			throw new HtmlFormException("Invalid form method: $method");
 		}
 		$this->method = $method;
-		$this->setRequestValues(); 
+		$this->setRequestValues();
 	}
 
 	/**
 	 * set form action
-	 * 
+	 *
 	 * @param string $action
 	 */
 	public function setAction($action) {
@@ -80,7 +80,7 @@ class HtmlForm {
 	/**
 	 * set encoding type of form
 	 * 'application/x-www-form-urlencoded' and 'multipart/form-data' are the only allowed values
-	 * 
+	 *
 	 * @param string $method
 	 * @throws HtmlFormException
 	 */
@@ -94,7 +94,7 @@ class HtmlForm {
 
 	/**
 	 * set miscellaneous attribute of form
-	 * 
+	 *
 	 * @param string $attr
 	 * @param string $value
 	 */
@@ -112,13 +112,13 @@ class HtmlForm {
 				$this->setMethod($value);
 				return;
 			default:
-				$this->attributes[$attr] = $value;		
+				$this->attributes[$attr] = $value;
 		}
 	}
 
 	/**
 	 * sets sevaral form attributes stored in associative array
-	 * 
+	 *
 	 * @param array $attrs
 	 */
 	public function setAttributes(array $attrs) {
@@ -148,7 +148,7 @@ class HtmlForm {
 				$this->clickedSubmit = $e;
 				return $e;
 			}
-				
+
 			if(is_array($e)) {
 
 				// needed for submits via XHR, since arrays are returned as plain text
@@ -161,7 +161,7 @@ class HtmlForm {
 						}
 					}
 				}
-				
+
 				foreach($e as $k => $ee) {
 					if($ee instanceof ImageElement && isset($this->request["{$this->request[$name]}_x"][$k])) {
 						$this->clickedSubmit = $ee;
@@ -180,7 +180,7 @@ class HtmlForm {
 
 	/**
 	 * checks whether form was submitted by element with $name
-	 * 
+	 *
 	 * @param string $name, name of element
 	 * @return boolean result
 	 */
@@ -196,22 +196,22 @@ class HtmlForm {
 	 */
 	public function render() {
 		if($this->loadTemplate())	{
-		
+
 			$this->primeTemplate();
 			$this->insertFormFields();
-	
+
 			SimpleTemplate::parseTemplateLinks($this->html);
 			SimpleTemplate::parseTemplateLocales($this->html);
-	
+
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
-			
+
 			$link = defined('USE_MOD_REWRITE') && USE_MOD_REWRITE ? SimpleTemplate::link2Canonical($this->action) : $this->action;
 			$attr = array();
 			foreach($this->attributes as $k => $v) {
 				$attr[] = "$k='$v'";
 			}
-			
+
 			return implode('', array(
 				"<form action='$link' method='{$this->method}'",
 				($this->type ? " enctype='{$this->type}'" : ''),
@@ -227,8 +227,8 @@ class HtmlForm {
 
 	/**
 	 * deliver all valid form values
-	 * 
-	 * @param boolean $getSubmits,deliver submit buttons when TRUE, defaults to FALSE 
+	 *
+	 * @param boolean $getSubmits,deliver submit buttons when TRUE, defaults to FALSE
 	 * @return array valid_form_values
 	 */
 	public function getValidFormValues($getSubmits = FALSE) {
@@ -257,7 +257,7 @@ class HtmlForm {
 					) {
 						continue;
 					}
-					$tmp[$name][$ndx] = $elem->getFilteredValue();					
+					$tmp[$name][$ndx] = $elem->getFilteredValue();
 				}
 			}
 		}
@@ -269,13 +269,13 @@ class HtmlForm {
 	 * sets initial form values stored in associative array
 	 * values will only be applied to elements with previously declared value NULL
 	 * checkbox elements will be checked when their value equals form value
-	 * 
-	 * @param array $values 
+	 *
+	 * @param array $values
 	 * @return void
 	 */
 	public function setInitFormValues(array $values) {
 		$this->initFormValues = $values;
-		
+
 		foreach($values as $name => $value) {
 			if(isset($this->elements[$name]) && $this->elements[$name] instanceof FormElement) {
 				if($this->elements[$name] instanceof CheckboxElement) {
@@ -296,8 +296,8 @@ class HtmlForm {
 	/**
 	 * retrieve form errors
 	 * $result is either FALSE if no error found, or array with errors
-	 * 
-	 * @return $result 
+	 *
+	 * @return $result
 	 */
 	public function getFormErrors() {
 		if(count($this->formErrors) === 0) {
@@ -314,8 +314,8 @@ class HtmlForm {
 	 * might come in handy with XHR functionality
 	 * returns NULL if extraction fails or template is missing
 	 * if $keys is set, only error texts for given element names are extracted
-	 * 
-	 * @param array $keys  
+	 *
+	 * @param array $keys
 	 * @return array $error_texts
 	 */
 	public function getErrorTexts(array $keys = array()) {
@@ -345,12 +345,10 @@ class HtmlForm {
 
 			else {
 				foreach($e as $ndx => $elem) {
-					if(!$elem->isValid()) {
-						if(!isset($this->formErrors[$name])) {
-							$this->formErrors[$name] = array();
-						}
-						$this->formErrors[$name][$ndx] = TRUE;
+					if(!isset($this->formErrors[$name])) {
+						$this->formErrors[$name] = array();
 					}
+					$this->formErrors[$name][$ndx] = !$elem->isValid();
 				}
 			}
 		}
@@ -359,7 +357,7 @@ class HtmlForm {
 	/**
 	 * initialize a miscellaneous template variable
 	 * array values allow "dynamic" loops an if-else constructs
-	 * 
+	 *
 	 * @param string $name_of_var
 	 * @param mixed $value_of_var
 	 */
@@ -369,7 +367,7 @@ class HtmlForm {
 
 	/**
 	 * add custom error and force error message in template
-	 * 
+	 *
 	 * @param string $error_name
 	 * @param mixed $error_name_index
 	 */
@@ -384,17 +382,17 @@ class HtmlForm {
 
 	/**
 	 * add form element to form
-	 * 
+	 *
 	 * @param FormElement $e
 	 */
 	public function addElement(FormElement $e) {
 		$this->elements[$e->getName()] = $e;
 		$this->setElementRequestValue($e);
-	} 
+	}
 
 	/**
 	 * add several form elements stored in array to form
-	 * 
+	 *
 	 * @param array $e
 	 */
 	public function addElementArray(array $e) {
@@ -405,7 +403,7 @@ class HtmlForm {
 			$this->elements[$name] = $e;
 			$this->setElementArrayRequestValue($name);
 		}
-	} 
+	}
 
 	private function setElementRequestValue(FormElement $e) {
 		$name = $e->getName();
@@ -428,7 +426,7 @@ class HtmlForm {
 
 	private function setElementArrayRequestValue($name) {
 		foreach($this->elements[$name] as $k => $e) {
-	
+
 			if($e instanceof CheckboxElement) {
 				$e->setChecked(isset($this->request[$name][$k]));
 			}
@@ -445,7 +443,7 @@ class HtmlForm {
 
 	/**
 	 * add miscellaneous markup and text to form
-	 * 
+	 *
 	 * @param string $markup_id
 	 * @param mixed $markup_value
 	 */
@@ -475,7 +473,7 @@ class HtmlForm {
 		$label = md5($secret);
 
 		$_SESSION['antiSpamTimer'][$secret]	= microtime(true);
-		
+
 		$e = new InputElement('verify', NULL);
 		$e->setAttribute('type', 'hidden');
 
@@ -490,10 +488,10 @@ class HtmlForm {
 				</span>
 			</div>";
 	}
-	
+
 	/**
 	 * check for spam
-	 * 
+	 *
 	 * @return boolean $spam_detected
 	 */
 	public function detectSpam(array $fields = array(), $threshold = 3) {
@@ -526,7 +524,7 @@ class HtmlForm {
 	 * remove form element
 	 * when $name indicates an array of elements,
 	 * a single element can be picked by declaring $index_of_element_in_array
-	 * 
+	 *
 	 * @param $name_of_element
 	 * @param $index_of_element_in_array
 	 */
@@ -543,7 +541,7 @@ class HtmlForm {
 	 * remove miscellaneous markup and text to form
 	 * when $id indicates an array of snippets,
 	 * a single snippet can be picked by declaring $index_of_markup_in_array
-	 * 
+	 *
 	 * @param string $markup_id
 	 * @param mixed $index_of_markup_in_array
 	 */
@@ -571,7 +569,7 @@ class HtmlForm {
 
 	/**
 	 * load template
-	 * 
+	 *
 	 * @return $success
 	 * @throws HtmlFormException
 	 */
@@ -593,16 +591,16 @@ class HtmlForm {
 		}
 
 		$this->template = @file_get_contents($path.$this->tplFile);
-		
+
 		return TRUE;
 	}
 
 	/**
 	 * prepare template
-	 * 
+	 *
 	 * interprets pseudo tags
 	 * {loop $i} .. {end_loop}
-	 * {if(cond)} .. {else} .. {end_if} 
+	 * {if(cond)} .. {else} .. {end_if}
 	 * {html:$string}
 	 */
 	private function primeTemplate() {
@@ -612,7 +610,7 @@ class HtmlForm {
 
 		// insert vars and loop counters
 		$this->template = $this->doInsertVars($this->template);
-		
+
 		// {if (cond)} .. {else} .. {end_if}
 		$this->template = $this->doIfElseEndif($this->template);
 
@@ -637,7 +635,7 @@ class HtmlForm {
 		$tpl = $this->unrollLoops($stack);
 		return $tpl;
 	}
-	
+
 	private function parseLoopVar($tpl, $counters) {
 		foreach($counters as $c => $v) {
 			$tpl = preg_replace('~\044'.$c.'~', $v, $tpl);
@@ -660,22 +658,22 @@ class HtmlForm {
 
 			$inner = '';
 			$counter = $this->vars[$s['loopVar']];
-			
+
 			if(!empty($s['ndx'])) {
 				$ndxs = explode('][', trim($s['ndx'], '[]$'));
 				foreach($ndxs as $n) {
-					$counter = is_array($counter) && isset($counters[$n]) && isset($counter[$counters[$n]]) ? $counter[$counters[$n]] : 0; 
+					$counter = is_array($counter) && isset($counters[$n]) && isset($counter[$counters[$n]]) ? $counter[$counters[$n]] : 0;
 				}
 			}
 
 			if(is_array($s['inner'])) {
-				for($i = 0; $i < $counter; ++$i) { 
+				for($i = 0; $i < $counter; ++$i) {
 					$counters[$s['loopVar']] = $i;
 					$inner .= $this->unrollLoops($s['inner'], $counters);
 				}
 			}
 			else {
-				for($i = 0; $i < $counter; ++$i) { 
+				for($i = 0; $i < $counter; ++$i) {
 					$counters[$s['loopVar']] = $i;
 					$inner .= $this->parseLoopVar($s['inner'], $counters);
 				}
@@ -740,7 +738,7 @@ class HtmlForm {
 		}
 		return $tpl;
 	}
-	
+
 	/*
 	 * handle {if (cond)} .. {else} .. {end_if}
 	 */
@@ -751,7 +749,7 @@ class HtmlForm {
 
 		while(true) {
 			preg_match('~(.*?)\{(if\s*\((.+?)\)\s*|else|end_if)\}(.*)~si', $tpl, $matches);
- 			
+
 			if(count($matches) < 5) {
 				break;
 			}
@@ -762,7 +760,7 @@ class HtmlForm {
 			switch($matches[2]) {
 				case 'else':
 					$last = &$stack[$nesting-1];
-					
+
 					$last['else'] = true;
 
 					if($last['condition'] && (!isset($last['parentCond']) || $last['parentCond'])) {
@@ -778,7 +776,7 @@ class HtmlForm {
 					}
 
 					--$nesting;
-					
+
 					if($nesting > 0) {
 						$stack[$nesting-1]['left'] .= $stack[$nesting]['left'];
 						$stack[$nesting]['left'] = '';
@@ -803,7 +801,7 @@ class HtmlForm {
 					}
 					else {
 						$cond = $this->evalCondition($matches[3]);
-					} 
+					}
 
 					if(!empty($stack[$nesting]['left'])) {
 						$left = $stack[$nesting]['left'].$left;
@@ -829,7 +827,7 @@ class HtmlForm {
 
 		if(preg_match('/\044(.*)/', $terms[1], $tmp)) { $terms[1] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : null; }
 		if(preg_match('/\044(.*)/', $terms[3], $tmp)) { $terms[3] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : null; }
-		
+
 		switch ($terms[2]) {
 			case '==':	return $terms[1] == $terms[3];
 			case '!=':	return $terms[1] != $terms[3];
@@ -849,7 +847,7 @@ class HtmlForm {
 			'~<\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(\s+.*?)*\s*\/>~i',
 			array($this, 'insertFieldsCallbackNew'),
 			$this->template);
-*/		
+*/
 		$this->html = preg_replace_callback(
 			'/\{(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(\s+.*?)*\}/i',
 			array($this, 'insertFieldsCallback'),
@@ -870,7 +868,7 @@ class HtmlForm {
 			return $this->elements[$matches[2]]->render();
 		}
 	}
-	
+
 	/**
 	 * insert error messages into template
 	 * placeholder for error messages are replaced
@@ -878,7 +876,7 @@ class HtmlForm {
 	private function insertErrorMessages() {
 
 		$rex = '/\{(?:\w+\|)*error_%s(?:\|\w+)*:([^\}]+)\}/i';
-		
+
 		foreach($this->formErrors as $name => $v) {
 			if(!is_array($v)) {
 				$this->html = preg_replace(
@@ -909,7 +907,7 @@ class HtmlForm {
 	/**
 	 * Check date input
 	 * depending on SITE_LOCALE constant
-	 * 
+	 *
 	 * @param string date
 	 * @param bool future allow only future dates
 	 * @param string locale override
@@ -946,7 +944,7 @@ class HtmlForm {
 		}
 
 		if($future) {
-			$dformat = '%04d%02d%02d'; 
+			$dformat = '%04d%02d%02d';
 			switch($locale){
 				case 'de':
 					if(sprintf($dformat, $tmp[2],$tmp[1],$tmp[0]) < date('Ymd'))	{ return false; }
@@ -963,7 +961,7 @@ class HtmlForm {
 
 	/**
 	 * Check time input (H[H]:[M]M)
-	 * 
+	 *
 	 * @param string time
 	 * @return bool result
 	 */
