@@ -304,9 +304,32 @@ class HtmlForm {
 			return FALSE;
 		}
 
-		else {
-			return $this->formErrors;
+		$errors = array();
+
+		foreach($this->formErrors as $key => $err) {
+			if(!is_array($err)) {
+				$errors[$key] = TRUE;
+				continue;
+			}
+			else {
+				foreach($this->formErrors[$key] as $k => $e) {
+
+					if($this->formErrors[$key][$k]) {
+						if(!isset($errors[$key])) {
+							$errors[$key] = array();
+						}
+						$errors[$key][$k] = TRUE;
+					}
+
+				}
+			}
 		}
+
+		if(!count($errors)) {
+			return FALSE;
+		}
+
+		return $errors;
 	}
 
 	/**
