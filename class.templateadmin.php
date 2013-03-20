@@ -1,0 +1,442 @@
+<?php
+/**
+ * helper class to sync and update templates both in filesystem and database
+ * 
+ * @version 0.3.6 2011-08-30
+ * @author Gregor Kofler
+ * 
+ */
+
+class TemplateAdmin {
+	private static $maxPageRevisions;
+
+	private function __construct() {}
+
+	/**
+	 * public function for
+	 * syncing file and db based templates 
+	 *
+	 * can either
+	 * create template files from db entries
+	 * insert templates from template files into db
+	 * update templates
+	 */
+	private static function getTplFiles($locale, &$tpl) {
+		$path	= self::getPath($locale);
+		$files	= Filesystem::getDir($path, 'htm');
+		
+		if(!empty($files)) {
+			foreach($files as $f) {
+				$t = filemtime($path.$f);
+
+				$tpl['universal'][$f] = array(
+					'Template' => $f,
+					'fmtime' => $t,
+					'fmtimef' => date('Y-m-d H:i:s', $t)
+				);
+			}
+		}
+	}
+
+	public static function syncTemplates() {
+		$db = &$GLOBALS['db'];
+		$locales = empty($GLOBALS['config']->site->locales) ? array() : $GLOBALS['config']->site->locales;
+
+		// fetch file info
+		$tpl = array();
+		
+		// "universal" templates
+		self::getTplFiles('universal', $tpl);
+
+		// localized templates
+		foreach($locales as $l) {
+			self::getTplFiles($l, $tpl);
+		}
+
+		// fetch db info
+		$dbTpl = array();
+		
+		// "universal" templates
+		$rows = $db->doQuery("
+			select
+				p.pagesID,
+				p.Template,
+				p.Alias,
+				date_format(max(r.templateUpdated), '%Y-%m-%d %H:%i:%s') as lastUpdate,
+				UNIX_TIMESTAMP(max(r.templateUpdated)) as lastUpdateTS
+			from
+				revisions r
+				right join pages p on r.pagesID = p.pagesID
+			where
+				r.Locale IS NULL OR r.Locale = ''
+			group by
+				pagesID,
+				Template
+			", TRUE);
+
+		foreach($rows as $r) {
+			$dbTpl['universal'][$r['Template']] = $r;
+		}
+
+		// localized templates
+		foreach($locales as $l) {
+			$rows = $db->doPreparedQuery("
+				select
+					p.pagesID,
+					p.Template,
+					p.Alias,
+					date_format(max(r.templateUpdated), '%Y-%m-%d %H:%i:%s') as lastUpdate,
+					UNIX_TIMESTAMP(max(r.templateUpdated)) as lastUpdateTS
+				from
+					revisions r
+					right join pages p on r.pagesID = p.pagesID
+				where
+					r.Locale = ?
+				group by
+					pagesID,
+					Template
+			", array($l));
+
+			foreach($rows as $r) {
+				$dbTpl[$l][$r['Template']] = $r;
+			}
+		}
+		
+		// update templates based on db info
+		foreach($dbTpl as $l => $t) {
+			foreach($t as $k => $v) {
+				if(!isset($tpl[$l][$k]) || ($tpl[$l][$k]['fmtime'] < $v['lastUpdateTS'])) {
+
+					$localeSQL = $l == 'universal' ? "(r.Locale IS NULL OR r.Locale = '')" : "r.Locale = '$l'";
+
+					$rows = $db->doQuery("
+						select
+							r.Markup
+						from
+							revisions r
+						where
+							pagesID = {$v['pagesID']} AND $localeSQL
+						order by
+							templateUpdated desc
+						limit 1
+						", TRUE);
+					self::createTemplate($v + $rows[0], $l);
+				}
+			}
+		}
+
+		// update db on template files
+		foreach($tpl as $l => $t) {
+
+			foreach($t as $k => $v) {
+				if(!isset($dbTpl[$l][$k])) {
+					self::insertTemplate($v, $l);
+				}
+				else if(empty($dbTpl[$l][$k]['lastUpdateTS']) || ($v['fmtime'] > $dbTpl[$l][$k]['lastUpdateTS'])) {
+					self::updateTemplate($dbTpl[$l][$k] + $v, $l);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * public function for
+	 * adding a revision to a template
+	 * @param array $data new revision data
+	 */
+	public static function addRevision($data) {
+		$locale = $data['Locale'];
+		unset($data['Locale']);
+		self::deleteOldRevisions($data['pagesID'], $locale);
+		return self::insertRevision($data, $locale);
+	}
+
+	/**
+	 * create a new template file
+	 * @param array $data content, mtime, etc. of template
+	 * @param string $locale locale of template
+	 */
+	private static function createTemplate($data, $locale = 'universal') {
+		$path = self::getPath($locale);
+
+		$handle = fopen($path.$data['Template'], 'w');
+		if(!$handle) {
+			return FALSE;
+		}
+		if(fwrite($handle, $data['Markup']) === FALSE) {
+			return FALSE;
+		}
+		fclose($handle);
+
+		@chmod($path.$data['Template'], 0666);
+		@touch($path.$data['Template'], $data['lastUpdateTS']);
+		
+		return TRUE;
+	}
+
+	/**
+	 * insert page data and first revision
+	 * @param array $data template data
+	 * @param string $locale of template
+	 */
+	private static function insertTemplate($data, $locale = 'universal') {
+		$db = &$GLOBALS['db'];
+		
+		$alias = strtoupper(basename($data['Template'], '.htm'));
+
+		$rows = $db->doQuery("SELECT pagesID from pages WHERE Alias = '$alias'", TRUE);
+		
+		// insert only revision (locale might differ)
+		if(!empty($rows)) {
+			$newId = $rows[0]['pagesID'];
+		}
+		else {
+			if(!($newId = $db->insertRecord('pages', 
+			array(
+				'Template' => $data['Template'],
+				'Alias' => $alias
+			)
+			))) {
+				return FALSE;
+			}
+		}
+
+		$markup = file_get_contents(self::getPath($locale).$data['Template']);
+		return self::insertRevision(
+			array(
+				'Markup' => $markup,
+				'Rawtext' => self::extractRawtext($markup),
+				'pagesID' => $newId,
+				'templateUpdated' => $data['fmtimef']
+			), $locale
+		);
+	}
+
+	/**
+	 * delete old revisions and add new revision
+	 */
+	private static function updateTemplate($data, $locale = 'universal') {
+		$metaData = self::getPageMetaData($data['Alias']);
+		$markup = file_get_contents(self::getPath($locale).$data['Template']);
+
+		self::deleteOldRevisions($data['pagesID'], $locale);
+
+		return self::insertRevision(
+			array_merge($metaData,
+			array(
+				'Markup' => $markup,
+				'Rawtext' => self::extractRawtext($markup),
+				'pagesID' => $data['pagesID'],
+				'templateUpdated' => $data['fmtimef']
+			)), $locale
+		);
+	}
+
+	private static function insertRevision($row, $locale = 'universal') {
+		$db = &$GLOBALS['db'];
+
+		$row			= self::sanitizeTemplateData($row);
+		$row['Rawtext']	= self::extractRawtext($row['Markup']);
+
+		if(!empty($locale) && $locale != 'universal' && in_array($locale, $GLOBALS['config']->site->locales)) {
+			$row['Locale'] = $locale;
+			$localeSQL = "r.Locale = '$locale'";
+		}
+		else {
+			$localeSQL = "(r.Locale IS NULL OR r.Locale = '')";
+		}
+
+		$db->execute("update revisions r set active = NULL where active = 1 AND pagesID = {$row['pagesID']} AND $localeSQL");
+		$row['active'] = 1;
+		
+		return $db->insertRecord('revisions', $row);
+	}
+
+	private static function deleteOldRevisions($pagesID, $locale = 'universal') {
+		$db = &$GLOBALS['db'];
+
+		if(empty(self::$maxPageRevisions)) {
+			self::$maxPageRevisions =	isset($GLOBALS['config']->site->max_page_revisions) &&
+										is_numeric($GLOBALS['config']->site->max_page_revisions) ?
+										((int) $GLOBALS['config']->site->max_page_revisions > 0 ? (int) $GLOBALS['config']->site->max_page_revisions : 1) :
+										5;
+		}
+
+		$delIds = array();
+
+		$localeSQL = !empty($locale) && $locale != 'universal' && in_array($locale, $GLOBALS['config']->site->locales) ?
+			"Locale = '$locale'" :
+			"(Locale IS NULL OR Locale = '')";
+
+		$db->doQuery("
+			select
+				revisionsID
+			from
+				revisions r
+			where
+				pagesID = $pagesID AND $localeSQL
+			order by
+				templateUpdated desc");
+		
+		if($db->numRows < self::$maxPageRevisions) {
+			return TRUE;
+		}
+
+		for($i = self::$maxPageRevisions - 1; $i--;) {
+			$r = $db->queryResult->fetch_assoc();
+			array_push($delIds, $r['revisionsID']);
+		}
+
+		return $db->execute("
+			DELETE FROM
+				revisions
+			WHERE
+				revisionsID NOT IN (".implode(',', $delIds).") AND pagesID = $pagesID AND $localeSQL");
+	}
+	
+	private static function getPath($locale) {
+		return
+			rtrim($_SERVER['DOCUMENT_ROOT'], '/').
+			(defined('TPL_PATH') ? TPL_PATH : '/').
+			($locale === 'universal' ? '' : "$locale/");
+	}
+	
+	/**
+	 * extract raw text data from php/html template 
+	 */
+	private static function extractRawtext($text) {
+		return strip_tags(htmlspecialchars_decode(preg_replace(array('~\s+~', '~<br\s*/?>~', '~<\s*script.*?>.*?</\s*script\s*>~', '~<\?(php)?.*?\?>~'), array(' ', ' ', '', '') , $text)));
+	}
+	
+	/**
+	 * sanitize keywords, description
+	 */
+	private static function sanitizeTemplateData($data) {
+		if(!empty($data['Keywords'])) {
+			$data['Keywords']	= preg_replace(array('~\s+~', '~\s*,\s*~', '~[^ \w\däöüß,.-]~i'), array(' ', ', ', ''), trim($data['Keywords']));
+		}
+		if(!empty($data['Description'])) {
+			$data['Description']= preg_replace(array('~\s+~', '~[^ \pL\d,.-]~'), array(' ', ''), trim($data['Description']));
+		}
+		return $data;
+	}
+
+	/**
+	 * retrieve metadata of template stored in database
+	 */
+	public static function getPageMetaData($alias) {
+		$db = &$GLOBALS['db'];
+		
+		if(empty($db)) {
+			return false;
+		}
+
+		$config = &$GLOBALS['config'];
+
+		$alias = strtoupper($alias);
+
+		if($db->tableExists('pages') && $db->tableExists('revisions')) {
+			$data = $db->doQuery("
+				SELECT
+					r.Title,
+					a.Name,
+					r.Keywords,
+					r.Description,
+					r.templateUpdated as lastChanged,
+					IFNULL(r.locale, '') AS locale_sort
+				FROM
+					revisions r
+					INNER JOIN pages p ON r.pagesID = p.pagesID
+					LEFT JOIN admin a ON r.authorID = a.adminID
+				WHERE
+					p.Alias = '$alias' AND
+					r.locale IS NULL OR r.locale = '{$config->site->current_locale}'
+				ORDER BY
+					locale_sort DESC, active DESC, r.lastUpdated DESC
+				LIMIT 1
+				", true);
+			if(!empty($data[0])) {
+				unset($data[0]['locale_sort']);
+				return $data[0];
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * retrieve available page categories
+	 */
+	public static function getAvailablePageCategories() {
+		$db = &$GLOBALS['db'];
+
+		if(empty($db)) {
+			return FALSE;
+		}
+
+		if(!$db->tableExists('pagecategories')) {
+			return array();
+		}
+
+		$categories = array();
+		$rows = $db->doQuery("SELECT pagecategoriesID, Name FROM pagecategories ORDER BY Name", TRUE);
+		foreach($rows as $r) {
+			$categories[$r['pagecategoriesID']] = $r['Name'];
+		}
+		return $categories;
+	}
+
+	/**
+	 * get page categories for page
+	 * 
+	 * @param integer $pageId
+	 * 
+	 * @return categories
+	 */
+	public static function getPageCategories($id) {
+		$db = &$GLOBALS['db'];
+
+		if(empty($db)) {
+			return FALSE;
+		}
+
+		if(!$db->tableExists('pagecategories')) {
+			return array();
+		}
+
+		$categories = array();
+		$rows = $db->doPreparedQuery("
+			SELECT
+				c.pagecategoriesID,
+				Name
+			FROM pagecategories c
+			INNER JOIN pages_pagecategories pc ON c.pagecategoriesID = pc.pagecategoriesID
+		WHERE
+			pagesID = ?
+		ORDER BY Name", array((int) $id));
+
+		foreach($rows as $r) {
+			$categories[$r['pagecategoriesID']] = $r['Name'];
+		}
+		return $categories;
+	}
+
+	/**
+	 * set page categories for page
+	 * 
+	 * @param integer $pageId
+	 * @param array $pageCategoriesId
+	 * 
+	 * @return success
+	 */
+	 public static function setPageCategories($id, Array $pageCategoriesId) {
+		$db = &$GLOBALS['db'];
+
+		if(!$db->preparedExecute("DELETE FROM pages_pagecategories WHERE pagesID = ?", array((int) $id))) {
+			return FALSE;
+		}
+		foreach($pageCategoriesId as $catId) {
+			$db->insertRecord('pages_pagecategories', array('pagesID' => (integer) $id, 'pagecategoriesID' => (integer) $catId));
+		 }
+	 }
+}
+?>
