@@ -528,4 +528,8 @@ class Article implements SubjectInterface {
 
 		return $articles;
 	}
+
+	public static function createList() {
+		return $this;
+	}
 }
