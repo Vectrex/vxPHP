@@ -2,6 +2,7 @@
 
 namespace vxPHP\Orm\Custom;
 
+use vxPHP\Orm\Custom\ArticleQuery;
 use vxPHP\Orm\Custom\Exception\ArticleException;
 
 use vxPHP\Observer\SubjectInterface;
@@ -529,7 +530,7 @@ class Article implements SubjectInterface {
 		return $articles;
 	}
 
-	public static function createList() {
+	public static function ArticlesFromQuery(ArticleQuery $query) {
 		return $this;
 	}
 }
