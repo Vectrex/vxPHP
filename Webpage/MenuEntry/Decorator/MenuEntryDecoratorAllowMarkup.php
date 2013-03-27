@@ -49,7 +49,7 @@ class MenuEntryDecoratorAllowMarkup extends MenuEntryDecorator {
 			}
 
 			if(isset($subMenu) && $menu->getShowSubmenus()) {
-				$markup .= $subMenu->render();
+				$markup .= $subMenu->render($menu->getShowSubmenus(), $menu->getForceActive());
 			}
 		}
 		return $markup.'</li>';

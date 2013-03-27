@@ -140,7 +140,7 @@ class MenuEntry implements MenuEntryInterface {
 				}
 
 				if(isset($this->subMenu) && $this->menu->getShowSubmenus()) {
-					$markup .= $this->subMenu->render();
+					$markup .= $this->subMenu->render($this->menu->getShowSubmenus(), $this->menu->getForceActive());
 				}
 			}
 			return $markup.'</li>';
