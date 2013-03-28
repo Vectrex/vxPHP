@@ -18,7 +18,7 @@ use vxPHP\File\MetaFile;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.4.1 2012-12-13
+ * @version 0.6.5 2013-03-28
  */
 
 class Article implements SubjectInterface {
@@ -239,6 +239,24 @@ class Article implements SubjectInterface {
 	 */
 	public function getUpdatedBy() {
 		return $this->updatedBy;
+	}
+
+	/**
+	 * get timestamp of article creation
+	 *
+	 *  @return DateTime
+	 */
+	public function getFirstCreated() {
+		return $this->firstCreated;
+	}
+
+	/**
+	 * get timestamp of last article update
+	 *
+	 *  @return DateTime
+	 */
+	public function getLastUpdated() {
+		return $this->lastUpdated;
 	}
 
 	/**
