@@ -18,7 +18,7 @@ use vxPHP\File\MetaFile;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.5 2013-03-28
+ * @version 0.6.6 2013-03-29
  */
 
 class Article implements SubjectInterface {
@@ -44,6 +44,10 @@ class Article implements SubjectInterface {
 					$instancesByAlias;
 
 	public function __construct() {
+	}
+
+	public function __toString() {
+		return $this->alias;
 	}
 
 	/**
@@ -518,6 +522,66 @@ class Article implements SubjectInterface {
 		self::$instancesById[$article->id]			= $article;
 
 		return $article;
+	}
+
+	public static function getInstances(array $ids) {
+
+		$db = &$GLOBALS['db'];
+
+		$toRetrieveById		= array();
+		$toRetrieveByAlias	= array();
+
+		foreach($ids as $id) {
+
+			if(is_numeric($id)) {
+				$id = (int) $id;
+
+				if(!isset(self::$instancesById[$id])) {
+					$toRetrieveById[] = $id;
+				}
+			}
+
+			else {
+				if(!isset(self::$instancesByAlias[$id])) {
+					$toRetrieveByAlias[] = $id;
+				}
+			}
+
+			$where = array();
+
+			if(count($toRetrieveById)) {
+				$where[] = 'a.articlesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
+			}
+			if(count($toRetrieveByAlias)) {
+				$where[] = 'a.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
+			}
+
+			if(count($where)) {
+				$rows = $db->doPreparedQuery('
+					SELECT
+						a.*
+					FROM
+						articles a
+					WHERE
+						' . implode(' OR ', $where),
+				array_merge($toRetrieveById, $toRetrieveByAlias));
+
+				foreach($rows as $row) {
+					$article = self::createInstance($row);
+					self::$instancesByAlias[$article->alias]	= $article;
+					self::$instancesById[$article->id]			= $article;
+				}
+			}
+		}
+
+		$articles = array();
+
+		foreach($ids as $id) {
+			$articles[] = self::getInstance($id);
+		}
+
+		return $articles;
+
 	}
 
 	/**
