@@ -524,6 +524,12 @@ class Article implements SubjectInterface {
 		return $article;
 	}
 
+	/**
+	 * returns array of Article objects identified by numeric id or alias
+	 *
+	 * @param array $ids contains mixed article ids or alias
+	 * @return array
+	 */
 	public static function getInstances(array $ids) {
 
 		$db = &$GLOBALS['db'];
