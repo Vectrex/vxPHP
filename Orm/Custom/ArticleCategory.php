@@ -9,7 +9,7 @@ use vxPHP\Orm\Custom\Article;
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.1.0 2012-11-30
+ * @version 0.2.0 2013-04-02
  */
 
 class ArticleCategory {
@@ -27,6 +27,10 @@ class ArticleCategory {
 	public function __construct($title, ArticleCategory $parentCategory = NULL) {
 		$this->parentCategory	= $parentCategory;
 		$this->title			= $title;
+	}
+
+	public function __toString() {
+		return $this->alias;
 	}
 
 	public function __destruct() {
@@ -91,14 +95,23 @@ class ArticleCategory {
 		self::$instancesById[$cat->id]			= $this;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getId() {
 		return $this->id;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getAlias() {
 		return $this->alias;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getTitle() {
 		return $this->title;
 	}
@@ -107,6 +120,10 @@ class ArticleCategory {
 		$this->title = trim($title);
 	}
 
+
+	/**
+	 * @return int
+	 */
 	public function getCustomSort() {
 		return $this->customSort;
 	}
@@ -146,6 +163,13 @@ class ArticleCategory {
 		return array('r' => $this->r, 'l' => $this->l, 'level' => $this->level);
 	}
 
+	/**
+	 * returns articlecategory instance identified by numeric id or alias
+	 *
+	 * @param mixed $id
+	 * @throws ArticleCategoryException
+	 * @return \vxPHP\Orm\Custom\ArticleCategory
+	 */
 	public static function getInstance($id) {
 		$db = &$GLOBALS['db'];
 
@@ -205,6 +229,96 @@ class ArticleCategory {
 
 		return $cat;
 	}
+
+	/**
+	 * returns array of ArticleCategory objects identified by numeric id or alias
+	 *
+	 * @param array $ids contains mixed category ids or alias
+	 * @throws ArticleCategoryException
+	 * @return array
+	 */
+	public static function getInstances(array $ids) {
+
+		$db = &$GLOBALS['db'];
+
+		$toRetrieveById		= array();
+		$toRetrieveByAlias	= array();
+
+		foreach($ids as $id) {
+
+			if(is_numeric($id)) {
+				$id = (int) $id;
+
+				if(!isset(self::$instancesById[$id])) {
+					$toRetrieveById[] = $id;
+				}
+			}
+
+			else {
+				if(!isset(self::$instancesByAlias[$id])) {
+					$toRetrieveByAlias[] = $id;
+				}
+			}
+
+			$where = array();
+
+			if(count($toRetrieveById)) {
+				$where[] = 'c.articlecategoriesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
+			}
+			if(count($toRetrieveByAlias)) {
+				$where[] = 'c.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
+			}
+
+			if(count($where)) {
+
+				$rows = $db->doPreparedQuery('
+					SELECT
+						c.*,
+						p.articlecategoriesID AS parentID
+					FROM
+						articlecategories c
+						LEFT JOIN articlecategories p ON p.l < c.l AND p.r > c.r AND p.level = c.level - 1
+					WHERE
+						' . implode(' OR ', $where),
+					array_merge($toRetrieveById, $toRetrieveByAlias)
+				);
+
+				foreach($rows as $row) {
+
+					if(!empty($row['level'])) {
+						if(empty($row['parentID'])) {
+							throw new ArticleCategoryException("Category '{$row['Title']}' not properly nested.", ArticleCategoryException::ARTICLECATEGORY_NOT_NESTED);
+						}
+						else {
+							$cat = new self($row['Title'], ArticleCategory::getInstance($row['parentID']));
+						}
+					}
+					else {
+						$cat = new self($row['Title']);
+					}
+
+					$cat->id			= $row['articlecategoriesID'];
+					$cat->alias			= $row['Alias'];
+					$cat->r				= $row['r'];
+					$cat->l				= $row['l'];
+					$cat->level			= $row['level'];
+					$cat->customSort	= $row['customSort'];
+
+					self::$instancesByAlias[$cat->alias]	= $cat;
+					self::$instancesById[$cat->id]			= $cat;
+				}
+			}
+		}
+
+		$categories = array();
+
+		foreach($ids as $id) {
+			$categories[] = self::getInstance($id);
+		}
+
+		return $categories;
+	}
+
 
 	/**
 	 * retrieve all available categories sorted by $sortCallback
