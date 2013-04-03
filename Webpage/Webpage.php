@@ -12,6 +12,8 @@ use vxPHP\User\Admin;
 use vxPHP\Util\JSMin;
 use vxPHP\Request\NiceURI;
 use vxPHP\Template\Util\SimpleTemplateUtil;
+use vxPHP\Database\Mysqldbi;
+use vxPHP\Config\Config;
 
 
 /**
@@ -20,7 +22,7 @@ use vxPHP\Template\Util\SimpleTemplateUtil;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.15.2 2012-11-03
+ * @version 1.15.3 2013-04-03
  *
  */
 
@@ -30,9 +32,19 @@ abstract class Webpage {
 				$validatedRequests	= array(),
 				$currentPage		= NULL,
 				$currentDocument	= NULL;
-	protected	$allowedRequests	= array('page' => '~^[a-z0-9_]+$~i'),
-				$config,
-				$pageConfigData,
+
+	/**
+	 * @var Config
+	 */
+	protected	$config;
+
+
+	/**
+	 * @var Mysqldbi
+	 */
+	protected	$db;
+
+	protected 	$pageConfigData,
 				$author				= 'Gregor Kofler - Mediendesign und Webapplikationen, http://gregorkofler.com',
 				$robots				= 'index, follow',
 				$title,
@@ -44,37 +56,44 @@ abstract class Webpage {
 				$useTimestamps		= TRUE,
 				$metaData			= array(),
 				$primedMenus		= array(),	// cache for menus, when shown several times on page
+				$allowedRequests	= array('page' => '~^[a-z0-9_]+$~i'),
 				$forceActiveMenu;
 
-	protected	$db;
-
 	public function __construct() {
+
 		if(!isset($GLOBALS['config'])) {
 			throw new WebpageException('Configuraton object not found!');
 		}
+
 		if(isset($GLOBALS['db'])) {
 			$this->db = &$GLOBALS['db'];
 		}
-		$this->config = &$GLOBALS['config'];
-		$this->html = '';
 
-		$this->currentDocument = $this->config->getDocument();
+		$this->config			= &$GLOBALS['config'];
+		$this->html				= '';
+		$this->currentDocument	= $this->config->getDocument();
 		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
+
 		$this->validateRequests(array_merge($this->config->_get, $_POST));
 
 		if(isset($this->validatedRequests['page']) && (
 			isset($this->config->pages[$this->config->getDocument()][$this->validatedRequests['page']]) ||
 			isset($this->config->pages[$this->config->getDocument()]['default']))) {
-				$this->currentPage = $this->validatedRequests['page'];
+
+			$this->currentPage = $this->validatedRequests['page'];
+
 		}
-		else if(!empty($this->config->pages)){
+		else if(!empty($this->config->pages)) {
+
 			if(empty($this->config->pages[$this->config->getDocument()])) {
 				$this->generateHttpError();
 				return;
 			}
+
 			$pageKeys = array_keys($this->config->pages[$this->config->getDocument()]);
 			$this->currentPage = array_shift($pageKeys);
 		}
+
 		if(isset($this->config->pages[$this->config->getDocument()][$this->currentPage])) {
 			$this->pageConfigData = $this->config->pages[$this->config->getDocument()][$this->currentPage];
 		}
@@ -86,6 +105,7 @@ abstract class Webpage {
 			$_SESSION['authViolatingUri'] = !empty($_SERVER['REQUEST_URI']) ? ltrim($_SERVER['REQUEST_URI'], '/') : NULL;
 			$this->redirect();
 		}
+
 		$this->handleXHR();
 	}
 
@@ -93,13 +113,15 @@ abstract class Webpage {
 	 * Set value of a single meta element
 	 * valid names are: author, description, robots, keywords
 	 *
-	 * @param string $name of meta tag
-	 * @param string $value of tag
+	 * @param string $name
+	 * @param string $value
 	 */
 	public function overrideMetaValue($name, $value) {
+
 		if(property_exists($this, $name)) {
 			$this->$name = $value;
 		}
+
 	}
 
 	/**
@@ -108,7 +130,9 @@ abstract class Webpage {
 	 * @param array $css
 	 */
 	public function appendCssLinks(Array $css) {
+
 		$this->css = array_merge($this->css, $css);
+
 	}
 
 	/**
@@ -117,9 +141,20 @@ abstract class Webpage {
 	 * @param array $css
 	 */
 	public function appendJsLinks(Array $js) {
+
 		$this->js = array_merge($this->js, $js);
+
 	}
 
+	/**
+	 * build complete HTML header
+	 *
+	 * @param string $title
+	 * @param string $css
+	 * @param string $js
+	 * @param string $miscstr
+	 * @return string
+	 */
 	public function htmlHeader($title = NULL, $css = NULL, $js = NULL, $miscstr = NULL) {
 		$caption =  !empty($title) ? $title : $this->setMetaValue('title');
 
