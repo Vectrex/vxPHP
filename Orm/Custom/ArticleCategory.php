@@ -9,21 +9,35 @@ use vxPHP\Orm\Custom\Article;
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.2.0 2013-04-02
+ * @version 0.2.0a 2013-04-06
  */
 
 class ArticleCategory {
-	private			$id,
-					$alias,
-					$level, $l, $r,
-					$title,
-					$parentCategory,
-					$customSort,
-					$articles;
 
 	private static	$instancesById		= array(),
 					$instancesByAlias	= array();
 
+	private	$id,
+			$alias,
+			$level, $l, $r,
+			$title,
+			$customSort,
+			$articles;
+
+	/**
+	 * @var ArticleCategory
+	 */
+	private $parentCategory;
+
+
+	/**
+	 * create a new category
+	 * a freshly created category has no representation in the database yet
+	 * persistence requires a save()
+	 *
+	 * @param string $title
+	 * @param ArticleCategory $parentCategory
+	 */
 	public function __construct($title, ArticleCategory $parentCategory = NULL) {
 		$this->parentCategory	= $parentCategory;
 		$this->title			= $title;
@@ -39,6 +53,12 @@ class ArticleCategory {
 
 	}
 
+	/**
+	 * save category
+	 *
+	 * @todo only INSERTs are supported, UPDATE has to be implemented
+	 * @throws ArticleCategoryException
+	 */
 	public function save() {
 		$db		= &$GLOBALS['db'];
 		$data	= array();
