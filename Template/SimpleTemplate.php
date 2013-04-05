@@ -11,7 +11,7 @@ use vxPHP\Request\NiceURI;
 /**
  * A simple template system
  *
- * @version 0.8.2a 2012-09-16
+ * @version 0.8.3 2013-04-06
  * @author Gregor Kofler
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -394,7 +394,8 @@ class SimpleTemplate {
 				$params = preg_split('~\s+~', $a);
 
 				$method = array_shift($params);
-				if(method_exists('ImageEdit', $method)) {
+
+				if(method_exists('vxPHP\\Image\\ImageModifier', $method)) {
 					call_user_func_array(array($imgEdit, $method), $params);
 				}
 			}
