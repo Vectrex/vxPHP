@@ -18,30 +18,63 @@ use vxPHP\File\MetaFile;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.6 2013-03-29
+ * @version 0.6.6a 2013-04-05
  */
 
 class Article implements SubjectInterface {
+
+	private static	$instancesById,
+					$instancesByAlias;
+
 	private	$id,
 			$alias,
-			$category,
 			$headline,
 			$data,
-			$articleDate,
-			$displayFrom,
-			$displayUntil,
-			$createdBy,
-			$updatedBy,
-			$lastUpdated,
-			$firstCreated,
 			$customFlags,
 			$customSort,
 			$referencingFiles,
-			$previouslySavedValues;
+			$previouslySavedValues,
+			$dataCols = array('Teaser', 'Content');
 
-	private	$dataCols = array('Teaser', 'Content');
-	private static	$instancesById,
-					$instancesByAlias;
+	/**
+	 * @var ArticleCategory
+	 */
+	private	$category;
+
+	/**
+	 * @var \DateTime
+	 */
+	private	$articleDate;
+
+	/**
+	 * @var \DateTime
+	 */
+	private	$displayFrom;
+
+	/**
+	 * @var \DateTime
+	 */
+	private	$displayUntil;
+
+	/**
+	 * @var \DateTime
+	 */
+	private	$lastUpdated;
+
+	/**
+	 * @var \DateTime
+	 */
+	private	$firstCreated;
+
+	/**
+	 * @var User
+	 */
+	private	$createdBy;
+
+	/**
+	 * @var User
+	 */
+	private	$updatedBy;
 
 	public function __construct() {
 	}
