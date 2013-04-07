@@ -8,7 +8,7 @@ use vxPHP\File\Exception\FilesystemFolderException;
 /**
  * helper class to sync and update templates both in filesystem and database
  *
- * @version 0.3.6 2011-08-30
+ * @version 0.3.7 2013-04-07
  * @author Gregor Kofler
  *
  */
@@ -118,7 +118,9 @@ class SimpleTemplateUtil {
 						LIMIT 1
 					", TRUE);
 
-					self::createTemplate($v + $rows[0], $l);
+					if(!empty($rows[0])) {
+						self::createTemplate($v + $rows[0], $l);
+					}
 				}
 			}
 		}
@@ -248,7 +250,7 @@ class SimpleTemplateUtil {
 	private static function insertTemplate($data, $locale = 'universal') {
 		$db = &$GLOBALS['db'];
 
-		$alias = strtoupper(basename($data['Template'], '.htm'));
+		$alias = strtoupper(basename($data['Template']->getFilename(), '.htm'));
 
 		$rows = $db->doQuery("SELECT pagesID from pages WHERE Alias = '$alias'", TRUE);
 
@@ -259,7 +261,7 @@ class SimpleTemplateUtil {
 		else {
 			if(!($newId = $db->insertRecord('pages',
 			array(
-				'Template' => $data['Template'],
+				'Template' => $data['Template']->getFilename(),
 				'Alias' => $alias
 			)
 			))) {
@@ -267,7 +269,8 @@ class SimpleTemplateUtil {
 			}
 		}
 
-		$markup = file_get_contents(self::getPath($locale).$data['Template']);
+		$markup = file_get_contents($data['Template']->getPath());
+
 		return self::insertRevision(
 			array(
 				'Markup' => $markup,
@@ -282,8 +285,9 @@ class SimpleTemplateUtil {
 	 * delete old revisions and add new revision
 	 */
 	private static function updateTemplate($data, $locale = 'universal') {
+
 		$metaData = self::getPageMetaData($data['Alias']);
-		$markup = file_get_contents(self::getPath($locale).$data['Template']);
+		$markup = file_get_contents($data['Template']->getPath());
 
 		self::deleteOldRevisions($data['pagesID'], $locale);
 
@@ -362,9 +366,9 @@ class SimpleTemplateUtil {
 
 	private static function getPath($locale) {
 		return
-			rtrim($_SERVER['DOCUMENT_ROOT'], '/').
-			(defined('TPL_PATH') ? TPL_PATH : '/').
-			($locale === 'universal' ? '' : "$locale/");
+			rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).
+			(defined('TPL_PATH') ? TPL_PATH : DIRECTORY_SEPARATOR).
+			($locale === 'universal' ? '' : ($locale . DIRECTORY_SEPARATOR) );
 	}
 
 	/**
