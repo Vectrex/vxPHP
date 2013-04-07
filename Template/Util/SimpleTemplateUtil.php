@@ -134,7 +134,7 @@ class SimpleTemplateUtil {
 					self::insertTemplate($v, $l);
 				}
 				else if(empty($dbTpl[$l][$k]['lastUpdateTS']) || ($v['fmtime'] > $dbTpl[$l][$k]['lastUpdateTS'])) {
-					self::updateTemplate($dbTpl[$l][$k] + $v, $l);
+					self::updateTemplate(array_merge($dbTpl[$l][$k], $v), $l);
 				}
 			}
 		}
