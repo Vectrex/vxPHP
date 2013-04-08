@@ -81,58 +81,133 @@ class MetaFile implements SubjectInterface {
 	}
 
 	/**
-	 * return MetaFiles either identified by primary keys or paths
+	 * return array of MetaFiles identified by primary keys
 	 *
-	 * @param array $paths
 	 * @param array $ids
-	 * @throws MetaFileException
 	 *
 	 * @return array
 	 */
-	public static function getInstances(array $paths = NULL, array $ids = NULL) {
+	public static function getInstancesByIds(array $ids) {
 
-		$retrieveByPath	= array();
-		$retrieveById	= array();
-
-		// collect paths, that must be read from db
-
-		if(!is_null($paths)) {
-			foreach($paths as $path) {
-
-				$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
-				$path :
-				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
-
-				if(!isset(self::$instancesByPath[$lookup])) {
-					$retrieveByPath[] = $path;
-				}
-			}
-		}
+		$toRetrieveById = array();
 
 		// collect ids that must be read from db
 
-		if(!is_null($ids)) {
-			foreach($ids as $id) {
-				if(!isset(self::$instancesById[$id])) {
-					$retrieveById[] = (int) $id;
-				}
+		foreach($ids as $id) {
+			if(!isset(self::$instancesById[$id])) {
+				$toRetrieveById[] = (int) $id;
 			}
 		}
 
 		// build and execute query, if necessary
 
-		if(count($retrieveById) || count($retrieveByPath)) {
+		if(count($toRetrieveById)) {
+
 			if(!isset(self::$db)) {
 				self::$db = $GLOBALS['db'];
 			}
 
-			$rows = self::$db->doPreparedQuery(
-				"
-					SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.filesID IN (?)",
-					$retrieveById
-			);
+			$rows = self::$db->doPreparedQuery('
+				SELECT
+					f.*,
+					CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
+				FROM
+					files f
+					INNER JOIN folders fo ON fo.foldersID = f.foldersID
+				WHERE
+					f.filesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')) . ')',
+			$toRetrieveById);
 
+			foreach($rows as $row) {
+				$mf = new self(NULL, NULL, $row);
+				self::$instancesById[$mf->getId()]						= $mf;
+				self::$instancesByPath[$mf->filesystemFile->getPath()]	= $mf;
+			}
 		}
+
+		// return instances
+
+		$metafiles = array();
+
+		foreach($ids as $id) {
+			$metafiles[] = self::$instancesById[$id];
+		}
+
+		return $metafiles;
+
+	}
+
+	/**
+	 * return MetaFiles identified by paths
+	 *
+	 * @param array $paths
+	 *
+	 * @return array
+	 */
+	public static function getInstancesByPaths(array $paths) {
+
+		$toRetrieveByPath	= array();
+		$lookupPaths		= array();
+
+		// collect paths, that must be read from db
+
+		$lookupPaths = array();
+
+		foreach($paths as $path) {
+
+			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
+						$path :
+						rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+
+			$lookupPaths[] = $lookup;
+
+			if(!isset(self::$instancesByPath[$lookup])) {
+				$pathinfo = pathinfo($lookup);
+
+				$toRetrieveByPath[] = $pathinfo['basename'];
+				$toRetrieveByPath[] = $pathinfo['dirname'].DIRECTORY_SEPARATOR;
+				$toRetrieveByPath[] = str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR, '', $pathinfo['dirname']).DIRECTORY_SEPARATOR;
+			}
+		}
+
+		// build and execute query, if necessary
+
+		if(count($toRetrieveByPath)) {
+
+			if(!isset(self::$db)) {
+				self::$db = $GLOBALS['db'];
+			}
+
+			$where = array_fill(0, count($toRetrieveByPath) / 3, 'f.File = ? AND fo.Path IN (?, ?)');
+
+			$rows = self::$db->doPreparedQuery('
+				SELECT
+					f.*,
+					CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
+				FROM
+					files f
+					INNER JOIN folders fo ON fo.foldersID = f.foldersID
+				WHERE
+					'. implode(' OR ', $where),
+			$toRetrieveByPath);
+
+			foreach($rows as $row) {
+				$mf = new self(NULL, NULL, $row);
+				self::$instancesById[$mf->getId()]						= $mf;
+				self::$instancesByPath[$mf->filesystemFile->getPath()]	= $mf;
+			}
+		}
+
+		// return instances
+
+		$metafiles = array();
+
+		foreach($lookupPaths as $path) {
+			$metafiles[] = self::$instancesByPath[$path];
+		}
+
+		return $metafiles;
+
 	}
 
 	/**
@@ -350,6 +425,10 @@ class MetaFile implements SubjectInterface {
 		// when record features an obscured_filename, the FilesystemFile is bound to this obscured filename, while the metafile always references the non-obscured filename
 
 		$this->isObscured		= $this->data['File'] !== $this->filesystemFile->getFilename();
+	}
+
+	public function __toString() {
+		return $this->getPath();
 	}
 
 	/**
