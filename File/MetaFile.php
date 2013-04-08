@@ -10,6 +10,7 @@ use vxPHP\File\FilesystemFile;
 
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Observer\SubjectInterface;
+use vxPHP\Database\Mysqldbi;
 
 /**
  * mapper for metafiles
@@ -18,14 +19,19 @@ use vxPHP\Observer\SubjectInterface;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.0 2012-11-19
+ * @version 0.6.0 2013-04-08
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
  */
 class MetaFile implements SubjectInterface {
+
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
+
+	/**
+	 * @var Mysqldbi
+	 */
 	private static	$db;
 
 	/**
