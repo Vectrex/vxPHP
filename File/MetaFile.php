@@ -72,6 +72,33 @@ class MetaFile implements SubjectInterface {
 	}
 
 	/**
+	 * return MetaFiles either identified by primary keys or paths
+	 *
+	 * @param array $paths
+	 * @param array $ids
+	 * @throws MetaFileException
+	 *
+	 * @return array
+	 */
+	public static function getInstances(array $paths = NULL, array $ids = NULL) {
+
+		$retrieveByPath	= array();
+		$retrieveById	= array();
+
+		if(!is_null($paths)) {
+			foreach($paths as $path) {
+
+			}
+		}
+
+		if(!is_null($ids)) {
+			foreach($ids as $id) {
+
+			}
+		}
+	}
+
+	/**
 	 * return all metafile instances within a certain metafolder
 	 * faster than Metafolder::getMetafiles()
 	 *
