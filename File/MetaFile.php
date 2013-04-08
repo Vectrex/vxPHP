@@ -28,10 +28,17 @@ class MetaFile implements SubjectInterface {
 	private static	$instancesByPath	= array();
 	private static	$db;
 
+	/**
+	 * @var FilesystemFile
+	 */
 	private $filesystemFile;
 
-	private	$metaFolder,
-			$id,
+	/**
+	 * @var MetaFolder
+	 */
+	private	$metaFolder;
+
+	private	$id,
 			$isObscured,
 			$data;
 
