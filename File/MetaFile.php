@@ -49,7 +49,9 @@ class MetaFile implements SubjectInterface {
 			self::$db = $GLOBALS['db'];
 		}
 		if(isset($path)) {
-			$lookup = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
+						$path :
+						rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
 
 			if(!isset(self::$instancesByPath[$lookup])) {
 				$mf = new self($path);
@@ -88,12 +90,21 @@ class MetaFile implements SubjectInterface {
 		if(!is_null($paths)) {
 			foreach($paths as $path) {
 
+				$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
+				$path :
+				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+
+				if(!isset(self::$instancesByPath[$lookup])) {
+					$retrieveByPath[] = $path;
+				}
 			}
 		}
 
 		if(!is_null($ids)) {
 			foreach($ids as $id) {
-
+				if(!isset(self::$instancesById[$id])) {
+					$retrieveById[] = (int) $id;
+				}
 			}
 		}
 	}
