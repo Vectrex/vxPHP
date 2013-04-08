@@ -94,6 +94,8 @@ class MetaFile implements SubjectInterface {
 		$retrieveByPath	= array();
 		$retrieveById	= array();
 
+		// collect paths, that must be read from db
+
 		if(!is_null($paths)) {
 			foreach($paths as $path) {
 
@@ -107,12 +109,29 @@ class MetaFile implements SubjectInterface {
 			}
 		}
 
+		// collect ids that must be read from db
+
 		if(!is_null($ids)) {
 			foreach($ids as $id) {
 				if(!isset(self::$instancesById[$id])) {
 					$retrieveById[] = (int) $id;
 				}
 			}
+		}
+
+		// build and execute query, if necessary
+
+		if(count($retrieveById) || count($retrieveByPath)) {
+			if(!isset(self::$db)) {
+				self::$db = $GLOBALS['db'];
+			}
+
+			$rows = self::$db->doPreparedQuery(
+				"
+					SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.filesID IN (?)",
+					$retrieveById
+			);
+
 		}
 	}
 
@@ -157,8 +176,8 @@ class MetaFile implements SubjectInterface {
 			usort($result, $callBackSort);
 			return $result;
 		}
-		else if(is_callable("Metafile::$callBackSort")) {
-			usort($result, "Metafile::$callBackSort");
+		else if(is_callable("self::$callBackSort")) {
+			usort($result, "self::$callBackSort");
 			return $result;
 		}
 		else {
