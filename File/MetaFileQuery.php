@@ -102,7 +102,7 @@ class MetaFileQuery extends CustomQuery implements CustomQueryInterface {
 		$ids = array();
 
 		foreach($rows as $row) {
-			$ids[] = $row['articlesID'];
+			$ids[] = $row['filesID'];
 		}
 
 		return MetaFile::getInstancesByIds($ids);
