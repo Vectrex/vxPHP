@@ -92,7 +92,7 @@ abstract class CustomQuery implements CustomQueryInterface {
 	 * specifying and executing query
 	 *
 	 * @param Mysqldbi $dbConnection
-	 * @return ArticleQuery
+	 * @return CustomQueryInterface
 	 */
 	public static function create(Mysqldbi $dbConnection) {
 		return new static($dbConnection);

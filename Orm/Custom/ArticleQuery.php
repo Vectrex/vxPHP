@@ -22,9 +22,6 @@ use vxPHP\Database\Mysqldbi;
  *
  * @author Gregor Kofler
  * @version 0.2.0 2013-04-10
- *
- * @todo avoid preparation of statement when underlying SQL doesn't change
- *
  */
 class ArticleQuery extends CustomQuery implements CustomQueryInterface {
 

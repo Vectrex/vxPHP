@@ -2,41 +2,110 @@
 namespace vxPHP\File;
 
 use vxPHP\Database\Mysqldbi;
-class MetaFileQuery {
+use vxPHP\Orm\Custom\CustomQuery;
+use vxPHP\Orm\Custom\CustomQueryInterface;
+use vxPHP\Orm\Custom\Exception\QueryException;
+
+/**
+ * query object which returns an array of MetaFile objects
+ *
+ * @example
+ *
+ * $articles =	vxPHP\File\MetaFileQuery::create($db)->
+ * 				filterByFolder($myFolder)->
+ * 				filterByReference('articles', $myArticle->getId())->
+ * 				sortBy('customSort', FALSE)->
+ * 				select();
+ *
+ * @author Gregor Kofler
+ * @version 0.1.0 2013-04-10
+ */
+class MetaFileQuery extends CustomQuery implements CustomQueryInterface {
 
 	public function __construct(Mysqldbi $dbConnection) {
 
-	}
-
-	public function select() {
-
-	}
-
-	public function selectFirst($rows = 1) {
+		$this->selectSql = 'SELECT * FROM files';
+		parent::__construct($dbConnection);
 
 	}
 
-	public function filter($columnName, $value) {
-
-	}
-
+	/**
+	 * add appropriate WHERE clause that filters for $metaFolder
+	 *
+	 * @param MetaFolder $category
+	 * @return MetaFileQuery
+	 */
 	public function filterByFolder(MetaFolder $folder) {
 
+		$this->addCondition("foldersID = ?", $folder->getId());
+		return $this;
+
 	}
+
+	/**
+	 * add appropriate WHERE clause that filters metafiles referencing
+	 * given $referencedId in $referencedTable
+	 *
+	 * @param string $referencedTable
+	 * @param int $referencedId
+	 * @return MetaFileQuery
+	 */
 
 	public function filterByReference($referencedTable, $referencedId) {
 
+		if(!is_numeric($referencedId)) {
+			throw new QueryException("Invalid 'referencedId' for " . __CLASS__ . '::' . __METHOD__);
+		}
+
+		$this->addCondition("referenced_Table = ?", $referencedTable);
+		$this->addCondition("referencedID = ?", (int) $referencedId);
+
+		return $this;
+
 	}
 
-	public function where($whereClause, Array $valuesToBind = NULL) {
+	/**
+	 * executes query and returns array of MetaFile instances
+	 *
+	 * @return array
+	 */
+	public function select() {
 
+		$this->buildQueryString();
+		$this->buildValuesArray();
+		$rows = $this->executeQuery();
+
+		$ids = array();
+
+		foreach($rows as $row) {
+			$ids[] = $row['filesID'];
+		}
+
+		return MetaFile::getInstancesByIds($ids);
 	}
 
-	public function sortBy($columnName, $asc = TRUE) {
+	/**
+	 * adds LIMIT clause, executes query and returns array of MetaFile instances
+	 *
+	 * @param number $rows
+	 * @return array
+	 */
+	public function selectFirst($rows = 1) {
 
+		$this->buildQueryString();
+		$this->buildValuesArray();
+
+		$this->sql .= " LIMIT $rows";
+
+		$rows = $this->executeQuery();
+
+		$ids = array();
+
+		foreach($rows as $row) {
+			$ids[] = $row['articlesID'];
+		}
+
+		return MetaFile::getInstancesByIds($ids);
 	}
 
-	public static function create(Mysqldbi $dbConnection) {
-		return new self($dbConnection);
-	}
 }
