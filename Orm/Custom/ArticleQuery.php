@@ -1,8 +1,8 @@
 <?php
 namespace vxPHP\Orm\Custom;
 
-use vxPHP\Orm\Custom\CustomQuery;
-use vxPHP\Orm\Custom\CustomQueryInterface;
+use vxPHP\Orm\Query;
+use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleCategory;
 
@@ -23,7 +23,7 @@ use vxPHP\Database\Mysqldbi;
  * @author Gregor Kofler
  * @version 0.2.0 2013-04-10
  */
-class ArticleQuery extends CustomQuery implements CustomQueryInterface {
+class ArticleQuery extends Query implements QueryInterface {
 
 	/**
 	 * provide initial database connection

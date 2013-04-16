@@ -1,9 +1,9 @@
 <?php
 
-namespace vxPHP\Orm\Custom;
+namespace vxPHP\Orm;
 
 use vxPHP\Database\Mysqldbi;
-use vxPHP\Orm\Custom\CustomQueryInterface;
+use vxPHP\Orm\QueryInterface;
 
 /**
  * abstract class for ORM queries
@@ -11,7 +11,7 @@ use vxPHP\Orm\Custom\CustomQueryInterface;
  * @author Gregor Kofler
  * @version 0.1.0 2013-04-10
  */
-abstract class CustomQuery implements CustomQueryInterface {
+abstract class Query implements QueryInterface {
 
 	/**
 	 *

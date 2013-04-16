@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Orm\Custom\Exception;
+namespace vxPHP\Orm\Exception;
 
 class QueryException extends \Exception {
 }

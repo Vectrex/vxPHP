@@ -2,9 +2,9 @@
 namespace vxPHP\File;
 
 use vxPHP\Database\Mysqldbi;
-use vxPHP\Orm\Custom\CustomQuery;
-use vxPHP\Orm\Custom\CustomQueryInterface;
-use vxPHP\Orm\Custom\Exception\QueryException;
+use vxPHP\Orm\Query;
+use vxPHP\Orm\QueryInterface;
+use vxPHP\Orm\Exception\QueryException;
 
 /**
  * query object which returns an array of MetaFile objects
@@ -20,7 +20,7 @@ use vxPHP\Orm\Custom\Exception\QueryException;
  * @author Gregor Kofler
  * @version 0.1.0 2013-04-10
  */
-class MetaFileQuery extends CustomQuery implements CustomQueryInterface {
+class MetaFileQuery extends Query implements QueryInterface {
 
 	public function __construct(Mysqldbi $dbConnection) {
 

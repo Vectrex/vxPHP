@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Orm\Custom;
+namespace vxPHP\Orm;
 
 use vxPHP\Database\Mysqldbi;
 
@@ -10,7 +10,7 @@ use vxPHP\Database\Mysqldbi;
  * @author Gregor Kofler
  * @version 0.1.0 2013-04-10
  */
-interface CustomQueryInterface {
+interface QueryInterface {
 
 	public function filter($columnName, $value);
 	public function where($whereClause, array $valuesToBind);
