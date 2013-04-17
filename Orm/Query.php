@@ -9,7 +9,7 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.0 2013-04-10
+ * @version 0.1.1 2013-04-17
  */
 abstract class Query implements QueryInterface {
 
@@ -97,6 +97,28 @@ abstract class Query implements QueryInterface {
 	public static function create(Mysqldbi $dbConnection) {
 		return new static($dbConnection);
 	}
+
+	/**
+	 * executes query and returns number of rows
+	 *
+	 * @return int
+	 */
+	abstract public function count() {}
+
+	/**
+	 * executes query and returns array of (custom) row instances
+	 *
+	 * @return array
+	 */
+	abstract public function select() {}
+
+	/**
+	 * adds LIMIT clause, executes query and returns array of (custom) row instances
+	 *
+	 * @param number $rows
+	 * @return array
+	 */
+	abstract public function selectFirst($rows = 1) {}
 
 	/**
 	 * stores WHERE clause and values which must be bound
