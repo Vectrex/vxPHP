@@ -95,4 +95,7 @@ class ArticleQuery extends Query implements QueryInterface {
 		return Article::getInstances($ids);
 	}
 
+	public function count() {
+
+	}
 }

@@ -108,4 +108,8 @@ class MetaFileQuery extends Query implements QueryInterface {
 		return MetaFile::getInstancesByIds($ids);
 	}
 
+
+	public function count() {
+
+	}
 }
