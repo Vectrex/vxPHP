@@ -9,7 +9,7 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.1 2013-04-17
+ * @version 0.1.2 2013-05-07
  */
 abstract class Query implements QueryInterface {
 
@@ -103,14 +103,14 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @return int
 	 */
-	abstract public function count() {}
+	abstract public function count();
 
 	/**
 	 * executes query and returns array of (custom) row instances
 	 *
 	 * @return array
 	 */
-	abstract public function select() {}
+	abstract public function select();
 
 	/**
 	 * adds LIMIT clause, executes query and returns array of (custom) row instances
@@ -118,7 +118,7 @@ abstract class Query implements QueryInterface {
 	 * @param number $rows
 	 * @return array
 	 */
-	abstract public function selectFirst($rows = 1) {}
+	abstract public function selectFirst($rows = 1);
 
 	/**
 	 * stores WHERE clause and values which must be bound
