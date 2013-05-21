@@ -2,5 +2,5 @@
 
 namespace vxPHP\Mail\Exception;
 
-abstract class MailerException {
+abstract class MailerException extends \Exception {
 }
