@@ -18,7 +18,7 @@ use vxPHP\Orm\Exception\QueryException;
  * 				select();
  *
  * @author Gregor Kofler
- * @version 0.1.0 2013-04-10
+ * @version 0.1.1 2013-05-24
  */
 class MetaFileQuery extends Query implements QueryInterface {
 
@@ -108,8 +108,19 @@ class MetaFileQuery extends Query implements QueryInterface {
 		return MetaFile::getInstancesByIds($ids);
 	}
 
+	/**
+	/* (non-PHPdoc)
+	 * @see \vxPHP\Orm\Query::selectFromTo()
+	 */
+	public function selectFromTo($from, $to) {
+		// TODO: Auto-generated method stub
+	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Orm\Query::count()
+	 */
 	public function count() {
-
+		// TODO: Auto-generated method stub
 	}
 }

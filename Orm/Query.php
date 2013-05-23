@@ -9,12 +9,11 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.2 2013-05-07
+ * @version 0.1.3 2013-05-24
  */
 abstract class Query implements QueryInterface {
 
 	/**
-	 *
 	 * @var Mysqldbi
 	 */
 	protected	$dbConnection;
@@ -25,6 +24,7 @@ abstract class Query implements QueryInterface {
 				$selectSql,
 				$sql,
 				$lastQuerySql;
+
 
 	/**
 	 * provide initial database connection
@@ -119,6 +119,17 @@ abstract class Query implements QueryInterface {
 	 * @return array
 	 */
 	abstract public function selectFirst($rows = 1);
+
+	/**
+	/* adds LIMIT clause with offset and count, executes query and returns array of (custom) row instances
+	 *
+	 * @see \vxPHP\Orm\QueryInterface::selectFromTo()
+	 */
+	public function selectFromTo($from, $to) {
+		// TODO: Auto-generated method stub
+
+	}
+
 
 	/**
 	 * stores WHERE clause and values which must be bound

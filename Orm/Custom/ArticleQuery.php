@@ -21,7 +21,7 @@ use vxPHP\Database\Mysqldbi;
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.2.0 2013-04-10
+ * @version 0.2.1 2013-05-24
  */
 class ArticleQuery extends Query implements QueryInterface {
 
@@ -95,7 +95,22 @@ class ArticleQuery extends Query implements QueryInterface {
 		return Article::getInstances($ids);
 	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Orm\Query::count()
+	 */
 	public function count() {
+		// TODO: Auto-generated method stub
 
 	}
+
+	/**
+	/* (non-PHPdoc)
+	 * @see \vxPHP\Orm\Query::selectFromTo()
+	 */
+	public function selectFromTo($from, $to) {
+		// TODO: Auto-generated method stub
+
+	}
+
 }
