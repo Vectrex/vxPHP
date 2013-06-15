@@ -18,7 +18,7 @@ class DynamicMenuEntry extends MenuEntry {
 			$this->attributes->$attr = $value;
 		}
 	}
-	
+
 	public function __destruct() {
 		parent::__destruct();
 	}

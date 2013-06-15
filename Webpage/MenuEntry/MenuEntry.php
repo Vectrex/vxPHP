@@ -9,6 +9,8 @@ use vxPHP\Request\NiceURI;
 /**
  * MenuEntry class
  * manages a single menu entry
+ *
+ * @version 0.2.0 2013-06-15
  */
 class MenuEntry implements MenuEntryInterface {
 	private static		$href, $admin;
@@ -40,6 +42,10 @@ class MenuEntry implements MenuEntryInterface {
 		if($this->subMenu && $this->subMenu->getType() == 'dynamic') {
 			$this->subMenu->__destruct();
 		}
+	}
+
+	public function __toString() {
+		return $this->page;
 	}
 
 	public function appendMenu(Menu $menu) {
