@@ -327,7 +327,7 @@ abstract class Webpage {
 
 		// instantiate optional decorator class
 		if(!empty($decorator)) {
-			$className = "MenuDecorator$decorator";
+			$className = "vxPHP\\Webpage\\Menu\\Decorator\\MenuDecorator$decorator";
 			$m = new $className($m);
 		}
 

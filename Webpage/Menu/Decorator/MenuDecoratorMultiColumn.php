@@ -5,7 +5,9 @@ namespace vxPHP\Webpage\Menu\Decorator;
 use vxPHP\Webpage\Menu\Decorator\MenuDecorator;
 
 class MenuDecoratorMultiColumn extends MenuDecorator {
+
 	public function render($showSubmenus = FALSE, $forceActive = FALSE, $entriesPerColumn) {
+
 		$this->menu->setShowSubmenus($showSubmenus);
 		$this->menu->setForceActive($forceActive);
 
