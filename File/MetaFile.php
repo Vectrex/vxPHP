@@ -19,7 +19,7 @@ use vxPHP\Database\Mysqldbi;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2013-04-08
+ * @version 0.6.1 2013-06-18
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -374,8 +374,8 @@ class MetaFile implements SubjectInterface {
 			usort($result, $callBackSort);
 			return $result;
 		}
-		else if(is_callable("Metafile::$callBackSort")) {
-			usort($result, "Metafile::$callBackSort");
+		else if(is_callable("self::$callBackSort")) {
+			usort($result, "self::$callBackSort");
 			return $result;
 		}
 		else {
