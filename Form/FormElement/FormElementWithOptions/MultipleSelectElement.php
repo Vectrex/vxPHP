@@ -4,11 +4,11 @@ namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 class MultipleSelectElement extends SelectElement {
 
-	public function __construct($name, Array $value = NULL) {
+	public function __construct($name, $value = NULL) {
 		parent::__construct($name, $value);
 	}
 
-	public function appendOption(FormElementFragment $option) {
+	public function appendOption(FormElementFragmentInterface $option) {
 
 		$this->options[] = $option;
 		$option->setParentElement($this);
@@ -23,11 +23,18 @@ class MultipleSelectElement extends SelectElement {
 		}
 	}
 
-	public function setValue(Array $value = NULL) {
+	/**
+	 * value can be either a primitive or an array
+	 *
+	 * @param mixed $value
+	 */
+	public function setValue($value = NULL) {
 
 		if(isset($value)) {
+
 			//ENT_QUOTES not set
-			$this->value = array_map('htmlspecialchars', $value);
+
+			$this->value = array_map('htmlspecialchars', (array) $value);
 		}
 
 		foreach($this->options as $o) {
