@@ -13,18 +13,23 @@ use vxPHP\User\Admin;
 use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
+use vxPHP\Database\Mysqldbi;
 
 /**
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.6a 2013-04-05
+ * @version 0.6.7 2013-06-19
  */
 
 class Article implements SubjectInterface {
 
 	private static	$instancesById,
-					$instancesByAlias;
+					$instancesByAlias,
+					/**
+					 * @var Mysqldbi
+					 */
+					$db;
 
 	private	$id,
 			$alias,
@@ -107,8 +112,17 @@ class Article implements SubjectInterface {
 
 				// non type-strict comparison for DateTime instances
 
-				if($this->previouslySavedValues->$p != $this->$p) {
-					return TRUE;
+				if($this->previouslySavedValues->$p instanceof \DateTime) {
+
+					if($this->previouslySavedValues->$p != $this->$p) {
+						return TRUE;
+					}
+
+				}
+				else {
+					if($this->previouslySavedValues->$p !== $this->$p) {
+						return TRUE;
+					}
 				}
 			}
 		}
@@ -122,7 +136,9 @@ class Article implements SubjectInterface {
 	 */
 	public function save() {
 
-		$db = $GLOBALS['db'];
+		if(!isset(self::$db)) {
+			self::$db = $GLOBALS['db'];
+		}
 
 		if(is_null($this->headline) || trim($this->headline) == '') {
 			throw new ArticleException("Headline not set. Article can't be inserted", ArticleException::ARTICLE_HEADLINE_NOT_SET);
@@ -138,7 +154,7 @@ class Article implements SubjectInterface {
 
 			// update
 
-			$this->alias = $db->getAlias($this->headline, 'articles', $this->id);
+			$this->alias = self::$db->getAlias($this->headline, 'articles', $this->id);
 
 			$cols = array_merge(
 				(array) $this->getData(),
@@ -155,14 +171,14 @@ class Article implements SubjectInterface {
 				)
 			);
 
-			$db->updateRecord('articles', $this->id, $cols);
+			self::$db->updateRecord('articles', $this->id, $cols);
 		}
 
 		else {
 
 			// insert
 
-			$this->alias = $db->getAlias($this->headline, 'articles');
+			$this->alias = self::$db->getAlias($this->headline, 'articles');
 
 			$cols = array_merge(
 				(array) $this->getData(),
@@ -179,7 +195,7 @@ class Article implements SubjectInterface {
 				)
 			);
 
-			$this->id = $db->insertRecord('articles', $cols);
+			$this->id = self::$db->insertRecord('articles', $cols);
 
 			// set file references
 
@@ -294,6 +310,29 @@ class Article implements SubjectInterface {
 	 */
 	public function getLastUpdated() {
 		return $this->lastUpdated;
+	}
+
+	/**
+	 * get custom sort value
+	 *
+	 * @return int
+	 */
+	public function getCustomSort() {
+		return $this->customSort;
+	}
+
+	/**
+	 * set custom sort value
+	 *
+	 * @param mixed $customSort
+	 */
+	public function setCustomSort($customSort) {
+		if(is_numeric($customSort)) {
+			$this->customSort = (int) $customSort;
+		}
+		else {
+			$this->customSort = '';
+		}
 	}
 
 	/**
@@ -517,7 +556,9 @@ class Article implements SubjectInterface {
 	 */
 	public static function getInstance($id) {
 
-		$db = &$GLOBALS['db'];
+		if(!isset(self::$db)) {
+			self::$db = $GLOBALS['db'];
+		}
 
 		if(is_numeric($id)) {
 			$id = (int) $id;
@@ -535,7 +576,7 @@ class Article implements SubjectInterface {
 			$col = 'Alias';
 		}
 
-		$rows = $db->doPreparedQuery("
+		$rows = self::$db->doPreparedQuery("
 			SELECT
 				a.*
 			FROM
@@ -565,7 +606,9 @@ class Article implements SubjectInterface {
 	 */
 	public static function getInstances(array $ids) {
 
-		$db = &$GLOBALS['db'];
+		if(!isset(self::$db)) {
+			self::$db = $GLOBALS['db'];
+		}
 
 		$toRetrieveById		= array();
 		$toRetrieveByAlias	= array();
@@ -596,7 +639,7 @@ class Article implements SubjectInterface {
 			}
 
 			if(count($where)) {
-				$rows = $db->doPreparedQuery('
+				$rows = self::$db->doPreparedQuery('
 					SELECT
 						a.*
 					FROM
