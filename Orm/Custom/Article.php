@@ -324,14 +324,14 @@ class Article implements SubjectInterface {
 	/**
 	 * set custom sort value
 	 *
-	 * @param mixed $customSort
+	 * @param mixed $ndx
 	 */
-	public function setCustomSort($customSort) {
-		if(is_numeric($customSort)) {
-			$this->customSort = (int) $customSort;
+	public function setCustomSort($ndx) {
+		if(is_numeric($ndx)) {
+			$this->customSort = (int) $ndx;
 		}
 		else {
-			$this->customSort = '';
+			$this->customSort = NULL;
 		}
 	}
 
@@ -345,11 +345,11 @@ class Article implements SubjectInterface {
 	}
 
 	/**
-	 * set article date
+	 * set article date, omitting argument deletes date value
 	 *
 	 * @param DateTime $articleDate
 	 */
-	public function setDate(\DateTime $articleDate) {
+	public function setDate(\DateTime $articleDate = NULL) {
 		$this->articleDate = $articleDate;
 	}
 
@@ -363,11 +363,11 @@ class Article implements SubjectInterface {
 	}
 
 	/**
-	 * set displayFrom date
+	 * set displayFrom date, omitting argument deletes date value
 	 *
 	 * @param DateTime $articleDate
 	 */
-	public function setDisplayFrom(\DateTime $displayFrom) {
+	public function setDisplayFrom(\DateTime $displayFrom = NULL) {
 		$this->displayFrom = $displayFrom;
 	}
 
@@ -381,11 +381,11 @@ class Article implements SubjectInterface {
 	}
 
 	/**
-	 * set displayUntil date
+	 * set displayUntil date, omitting argument deletes date value
 	 *
 	 * @param DateTime $articleDate
 	 */
-	public function setDisplayUntil(\DateTime $displayUntil) {
+	public function setDisplayUntil(\DateTime $displayUntil = NULL) {
 		$this->displayUntil = $displayUntil;
 	}
 
