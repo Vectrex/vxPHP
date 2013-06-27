@@ -12,7 +12,7 @@ use vxPHP\Database\MysqldbiStatement;
  *
  * @extends mysqli
  *
- * @version 4.8.1 2013-02-05
+ * @version 4.10.0 2013-06-28
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -276,47 +276,55 @@ class Mysqldbi extends \mysqli {
 	 *
 	 * @param string table
 	 * @param array Data
-	 * @return int insert id | bool FALSE
+	 * @return int insert id | bool FALSE | NULL
 	 */
 	public function insertRecord($table, $insert) {
+
 		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) {
 			return FALSE;
 		}
 
 		$insert = array_change_key_case($insert, CASE_LOWER);
 
-		$fields = $this->queryResult->fetch_fields();
+		$fields	= $this->queryResult->fetch_fields();
+		$names	= array();
+		$values	= array();
 
 	    foreach($fields as $f) {
 
 	    	$name = strtolower($f->name);
 
-			if (isset($insert[$name])) {
-				$names[] = $name;
-				$v = $this->maskField($f, $insert[$name]);
-
-				if($v === FALSE) {
-					return FALSE;
-				}
-
-				$values[] = $v;
+	    	if (array_key_exists($name, $insert)) {
+				$names[]	= $name;
+				$values[]	= $this->maskField($f, $insert[$name]);
 			}
 
 			else if($name == strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
 				$names[]	= self::UPDATE_FIELD;
-				$values[]	= 'NULL';
+				$values[]	= NULL;
 			}
 
 			else if($name == strtolower(self::CREATE_FIELD)) {
 				$names[]	= self::CREATE_FIELD;
-				$values[]	= 'NOW()';
+				$values[]	= date('Y-m-d H:i:s');
 			}
 		}
 
-		$sqlnames	= implode(',',$names);
-		$sqlvalues	= implode(',',$values);
+		// nothing to do
 
-		if(!$this->execute("INSERT INTO $table ($sqlnames) VALUES ($sqlvalues)")) {
+		if(!count($names)) {
+			return NULL;
+		}
+
+		// execute statement
+
+		if(
+			!$this->preparedExecute("
+				INSERT INTO
+					$table (`" . implode('`, `', $names) . '`)
+					VALUES (' . implode(', ', array_fill(0, count($names), '?')) . ')'
+			, $values)
+		) {
 			return FALSE;
 		}
 
@@ -326,56 +334,75 @@ class Mysqldbi extends \mysqli {
 	/**
 	 * update record in specified table
 	 *
-	 * @param string table
-	 * @param mixed id (dzt. nur primary Key)
-	 * @param array newData
-	 * @return bool Result
+	 * @param string $table
+	 * @param mixed $id
+	 * @param array $update
+	 * @return bool Result | NULL
 	 **/
 	public function updateRecord($table, $id, $update) {
+
 		if(!$this->doQuery("SELECT * FROM $table LIMIT 1")) {
 			return FALSE;
 		}
 
 		$update = array_change_key_case($update, CASE_LOWER);
 
-		$fields = $this->queryResult->fetch_fields();
-
-		$assignedValues = array();
+		$fields	= $this->queryResult->fetch_fields();
+		$names	= array();
+		$values	= array();
 
 	    foreach($fields as $f) {
+
 	    	$name = strtolower($f->name);
 
 	    	if($f->flags & MYSQLI_PRI_KEY_FLAG) {
 	    		$primaryKey = $name;
 	    	}
 
-			if (isset($update[$name])) {
-				$v = $this->maskField($f, $update[$name]);
-
-				if($v === FALSE) {
-					return FALSE;
-				}
-
-				$assignedValues[] = "$name=$v";
+			if (array_key_exists($name, $update)) {
+				$names[]	= $name;
+				$values[]	= $this->maskField($f, $update[$name]);
 			}
 
 			else if($name == strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
-				$assignedValues[] = self::UPDATE_FIELD."=NULL";
+				$names[]	= self::UPDATE_FIELD;
+				$values[]	= NULL;
 			}
 	    }
 
-		if(empty($assignedValues)) {
+		// nothing to do
+
+		if(!count($names)) {
 			return NULL;
 		}
 
+		// record identified with id
+
 		if(!is_array($id)) {
-			return $this->execute("UPDATE $table SET ".implode(',', $assignedValues)." WHERE $primaryKey = $id");
+
+			$values[] = is_numeric($id) ? (int) $id : $id;
+
+			return $this->preparedExecute("
+				UPDATE $table SET `".
+					implode('` = ?, `', $names)."` = ?
+				WHERE
+					$primaryKey = ?
+				",
+				$values
+			);
 		}
 
-		foreach($id as $k => $v) {
-			$where[] = "$k = $v";
-		}
-		return $this->execute("UPDATE $table SET ".implode(',', $assignedValues)." WHERE ".implode(' AND ', $where));
+		// record identified with one or more specific attributes
+
+		return $this->preparedExecute("
+			UPDATE $table SET `".
+				implode('` = ?, `', $names). '` = ?
+			WHERE `'.
+				implode ('` = ?, `', array_keys($id)) . ' = ?
+			',
+			array_merge($values, array_values($id))
+		);
+
 	}
 
 	/**
@@ -616,40 +643,53 @@ class Mysqldbi extends \mysqli {
 	 * @return mixed $value
 	 */
 	protected function maskField($f, $v)	{
-		if(	$f->type === MYSQLI_TYPE_DATE ||
+
+		// NULL gets special treatment
+
+		if(is_null($v)) {
+			return NULL;
+		}
+
+		// cast for integer attributes
+
+		if(
+			$f->type === MYSQLI_TYPE_TINY ||
+			$f->type === MYSQLI_TYPE_SHORT ||
+			$f->type === MYSQLI_TYPE_LONG ||
+			$f->type === MYSQLI_TYPE_LONGLONG ||
+			$f->type === MYSQLI_TYPE_INT24 ||
+			(defined('MYSQLI_TYPE_BIT') && $f->type === MYSQLI_TYPE_BIT)
+		) {
+			return (int) $v;
+		}
+
+		// cast for float attributes
+
+		if(
+			$f->type === MYSQLI_TYPE_FLOAT ||
+			$f->type === MYSQLI_TYPE_DOUBLE ||
+			$f->type === MYSQLI_TYPE_DECIMAL ||
+			(defined('MYSQLI_TYPE_NEWDECIMAL') && $f->type === MYSQLI_TYPE_NEWDECIMAL)
+		) {
+			return (float) $v;
+		}
+
+		// special treatment for date attributes
+
+		if(
+			$f->type === MYSQLI_TYPE_DATE ||
 			$f->type === MYSQLI_TYPE_TIME ||
 			$f->type === MYSQLI_TYPE_DATETIME ||
 			$f->type === MYSQLI_TYPE_TIMESTAMP ||
 			$f->type === MYSQLI_TYPE_YEAR ||
 			$f->type === MYSQLI_TYPE_NEWDATE
-			){
-			$v = ($v === '') ? 'NULL' : "'$v'";
+		) {
+			return $v === '' ? NULL : (string) $v;
 		}
-		else if(
-			$f->type === MYSQLI_TYPE_TINY ||
-			$f->type === MYSQLI_TYPE_SHORT ||
-			$f->type === MYSQLI_TYPE_LONG ||
-			$f->type === MYSQLI_TYPE_FLOAT ||
-			$f->type === MYSQLI_TYPE_DOUBLE ||
-			$f->type === MYSQLI_TYPE_NULL ||
-			$f->type === MYSQLI_TYPE_LONGLONG ||
-			$f->type === MYSQLI_TYPE_INT24 ||
-			$f->type === MYSQLI_TYPE_DECIMAL ||
-			(defined('MYSQLI_TYPE_BIT') && $f->type === MYSQLI_TYPE_BIT) ||
-			(defined('MYSQLI_TYPE_NEWDECIMAL') && $f->type === MYSQLI_TYPE_NEWDECIMAL)
-			) {
-			if(is_bool($v)) {
-				return $v ? 1 : 0;
-			}
-			if(!empty($v) && !is_numeric($v) && strtoupper($v) !== 'NULL') {
-				return FALSE;
-			}
-			$v = ($v === '') ? 'NULL' : $v;
-		}
-		else {
-			$v = "'".$this->escapeString(htmlspecialchars_decode($v, ENT_QUOTES))."'";
-		}
-		return $v;
+
+		// default for string-like attributes
+
+		return htmlspecialchars_decode((string) $v, ENT_QUOTES);
 	}
 
 	/**
