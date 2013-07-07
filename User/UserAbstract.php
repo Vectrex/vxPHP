@@ -201,13 +201,13 @@ abstract class UserAbstract {
 	}
 
 	/**
-	 * authenticate user by checking stored password
+	 * authenticate user by checking stored hash
 	 * against argument
 	 *
 	 * @param string $pwd
 	 */
 	public function authenticate($pwd) {
-		$this->authenticated = $this->pwd == Util::encodePwd($pwd);
+		$this->authenticated = Util::checkPasswordHash($pwd, $this->pwd);
 	}
 
 	/**

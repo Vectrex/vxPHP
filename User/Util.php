@@ -9,21 +9,54 @@ use vxPHP\User\Exception\UserException;
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 0.1.0
+ * @version 0.2.0
  */
 
 class Util {
 
 	/**
-	 * encode password, the only place where encoding should be done
+	 * hash password, the only place where hashing should be done
 	 *
-	 * @param string $plainPwd
-	 * @return string encoded password
+	 * @param string $plainPassword
+	 *
+	 * @return string hashed password
 	 */
-	public static function encodePwd($plainPwd) {
+	public static function hashPassword($plainPassword) {
 
-		$encoded = sha1($plainPwd);
-		return $encoded;
+		// use mcrypt functionality if possible
+
+		if(function_exists('mcrypt_create_iv')) {
+			$salt = strtr(base64_encode(mcrypt_create_iv(16, MCRYPT_DEV_URANDOM)), '+', '.');
+		}
+
+		// otherwise use some weaker generic replacement
+
+		else {
+			$salt = md5(uniqid('', TRUE));
+		}
+
+		// Blowfish algorithm, cost 10
+
+		return crypt($plainPassword, '$2a$10$' . $salt);
+
+
+//		$encoded = sha1($plainPwd);
+//		return $encoded;
+
+	}
+
+	/**
+	 * check whether a plain password matches the hash, the only place where checking should be done
+	 *
+	 * @param string $hash
+	 * @param string $passwordToCheck
+	 *
+	 * @return boolean
+	 */
+
+	public static function checkPasswordHash($passwordToCheck, $hash) {
+
+		return crypt($passwordToCheck, $hash) === $hash;
 
 	}
 
