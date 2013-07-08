@@ -13,7 +13,7 @@ class CheckboxElement extends InputElement {
 		$this->setChecked($checked);
 		$this->setLabel($label);
 	}
-	
+
 	public function setChecked($state) {
 		$this->checked = !!$state;
 	}
@@ -38,7 +38,7 @@ class CheckboxElement extends InputElement {
 
 			$this->html = parent::render(TRUE).$this->label;
 		}
-		
+
 		return $this->html;
 	}
 }

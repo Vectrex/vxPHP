@@ -11,10 +11,6 @@ class RadioElement extends FormElementWithOptions {
 		parent::__construct($name, $value);
 	}
 
-	public function appendOption(FormElementWithOptions $option) {
-		parent::appendOption($option);
-	}
-
 	public function createOptions(Array $options) {
 		$this->options = array();
 		foreach($options as $k => $v) {
@@ -30,6 +26,8 @@ class RadioElement extends FormElementWithOptions {
 			}
 		}
 
-		return $this->html;
+		//@TODO flexible rendering of options
+
+		return '<span>' . implode('</span><span>', $this->html) . '</span>';
 	}
 }
