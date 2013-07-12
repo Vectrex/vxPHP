@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpFoundation;
+namespace vxPHP\Request;
 
 /**
  * HeaderBag is a container for HTTP headers.
@@ -18,308 +18,312 @@ namespace Symfony\Component\HttpFoundation;
  *
  * @api
  */
-class HeaderBag implements \IteratorAggregate, \Countable
-{
-    protected $headers;
-    protected $cacheControl;
+class HeaderBag implements \IteratorAggregate, \Countable {
 
-    /**
-     * Constructor.
-     *
-     * @param array $headers An array of HTTP headers
-     *
-     * @api
-     */
-    public function __construct(array $headers = array())
-    {
-        $this->cacheControl = array();
-        $this->headers = array();
-        foreach ($headers as $key => $values) {
-            $this->set($key, $values);
-        }
-    }
+	protected	$headers;
+	protected	$cacheControl;
 
-    /**
-     * Returns the headers as a string.
-     *
-     * @return string The headers
-     */
-    public function __toString()
-    {
-        if (!$this->headers) {
-            return '';
-        }
+	/**
+	 * Constructor.
+	 *
+	 * @param array $headers An array of HTTP headers
+	 *
+	 * @api
+	 */
+	public function __construct(array $headers = array()) {
 
-        $max = max(array_map('strlen', array_keys($this->headers))) + 1;
-        $content = '';
-        ksort($this->headers);
-        foreach ($this->headers as $name => $values) {
-            $name = implode('-', array_map('ucfirst', explode('-', $name)));
-            foreach ($values as $value) {
-                $content .= sprintf("%-{$max}s %s\r\n", $name.':', $value);
-            }
-        }
+		$this->cacheControl = array();
+		$this->headers = array();
 
-        return $content;
-    }
+		foreach ($headers as $key => $values) {
+			$this->set($key, $values);
+		}
+	}
 
-    /**
-     * Returns the headers.
-     *
-     * @return array An array of headers
-     *
-     * @api
-     */
-    public function all()
-    {
-        return $this->headers;
-    }
+	/**
+	 * Returns the headers as a string.
+	 *
+	 * @return string The headers
+	 */
+	public function __toString() {
 
-    /**
-     * Returns the parameter keys.
-     *
-     * @return array An array of parameter keys
-     *
-     * @api
-     */
-    public function keys()
-    {
-        return array_keys($this->headers);
-    }
+		if (!$this->headers) {
+			return '';
+		}
 
-    /**
-     * Replaces the current HTTP headers by a new set.
-     *
-     * @param array $headers An array of HTTP headers
-     *
-     * @api
-     */
-    public function replace(array $headers = array())
-    {
-        $this->headers = array();
-        $this->add($headers);
-    }
+		$max = max(array_map('strlen', array_keys($this->headers))) + 1;
+		$content = '';
+		ksort($this->headers);
 
-    /**
-     * Adds new headers the current HTTP headers set.
-     *
-     * @param array $headers An array of HTTP headers
-     *
-     * @api
-     */
-    public function add(array $headers)
-    {
-        foreach ($headers as $key => $values) {
-            $this->set($key, $values);
-        }
-    }
+		foreach ($this->headers as $name => $values) {
+			$name = implode('-', array_map('ucfirst', explode('-', $name)));
+			foreach ($values as $value) {
+				$content .= sprintf("%-{$max}s: %s\r\n", $name, $value);
+			}
+		}
 
-    /**
-     * Returns a header value by name.
-     *
-     * @param string  $key     The header name
-     * @param mixed   $default The default value
-     * @param Boolean $first   Whether to return the first value or all header values
-     *
-     * @return string|array The first header value if $first is true, an array of values otherwise
-     *
-     * @api
-     */
-    public function get($key, $default = null, $first = true)
-    {
-        $key = strtr(strtolower($key), '_', '-');
+		return $content;
+	}
 
-        if (!array_key_exists($key, $this->headers)) {
-            if (null === $default) {
-                return $first ? null : array();
-            }
+	/**
+	 * Returns the headers.
+	 *
+	 * @return array An array of headers
+	 *
+	 * @api
+	 */
+	public function all() {
 
-            return $first ? $default : array($default);
-        }
+		return $this->headers;
 
-        if ($first) {
-            return count($this->headers[$key]) ? $this->headers[$key][0] : $default;
-        }
+	}
 
-        return $this->headers[$key];
-    }
+	/**
+	 * Returns the parameter keys.
+	 *
+	 * @return array An array of parameter keys
+	 *
+	 * @api
+	 */
+	public function keys() {
 
-    /**
-     * Sets a header by name.
-     *
-     * @param string       $key     The key
-     * @param string|array $values  The value or an array of values
-     * @param Boolean      $replace Whether to replace the actual value or not (true by default)
-     *
-     * @api
-     */
-    public function set($key, $values, $replace = true)
-    {
-        $key = strtr(strtolower($key), '_', '-');
+		return array_keys($this->headers);
 
-        $values = array_values((array) $values);
+	}
 
-        if (true === $replace || !isset($this->headers[$key])) {
-            $this->headers[$key] = $values;
-        } else {
-            $this->headers[$key] = array_merge($this->headers[$key], $values);
-        }
+	/**
+	 * Replaces the current HTTP headers by a new set.
+	 *
+	 * @param array $headers An array of HTTP headers
+	 *
+	 * @api
+	 */
+	public function replace(array $headers = array())
+	{
+		$this->headers = array();
+		$this->add($headers);
+	}
 
-        if ('cache-control' === $key) {
-            $this->cacheControl = $this->parseCacheControl($values[0]);
-        }
-    }
+	/**
+	 * Adds new headers the current HTTP headers set.
+	 *
+	 * @param array $headers An array of HTTP headers
+	 *
+	 * @api
+	 */
+	public function add(array $headers)
+	{
+		foreach ($headers as $key => $values) {
+			$this->set($key, $values);
+		}
+	}
 
-    /**
-     * Returns true if the HTTP header is defined.
-     *
-     * @param string $key The HTTP header
-     *
-     * @return Boolean true if the parameter exists, false otherwise
-     *
-     * @api
-     */
-    public function has($key)
-    {
-        return array_key_exists(strtr(strtolower($key), '_', '-'), $this->headers);
-    }
+	/**
+	 * Returns a header value by name.
+	 *
+	 * @param string  $key     The header name
+	 * @param mixed   $default The default value
+	 * @param Boolean $first   Whether to return the first value or all header values
+	 *
+	 * @return string|array The first header value if $first is TRUE, an array of values otherwise
+	 *
+	 * @api
+	 */
+	public function get($key, $default = NULL, $first = TRUE)
+	{
+		$key = strtr(strtolower($key), '_', '-');
 
-    /**
-     * Returns true if the given HTTP header contains the given value.
-     *
-     * @param string $key   The HTTP header name
-     * @param string $value The HTTP value
-     *
-     * @return Boolean true if the value is contained in the header, false otherwise
-     *
-     * @api
-     */
-    public function contains($key, $value)
-    {
-        return in_array($value, $this->get($key, null, false));
-    }
+		if (!array_key_exists($key, $this->headers)) {
+			if (NULL === $default) {
+				return $first ? NULL : array();
+			}
 
-    /**
-     * Removes a header.
-     *
-     * @param string $key The HTTP header name
-     *
-     * @api
-     */
-    public function remove($key)
-    {
-        $key = strtr(strtolower($key), '_', '-');
+			return $first ? $default : array($default);
+		}
 
-        unset($this->headers[$key]);
+		if ($first) {
+			return count($this->headers[$key]) ? $this->headers[$key][0] : $default;
+		}
 
-        if ('cache-control' === $key) {
-            $this->cacheControl = array();
-        }
-    }
+		return $this->headers[$key];
+	}
 
-    /**
-     * Returns the HTTP header value converted to a date.
-     *
-     * @param string    $key     The parameter key
-     * @param \DateTime $default The default value
-     *
-     * @return null|\DateTime The parsed DateTime or the default value if the header does not exist
-     *
-     * @throws \RuntimeException When the HTTP header is not parseable
-     *
-     * @api
-     */
-    public function getDate($key, \DateTime $default = null)
-    {
-        if (null === $value = $this->get($key)) {
-            return $default;
-        }
+	/**
+	 * Sets a header by name.
+	 *
+	 * @param string       $key     The key
+	 * @param string|array $values  The value or an array of values
+	 * @param Boolean      $replace Whether to replace the actual value or not (TRUE by default)
+	 *
+	 * @api
+	 */
+	public function set($key, $values, $replace = TRUE)
+	{
+		$key = strtr(strtolower($key), '_', '-');
 
-        if (false === $date = \DateTime::createFromFormat(DATE_RFC2822, $value)) {
-            throw new \RuntimeException(sprintf('The %s HTTP header is not parseable (%s).', $key, $value));
-        }
+		$values = array_values((array) $values);
 
-        return $date;
-    }
+		if (TRUE === $replace || !isset($this->headers[$key])) {
+			$this->headers[$key] = $values;
+		} else {
+			$this->headers[$key] = array_merge($this->headers[$key], $values);
+		}
 
-    public function addCacheControlDirective($key, $value = true)
-    {
-        $this->cacheControl[$key] = $value;
+		if ('cache-control' === $key) {
+			$this->cacheControl = $this->parseCacheControl($values[0]);
+		}
+	}
 
-        $this->set('Cache-Control', $this->getCacheControlHeader());
-    }
+	/**
+	 * Returns TRUE if the HTTP header is defined.
+	 *
+	 * @param string $key The HTTP header
+	 *
+	 * @return Boolean TRUE if the parameter exists, FALSE otherwise
+	 *
+	 * @api
+	 */
+	public function has($key)
+	{
+		return array_key_exists(strtr(strtolower($key), '_', '-'), $this->headers);
+	}
 
-    public function hasCacheControlDirective($key)
-    {
-        return array_key_exists($key, $this->cacheControl);
-    }
+	/**
+	 * Returns TRUE if the given HTTP header contains the given value.
+	 *
+	 * @param string $key   The HTTP header name
+	 * @param string $value The HTTP value
+	 *
+	 * @return Boolean TRUE if the value is contained in the header, FALSE otherwise
+	 *
+	 * @api
+	 */
+	public function contains($key, $value)
+	{
+		return in_array($value, $this->get($key, NULL, FALSE));
+	}
 
-    public function getCacheControlDirective($key)
-    {
-        return array_key_exists($key, $this->cacheControl) ? $this->cacheControl[$key] : null;
-    }
+	/**
+	 * Removes a header.
+	 *
+	 * @param string $key The HTTP header name
+	 *
+	 * @api
+	 */
+	public function remove($key)
+	{
+		$key = strtr(strtolower($key), '_', '-');
 
-    public function removeCacheControlDirective($key)
-    {
-        unset($this->cacheControl[$key]);
+		unset($this->headers[$key]);
 
-        $this->set('Cache-Control', $this->getCacheControlHeader());
-    }
+		if ('cache-control' === $key) {
+			$this->cacheControl = array();
+		}
+	}
 
-    /**
-     * Returns an iterator for headers.
-     *
-     * @return \ArrayIterator An \ArrayIterator instance
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->headers);
-    }
+	/**
+	 * Returns the HTTP header value converted to a date.
+	 *
+	 * @param string    $key     The parameter key
+	 * @param \DateTime $default The default value
+	 *
+	 * @return NULL|\DateTime The parsed DateTime or the default value if the header does not exist
+	 *
+	 * @throws \RuntimeException When the HTTP header is not parseable
+	 *
+	 * @api
+	 */
+	public function getDate($key, \DateTime $default = NULL)
+	{
+		if (NULL === $value = $this->get($key)) {
+			return $default;
+		}
 
-    /**
-     * Returns the number of headers.
-     *
-     * @return int The number of headers
-     */
-    public function count()
-    {
-        return count($this->headers);
-    }
+		if (FALSE === $date = \DateTime::createFromFormat(DATE_RFC2822, $value)) {
+			throw new \RuntimeException(sprintf('The %s HTTP header is not parseable (%s).', $key, $value));
+		}
 
-    protected function getCacheControlHeader()
-    {
-        $parts = array();
-        ksort($this->cacheControl);
-        foreach ($this->cacheControl as $key => $value) {
-            if (true === $value) {
-                $parts[] = $key;
-            } else {
-                if (preg_match('#[^a-zA-Z0-9._-]#', $value)) {
-                    $value = '"'.$value.'"';
-                }
+		return $date;
+	}
 
-                $parts[] = "$key=$value";
-            }
-        }
+	public function addCacheControlDirective($key, $value = TRUE)
+	{
+		$this->cacheControl[$key] = $value;
 
-        return implode(', ', $parts);
-    }
+		$this->set('Cache-Control', $this->getCacheControlHeader());
+	}
 
-    /**
-     * Parses a Cache-Control HTTP header.
-     *
-     * @param string $header The value of the Cache-Control HTTP header
-     *
-     * @return array An array representing the attribute values
-     */
-    protected function parseCacheControl($header)
-    {
-        $cacheControl = array();
-        preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, PREG_SET_ORDER);
-        foreach ($matches as $match) {
-            $cacheControl[strtolower($match[1])] = isset($match[3]) ? $match[3] : (isset($match[2]) ? $match[2] : true);
-        }
+	public function hasCacheControlDirective($key)
+	{
+		return array_key_exists($key, $this->cacheControl);
+	}
 
-        return $cacheControl;
-    }
+	public function getCacheControlDirective($key)
+	{
+		return array_key_exists($key, $this->cacheControl) ? $this->cacheControl[$key] : NULL;
+	}
+
+	public function removeCacheControlDirective($key)
+	{
+		unset($this->cacheControl[$key]);
+
+		$this->set('Cache-Control', $this->getCacheControlHeader());
+	}
+
+	/**
+	 * Returns an iterator for headers.
+	 *
+	 * @return \ArrayIterator An \ArrayIterator instance
+	 */
+	public function getIterator()
+	{
+		return new \ArrayIterator($this->headers);
+	}
+
+	/**
+	 * Returns the number of headers.
+	 *
+	 * @return int The number of headers
+	 */
+	public function count()
+	{
+		return count($this->headers);
+	}
+
+	protected function getCacheControlHeader()
+	{
+		$parts = array();
+		ksort($this->cacheControl);
+		foreach ($this->cacheControl as $key => $value) {
+			if (TRUE === $value) {
+				$parts[] = $key;
+			} else {
+				if (preg_match('#[^a-zA-Z0-9._-]#', $value)) {
+					$value = '"'.$value.'"';
+				}
+
+				$parts[] = "$key=$value";
+			}
+		}
+
+		return implode(', ', $parts);
+	}
+
+	/**
+	 * Parses a Cache-Control HTTP header.
+	 *
+	 * @param string $header The value of the Cache-Control HTTP header
+	 *
+	 * @return array An array representing the attribute values
+	 */
+	protected function parseCacheControl($header)
+	{
+		$cacheControl = array();
+		preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, PREG_SET_ORDER);
+		foreach ($matches as $match) {
+			$cacheControl[strtolower($match[1])] = isset($match[3]) ? $match[3] : (isset($match[2]) ? $match[2] : TRUE);
+		}
+
+		return $cacheControl;
+	}
 }

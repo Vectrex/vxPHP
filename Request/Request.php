@@ -9,9 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpFoundation;
-
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+namespace vxPHP\Request;
 
 /**
  * Request represents an HTTP request.
@@ -28,16 +26,14 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  *
  * @api
  */
-class Request
-{
-    const HEADER_CLIENT_IP    = 'client_ip';
-    const HEADER_CLIENT_HOST  = 'client_host';
-    const HEADER_CLIENT_PROTO = 'client_proto';
-    const HEADER_CLIENT_PORT  = 'client_port';
+class Request {
+    const HEADER_CLIENT_IP		= 'client_ip';
+    const HEADER_CLIENT_HOST	= 'client_host';
+    const HEADER_CLIENT_PROTO	= 'client_proto';
+    const HEADER_CLIENT_PORT	= 'client_port';
 
-    protected static $trustProxy = false;
-
-    protected static $trustedProxies = array();
+    protected static $trustProxy		= FALSE;
+    protected static $trustedProxies	= array();
 
     /**
      * Names for headers that can be trusted when
@@ -153,11 +149,6 @@ class Request
      * @var string
      */
     protected $format;
-
-    /**
-     * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
-     */
-    protected $session;
 
     /**
      * @var string
@@ -401,9 +392,6 @@ class Request
 
     /**
      * Clones the current request.
-     *
-     * Note that the session is not cloned as duplicated requests
-     * are most of the time sub-requests of the main one.
      */
     public function __clone()
     {
@@ -465,18 +453,6 @@ class Request
     }
 
     /**
-     * Trusts $_SERVER entries coming from proxies.
-     *
-     * @deprecated Deprecated since version 2.0, to be removed in 2.3. Use setTrustedProxies instead.
-     */
-    public static function trustProxyData()
-    {
-        trigger_error('trustProxyData() is deprecated since version 2.0 and will be removed in 2.3. Use setTrustedProxies() instead.', E_USER_DEPRECATED);
-
-        self::$trustProxy = true;
-    }
-
-    /**
      * Sets a list of trusted proxies.
      *
      * You should only list the reverse proxies that you manage directly.
@@ -525,19 +501,6 @@ class Request
         }
 
         self::$trustedHeaders[$key] = $value;
-    }
-
-    /**
-     * Returns true if $_SERVER entries coming from proxies are trusted,
-     * false otherwise.
-     *
-     * @return boolean
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use getTrustedProxies instead.
-     */
-    public static function isProxyTrusted()
-    {
-        return self::$trustProxy;
     }
 
     /**
@@ -630,60 +593,6 @@ class Request
     public function get($key, $default = null, $deep = false)
     {
         return $this->query->get($key, $this->attributes->get($key, $this->request->get($key, $default, $deep), $deep), $deep);
-    }
-
-    /**
-     * Gets the Session.
-     *
-     * @return SessionInterface|null The session
-     *
-     * @api
-     */
-    public function getSession()
-    {
-        return $this->session;
-    }
-
-    /**
-     * Whether the request contains a Session which was started in one of the
-     * previous requests.
-     *
-     * @return Boolean
-     *
-     * @api
-     */
-    public function hasPreviousSession()
-    {
-        // the check for $this->session avoids malicious users trying to fake a session cookie with proper name
-        return $this->hasSession() && $this->cookies->has($this->session->getName());
-    }
-
-    /**
-     * Whether the request contains a Session object.
-     *
-     * This method does not give any information about the state of the session object,
-     * like whether the session is started or not. It is just a way to check if this Request
-     * is associated with a Session instance.
-     *
-     * @return Boolean true when the Request contains a Session object, false otherwise
-     *
-     * @api
-     */
-    public function hasSession()
-    {
-        return null !== $this->session;
-    }
-
-    /**
-     * Sets the Session.
-     *
-     * @param SessionInterface $session The Session
-     *
-     * @api
-     */
-    public function setSession(SessionInterface $session)
-    {
-        $this->session = $session;
     }
 
     /**
@@ -1433,8 +1342,8 @@ class Request
      *
      * @api
      */
-    public function getAcceptableContentTypes()
-    {
+    public function getAcceptableContentTypes() {
+
         if (null !== $this->acceptableContentTypes) {
             return $this->acceptableContentTypes;
         }
@@ -1456,31 +1365,6 @@ class Request
     public function isXmlHttpRequest()
     {
         return 'XMLHttpRequest' == $this->headers->get('X-Requested-With');
-    }
-
-    /**
-     * Splits an Accept-* HTTP header.
-     *
-     * @param string $header Header to split
-     *
-     * @return array Array indexed by the values of the Accept-* header in preferred order
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3.
-     */
-    public function splitHttpAcceptHeader($header)
-    {
-        trigger_error('splitHttpAcceptHeader() is deprecated since version 2.2 and will be removed in 2.3.', E_USER_DEPRECATED);
-
-        $headers = array();
-        foreach (AcceptHeader::fromString($header)->all() as $item) {
-            $key = $item->getValue();
-            foreach ($item->getAttributes() as $name => $value) {
-                $key .= sprintf(';%s=%s', $name, $value);
-            }
-            $headers[$key] = $item->getQuality();
-        }
-
-        return $headers;
     }
 
     /*
