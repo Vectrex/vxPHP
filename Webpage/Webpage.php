@@ -22,7 +22,7 @@ use vxPHP\Config\Config;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.15.3 2013-04-03
+ * @version 1.16.0 2013-07-24
  *
  */
 
@@ -187,7 +187,12 @@ abstract class Webpage {
 		}
 
 		foreach($css as $c) {
-			$html .= "<link type='text/css' rel='stylesheet' href='{$this->config->paths['css_path']['subdir']}$c'>\n";
+			if(substr($c, 0, 1) !== '/') {
+				$html .= "<link type='text/css' rel='stylesheet' href='{$this->config->paths['css_path']['subdir']}$c'>\n";
+			}
+			else {
+				$html .= "<link type='text/css' rel='stylesheet' href='$c'>\n";
+			}
 		}
 
 		$ie = array('ie', 'ie 6', 'ie 7', 'ie 8');
