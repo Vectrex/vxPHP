@@ -10,6 +10,8 @@ use vxPHP\Form\FormElement\ImageElement;
 use vxPHP\Form\FormElement\CheckboxElement;
 
 use vxPHP\Template\SimpleTemplate;
+use vxPHP\Request\Request;
+use vxPHP\Request\ParameterBag;
 
 /**
  * Template Engine for Forms
@@ -34,7 +36,15 @@ class HtmlForm {
 				$vars 			= array(),
 				$allowApcUpload	= FALSE,
 
+				/**
+				 * @var Request
+				 */
 				$request,
+
+				/**
+				 * @var ParameterBag
+				 */
+				$requestValues,
 				$action,
 				$type,
 				$method,
@@ -59,7 +69,9 @@ class HtmlForm {
 		$this->css		= $css;
 		$this->tplFile	= $template;
 
-		$this->setAction($action ? $action : $_SERVER['REQUEST_URI']);
+		$this->request	= Request::createFromGlobals();
+
+		$this->setAction($action ? $action : $this->request->getRequestUri());
 		$this->setRequestValues();
 	}
 

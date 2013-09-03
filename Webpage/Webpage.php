@@ -14,6 +14,7 @@ use vxPHP\Request\NiceURI;
 use vxPHP\Template\Util\SimpleTemplateUtil;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Config\Config;
+use vxPHP\Request\Request;
 
 
 /**
@@ -61,19 +62,24 @@ abstract class Webpage {
 
 	public function __construct() {
 
+		// set up references for
+
 		if(!isset($GLOBALS['config'])) {
 			throw new WebpageException('Configuraton object not found!');
+		}
+		else {
+			$this->config = &$GLOBALS['config'];
 		}
 
 		if(isset($GLOBALS['db'])) {
 			$this->db = &$GLOBALS['db'];
 		}
 
-		$this->config			= &$GLOBALS['config'];
 		$this->html				= '';
-		$this->currentDocument	= $this->config->getDocument();
-		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
+		$this->currentDocument	= basename(Request::createFromGlobals()->server->get('SCRIPT_NAME'));
+		$this->currentPage		=
 
+		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
 		$this->validateRequests(array_merge($this->config->_get, $_POST));
 
 		if(isset($this->validatedRequests['page']) && (

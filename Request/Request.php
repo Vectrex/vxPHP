@@ -52,49 +52,49 @@ class Request {
     protected static $httpMethodParameterOverride = false;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var \vxPHP\Request\ParameterBag
      *
      * @api
      */
     public $attributes;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var \vxPHP\Request\ParameterBag
      *
      * @api
      */
     public $request;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var \vxPHP\Request\ParameterBag
      *
      * @api
      */
     public $query;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\ServerBag
+     * @var \vxPHP\Request\ServerBag
      *
      * @api
      */
     public $server;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\FileBag
+     * @var \vxPHP\Request\FileBag
      *
      * @api
      */
     public $files;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\ParameterBag
+     * @var \vxPHP\Request\ParameterBag
      *
      * @api
      */
     public $cookies;
 
     /**
-     * @var \Symfony\Component\HttpFoundation\HeaderBag
+     * @var \vxPHP\Request\HeaderBag
      *
      * @api
      */

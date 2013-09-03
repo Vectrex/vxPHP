@@ -11,6 +11,9 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 use vxPHP\Observer\EventDispatcher;
 
 use vxPHP\Request\NiceURI;
+use vxPHP\Request\Request;
+use vxPHP\Request\Route;
+use vxPHP\Request\Router;
 
 /**
  * Config
@@ -28,7 +31,7 @@ class Config {
 			$paths,
 			$binaries,
 			$uploadImages,
-			$pages,
+			$routes,
 			$wildcardPages,
 			$menus,
 			$server;
@@ -317,55 +320,48 @@ class Config {
 	}
 
 	/**
-	 * parse page settings
+	 * parse page routes
 	 * called seperately for differing script attributes
 	 *
 	 * @param SimpleXMLElement $pages
 	 */
 	private function parsePagesSettings(\SimpleXMLElement $pages) {
 
-		$doc = empty($pages->attributes()->script) ? $this->site->root_document : (string) $pages->attributes()->script;
-		$red = empty($pages->attributes()->default_redirect) ? NULL : (string) $pages->attributes()->default_redirect;
+		$scriptName = empty($pages->attributes()->script) ? $this->site->root_document : (string) $pages->attributes()->script;
 
 		foreach($pages->page as $page) {
 
+			$parameters = array();
+
 			$a = $page->attributes();
-			$id = (string) $a->id;
 
-			// so-called wildcard pages end up in their own collection
+			$pageId	= (string) $a->id;
 
-			if(substr($id, -1) == '*') {
-				$id = substr($id, 0, -1);
-				$collection = &$this->wildcardPages;
+			if(isset($a->class)) {
+				$parameters['controller'] = (string) $a->class;
 			}
-
-			// otherwise we have standard pages
-
-			else {
-				$collection = &$this->pages;
-			}
-
-			// attributes stay the same
-
-			$collection[$doc][$id] = new \StdClass;
-			$collection[$doc][$id]->class = (string) $a->class;
-			$collection[$doc][$id]->defaultRedirect = $red;
-
-			// set optional authentication level; if level is not defined, page is locked for everyone
 
 			if(isset($a->auth)) {
+
 				$auth = strtoupper(trim((string) $a->auth));
+
 				if(defined("vxPHP\\User\\UserAbstract::AUTH_$auth")) {
-					$collection[$doc][$id]->auth = constant("vxPHP\\User\\UserAbstract::AUTH_$auth");
+					$auth = constant("vxPHP\\User\\UserAbstract::AUTH_$auth");
 
 					if(isset($a->auth_parameters)) {
-						$collection[$doc][$id]->auth_parameters = trim((string) $a->auth_parameters);
+						$parameters['authParameters'] = trim((string) $a->auth_parameters);
 					}
 				}
 				else {
-					$collection[$doc][$id]->auth = -1;
+					$auth = -1;
 				}
+
+				$parameters['auth'] = $auth;
 			}
+
+
+			$this->routes[$scriptName][$pageId] = new Route($pageId, $scriptName, $parameters);
+
 		}
 	}
 
@@ -476,23 +472,37 @@ class Config {
 	 * @return webpage
 	 */
 	public function initPage() {
+
 		if(empty($this->site->use_nice_uris)) {
-			$this->site->use_nice_uris = false;
-		}
-		// check for non-nice URI
-
-		if(!$this->site->use_nice_uris || NiceURI::isPlainURI($_SERVER['REQUEST_URI'])) {
-			$this->_get = $_GET;
+			$this->site->use_nice_uris = FALSE;
 		}
 
-		else {
-			$this->_get = NiceURI::getNiceURI_GET($_SERVER['REQUEST_URI']);
+		$request		= Request::createFromGlobals();
+		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
+
+		if(count($pathSegments)) {
+
+			// get locale (if match found in Config::locales)
+
+			if(in_array($pathSegments[0], $this->locales)) {
+				$this->setLocale(array_shift($pathSegments));
+			}
+
+			// get page
+
+			if(isset($pathSegments[0])) {
+				$page = $this->requestPage(array_shift($pathSegments), basename($request->server->get('SCRIPT_NAME')));
+			}
+
+			// @todo store remaining path segments
 		}
 
-		if(isset($this->_get['lang'])) {
-			$this->setLocale($this->_get['lang']);
+		if(isset($page)) {
+			return $page;
 		}
-		return $this->requestPage(!empty($this->_get['page']) ? $this->_get['page'] : NULL, basename($_SERVER['SCRIPT_NAME']));
+
+		return $this->requestPage(NULL, basename($request->server->get('SCRIPT_NAME')));
+
 	}
 
 	/**
@@ -500,7 +510,7 @@ class Config {
 	 *
 	 * @param string $locale
 	 */
-	public function setLocale($locale = null) {
+	public function setLocale($locale = NULL) {
 		if(!empty($locale) && array_key_exists($locale, $this->locales)) {
 			$this->site->current_locale = $locale;
 			setlocale(LC_ALL, $this->locales[$locale]);
@@ -614,25 +624,30 @@ class Config {
 	 * @return string page class name
 	 */
 	private function requestPage($p, $doc = NULL) {
+
 		if(!isset($doc)) {
 			$doc = $this->site->root_document;
 		}
 
 		// just stored for misc later use
+
 		$this->document = $doc;
 
 		// if no page given try to get the first from list
+
 		if(!isset($p) && isset($this->pages[$doc])) {
 			$ndx = array_keys($this->pages[$doc]);
 			$p = $ndx[0];
 		}
 
 		// page class for "normal" pages
-		if(isset($this->pages[$doc]) && $p !== null && in_array($p ,array_keys($this->pages[$doc]))) {
+
+		if(isset($this->pages[$doc]) && $p !== NULL && in_array($p ,array_keys($this->pages[$doc]))) {
 			return new $this->pages[$doc][$p]->class;
 		}
 
 		// page class for wildcard pages
+
 		if(isset($this->wildcardPages[$doc]) && $p !== null) {
 			foreach(array_keys($this->wildcardPages[$doc]) as $pattern) {
 				if(strpos($p, $pattern) === 0) {
@@ -642,11 +657,13 @@ class Config {
 		}
 
 		// default page class, if available
+
 		if(isset($this->pages[$doc]) && in_array('default', array_keys($this->pages[$doc]))) {
 			return new $this->pages[$doc]['default']->class;
 		}
 
 		// first page class assigned to root document
+
 		$ndx = array_keys($this->pages[$this->site->root_document]);
 		return new $this->pages[$this->site->root_document][$ndx[0]]->class;
 	}
