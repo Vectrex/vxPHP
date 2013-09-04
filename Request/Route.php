@@ -10,7 +10,7 @@ namespace vxPHP\Request;
  */
 class Route {
 
-	private $page,
+	private $routeId,
 			$wildcard,
 			$scriptName,
 			$controller,
@@ -19,20 +19,20 @@ class Route {
 
 	/**
 	 *
-	 * @param string $page, the page identifier
+	 * @param string $route id, the route identifier
 	 * @param string $scriptName, name of assigned script
 	 * @param string $auth, authentication information
 	 * @param \vxPHP\Webpage\Webpage $controller
 	 * @param boolean $hasWildcard, TRUE when route matches several page identifiers with same leading characters
 	 */
-	public function __construct($page, $scriptName, array $parameters = array()) {
+	public function __construct($routeId, $scriptName, array $parameters = array()) {
 
-		if(substr($page, -1) == '*') {
-			$page = substr($page, 0, -1);
+		if(substr($routeId, -1) == '*') {
+			$routeId = substr($routeId, 0, -1);
 			$this->wildcard = TRUE;
 		}
 
-		$this->page			= $page;
+		$this->routeId		= $routeId;
 		$this->scriptName	= $scriptName;
 
 		if(isset($parameters['auth'])) {
@@ -51,15 +51,15 @@ class Route {
 	/**
 	 * @return string $page
 	 */
-	public function getPage() {
-		return $this->page;
+	public function getrouteId() {
+		return $this->routeId;
 	}
 
 	/**
 	 * @param string $page
 	 */
-	private function setPage($page) {
-		$this->page = $page;
+	private function setrouteId($routeId) {
+		$this->routeId = $routeId;
 	}
 
 	/**

@@ -12,6 +12,13 @@ use vxPHP\Util\LocalesFactory;
 class Router {
 
 	/**
+	 * $routeLookup caches already parsed routes
+	 *
+	 * @var array
+	 */
+	private static $routeLookup = array();
+
+	/**
 	 * returns controller class for page
 	 * the page id is second along the path behind an optional locale string
 	 *
@@ -21,29 +28,25 @@ class Router {
 
 		$request		= Request::createFromGlobals();
 		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
+		$script			= basename($request->server->get('SCRIPT_NAME'));
 
-		if(count($pathSegments)) {
-
-			// skip locale if one found
-
-			if(in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
-				array_shift($pathSegments);
-			}
-
-			// get page
-
-			if(count($pathSegments)) {
-				$route = self::getRouteFromConfig($pathSegments[0], basename($request->server->get('SCRIPT_NAME')));
-			}
-
+		if(!isset(self::$routeLookup[$script])) {
+			self::$routeLookup[$script] = array();
 		}
 
-		if(isset($route)) {
-			return $route;
+		// skip locale if one found
+
+		if(in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
+			array_shift($pathSegments);
 		}
 
-		return self::getRouteFromConfig(NULL, basename($request->server->get('SCRIPT_NAME')));
+		// get page
 
+		if(count($pathSegments) && !empty($pathSegments[0])) {
+			return self::getRouteFromConfig($script, $pathSegments);
+		}
+
+		return self::getRouteFromConfig($script);
 	}
 
 	/**
@@ -65,32 +68,44 @@ class Router {
 
 	/**
 	 *
-	 * @param string $pageId
 	 * @param string $scriptName (e.g. index.php, admin.php)
+	 * @array $pathSegments
 	 *
 	 * @return \vxPHP\Request\Route
 	 */
-	private static function getRouteFromConfig($pageId = NULL, $scriptName) {
+	private static function getRouteFromConfig($scriptName, array $pathSegments = NULL) {
 
 		$routes = $GLOBALS['config']->routes;
 
 		// if no page given try to get the first from list
 
-		if(!isset($pageId) && isset($routes[$scriptName])) {
-			return reset($routes[$scriptName]);
+		if(is_null($pathSegments) && isset($routes[$scriptName])) {
+			return $routes[$scriptName][0];
 		}
 
-		// page class for "normal" pages
+		// iterate over $pathSegments and try to find route ("normal" pages with controller)
 
-		if(isset($routes[$scriptName]) && $pageId !== NULL && in_array($pageId ,array_keys($routes[$scriptName]))) {
-			return $routes[$scriptName][$pageId];
+		$segs = $pathSegments;
+
+		while($segment = array_pop($segs)) {
+
+			if(isset($routes[$scriptName]) && in_array($segment, array_keys($routes[$scriptName]))) {
+				return $routes[$scriptName][$segment];
+			}
 		}
 
-		// match pageId with possible wildcard routes
+		// iterate over $pathSegments, try to find match with possible wildcard routes
+
+		$segs = $pathSegments;
 
 		foreach($routes[$scriptName] as $id => $route) {
-			if($route->hasWildcard() && strpos($id, $pageId) === 0) {
-				return $route;
+
+			if($route->hasWildcard()) {
+				for($i = count($segs); $i--;) {
+					if(strpos($id, $segs[i]) === 0) {
+						return $route;
+					}
+				}
 			}
 		}
 

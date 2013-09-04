@@ -7,6 +7,8 @@ use vxPHP\Util\Rex;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Image\ImageModifier;
 use vxPHP\Request\NiceURI;
+use vxPHP\Request\Router;
+use vxPHP\Request\Request;
 
 /**
  * A simple template system
@@ -31,34 +33,37 @@ class SimpleTemplate {
 				$locale,
 				$filters = array();
 
-	public		$error;
-
 	public function __construct($file) {
-		$file = preg_replace('~^[^a-z0-9_]+~', '', $file);
-		$path = $this->getPath();
 
-		$this->locale = isset($GLOBALS['config']->site->current_locale) ? $GLOBALS['config']->site->current_locale : '';
+		$serverBag		= Request::createFromGlobals()->server;
+		$this->locale	= Router::getLocaleFromPathInfo();
 
-		if(file_exists("{$path}{$this->locale}/{$file}")) {
-			$this->file = "{$path}{$this->locale}/{$file}";
+		$path =
+			realpath($serverBag->get('DOCUMENT_ROOT')) .
+			(defined('TPL_PATH') ? TPL_PATH : '') .
+			(basename($serverBag->get('SCRIPT_NAME'), '.php') !== 'index' ? (basename($serverBag->get('SCRIPT_NAME'), '.php') . DIRECTORY_SEPARATOR) : '');
+
+		if(!is_null($this->locale)) {
+			if(file_exists(
+				$path .
+				$this->locale->getLocaleString() . DIRECTORY_SEPARATOR .
+				$file
+			)) {
+				$this->file = $path . $this->locale->getLocaleString() . DIRECTORY_SEPARATOR . $file;
+			}
 		}
-		else if (file_exists($path.$file)) {
-			$this->file = $path.$file;
+
+		if(is_null($this->file)) {
+			if (file_exists($path.$file)) {
+				$this->file = $path . $file;
+			}
+			else {
+				throw new SimpleTemplateException("Template file '{$path}{$file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+			}
 		}
-		else {
-			$this->error = 'Template file does not exist.';
-			return;
-		}
+
 		$this->rawContent = file_get_contents($this->file);
 		$this->initFilters();
-	}
-
-	public function showLocaleDummies() {
-		self::$suppressLocales = TRUE;
-	}
-
-	public function hideLocaleDummies() {
-		self::$suppressLocales = FALSE;
 	}
 
 	public function containsPHP() {
@@ -131,57 +136,12 @@ class SimpleTemplate {
 					),
 				),
 
-			'text2countedLinks' =>
-				array(
-					array(
-						'/(?<!href=(\'|"))'.Rex::URI_STRICT.'/i',
-						'/(?<!mailto:)'.Rex::EMAIL.'/i'
-					),
-					array(
-						'makeCountClickURICallback',
-						'<a href="mailto:$0">$0</a>'
-					),
-				),
-
-			'text2tags' =>
-				array(
-					array(
-						'@(^|\n)\s*\*\s+(.+?)(?:\r?\n|<br\s*/?>|(</.*?>))@m',
-						'@(?:(?:^|[ \t]*)(<l>.*?</l>))((?:\r?\n)|$|\s*<(?:/|br))@s',
-						'@<(/?)l>@m',
-						'@(^|[^\w\p{L}*])_([^\s_]+?(\s+[^\s_]+)*?)_([^\w\p{L}*]|$)@im',
-						'@(^|[^\w\p{L}*])\*([^\s*]+?(\s+[^\s*]+)*?)\*([^\w\p{L}*]|$)@im',
-						'@((^|\s+)/([\w\p{L}]+[\w\s\p{L}]*[\w\p{L}])/(\s+|$))@im',
-						//'@(^|[^\w\p{L}/])/([^\s/]+?(\s+[^\s/]+)*?)/([^\w\p{L}/>]|$)@im',
-					),
-					array(
-						'<l>$2</l>$3',
-						'<ul>$1</ul>$2',
-						'<$1li>',
-						'$1<u>$2</u>$4',
-						'$1<strong>$2</strong>$4',
-						'$1<em>$2</em>$3',
-					)
-				),
 			'shortenText' =>
 				array(
 					array(
 						'@<(\w+)\s+(.*?)class=(\'|")?([a-z0-9_]*\s*)shortened_(\d+)(.*?)>(?s)(.*?)(?-s)</\s*\1>@i',
 					),
 					'shortenTextCallback'
-				),
-			'bbCode' =>
-				array(
-					array(
-						'/\[b\](.*?)\[\/b\]/',
-						'/\[i\](.*?)\[\/i\]/',
-						'/\[h\](.*?)\[\/h\]/',
-					),
-					array(
-						'<strong>$1</strong>',
-						'<em>$1</em>',
-						'<h6>$1</h6>',
-					)
 				)
 			);
 	}
@@ -229,19 +189,6 @@ class SimpleTemplate {
 		$src = strip_tags($src, '<a><strong><em><u><a>');
 		$ret = substr($src,0,$len+1);
 		return $prefix.substr($ret,0,strrpos($ret,' ')).' &hellip;'.$suffix;
-	}
-
-	private function makeCountClickURICallback($matches) {
-		return
-			implode('', array(
-				EXTERNAL_LINK_GFX,
-				'<a href="countclicks.php',
-				'?uri=', urlencode($matches[0]),
-				isset($_SERVER['REQUEST_URI']) ? '&amp;referer='.urlencode($_SERVER['REQUEST_URI']) : '',
-				'">',
-				(self::$showProtocol ? $matches[0] : $matches[3]),
-				'</a>'
-			));
 	}
 
 	private function hrefCallback($matches) {

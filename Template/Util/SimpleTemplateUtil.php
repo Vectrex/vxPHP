@@ -142,17 +142,16 @@ class SimpleTemplateUtil {
 
 	/**
 	 * retrieve metadata of template stored in database
+	 *
+	 * @param string $pageId
 	 */
-	public static function getPageMetaData($alias) {
+	public static function getPageMetaData($pageId, $locale = '') {
+
 		$db = &$GLOBALS['db'];
 
 		if(empty($db)) {
 			return FALSE;
 		}
-
-		$config = &$GLOBALS['config'];
-
-		$alias = strtoupper($alias);
 
 		if($db->tableExists('pages') && $db->tableExists('revisions')) {
 			$data = $db->doPreparedQuery("
@@ -173,7 +172,12 @@ class SimpleTemplateUtil {
 				ORDER BY
 					locale_sort DESC, active DESC, r.lastUpdated DESC
 				LIMIT 1
-				", array($alias, $config->site->current_locale));
+				",
+				array(
+					strtoupper($pageId),
+					$locale
+				)
+			);
 
 			if(!empty($data[0])) {
 				unset($data[0]['locale_sort']);

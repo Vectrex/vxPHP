@@ -18,7 +18,7 @@ class NiceURI {
 	 * /[{script_basename}][/{language}]/{page}[/id][/key_1/value_1][/key_2/value_2]...[/key_n/value_n]
 	 */
 	public static function toNice($plainUri) {
-		$doc = basename($GLOBALS['config']->getDocument(), '.php');
+		$doc = basename(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '.php');
 		if($doc == 'index') {
 			$doc = '';
 		}

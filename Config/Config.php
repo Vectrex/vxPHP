@@ -30,9 +30,7 @@ class Config {
 			$mail,
 			$paths,
 			$binaries,
-			$uploadImages,
 			$routes,
-			$wildcardPages,
 			$menus,
 			$server;
 
@@ -54,7 +52,6 @@ class Config {
 				$xmlFileTS,
 				$sections = array(),
 				$config,
-				$document,
 				$plugins = array();
 
 	/**
@@ -77,7 +74,6 @@ class Config {
 		$this->xmlFileTS = filemtime($this->xmlFile);
 
 		$this->parseConfig();
-		$this->setLocale();
 		$this->getServerConfig();
 
 		unset($this->config);
@@ -101,9 +97,6 @@ class Config {
 	}
 
 	private function parseConfig() {
-
-		$this->pages			= array();
-		$this->wildcardPages	= array();
 
 		try {
 
@@ -225,9 +218,25 @@ class Config {
 
 		$this->site = new \StdClass;
 
+		$this->site->use_nice_uris = FALSE;
+
 		foreach($site[0] as $k => $v) {
-			if($k != 'locales') {
-				$this->site->$k = trim((string) $v);
+
+			$v = trim((string) $v);
+
+			switch ($k) {
+
+				case 'locales':
+					break;
+
+				case 'site->use_nice_uris':
+					if($v === '1') {
+						$this->site->use_nice_uris = TRUE;
+					}
+					break;
+
+				default:
+					$this->site->$k = $v;
 			}
 		}
 
@@ -245,39 +254,6 @@ class Config {
 			}
 			else {
 				$this->site->current_locale = $this->site->locales[0];
-			}
-		}
-	}
-
-	/**
-	 * parse various upload parameter settings
-	 *
-	 * @param SimpleXMLElement $uploadParameters
-	 */
-	private function parseUploadParametersSettings(\SimpleXMLElement $uploadParameters) {
-
-		if(isset($uploadParameters->images->group)) {
-			foreach($uploadParameters->images->group as $g) {
-				$id = (string) $g->attributes()->id;
-				$this->uploadImages[$id]->allowedTypes = explode('|', strtolower((string) $g->attributes()->types));
-				$this->uploadImages[$id]->sizes = array();
-
-				foreach($g->size as $s) {
-					$a = $s->attributes();
-					$o = new \StdClass;
-
-					if((string) $a->width === 'original' || (string) $a->height === 'original') {
-						$o->width = 'original';
-						$o->height = 'original';
-					}
-					else {
-						$o->width	= (int) $a->width;
-						$o->height	= (int) $a->height;
-					}
-					// @TODO clean up path issues
-					$o->path = trim((string) $a->path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-					$this->uploadImages[$id]->sizes[] = $o;
-				}
 			}
 		}
 	}
@@ -371,10 +347,12 @@ class Config {
 	 * @param SimpleXMLElement $menus
 	 */
 	private function parseMenusSettings(\SimpleXMLElement $menus) {
+
 		foreach ($menus->menu as $menu) {
 			$menuInstance = $this->parseMenu($menu);
 			$this->menus[$menuInstance->getId()] = $menuInstance;
 		}
+
 	}
 
 	/**
@@ -384,6 +362,7 @@ class Config {
 	 * @return Menu
 	 */
 	private function parseMenu(\SimpleXMLElement $menu) {
+
 		$a			= $menu->attributes();
 		$root		= isset($a->script)	? (string) $a->script : $this->site->root_document;
 
@@ -420,7 +399,7 @@ class Config {
 					$page = (string) $a->page;
 					$local = strpos($page, '/') !== 0 && !preg_match('~^[a-z]+://~', $page);
 
-					if(!$local || isset($this->pages[$root][$page]) || isset($this->pages[$root]['default'])) {
+					if(!$local || isset($this->routes[$root][$page]) || isset($this->routes[$root]['default'])) {
 
 						$e = new MenuEntry((string) $a->page, $a, $local);
 
@@ -460,68 +439,11 @@ class Config {
 		return $m;
 	}
 
-	// refresh config by re-parsing XML file
+	/**
+	 * @todo refresh config by re-parsing XML file
+	 */
 
 	public function refresh() {
-	}
-
-	/**
-	 * init application
-	 *
-	 * sets locale and selects page
-	 * @return webpage
-	 */
-	public function initPage() {
-
-		if(empty($this->site->use_nice_uris)) {
-			$this->site->use_nice_uris = FALSE;
-		}
-
-		$request		= Request::createFromGlobals();
-		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
-
-		if(count($pathSegments)) {
-
-			// get locale (if match found in Config::locales)
-
-			if(in_array($pathSegments[0], $this->locales)) {
-				$this->setLocale(array_shift($pathSegments));
-			}
-
-			// get page
-
-			if(isset($pathSegments[0])) {
-				$page = $this->requestPage(array_shift($pathSegments), basename($request->server->get('SCRIPT_NAME')));
-			}
-
-			// @todo store remaining path segments
-		}
-
-		if(isset($page)) {
-			return $page;
-		}
-
-		return $this->requestPage(NULL, basename($request->server->get('SCRIPT_NAME')));
-
-	}
-
-	/**
-	 * sets locale of website
-	 *
-	 * @param string $locale
-	 */
-	public function setLocale($locale = NULL) {
-		if(!empty($locale) && array_key_exists($locale, $this->locales)) {
-			$this->site->current_locale = $locale;
-			setlocale(LC_ALL, $this->locales[$locale]);
-			return;
-		}
-
-		if(!isset($this->site->default_locale) || !isset($this->locales[$this->site->default_locale])) {
-			$this->site->default_locale = 'de';
-		}
-		$this->site->current_locale = $this->site->default_locale;
-		setlocale(LC_ALL, $this->locales[$this->site->default_locale]);
 	}
 
 	/**
@@ -555,30 +477,12 @@ class Config {
 			}
 		}
 
-		if(isset($properties['uploadImages'])) {
-			foreach($properties['uploadImages'] as $k => $v) {
-				$k = strtoupper($k);
-				if(!defined("IMG_{$k}_PATH")) {
-					define("IMG_{$k}_PATH", $v->sizes[0]->path);
-				}
-			}
-		}
-
 		$locale = localeconv();
 
 		foreach($locale as $k => $v) {
 			$k = strtoupper($k);
 			if(!defined($k) && !is_array($v)) { define($k, $v); }
 		}
-	}
-
-	/**
-	 * returns currently used document (e.g. index.php, admin.php)
-	 *
-	 * @return used document
-	 */
-	public function getDocument() {
-		return $this->document;
 	}
 
 	/**
@@ -612,60 +516,6 @@ class Config {
 				EventDispatcher::getInstance()->attach($pluginInstance, $eventType);
 			}
 		}
-	}
-
-	/**
-	 * checks for availability of requested page (considering an optional script file)
-	 * fallbacks are either a default page or the first page listed in config file
-	 *
-	 * @param string $p page id
-	 * @param string $doc script name for which page id is searched
-	 *
-	 * @return string page class name
-	 */
-	private function requestPage($p, $doc = NULL) {
-
-		if(!isset($doc)) {
-			$doc = $this->site->root_document;
-		}
-
-		// just stored for misc later use
-
-		$this->document = $doc;
-
-		// if no page given try to get the first from list
-
-		if(!isset($p) && isset($this->pages[$doc])) {
-			$ndx = array_keys($this->pages[$doc]);
-			$p = $ndx[0];
-		}
-
-		// page class for "normal" pages
-
-		if(isset($this->pages[$doc]) && $p !== NULL && in_array($p ,array_keys($this->pages[$doc]))) {
-			return new $this->pages[$doc][$p]->class;
-		}
-
-		// page class for wildcard pages
-
-		if(isset($this->wildcardPages[$doc]) && $p !== null) {
-			foreach(array_keys($this->wildcardPages[$doc]) as $pattern) {
-				if(strpos($p, $pattern) === 0) {
-					return new $this->wildcardPages[$doc][$pattern]->class;
-				}
-			}
-		}
-
-		// default page class, if available
-
-		if(isset($this->pages[$doc]) && in_array('default', array_keys($this->pages[$doc]))) {
-			return new $this->pages[$doc]['default']->class;
-		}
-
-		// first page class assigned to root document
-
-		$ndx = array_keys($this->pages[$this->site->root_document]);
-		return new $this->pages[$this->site->root_document][$ndx[0]]->class;
 	}
 
 	/**

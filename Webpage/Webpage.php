@@ -15,6 +15,9 @@ use vxPHP\Template\Util\SimpleTemplateUtil;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Config\Config;
 use vxPHP\Request\Request;
+use vxPHP\Request\Router;
+use vxPHP\Request\Route;
+use vxPHP\Util\LocalesFactory;
 
 
 /**
@@ -31,8 +34,12 @@ abstract class Webpage {
 
 	public		$html,
 				$validatedRequests	= array(),
-				$currentPage		= NULL,
-				$currentDocument	= NULL;
+				$currentDocument	= NULL,
+				/**
+				 * @var \vxPHP\Request\Route
+				 */
+				$route,
+				$pathSegments = array();
 
 	/**
 	 * @var Config
@@ -57,12 +64,12 @@ abstract class Webpage {
 				$useTimestamps		= TRUE,
 				$metaData			= array(),
 				$primedMenus		= array(),	// cache for menus, when shown several times on page
-				$allowedRequests	= array('page' => '~^[a-z0-9_]+$~i'),
+				$allowedRequests	= array(),
 				$forceActiveMenu;
 
 	public function __construct() {
 
-		// set up references for
+		// set up references required in controllers
 
 		if(!isset($GLOBALS['config'])) {
 			throw new WebpageException('Configuraton object not found!');
@@ -75,37 +82,18 @@ abstract class Webpage {
 			$this->db = &$GLOBALS['db'];
 		}
 
-		$this->html				= '';
+		$this->route			= Router::getRouteFromPathInfo();
 		$this->currentDocument	= basename(Request::createFromGlobals()->server->get('SCRIPT_NAME'));
-		$this->currentPage		=
+		$this->pathSegments		= explode('/', trim(Request::createFromGlobals()->server->get('PATH_INFO'), '/'));
 
-		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
-		$this->validateRequests(array_merge($this->config->_get, $_POST));
+		// skip locale if one found
 
-		if(isset($this->validatedRequests['page']) && (
-			isset($this->config->pages[$this->config->getDocument()][$this->validatedRequests['page']]) ||
-			isset($this->config->pages[$this->config->getDocument()]['default']))) {
-
-			$this->currentPage = $this->validatedRequests['page'];
-
-		}
-		else if(!empty($this->config->pages)) {
-
-			if(empty($this->config->pages[$this->config->getDocument()])) {
-				$this->generateHttpError();
-				return;
-			}
-
-			$pageKeys = array_keys($this->config->pages[$this->config->getDocument()]);
-			$this->currentPage = array_shift($pageKeys);
+		if(in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
+			array_shift($this->pathSegments);
 		}
 
-		if(isset($this->config->pages[$this->config->getDocument()][$this->currentPage])) {
-			$this->pageConfigData = $this->config->pages[$this->config->getDocument()][$this->currentPage];
-		}
-		else {
-			$this->pageConfigData = $this->config->pages[$this->config->getDocument()]['default'];
-		}
+//		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
+//		$this->validateRequests(array_merge($this->config->_get, $_POST));
 
 		if(!$this->authenticate()) {
 			$_SESSION['authViolatingUri'] = !empty($_SERVER['REQUEST_URI']) ? ltrim($_SERVER['REQUEST_URI'], '/') : NULL;
@@ -495,6 +483,7 @@ abstract class Webpage {
 	}
 
 	private function setMetaValue($name) {
+
 		static $metaData = NULL;
 
 		$name = strtolower($name);
@@ -521,18 +510,29 @@ abstract class Webpage {
 		$metaValue = array();
 
 		// initial value of configuration
+
 		if(!empty($this->config->site->$name)) {
 			$metaValue[] = $this->config->site->$name;
 		}
 
 		// add possible protected property
+
 		if(!empty($this->$name)) {
 			$metaValue[] = $this->$name;
 		}
 
 		// add meta value stored in db
-		if(!isset($metaData) && method_exists('vxPHP\\Template\Util\SimpleTemplateUtil', 'getPageMetaData')) {
-			$metaData = SimpleTemplateUtil::getPageMetaData($this->currentPage);
+
+		if(!isset($metaData)) {
+
+			$pageId = $this->route->getrouteId();
+
+			if($pageId == 'default') {
+				$pageId = end($this->pathSegments);
+			}
+
+			$metaData = SimpleTemplateUtil::getPageMetaData($pageId);
+
 			if(!empty($metaData)) {
 				$metaData = array_change_key_case($metaData, CASE_LOWER);
 			}
@@ -598,7 +598,10 @@ abstract class Webpage {
 	 * @return boolean
 	 */
 	private function authenticate() {
-		if(!empty($this->pageConfigData->auth)) {
+
+		$auth = $this->route->getAuth();
+
+		if(!is_null($auth)) {
 
 			$admin = Admin::getInstance();
 
@@ -606,14 +609,14 @@ abstract class Webpage {
 				return FALSE;
 			}
 
-			if($this->pageConfigData->auth === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
+			if($auth === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
 				return $this->authenticateByTableRowAccess();
 			}
-			if($this->pageConfigData->auth === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
+			if($auth === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
 				return $this->authenticateByTableRowAccess();
 			}
 
-			if($this->pageConfigData->auth >= $admin->getPrivilegeLevel()) {
+			if($auth >= $admin->getPrivilegeLevel()) {
 				return TRUE;
 			}
 			return $this->authenticateByMiscRules();
@@ -630,11 +633,13 @@ abstract class Webpage {
 	 */
 	protected function authenticateByTableRowAccess() {
 
-		if(empty($this->pageConfigData->auth_parameters)) {
+		$authParameters = $this->route->getAuthParameters();
+
+		if(is_null($authParameters)) {
 			return FALSE;
 		}
 
-		$tables = preg_split('/\s*,\s*/', trim($this->pageConfigData->auth_parameters));
+		$tables = preg_split('/\s*,\s*/', trim($authParameters));
 		$admin = Admin::getInstance();
 
 		$matching = array_intersect($tables, $admin->getTableAccess());
@@ -908,4 +913,3 @@ abstract class Webpage {
 		exit();
 	}
 }
-?>
