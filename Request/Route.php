@@ -51,14 +51,14 @@ class Route {
 	/**
 	 * @return string $page
 	 */
-	public function getrouteId() {
+	public function getRouteId() {
 		return $this->routeId;
 	}
 
 	/**
 	 * @param string $page
 	 */
-	private function setrouteId($routeId) {
+	private function setRouteId($routeId) {
 		$this->routeId = $routeId;
 	}
 

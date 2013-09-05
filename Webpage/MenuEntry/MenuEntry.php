@@ -13,7 +13,6 @@ use vxPHP\Request\NiceURI;
  * @version 0.2.0 2013-06-15
  */
 class MenuEntry implements MenuEntryInterface {
-	private static		$href, $admin;
 	protected static	$count = 1;
 	protected			$menu,
 						$auth,
@@ -23,6 +22,7 @@ class MenuEntry implements MenuEntryInterface {
 						$page,
 						$subMenu,
 						$localPage;
+	private 			$href;
 
 	public function __construct($page, $attributes, $localPage = TRUE) {
 		$this->id			= self::$count++;
@@ -113,21 +113,41 @@ class MenuEntry implements MenuEntryInterface {
 			return FALSE;
 		}
 
-		if(!isset(self::$href)) {
-			self::$href = "{$this->menu->getScript()}?page=";
+		if(is_null($this->href)) {
+
+			if($this->localPage) {
+
+				$pathSegments = array();
+				$e = $this;
+
+				do {
+					$pathSegments[] = $e->getPage();
+				} while ($e = $e->menu->getParentEntry());
+
+				$this->href = '/' . $this->menu->getScript() . '/' . implode('/', array_reverse($pathSegments));
+
+			}
+
+			else {
+
+				$this->href = $this->page;
+
+			}
 		}
 
 		$sel = $this->menu->getSelectedEntry();
 
 		if(isset($this->attributes->text)) {
+
 			if(!isset($sel) || $sel !== $this) {
 				$markup = sprintf(
 					'<li class="%s"><a href="%s">%s</a>',
 					preg_replace('~[^\w]~', '_', $this->page),
-					$this->localPage ? NiceURI::autoConvert(self::$href.$this->page) : $this->page,
+					$this->href,
 					htmlspecialchars($this->attributes->text)
 				);
 			}
+
 			else {
 				if((!isset($this->subMenu) || is_null($this->subMenu->getSelectedEntry())) && !$this->menu->getForceActive()) {
 					$markup = sprintf(
@@ -136,11 +156,12 @@ class MenuEntry implements MenuEntryInterface {
 						htmlspecialchars($this->attributes->text)
 					);
 				}
+
 				else {
 					$markup = sprintf(
 						'<li class="active %s"><a href="%s">%s</a>',
 						preg_replace('~[^\w]~', '_', $this->page),
-						$this->localPage ? NiceURI::autoConvert(self::$href.$this->page) : $this->page,
+						$this->href,
 						htmlspecialchars($this->attributes->text)
 					);
 				}

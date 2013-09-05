@@ -80,7 +80,7 @@ class Router {
 		// if no page given try to get the first from list
 
 		if(is_null($pathSegments) && isset($routes[$scriptName])) {
-			return $routes[$scriptName][0];
+			return array_shift($routes[$scriptName]);
 		}
 
 		// iterate over $pathSegments and try to find route ("normal" pages with controller)

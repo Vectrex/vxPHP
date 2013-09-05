@@ -349,6 +349,14 @@ abstract class Webpage {
 	 */
 	private function walkMenuTree(Menu $m) {
 
+		// get current page id to evaluate active menu entry
+
+		$idToFind = $this->route->getRouteId();
+
+		if($idToFind == 'default') {
+			$idToFind = end($this->pathSegments);
+		}
+
 		// return when matching entry in current menu
 
 		if(($e = $m->getSelectedEntry())) {
@@ -377,7 +385,7 @@ abstract class Webpage {
 
 			// when matching entry is found, build submenu of this entry then return entry
 
-			if($e->getPage() === $this->currentPage) {
+			if($e->getPage() === $idToFind) {
 
 				// generate complete dynamic menus
 
@@ -525,7 +533,7 @@ abstract class Webpage {
 
 		if(!isset($metaData)) {
 
-			$pageId = $this->route->getrouteId();
+			$pageId = $this->route->getRouteId();
 
 			if($pageId == 'default') {
 				$pageId = end($this->pathSegments);

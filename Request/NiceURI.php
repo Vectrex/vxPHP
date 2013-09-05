@@ -10,77 +10,68 @@ namespace vxPHP\Request;
  *
  */
 class NiceURI {
-	private static $locales;
+
+	/**
+	 * @var \vxPHP\Request\Request
+	 */
+	private static $request;
+
+	/**
+	 * @var array
+	 */
+	private static $knownBasenames = array(
+		'admin',
+		'embedded'
+	);
 
 	/**
 	 * transform "normal" uris to "nice" uris
 	 * result will have the following structure
-	 * /[{script_basename}][/{language}]/{page}[/id][/key_1/value_1][/key_2/value_2]...[/key_n/value_n]
+	 * /[{script_basename}][/{language}]/{path/to/page}
+	 *
+	 * @param string $plainUri
+	 * @return string $niceUri
+	 *
 	 */
 	public static function toNice($plainUri) {
-		$doc = basename(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '.php');
-		if($doc == 'index') {
-			$doc = '';
+
+		$components = parse_url($plainUri);
+
+		if (!isset($components['path'])) {
+			$path = '/';
 		}
 		else {
-			$doc = "/$doc";
+			$path = preg_replace(
+				array(
+					'~^index.php\/~i',
+					'~^(' . implode('|', self::$knownBasenames) . ').php\/~i'
+				),
+				array(
+					'/',
+					'${1}/'
+				),
+				$components['path']
+			);
 		}
 
-		$parts = explode('?', $plainUri);
-		if(count($parts) < 2) {
-			return $doc;
-		}
-
-		$query = explode('&', $parts[1]);
-		$get = array();
-
-		$lang = '';
-		$page = '';
-		$id = '';
-		$other = '';
-
-		foreach($query as $q) {
-			$g = explode('=', $q);
-			switch($g[0]) {
-				case 'lang':
-					$lang = '/'.$g[1];
-					break;
-				case 'page':
-					$page = '/'.$g[1];
-					break;
-				case 'id':
-					$id = '/'.$g[1];
-					break;
-				default:
-					if(isset($g[1])) {
-						$other .= '/'.$g[0].'/'.$g[1];
-					}
-					else {
-						$other .= "/{$g[0]}/1";
-					}
-			}
-		}
-
-		return $doc.$lang.$page.$id.$other;
+		return $path . (empty($components['query']) ? '' : '?' . $components['query']);
 	}
 
 	/**
 	 * transform nice uris to plain uris
+	 *
 	 * @param $niceUri
+	 * @return $plainUri
 	 */
 	public static function toPlain($niceUri) {
-		if(empty(self::$locales)) {
-			self::$locales = $GLOBALS['config']->locales;
-		}
+
 
 		$parts = explode('/', trim($niceUri, '/'));
 		$uri = '';
 
-		if(empty($parts)) {
-			return $uri;
+		if(in_array($parts[0], self::$knownBasenames)) {
+			$uri = $parts[0] . '.php';
 		}
-
-		$uri .= basename($_SERVER['SCRIPT_NAME']) != 'index.php' ? array_shift($parts).'.php' : '';
 
 		if(!($next = array_shift($parts))) {
 			return $uri;
