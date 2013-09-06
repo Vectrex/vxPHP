@@ -436,49 +436,58 @@ class SimpleTemplate {
 	 * @param string $text parsed text
 	 */
 	public static function parseTemplateLinks(&$text) {
+
 		if(empty($text)) {
 			return;
 		}
-		if($GLOBALS['config']->site->use_nice_uris) {
-			$text = preg_replace_callback(
-				'~<a(.*?)\s+href=("|\')\$([a-z0-9_./-]+)(.*?)\2(.*?)>~i',
-				__CLASS__.'::parseCallbackNiceA',
-				$text);
-		}
-		else {
-			$text = preg_replace_callback(
-				'~<a(.*?)\s+href=("|\')\$([a-z0-9_./-]+)(.*?)\2(.*?)>~i',
+
+		$text = preg_replace_callback(
+			'~<a(.*?)\s+href=("|\')\$([a-z0-9_.-]+[a-z0-9_./-]*)(.*?)\2(.*?)>~i',
+			__CLASS__.'::parseCallbackAWithPath',
+			$text
+		);
+
+		$text = preg_replace_callback(
+				'~<a(.*?)\s+href=("|\')\$\/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
 				__CLASS__.'::parseCallbackA',
-				$text);
-		}
+				$text
+		);
+
 		$text = preg_replace_callback(
 			'~<img(.*?)\s+src=("|\')\$([^"\']+)\2(.*?)>~i',
 			__CLASS__.'::parseCallbackImg',
-			$text);
+			$text
+		);
 	}
 
-	private static function parseCallbackNiceA($matches) {
-		static $doc = NULL;
+	private static function parseCallbackA($matches) {
+
+		static $doc;
+		static $niceUri;
+
 		if(empty($doc)) {
-			$doc = $GLOBALS['config']->getDocument();
+			$doc = Request::createFromGlobals()->server->get('SCRIPT_NAME');
+		}
+
+		if(empty($niceUri)) {
+			$niceUri = $GLOBALS['config']->site->use_nice_uris == 1;
 		}
 
 		$matches[4] = html_entity_decode($matches[4]);
 
-		$uri = NiceURI::toNice("/{$doc}?page={$matches[3]}{$matches[4]}");
+		$uri = ($niceUri ? '/' : '/' . $doc) . $matches[3] . $matches[4];
 
 		return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
 	}
 
-	private static function parseCallbackA($matches) {
-		static $doc = NULL;
-		if(empty($doc)) {
-			$doc = $GLOBALS['config']->getDocument();
-		}
-		return "<a{$matches[1]} href={$matches[2]}{$doc}?page={$matches[3]}{$matches[4]}{$matches[2]}{$matches[5]}>";
+	private static function parseCallbackAWithPath($matches) {
+		return 'xxx';
 	}
+
 	private static function parseCallbackImg($matches) {
+
 		return "<img{$matches[1]} src={$matches[2]}".IMG_SITE_PATH."{$matches[3]}{$matches[2]}{$matches[4]}>";
+
 	}
 
 	/**

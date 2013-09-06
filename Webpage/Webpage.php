@@ -41,16 +41,21 @@ abstract class Webpage {
 				$route,
 				$pathSegments = array();
 
-	/**
-	 * @var Config
-	 */
-	protected	$config;
+				/**
+				 * @var Config
+				 */
+	protected	$config,
 
 
-	/**
-	 * @var Mysqldbi
-	 */
-	protected	$db;
+				/**
+				 * @var Mysqldbi
+				 */
+				$db,
+
+				/**
+				 * @var Request
+				 */
+				$request;
 
 	protected 	$pageConfigData,
 				$author				= 'Gregor Kofler - Mediendesign und Webapplikationen, http://gregorkofler.com',
@@ -82,9 +87,19 @@ abstract class Webpage {
 			$this->db = &$GLOBALS['db'];
 		}
 
+		$this->request			= Request::createFromGlobals();
 		$this->route			= Router::getRouteFromPathInfo();
-		$this->currentDocument	= basename(Request::createFromGlobals()->server->get('SCRIPT_NAME'));
-		$this->pathSegments		= explode('/', trim(Request::createFromGlobals()->server->get('PATH_INFO'), '/'));
+
+		$pathInfo				= $this->request->server->get('PATH_INFO');
+
+		// with mod_rewrite active, PATH_INFO might not be available
+
+		if(is_null($pathInfo)) {
+			$pathInfo = $this->request->server->get('REQUEST_URI');
+		}
+
+		$this->currentDocument	= basename($this->request->server->get('SCRIPT_NAME'));
+		$this->pathSegments		= explode('/', trim($pathInfo, '/'));
 
 		// skip locale if one found
 
@@ -288,18 +303,18 @@ abstract class Webpage {
 		}
 
 		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
+
 		if(!in_array($m, $this->primedMenus)) {
 
 			// clear selected menu entries (which remain in the session)
+
 			$this->clearSelectedMenuEntries($m);
 
 			// walk tree, add dynamic menus along the way until an active entry is reached
-			$activeEntry = $this->walkMenuTree($m);
 
-			// propagate active entry up
-			if($activeEntry) {
-				$this->propagateActiveEntry($activeEntry);
-			}
+			$this->walkMenuTree($m, $this->pathSegments);
+
+			// cache menu for multiple renderings
 
 			$this->primedMenus[] = $m;
 		}
@@ -307,6 +322,7 @@ abstract class Webpage {
 		$css = "{$id}menu";
 
 		// drill down to required submenu (if only submenu needs to be rendered)
+
 		if($level !== FALSE) {
 			$css .= "_level_$level";
 
@@ -325,37 +341,42 @@ abstract class Webpage {
 		}
 
 		// instantiate optional decorator class
+
 		if(!empty($decorator)) {
 			$className = "vxPHP\\Webpage\\Menu\\Decorator\\MenuDecorator$decorator";
 			$m = new $className($m);
 		}
 
 		// output
+
 		$html = sprintf('<div id="%s">%s</div>', $css, $m->render($level === FALSE, $forceActiveMenu, $renderArgs));
 
 		// apply template parsers and filters
+
 		SimpleTemplate::parseTemplateLocales($html);
 		$this->html .= $html;
 		return $html;
 	}
 
 	/**
-	 * walk menu $m recursively until Webpage::currentPage match is found
+	 * walk menu $m recursively until path segments are no longer matching, or menu tree ends
 	 * if necessary dynamic menus will be added
 	 *
 	 * @param Menu $m
-	 * @return MenuEntry or FALSE
+	 * @param array $pathSegments
+	 *
+	 * @return MenuEntry or void
 	 *
 	 */
-	private function walkMenuTree(Menu $m) {
+	private function walkMenuTree(Menu $m, array $pathSegments) {
+
+		if(!count($pathSegments)) {
+			return;
+		}
 
 		// get current page id to evaluate active menu entry
 
-		$idToFind = $this->route->getRouteId();
-
-		if($idToFind == 'default') {
-			$idToFind = end($this->pathSegments);
-		}
+		$idToFind = array_shift($pathSegments);
 
 		// return when matching entry in current menu
 
@@ -363,7 +384,7 @@ abstract class Webpage {
 			return $e;
 		}
 
-		// if current menu is dynamic - generate it and return selected entry
+		// if current (sub-)menu is dynamic - generate it and return selected entry
 
 		if($m->getType() == 'dynamic') {
 
@@ -372,90 +393,50 @@ abstract class Webpage {
 				$method = 'buildDynamicMenu';
 			}
 
-			if(method_exists($this, $method) && ($addedMenu = $this->$method($m))) {
+			if(method_exists($this, $method) && ($addedMenu = $this->$method($m, $pathSegments))) {
 				return $addedMenu->getSelectedEntry();
 			}
 		}
 
-		// search current menu entries
-
 		foreach($m->getEntries() as $e) {
 
-			$sm = $e->getSubMenu();
-
-			// when matching entry is found, build submenu of this entry then return entry
+			// path segment doesn't match menu entry - finish walk
 
 			if($e->getPage() === $idToFind) {
 
-				// generate complete dynamic menus
+				$e->getMenu()->setSelectedEntry($e);
+				$sm = $e->getSubMenu();
+
+				// if submenu is flagged dynamic: try to generate it
 
 				if($sm && $sm->getType() == 'dynamic') {
 
 					// use either a specified method for building the menu or page::buildDynamicMenu()
 
 					$method = $sm->getMethod();
+
 					if(!$method) {
 						$method = 'buildDynamicMenu';
 					}
 
 					if(method_exists($this, $method)) {
-						$this->$method($sm);
+						$this->$method($sm, $pathSegments);
 					}
 				}
 
-				// postprocess menu: insert dynamic menu entries, modify entries, etc.
+				// otherwise postprocess menu: insert dynamic menu entries, modify entries, etc.
 
-				else if($sm && method_exists($this, 'reworkMenu')) {
+				else if ($sm && method_exists($this, 'reworkMenu')) {
 					$this->reworkMenu($sm);
 				}
 
-				return $e;
-			}
+				// walk  into submenu
 
-			if($sm) {
-				if($sm->getType() == 'dynamic') {
-
-					$method = $sm->getMethod();
-					if(!$method) {
-						$method = 'buildDynamicMenu';
-					}
-
-					if(method_exists($this, $method) && ($addedSm = $this->$method($sm))) {
-						return $addedSm->getSelectedEntry();
-					}
-				}
-				else {
-
-					// insert dynamic entries, modify entries, etc.
-
-					if(method_exists($this, 'reworkMenu')) {
-						$this->reworkMenu($sm);
-					}
-
-					if(($found = $this->walkMenuTree($sm))) {
-						return $found;
-					}
+				if($sm) {
+					$this->walkMenuTree($sm, $pathSegments);
 				}
 			}
 		}
-		return FALSE;
-	}
-
-	/**
-	 * marks menu entry $e as active and propagates this status up through menu tree
-	 * @param MenuEntry $e
-	 */
-	private function propagateActiveEntry(MenuEntry $e) {
-		$m = $e->getMenu();
-		$m->setSelectedEntry($e);
-
-		$parent = $m->getParentEntry();
-
-		if($parent) {
-			$parent->getMenu()->setSelectedEntry($parent);
-			$this->propagateActiveEntry($parent);
-		}
-
 	}
 
 	/**
@@ -483,11 +464,13 @@ abstract class Webpage {
 	 * @param Menu $m
 	 */
 	private function insertDynamicEntries(Menu $m) {
+
 		if(count($m->getDynamicEntriesNdx())) {
 			if(method_exists($this, 'buildDynamicEntries')) {
 				$this->buildDynamicEntries($m);
 			}
 		}
+
 	}
 
 	private function setMetaValue($name) {
