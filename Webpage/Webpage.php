@@ -53,7 +53,7 @@ abstract class Webpage {
 				$db,
 
 				/**
-				 * @var Request
+				 * @var \vxPHP\Request\Request
 				 */
 				$request;
 
@@ -89,17 +89,8 @@ abstract class Webpage {
 
 		$this->request			= Request::createFromGlobals();
 		$this->route			= Router::getRouteFromPathInfo();
-
-		$pathInfo				= $this->request->server->get('PATH_INFO');
-
-		// with mod_rewrite active, PATH_INFO might not be available
-
-		if(is_null($pathInfo)) {
-			$pathInfo = $this->request->server->get('REQUEST_URI');
-		}
-
 		$this->currentDocument	= basename($this->request->server->get('SCRIPT_NAME'));
-		$this->pathSegments		= explode('/', trim($pathInfo, '/'));
+		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
 
 		// skip locale if one found
 

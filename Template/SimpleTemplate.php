@@ -9,6 +9,8 @@ use vxPHP\Image\ImageModifier;
 use vxPHP\Request\NiceURI;
 use vxPHP\Request\Router;
 use vxPHP\Request\Request;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\MenuEntry\MenuEntry;
 
 /**
  * A simple template system
@@ -462,11 +464,11 @@ class SimpleTemplate {
 
 	private static function parseCallbackA($matches) {
 
-		static $doc;
+		static $script;
 		static $niceUri;
 
-		if(empty($doc)) {
-			$doc = Request::createFromGlobals()->server->get('SCRIPT_NAME');
+		if(empty($script)) {
+			$script = trim(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '/');
 		}
 
 		if(empty($niceUri)) {
@@ -475,13 +477,71 @@ class SimpleTemplate {
 
 		$matches[4] = html_entity_decode($matches[4]);
 
-		$uri = ($niceUri ? '/' : '/' . $doc) . $matches[3] . $matches[4];
+		$uri = ($niceUri ? '' : '/' . $script) . '/' . $matches[3] . $matches[4];
 
 		return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
 	}
 
 	private static function parseCallbackAWithPath($matches) {
-		return 'xxx';
+
+		static $script;
+		static $niceUri;
+
+		if(is_null($script)) {
+			$script = trim(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '/');
+		}
+
+		if(empty($niceUri)) {
+			$niceUri = $GLOBALS['config']->site->use_nice_uris == 1;
+		}
+
+		$idToFind = $matches[3];
+
+		$recursiveFind = function(Menu $m) use (&$recursiveFind, $idToFind) {
+
+			foreach($m->getEntries() as $e) {
+
+				if($e->getPage() === $idToFind) {
+					return $e;
+				}
+
+				if(($sm = $e->getSubMenu()) && $sm->getType() != 'dynamic') {
+					if($e = $recursiveFind($sm)) {
+						return $e;
+					}
+				}
+			}
+
+		};
+
+		foreach($GLOBALS['config']->menus as $menu) {
+
+			if($menu->getScript() !== $script) {
+				continue;
+			}
+
+			if($e = $recursiveFind($menu)) {
+				break;
+			}
+
+		}
+
+		if(isset($e)) {
+
+			$pathSegments = array($e->getPage());
+
+			while($e = $e->getMenu()->getParentEntry()) {
+				$pathSegments[] = $e->getPage();
+			}
+
+			$uri =
+				($niceUri ? '' : '/' . $script) .
+				(count($pathSegments) ? '/' . implode('/', array_reverse($pathSegments)) : '') .
+				$matches[4];
+
+			return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
+
+		}
 	}
 
 	private static function parseCallbackImg($matches) {
@@ -496,11 +556,15 @@ class SimpleTemplate {
 	 * @return string translated word
 	 */
 	public static function translatePhrase($phrase) {
+
 		$locale = isset($GLOBALS['config']->site->current_locale) ? $GLOBALS['config']->site->current_locale : '';
+
 		if(empty($locale)) {
 			return '';
 		}
+
 		self::getPhrases($locale);
+
 		if(isset($GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$phrase])) {
 			return $GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$phrase];
 		}

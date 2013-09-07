@@ -4,7 +4,6 @@ namespace vxPHP\Webpage\MenuEntry;
 
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntryInterface;
-use vxPHP\Request\NiceURI;
 
 /**
  * MenuEntry class
@@ -105,6 +104,7 @@ class MenuEntry implements MenuEntryInterface {
 		$this->attributes->$attr = $value;
 	}
 
+
 	public function render() {
 
 		// check display attribute
@@ -124,7 +124,10 @@ class MenuEntry implements MenuEntryInterface {
 					$pathSegments[] = $e->getPage();
 				} while ($e = $e->menu->getParentEntry());
 
-				$this->href = '/' . $this->menu->getScript() . '/' . implode('/', array_reverse($pathSegments));
+				$this->href =
+					'/' .
+					($GLOBALS['config']->site->use_nice_uris == 1 ? '' : $this->menu->getScript() . '/') .
+					implode('/', array_reverse($pathSegments));
 
 			}
 
@@ -133,6 +136,7 @@ class MenuEntry implements MenuEntryInterface {
 				$this->href = $this->page;
 
 			}
+
 		}
 
 		$sel = $this->menu->getSelectedEntry();
