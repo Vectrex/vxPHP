@@ -7,6 +7,8 @@ namespace vxPHP\Util;
  * @author Gregor Kofler
  * @todo currently a stub
  *
+ * @version 0.1.0 2013-09-08
+ *
  */
 class Locale {
 

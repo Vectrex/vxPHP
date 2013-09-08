@@ -9,7 +9,7 @@ use vxPHP\Webpage\MenuEntry\MenuEntryInterface;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.2.0 2013-06-15
+ * @version 0.3.0 2013-09-08
  */
 class MenuEntry implements MenuEntryInterface {
 	protected static	$count = 1;

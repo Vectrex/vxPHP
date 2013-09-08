@@ -8,6 +8,8 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
+ * @version 0.1.0 2013-09-08
+ *
  */
 class Router {
 

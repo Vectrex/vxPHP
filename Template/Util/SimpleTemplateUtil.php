@@ -8,8 +8,8 @@ use vxPHP\File\Exception\FilesystemFolderException;
 /**
  * helper class to sync and update templates both in filesystem and database
  *
- * @version 0.3.7 2013-04-07
  * @author Gregor Kofler
+ * @version 0.3.8 2013-09-08
  *
  */
 

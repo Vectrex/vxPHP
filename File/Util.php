@@ -7,7 +7,7 @@ namespace vxPHP\File;
  * in particular uploads of images according to ini-settings
  *
  * @author Gregor Kofler
- * @version 0.3.10 2012-12-24
+ * @version 0.4.0 2013-09-08
  *
  */
 class Util {

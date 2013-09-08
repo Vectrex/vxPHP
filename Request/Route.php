@@ -5,6 +5,8 @@ namespace vxPHP\Request;
 /**
  * @author Gregor Kofler
  *
+ * @version 0.1.0 2013-09-08
+ *
  * @todo currently a stub
  * @todo proper interface for controllers + type hints
  */

@@ -15,8 +15,9 @@ use vxPHP\Webpage\MenuEntry\MenuEntry;
 /**
  * A simple template system
  *
- * @version 0.8.3 2013-04-06
  * @author Gregor Kofler
+ * @version 0.9.0 2013-09-08
+ *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
  * @todo improve text2links

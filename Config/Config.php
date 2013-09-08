@@ -19,7 +19,7 @@ use vxPHP\Request\Router;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.8.0 2013-01-18
+ * @version 0.9.0 2013-09-08
  *
  * @todo refresh() method
  */

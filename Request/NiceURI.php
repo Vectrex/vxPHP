@@ -6,7 +6,7 @@ namespace vxPHP\Request;
  * provides static low level methods to convert nice uris to plain uris and vice-versa
  *
  * @author Gregor Kofler
- * @version 0.8.2 2010-11-06
+ * @version 0.9.0 2013-09-08
  *
  */
 class NiceURI {
