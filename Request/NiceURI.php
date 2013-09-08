@@ -54,7 +54,7 @@ class NiceURI {
 			);
 		}
 
-		return $path . (empty($components['query']) ? '' : '?' . $components['query']);
+		return '/' . $path . (empty($components['query']) ? '' : '?' . $components['query']);
 	}
 
 	/**

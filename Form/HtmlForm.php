@@ -20,7 +20,6 @@ use vxPHP\Request\ParameterBag;
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
  * @todo make addAntiSpam working with multiple forms
- * @todo relocate date and time validation to more appropriate class
  */
 
 class HtmlForm {
@@ -72,7 +71,39 @@ class HtmlForm {
 		$this->request	= Request::createFromGlobals();
 
 		$this->setAction($action ? $action : $this->request->getRequestUri());
-		$this->setRequestValues();
+	}
+
+	/**
+	 * initialize parameter bag
+	 * parameterbag is either supplied, or depending on request method retrieved from request object
+	 *
+	 * @param ParameterBag $bag
+	 */
+	public function bindRequestParameters(ParameterBag $bag = NULL) {
+
+		if($bag) {
+			$this->requestValues = $bag;
+		}
+
+		else {
+			if($this->request->getMethod() == 'GET') {
+				$this->requestValues = $this->request->query;
+			}
+			else {
+				$this->requestValues = $this->request->request;
+			}
+		}
+
+		// set form element values
+
+		foreach($this->elements as $name => $element) {
+			if(is_array($element)) {
+				$this->setElementArrayRequestValue($name);
+			}
+			else {
+				$this->setElementRequestValue($element);
+			}
+		}
 	}
 
 	/**
@@ -83,21 +114,25 @@ class HtmlForm {
 	 * @throws HtmlFormException
 	 */
 	public function setMethod($method) {
+
 		$method = strtoupper($method);
 		if($method != 'GET' && $method != 'POST') {
 			throw new HtmlFormException("Invalid form method: $method");
 		}
 		$this->method = $method;
-		$this->setRequestValues();
+
 	}
 
 	/**
 	 * set form action
+	 * @todo auto convert action to nice uri and vice versa
 	 *
 	 * @param string $action
 	 */
 	public function setAction($action) {
+
 		$this->action = htmlspecialchars($action, ENT_QUOTES);
+
 	}
 
 	/**
@@ -108,11 +143,15 @@ class HtmlForm {
 	 * @throws HtmlFormException
 	 */
 	public function setEncType($type) {
+
 		$method = strtolower($type);
+
 		if($type != 'application/x-www-form-urlencoded' && $type != 'multipart/form-data' && !empty($type)) {
 			throw new HtmlFormException("Invalid form enctype: $type");
 		}
+
 		$this->type = $type;
+
 	}
 
 	/**
@@ -122,6 +161,7 @@ class HtmlForm {
 	 * @param string $value
 	 */
 	public function setAttribute($attr, $value) {
+
 		$attr = strtolower($attr);
 
 		switch($attr) {
@@ -145,9 +185,11 @@ class HtmlForm {
 	 * @param array $attrs
 	 */
 	public function setAttributes(array $attrs) {
+
 		foreach($attrs as $k => $v) {
 			$this->setAttribute($k, $v);
 		}
+
 	}
 
 	/**
@@ -156,18 +198,25 @@ class HtmlForm {
 	 */
 	public function getSubmittingElement() {
 
+		// cache submitting element
+
 		if(!empty($this->clickedSubmit)) {
 			return $this->clickedSubmit;
+		}
+
+		if(is_null($this->requestValues)) {
+			return;
 		}
 
 		$this->submitIndex = NULL;
 
 		foreach($this->elements as $name => $e) {
-			if($e instanceof ImageElement && isset($this->request["{$this->request[$name]}_x"])) {
+
+			if($e instanceof ImageElement && !is_null($this->requestValues->get($name . '_x'))) {
 				$this->clickedSubmit = $e;
 				return $e;
 			}
-			else if($e instanceof FormElement && $e->canSubmit() && isset($this->request[$name])) {
+			else if($e instanceof FormElement && $e->canSubmit() && !is_null($this->requestValues->get($name))) {
 				$this->clickedSubmit = $e;
 				return $e;
 			}
@@ -175,23 +224,37 @@ class HtmlForm {
 			if(is_array($e)) {
 
 				// needed for submits via XHR, since arrays are returned as plain text
-				foreach(array_keys($this->request) as $req) {
-					if(preg_match("/^$name\[(.*?)\]$/", $req, $m)) {
+
+				foreach($this->requestValues->keys() as $k) {
+
+					if(preg_match("/^$name\[(.*?)\]$/", $k, $m)) {
 						if(isset($this->elements[$name][$m[1]]) && $this->elements[$name][$m[1]]->canSubmit()) {
 							$this->submitIndex = $m[1];
 							$this->clickedSubmit = $e;
 							return $e;
 						}
 					}
+
 				}
 
 				foreach($e as $k => $ee) {
-					if($ee instanceof ImageElement && isset($this->request["{$this->request[$name]}_x"][$k])) {
+
+					if(
+						$ee instanceof ImageElement &&
+						($arr = $this->requestValues->get($name . '_x')) &&
+						isset($arr[$k])
+					) {
 						$this->clickedSubmit = $ee;
 						$this->submitIndex = $k;
 						return $ee;
 					}
-					else if($ee instanceof FormElement && $ee->canSubmit() && isset($this->request[$name][$k])) {
+
+					else if(
+						$ee instanceof FormElement &&
+						$ee->canSubmit() &&
+						($arr = $this->requestValues->get($name . '_x')) &&
+						isset($arr[$k])
+					) {
 						$this->clickedSubmit = $ee;
 						$this->submitIndex = $k;
 						return $ee;
@@ -208,9 +271,11 @@ class HtmlForm {
 	 * @return boolean result
 	 */
 	public function wasSubmittedByName($name) {
+
 		if(!is_null($this->getSubmittingElement())) {
 			return $this->getSubmittingElement()->getName() === $name;
 		}
+
 		return FALSE;
 	}
 
@@ -229,14 +294,13 @@ class HtmlForm {
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
 
-			$link = defined('USE_MOD_REWRITE') && USE_MOD_REWRITE ? SimpleTemplate::link2Canonical($this->action) : $this->action;
 			$attr = array();
 			foreach($this->attributes as $k => $v) {
 				$attr[] = "$k='$v'";
 			}
 
 			return implode('', array(
-				"<form action='$link' method='{$this->method}'",
+				"<form action='{$this->action}' method='{$this->method}'",
 				($this->type ? " enctype='{$this->type}'" : ''),
 				($this->css	? " class='{$this->css}'" : ' '),
 				implode(' ', $attr),
@@ -259,11 +323,12 @@ class HtmlForm {
 		$tmp = array();
 
 		foreach($this->elements as $name => $e) {
+
 			if($e instanceof FormElement) {
 				if(
 					$e->canSubmit() && !$getSubmits ||
 					!$e->isValid() ||
-					$e instanceof CheckboxElement && !isset($this->request[$name])
+					$e instanceof CheckboxElement && !$this->requestValues->get($name)
 				) {
 					continue;
 				}
@@ -276,7 +341,7 @@ class HtmlForm {
 					if(
 						$elem->canSubmit() && !$getSubmits ||
 						!$elem->isValid() ||
-						$elem instanceof CheckboxElement && !isset($this->request[$name][$ndx])
+						$elem instanceof CheckboxElement && !($arr = $this->requestValues->get($name)) && !isset($arr[$ndx])
 					) {
 						continue;
 					}
@@ -297,18 +362,21 @@ class HtmlForm {
 	 * @return void
 	 */
 	public function setInitFormValues(array $values) {
+
 		$this->initFormValues = $values;
 
 		foreach($values as $name => $value) {
 			if(isset($this->elements[$name]) && $this->elements[$name] instanceof FormElement) {
+
 				if($this->elements[$name] instanceof CheckboxElement) {
-					if(empty($this->request)) {
+					if(empty($this->requestValues)) {
 						$this->elements[$name]->setChecked($this->elements[$name]->getValue() == $value);
 					}
 					else {
-						$this->elements[$name]->setChecked(isset($this->request[$name]));
+						$this->elements[$name]->setChecked(!is_null($this->requestValues->get($name)));
 					}
 				}
+
 				else if(is_null($this->elements[$name]->getValue())) {
 					$this->elements[$name]->setValue($value);
 				}
@@ -323,6 +391,7 @@ class HtmlForm {
 	 * @return $result
 	 */
 	public function getFormErrors() {
+
 		if(count($this->formErrors) === 0) {
 			return FALSE;
 		}
@@ -365,6 +434,7 @@ class HtmlForm {
 	 * @return array $error_texts
 	 */
 	public function getErrorTexts(array $keys = array()) {
+
 		if($this->loadTemplate()) {
 			$pattern = empty($keys) ? '.*?' : implode('|', $keys);
 			preg_match_all("/\{\s*error_({$pattern}):(.*?)\}/", $this->template, $hits);
@@ -432,8 +502,10 @@ class HtmlForm {
 	 * @param FormElement $e
 	 */
 	public function addElement(FormElement $e) {
+
 		$this->elements[$e->getName()] = $e;
-		$this->setElementRequestValue($e);
+//		$this->setElementRequestValue($e);
+
 	}
 
 	/**
@@ -442,27 +514,34 @@ class HtmlForm {
 	 * @param array $e
 	 */
 	public function addElementArray(array $e) {
+
 		if(count($e)) {
 			$elems = array_values($e);
 			$name = $elems[0]->getName();
 			$name = preg_replace('~\[\w+\]$~i', '', $name);
 			$this->elements[$name] = $e;
-			$this->setElementArrayRequestValue($name);
+//			$this->setElementArrayRequestValue($name);
 		}
+
 	}
 
 	private function setElementRequestValue(FormElement $e) {
+
+		if(is_null($this->requestValues)) {
+			return;
+		}
+
 		$name = $e->getName();
 
-		// checkboxes are only affected by request, if request is set all
+		// flagging of checkboxes
 
-		if($e instanceof CheckboxElement && !empty($this->request)) {
-			$e->setChecked(isset($this->request[$name]));
+		if($e instanceof CheckboxElement) {
+			$e->setChecked(!!$this->requestValues->get($name));
 		}
 
 		else {
-			if(isset($this->request[$name])) {
-				$e->setValue($this->request[$name]);
+			if($value = $this->requestValues->get($name)) {
+				$e->setValue($value);
 			}
 			elseif(isset($this->initFormValues[$name]) && is_null($e->getValue())) {
 				$e->setValue($this->initFormValues[$name]);
@@ -471,6 +550,7 @@ class HtmlForm {
 	}
 
 	private function setElementArrayRequestValue($name) {
+
 		foreach($this->elements[$name] as $k => $e) {
 
 			if($e instanceof CheckboxElement) {
@@ -541,29 +621,33 @@ class HtmlForm {
 	 * @return boolean $spam_detected
 	 */
 	public function detectSpam(array $fields = array(), $threshold = 3) {
+
+		$verify = $this->requestValues->get('verify');
+
 		if(
-			!isset($this->request['verify']) ||
-			!isset($_SESSION['antiSpamTimer'][$this->request['verify']]) ||
-			(microtime(true) - $_SESSION['antiSpamTimer'][$this->request['verify']] < 1)
+			!$verify ||
+			!isset($_SESSION['antiSpamTimer'][$verify]) ||
+			(microtime(true) - $_SESSION['antiSpamTimer'][$verify] < 1)
 		) {
 			return TRUE;
 		}
 
-		$label = md5($this->request['verify']);
+		$label = md5($verify);
 
-		if(!isset($this->request["confirm_entry_$label"]) || $this->request["confirm_entry_$label"] !== '') {
+		if(is_null($this->requestValues->get('confirm_entry_' . $label)) || $this->requestValues->get('confirm_entry_' . $label) !== '') {
 			return TRUE;
 		}
 
 		foreach($fields as $f) {
-			if(preg_match_all('~<\s*a\s+href\s*\=\s*(\\\\*"|\\\\*\'){0,1}http://~i', $this->request[$f], $tmp) > $threshold) {
+			if(preg_match_all('~<\s*a\s+href\s*\=\s*(\\\\*"|\\\\*\'){0,1}http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
 				return TRUE;
 			}
-			if(preg_match('~\[\s*url.*?\]~i', $this->request[$f])) {
+			if(preg_match('~\[\s*url.*?\]~i', $this->requestValues->get($f))) {
 				return TRUE;
 			}
 		}
 		return FALSE;
+
 	}
 
 	/**
@@ -597,19 +681,6 @@ class HtmlForm {
 		}
 		else if(isset($this->miscHtml[$id])) {
 			unset($this->miscHtml[$id]);
-		}
-	}
-
-	/**
-	 * depending on form method
-	 * $_POST or $_GET values are retrieved for further processing
-	 */
-	private function setRequestValues() {
-		if($this->method == 'GET') {
-			$this->request = array_map('urldecode', $GLOBALS['config']->_get);
-		}
-		else {
-			$this->request = &$_POST;
 		}
 	}
 

@@ -9,7 +9,6 @@ use vxPHP\Template\SimpleTemplate;
 use vxPHP\User\UserAbstract;
 use vxPHP\User\Admin;
 use vxPHP\Util\JSMin;
-use vxPHP\Request\NiceURI;
 use vxPHP\Template\Util\SimpleTemplateUtil;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Config\Config;
@@ -29,24 +28,33 @@ use vxPHP\Util\LocalesFactory;
 
 abstract class Webpage {
 
+				/**
+				 * @var string
+				 */
+
 	public		$html,
-				$validatedRequests	= array(),
+
 				/**
 				 * @var string
 				 * the current script name (e.g. index.php, admin.php, ...)
 				 */
 				$currentDocument	= NULL,
+
 				/**
 				 * @var \vxPHP\Request\Route
 				 */
 				$route,
+
+				/**
+				 * @var array
+				 * path segments stripped from locale and page id
+				 */
 				$pathSegments = array();
 
 				/**
 				 * @var Config
 				 */
 	protected	$config,
-
 
 				/**
 				 * @var Mysqldbi
@@ -56,9 +64,9 @@ abstract class Webpage {
 				/**
 				 * @var \vxPHP\Request\Request
 				 */
-				$request;
+				$request,
 
-	protected 	$pageConfigData,
+				$pageConfigData,
 				$author				= 'Gregor Kofler - Mediendesign und Webapplikationen, http://gregorkofler.com',
 				$robots				= 'index, follow',
 				$title,
@@ -90,7 +98,7 @@ abstract class Webpage {
 
 		$this->request			= Request::createFromGlobals();
 		$this->route			= Router::getRouteFromPathInfo();
-		$this->currentDocument	= basename($this->request->server->get('SCRIPT_NAME'));
+		$this->currentDocument	= basename($this->request->getScriptName());
 		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
 
 		// skip locale if one found
@@ -739,6 +747,7 @@ abstract class Webpage {
 	 * @return isAuthenticated
 	 */
 	protected function authenticateMenuEntry(MenuEntry $e) {
+
 		$p = $e->getAuthParameters();
 
 		if(empty($p)) {
@@ -748,76 +757,41 @@ abstract class Webpage {
 		$tables = preg_split('/\s*,\s*/', trim($p));
 		$admin = Admin::getInstance();
 
-		$matching = array_intersect($tables, $admin->getTableAccess());
-		return !empty($matching);
+		return !array_intersect($tables, $admin->getTableAccess());
+
 	}
 
 	/**
-	 * validates request parameters
-	 * @param array Request
-	 * @return void
+	 * handle JS-HTTP-(Ajax)-Requests
 	 *
-	 * possible comparison patterns of $pageRequests are
-	 * (string) "isset":	checks for presence of parameter
-	 * array:				checks for existence of parameter value in array values
-	 * string:				must be a regular expressions against which the parameters are matched
-	 *
-	 * if a parameter does not validate and $requestDefaults[$parameter] is present,
-	 * this default value gets assigned to the parameter
-	 *
-	 * any request not explicitly mentioned gets automatically validated
-	 */
-	private function validateRequests($req) {
-		foreach ($this->allowedRequests as $k => $v) {
-
-			if(is_string($v) && $v == 'isset') {
-				if(isset($req[$k])) {
-					$this->validatedRequests[$k] = true;
-				}
-				else {
-					$this->validatedRequests[$k] = false;
-				}
-			}
-
-			else if(isset($req[$k])) {
-				if(is_array($v)) {
-					if(in_array($req[$k], $v)) {
-						$this->validatedRequests[$k] = $req[$k];
-					}
-				}
-
-				else if(preg_match($v, $req[$k])) {
-					$this->validatedRequests[$k] = $req[$k];
-				}
-			}
-
-			unset($req[$k]);
-			if(isset($this->requestDefaults[$k]) && !isset($this->validatedRequests[$k])) {
-				$this->validatedRequests[$k] = $this->requestDefaults[$k];
-			}
-		}
-		$this->validatedRequests = array_merge($this->validatedRequests, $req);
-	}
-
-	/**
-	 * JS-HTTP-(Ajax)-Requests abarbeiten
+	 * look for xmlHttpRequest array and fill
+	 * ParameterBags for $_POST and $_GET accordingly
 	 */
 	private function handleXHR() {
-		if(($req = isset($this->config->_get['xmlHttpRequest']))) {
-			$this->validateRequests(json_decode($this->config->_get['xmlHttpRequest'], true));
+
+		$parameters = array();
+
+		if($this->request->getMethod() === 'GET' && $this->request->query->get('xmlHttpRequest')) {
+			$bag = 'query';
+			foreach(json_decode($this->request->query->get('xmlHttpRequest'), TRUE) as $key => $value) {
+				$parameters[$key] = $value;
+			}
 		}
 
-		else if(($req = isset($_POST['xmlHttpRequest']))) {
-			$this->validateRequests(json_decode($_POST['xmlHttpRequest'], true));
+		else if($this->request->getMethod() === 'POST' && $this->request->request->get('xmlHttpRequest')) {
+			$bag = 'request';
+			foreach(json_decode($this->request->request->get('xmlHttpRequest'), TRUE) as $key => $value) {
+				$parameters[$key] = $value;
+			}
 		}
 
-		else if(($req = isset($this->config->_get['ifuRequest']))) {
+		// handle Iframe File Upload - works with vxJS.widget.xhrForm
 
-			$_POST['httpRequest'] = 'ifuSubmit';
-			$this->validateRequests($_POST);
+		else if($this->request->getMethod() === 'GET' && $this->request->query->get('ifuRequest')) {
 
+			$this->request->request->set('httpRequest', 'ifuSubmit');
 			echo json_encode($this->handleHttpRequest());
-			exit;
+			exit();
 
 		}
 
@@ -825,26 +799,30 @@ abstract class Webpage {
 			return;
 		}
 
-		if($req && !empty($this->validatedRequests)) {
-			if($this->validatedRequests['httpRequest'] === 'apcPoll') {
-				if($this->config->server['apc_on'] && isset($this->validatedRequests['id'])) {
-					$response = apc_fetch("upload_{$this->validatedRequests['id']}");
+		if(count($parameters)) {
+
+			$this->request->$bag->add($parameters);
+
+			// handle request for apc upload poll
+
+			if($this->request->$bag->get('httpRequest') === 'apcPoll') {
+
+				$id = $this->request->$bag->get('id');
+				if($this->config->server['apc_on'] && $id) {
+					$response = apc_fetch('upload_' . $id);
 				}
 				if(isset($response['done']) && $response['done'] == 1) {
 					apc_clear_cache('user');
 				}
+
 			}
 
 			else {
+
 				$response = $this->handleHttpRequest();
 
-				if(isset($this->validatedRequests['echo']) && $this->validatedRequests['echo'] == 1) {
-					$echo = isset($this->config->_get['xmlHttpRequest'])
-						?
-						json_decode(stripslashes($this->config->_get['xmlHttpRequest']))
-						:
-						json_decode(stripslashes($_POST['xmlHttpRequest']));
-
+				if($this->request->$bag->get('echo') == 1) {
+					$echo = json_decode(stripslashes($this->request->$bag->get('xmlHttpRequest')));
 					unset($echo->echo);
 					$response = array('echo' => $echo, 'response' => $response);
 				}
@@ -855,7 +833,7 @@ abstract class Webpage {
 			header('Content-Type: text/plain; charset=UTF-8');
 			echo json_encode($response);
 		}
-		exit;
+		exit();
 	}
 
 	/**
@@ -885,11 +863,21 @@ abstract class Webpage {
 			}
 		}
 
+		if($this->config->site->use_nice_uris == 1) {
+			if(($scriptName = basename($this->request->getScriptName(), '.php')) === 'index') {
+				$scriptName = '';
+			}
+		}
+		else {
+			$scriptName = trim($this->request->getScriptName(), '/');
+		}
+
 		header(
 			'Location: ' .
-			$this->request->getScheme() .
-			'://' .
-			($this->config->site->use_nice_uris == 1  ? '' : $this->request->getScriptName() . '/') .
+			$this->request->getSchemeAndHttpHost() .
+			'/' .
+			$scriptName .
+			'/' .
 			$destinationPageId,
 			TRUE,
 			303

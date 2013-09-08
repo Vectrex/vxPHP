@@ -37,13 +37,14 @@ class SimpleTemplate {
 
 	public function __construct($file) {
 
-		$serverBag		= Request::createFromGlobals()->server;
+		$request		= Request::createFromGlobals();
+		$serverBag		= $request->server;
 		$this->locale	= Router::getLocaleFromPathInfo();
 
 		$path =
 			realpath($serverBag->get('DOCUMENT_ROOT')) .
 			(defined('TPL_PATH') ? TPL_PATH : '') .
-			(basename($serverBag->get('SCRIPT_NAME'), '.php') !== 'index' ? (basename($serverBag->get('SCRIPT_NAME'), '.php') . DIRECTORY_SEPARATOR) : '');
+			(basename($request->getScriptName(), '.php') !== 'index' ? (basename($request->getScriptName(), '.php') . DIRECTORY_SEPARATOR) : '');
 
 		if(!is_null($this->locale)) {
 			if(file_exists(
@@ -468,7 +469,7 @@ class SimpleTemplate {
 		static $niceUri;
 
 		if(empty($script)) {
-			$script = trim(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '/');
+			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
 		}
 
 		if(empty($niceUri)) {
@@ -488,7 +489,7 @@ class SimpleTemplate {
 		static $niceUri;
 
 		if(is_null($script)) {
-			$script = trim(Request::createFromGlobals()->server->get('SCRIPT_NAME'), '/');
+			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
 		}
 
 		if(empty($niceUri)) {
