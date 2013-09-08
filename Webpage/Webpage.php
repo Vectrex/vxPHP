@@ -5,7 +5,6 @@ namespace vxPHP\Webpage;
 use vxPHP\Webpage\Exception\WebpageException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
-
 use vxPHP\Template\SimpleTemplate;
 use vxPHP\User\UserAbstract;
 use vxPHP\User\Admin;
@@ -16,9 +15,7 @@ use vxPHP\Database\Mysqldbi;
 use vxPHP\Config\Config;
 use vxPHP\Request\Request;
 use vxPHP\Request\Router;
-use vxPHP\Request\Route;
 use vxPHP\Util\LocalesFactory;
-
 
 /**
  * Parent class for webpages,
@@ -34,6 +31,10 @@ abstract class Webpage {
 
 	public		$html,
 				$validatedRequests	= array(),
+				/**
+				 * @var string
+				 * the current script name (e.g. index.php, admin.php, ...)
+				 */
 				$currentDocument	= NULL,
 				/**
 				 * @var \vxPHP\Request\Route
@@ -866,22 +867,34 @@ abstract class Webpage {
 	}
 
 	/**
-	 * shortened header call
-	 * @param string destination page
+	 * builds a valid redirect string from a single route/page id
+	 *
+	 * @param string destination page id
 	 */
-	protected function redirect($destPage = NULL) {
-		if(is_null($destPage)) {
-			$script 	= $this->config->getDocument();
-			$page		= $this->config->pages[$script][$this->currentPage]->defaultRedirect;
-			$destPage	= empty($page) ? (defined('DEFAULT_REDIRECT') ? DEFAULT_REDIRECT : $script) : "$script?page=$page";
-		}
-		$destPage	= "/$destPage";
+	protected function redirect($destinationPageId = NULL) {
 
-		if($this->config->site->use_nice_uris && NiceURI::isPlainURI($destPage)) {
-			$destPage = NiceURI::toNice($destPage);
+		if(is_null($destinationPageId)) {
+			if($this->route->getRedirect()) {
+				$destinationPageId = $this->route->getRedirect();
+			}
+			else if ($this->site->default_redirect) {
+				$destinationPageId = $this->site->default_redirect;
+			}
+			else {
+				$destinationPageId = '';
+			}
 		}
-		header("Location: http://{$_SERVER['HTTP_HOST']}$destPage", TRUE, 303);
-		exit;
+
+		header(
+			'Location: ' .
+			$this->request->getScheme() .
+			'://' .
+			($this->config->site->use_nice_uris == 1  ? '' : $this->request->getScriptName() . '/') .
+			$destinationPageId,
+			TRUE,
+			303
+		);
+		exit();
 	}
 
 	/**

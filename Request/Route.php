@@ -14,6 +14,7 @@ class Route {
 			$wildcard,
 			$scriptName,
 			$controller,
+			$redirect,
 			$auth,
 			$authParameters;
 
@@ -45,6 +46,10 @@ class Route {
 
 		if(isset($parameters['controller'])) {
 			$this->setController($parameters['controller']);
+		}
+
+		if(isset($parameters['redirect'])) {
+			$this->setRedirect($parameters['redirect']);
 		}
 	}
 
@@ -135,4 +140,19 @@ class Route {
 	public function setController($controller) {
 		$this->controller = $controller;
 	}
+
+	/**
+	 * @return string $redirect route id
+	 */
+	public function getRedirect() {
+		return $this->redirect;
+	}
+
+	/**
+	 * @param string $redirect
+	 */
+	public function setRedirect($redirect) {
+		$this->redirect = $redirect;
+	}
+
 }

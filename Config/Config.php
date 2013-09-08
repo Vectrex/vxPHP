@@ -304,10 +304,11 @@ class Config {
 	private function parsePagesSettings(\SimpleXMLElement $pages) {
 
 		$scriptName = empty($pages->attributes()->script) ? $this->site->root_document : (string) $pages->attributes()->script;
+		$redirect	= empty($pages->attributes()->default_redirect) ? NULL : (string) $pages->attributes()->default_redirect;
 
 		foreach($pages->page as $page) {
 
-			$parameters = array();
+			$parameters = array('redirect' => $redirect);
 
 			$a = $page->attributes();
 

@@ -34,9 +34,15 @@ class Router {
 			self::$routeLookup[$script] = array();
 		}
 
+		// skip if pathinfo matches script name
+
+		if(basename($script, '.php') === $pathSegments[0]) {
+			array_shift($pathSegments);
+		}
+
 		// skip locale if one found
 
-		if(in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
+		if(count($pathSegments) && in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
 			array_shift($pathSegments);
 		}
 
