@@ -504,7 +504,6 @@ class HtmlForm {
 	public function addElement(FormElement $e) {
 
 		$this->elements[$e->getName()] = $e;
-//		$this->setElementRequestValue($e);
 
 	}
 
@@ -520,7 +519,6 @@ class HtmlForm {
 			$name = $elems[0]->getName();
 			$name = preg_replace('~\[\w+\]$~i', '', $name);
 			$this->elements[$name] = $e;
-//			$this->setElementArrayRequestValue($name);
 		}
 
 	}
@@ -553,12 +551,14 @@ class HtmlForm {
 
 		foreach($this->elements[$name] as $k => $e) {
 
+			$values = $this->requestValues->get($name);
+
 			if($e instanceof CheckboxElement) {
-				$e->setChecked(isset($this->request[$name][$k]));
+				$e->setChecked(!is_null($values) && isset($values[$k]));
 			}
 			else {
-				if(isset($this->request[$name][$k])) {
-					$e->setValue($this->request[$name][$k]);
+				if(isset($values[$k])) {
+					$e->setValue($values[$k]);
 				}
 				elseif(is_null($e->getValue()) || isset($this->initFormValues[$name][$k])) {
 					$e->setValue($this->initFormValues[$name][$k]);
