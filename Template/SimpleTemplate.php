@@ -478,7 +478,15 @@ class SimpleTemplate {
 
 		$matches[4] = html_entity_decode($matches[4]);
 
-		$uri = ($niceUri ? '' : '/' . $script) . '/' . $matches[3] . $matches[4];
+		if($niceUri) {
+			$script = $script == 'index.php' ? '' : basename($script, '.php');
+		}
+
+		$uri =
+			'/' .
+			$script .
+			($matches[3] !== '' ? '/' . $matches[3] : '') .
+			$matches[4];
 
 		return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
 	}
