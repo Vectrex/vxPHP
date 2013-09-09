@@ -22,7 +22,7 @@ use vxPHP\Util\LocalesFactory;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.16.0 2013-07-24
+ * @version 1.20.1 2013-09-08
  *
  */
 
@@ -38,7 +38,7 @@ abstract class Webpage {
 				 * @var string
 				 * the current script name (e.g. index.php, admin.php, ...)
 				 */
-				$currentDocument	= NULL,
+				$currentDocument = NULL,
 
 				/**
 				 * @var \vxPHP\Request\Route
@@ -47,7 +47,7 @@ abstract class Webpage {
 
 				/**
 				 * @var array
-				 * path segments stripped from locale and page id
+				 * path segments stripped from (beautified) document (e.g. admin/...) and locale
 				 */
 				$pathSegments = array();
 
@@ -78,7 +78,6 @@ abstract class Webpage {
 				$useTimestamps		= TRUE,
 				$metaData			= array(),
 				$primedMenus		= array(),	// cache for menus, when shown several times on page
-				$allowedRequests	= array(),
 				$forceActiveMenu;
 
 	public function __construct() {
@@ -101,14 +100,17 @@ abstract class Webpage {
 		$this->currentDocument	= basename($this->request->getScriptName());
 		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
 
+		// skip script name
+
+		if($this->config->site->use_nice_uris && $this->currentDocument != 'index.php') {
+			array_shift($this->pathSegments);
+		}
+
 		// skip locale if one found
 
 		if(in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
 			array_shift($this->pathSegments);
 		}
-
-//		$this->allowedRequests += isset($this->pageRequests) ? $this->pageRequests : array();
-//		$this->validateRequests(array_merge($this->config->_get, $_POST));
 
 		if(!$this->authenticate()) {
 			$_SESSION['authViolatingUri'] = !empty($_SERVER['REQUEST_URI']) ? ltrim($_SERVER['REQUEST_URI'], '/') : NULL;

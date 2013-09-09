@@ -9,7 +9,7 @@ use vxPHP\Webpage\MenuEntry\MenuEntryInterface;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.3.0 2013-09-08
+ * @version 0.3.1 2013-09-09
  */
 class MenuEntry implements MenuEntryInterface {
 	protected static	$count = 1;
@@ -113,6 +113,16 @@ class MenuEntry implements MenuEntryInterface {
 			return FALSE;
 		}
 
+		if($GLOBALS['config']->site->use_nice_uris == 1) {
+			$script = basename($this->menu->getScript(), '.php') . '/';
+			if($script == 'index') {
+				$script = '';
+			}
+		}
+		else {
+			$script = $this->menu->getScript() . '/';
+		}
+
 		if(is_null($this->href)) {
 
 			if($this->localPage) {
@@ -126,7 +136,7 @@ class MenuEntry implements MenuEntryInterface {
 
 				$this->href =
 					'/' .
-					($GLOBALS['config']->site->use_nice_uris == 1 ? '' : $this->menu->getScript() . '/') .
+					$script .
 					implode('/', array_reverse($pathSegments));
 
 			}
