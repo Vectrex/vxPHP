@@ -10,13 +10,12 @@ use vxPHP\Request\NiceURI;
 use vxPHP\Request\Router;
 use vxPHP\Request\Request;
 use vxPHP\Webpage\Menu\Menu;
-use vxPHP\Webpage\MenuEntry\MenuEntry;
 
 /**
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.0 2013-09-08
+ * @version 0.9.1 2013-09-10
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -446,7 +445,7 @@ class SimpleTemplate {
 		}
 
 		$text = preg_replace_callback(
-			'~<a(.*?)\s+href=("|\')\$([a-z0-9_.-]+[a-z0-9_./-]*)(.*?)\2(.*?)>~i',
+			'~<a(.*?)\s+href=("|\')\$([a-z0-9_.-]+[a-z0-9_.\/-]*)(.*?)\2(.*?)>~i',
 			__CLASS__.'::parseCallbackAWithPath',
 			$text
 		);
@@ -484,10 +483,19 @@ class SimpleTemplate {
 		return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
 	}
 
+	/**
+	 * callback to turn href shortcuts into site conform valid URLs
+	 *
+	 * $foo/bar?baz=1 becomes /level1/level2/foo/bar?baz=1
+	 *
+	 * @param array $matches
+	 * @return string
+	 */
 	private static function parseCallbackAWithPath($matches) {
 
 		static $script;
 		static $niceUri;
+		static $menuEntryLookup = array();
 
 		if(is_null($script)) {
 			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
@@ -497,7 +505,8 @@ class SimpleTemplate {
 			$niceUri = $GLOBALS['config']->site->use_nice_uris == 1;
 		}
 
-		$idToFind = $matches[3];
+		$matchSegments = explode('/', $matches[3]);
+		$idToFind = array_shift($matchSegments);
 
 		$recursiveFind = function(Menu $m) use (&$recursiveFind, $idToFind) {
 
@@ -516,16 +525,23 @@ class SimpleTemplate {
 
 		};
 
-		foreach($GLOBALS['config']->menus as $menu) {
+		if(isset($menuEntryLookup[$idToFind])) {
+			$e = $menuEntryLookup[$idToFind];
+		}
 
-			if($menu->getScript() !== $script) {
-				continue;
+		else {
+			foreach($GLOBALS['config']->menus as $menu) {
+
+				if($menu->getScript() !== $script) {
+					continue;
+				}
+
+				if($e = $recursiveFind($menu)) {
+					$menuEntryLookup[$idToFind] = $e;
+					break;
+				}
+
 			}
-
-			if($e = $recursiveFind($menu)) {
-				break;
-			}
-
 		}
 
 		if(isset($e)) {
@@ -536,9 +552,14 @@ class SimpleTemplate {
 				$pathSegments[] = $e->getPage();
 			}
 
+			if($niceUri) {
+				$script = $script == 'index.php' ? '' : basename($script, '.php');
+			}
 			$uri =
-				($niceUri ? '' : '/' . $script) .
+				'/'.
+				$script .
 				(count($pathSegments) ? '/' . implode('/', array_reverse($pathSegments)) : '') .
+				(count($matchSegments) ? '/' . implode('/', $matchSegments) : '') .
 				$matches[4];
 
 			return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";

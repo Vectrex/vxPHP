@@ -22,7 +22,7 @@ use vxPHP\Util\LocalesFactory;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.1 2013-09-08
+ * @version 1.20.2 2013-09-09
  *
  */
 
@@ -789,7 +789,7 @@ abstract class Webpage {
 
 		// handle Iframe File Upload - works with vxJS.widget.xhrForm
 
-		else if($this->request->getMethod() === 'GET' && $this->request->query->get('ifuRequest')) {
+		else if($this->request->query->get('ifuRequest')) {
 
 			$this->request->request->set('httpRequest', 'ifuSubmit');
 			echo json_encode($this->handleHttpRequest());
