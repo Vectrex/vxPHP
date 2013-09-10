@@ -22,7 +22,7 @@ use vxPHP\Util\LocalesFactory;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.2 2013-09-09
+ * @version 1.20.3 2013-09-10
  *
  */
 
@@ -108,7 +108,7 @@ abstract class Webpage {
 
 		// skip locale if one found
 
-		if(in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
+		if(count($this->pathSegments) && in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
 			array_shift($this->pathSegments);
 		}
 
