@@ -7,7 +7,7 @@ namespace vxPHP\File;
  * in particular uploads of images according to ini-settings
  *
  * @author Gregor Kofler
- * @version 0.4.0 2013-09-08
+ * @version 0.4.1 2013-09-10
  *
  */
 class Util {
@@ -46,5 +46,37 @@ class Util {
 		}
 
 		return sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']);
+	}
+
+	/**
+	 * scan dir without ./.. and return files with extension $ext
+	 *
+	 * @param string path
+	 * @param string extension
+	 * @return array filenames
+	 */
+	static function getDir($dir = '.', $ext = NULL) {
+
+		if($dir != '') {
+			$dir = rtrim($dir, '/').'/';
+		}
+		try {
+			$i = new \DirectoryIterator($dir);
+		} catch (\Exception $e) {
+			return false;
+		}
+
+		$files = array();
+
+		foreach($i as $file) {
+			$fn = $file->getFileName();
+			if(!$file->isDot() && $file->isFile() && substr($fn, 0, 1) !== '.') {
+				if(!isset($ext) || preg_match("~$ext\$~", $fn)) {
+					$files[] = $fn;
+				}
+			}
+		}
+
+		return $files;
 	}
 }
