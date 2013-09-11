@@ -117,7 +117,7 @@ class HtmlForm {
 
 		$method = strtoupper($method);
 		if($method != 'GET' && $method != 'POST') {
-			throw new HtmlFormException("Invalid form method: $method");
+			throw new HtmlFormException("Invalid form method: '$method'.", HtmlFormException::INVALID_METHOD);
 		}
 		$this->method = $method;
 
@@ -147,7 +147,7 @@ class HtmlForm {
 		$method = strtolower($type);
 
 		if($type != 'application/x-www-form-urlencoded' && $type != 'multipart/form-data' && !empty($type)) {
-			throw new HtmlFormException("Invalid form enctype: $type");
+			throw new HtmlFormException("Invalid form enctype: '$type'.", HtmlFormException::INVALID_ENCTYPE);
 		}
 
 		$this->type = $type;
@@ -319,6 +319,10 @@ class HtmlForm {
 	 * @return array valid_form_values
 	 */
 	public function getValidFormValues($getSubmits = FALSE) {
+
+		if(is_null($this->requestValues)) {
+			throw new HtmlFormException('Values can not be evaluated. No request bound.', HtmlFormException::NO_REQUEST_BOUND);
+		}
 
 		$tmp = array();
 
@@ -703,7 +707,7 @@ class HtmlForm {
 			$path = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).(defined('FORMTEMPLATES_PATH') ? FORMTEMPLATES_PATH : '');
 
 			if(!file_exists($path.$this->tplFile)) {
-				throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.");
+				throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.", HtmlFormException::TEMPLATE_FILE_NOT_FOUND);
 			}
 		}
 

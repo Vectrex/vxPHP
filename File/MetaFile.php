@@ -520,7 +520,7 @@ class MetaFile implements SubjectInterface {
 	 * @param bool $force forces re-read of mime type
 	 * @return string
 	 */
-	public function getMimetype($force = false) {
+	public function getMimetype($force = FALSE) {
 		return $this->filesystemFile->getMimetype($force);
 	}
 
@@ -531,7 +531,7 @@ class MetaFile implements SubjectInterface {
 	 * @param bool $force forces re-read of mime type
 	 * @return boolean
 	 */
-	public function isWebImage($force = false) {
+	public function isWebImage($force = FALSE) {
 		return $this->filesystemFile->isWebImage($force);
 	}
 
