@@ -15,7 +15,7 @@ use vxPHP\Webpage\Menu\Menu;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.1 2013-09-10
+ * @version 0.9.2 2013-09-12
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -445,7 +445,7 @@ class SimpleTemplate {
 		}
 
 		$text = preg_replace_callback(
-			'~<a(.*?)\s+href=("|\')\$([a-z0-9_.-]+[a-z0-9_.\/-]*)(.*?)\2(.*?)>~i',
+			'~<a(.*?)\s+href=("|\')\$([a-z0-9_]+[a-z0-9_.\/-]*)(.*?)\2(.*?)>~i',
 			__CLASS__.'::parseCallbackAWithPath',
 			$text
 		);
@@ -478,17 +478,24 @@ class SimpleTemplate {
 
 		$matches[4] = html_entity_decode($matches[4]);
 
+		$uriParts = array();
+
 		if($niceUri) {
-			$script = $script == 'index.php' ? '' : basename($script, '.php');
+			if($script !== 'index.php') {
+				$uriParts[] = basename($script, '.php');
+			}
+		}
+		else {
+			$uriParts[] = $script;
 		}
 
-		$uri =
-			'/' .
-			$script .
-			($matches[3] !== '' ? '/' . $matches[3] : '') .
-			$matches[4];
+		if($matches[3] !== '') {
+			$uriParts[] = $matches[3];
+		}
 
-		return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
+		$uri = implode('/', $uriParts) . $matches[4];
+
+		return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
 	}
 
 	/**
@@ -560,17 +567,26 @@ class SimpleTemplate {
 				$pathSegments[] = $e->getPage();
 			}
 
-			if($niceUri) {
-				$script = $script == 'index.php' ? '' : basename($script, '.php');
-			}
-			$uri =
-				'/'.
-				$script .
-				(count($pathSegments) ? '/' . implode('/', array_reverse($pathSegments)) : '') .
-				(count($matchSegments) ? '/' . implode('/', $matchSegments) : '') .
-				$matches[4];
+			$uriParts = array();
 
-			return "<a{$matches[1]} href={$matches[2]}$uri{$matches[2]}{$matches[5]}>";
+			if($niceUri) {
+				if($script !== 'index.php') {
+					$uriParts[] = basename($script, '.php');
+				}
+			}
+			else {
+				$uriParts[] = $script;
+			}
+			if(count($pathSegments)) {
+				$uriParts[] = implode('/', array_reverse($pathSegments));
+			}
+			if(count($matchSegments)) {
+				$uriParts[] = implode('/', $matchSegments);
+			}
+
+			$uri = implode('/', $uriParts) . $matches[4];
+
+			return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
 
 		}
 	}
