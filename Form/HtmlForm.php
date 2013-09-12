@@ -542,7 +542,7 @@ class HtmlForm {
 		}
 
 		else {
-			if($value = $this->requestValues->get($name)) {
+			if(!is_null($value = $this->requestValues->get($name))) {
 				$e->setValue($value);
 			}
 			elseif(isset($this->initFormValues[$name]) && is_null($e->getValue())) {
