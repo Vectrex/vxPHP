@@ -12,7 +12,7 @@ use vxPHP\Database\MysqldbiStatement;
  *
  * @extends mysqli
  *
- * @version 4.10.0 2013-06-28
+ * @version 4.10.1 2013-09-12
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -660,6 +660,12 @@ class Mysqldbi extends \mysqli {
 			$f->type === MYSQLI_TYPE_INT24 ||
 			(defined('MYSQLI_TYPE_BIT') && $f->type === MYSQLI_TYPE_BIT)
 		) {
+
+			// empty strings should not be interpreted as (int) 0
+
+			if($v === '') {
+				return NULL;
+			}
 			return (int) $v;
 		}
 
@@ -671,6 +677,12 @@ class Mysqldbi extends \mysqli {
 			$f->type === MYSQLI_TYPE_DECIMAL ||
 			(defined('MYSQLI_TYPE_NEWDECIMAL') && $f->type === MYSQLI_TYPE_NEWDECIMAL)
 		) {
+
+			// empty strings should not be interpreted as (float) 0
+
+			if($v === '') {
+				return NULL;
+			}
 			return (float) $v;
 		}
 
