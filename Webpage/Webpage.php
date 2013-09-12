@@ -15,6 +15,7 @@ use vxPHP\Config\Config;
 use vxPHP\Request\Request;
 use vxPHP\Request\Router;
 use vxPHP\Util\LocalesFactory;
+use vxPHP\Request\StatusCode;
 
 /**
  * Parent class for webpages,
@@ -892,9 +893,9 @@ abstract class Webpage {
 	 *
 	 * @param integer $errorCode
 	 */
-	protected function generateHttpError($errorCode = 404) {
-		header("{$_SERVER['SERVER_PROTOCOL']} 404 Not Found");
-		echo "<h1>Error $errorCode</h1>";
+	public static function generateHttpError($errorCode = 404) {
+		header("{$_SERVER['SERVER_PROTOCOL']} $errorCode " . StatusCode::$code[$errorCode]);
+		echo '<h1>' . $errorCode . ' ' . StatusCode::$code[$errorCode] . '</h1>';
 		exit();
 	}
 }
