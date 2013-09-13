@@ -23,7 +23,7 @@ use vxPHP\Request\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.5 2013-09-13
+ * @version 1.20.6 2013-09-13
  *
  */
 
@@ -875,7 +875,7 @@ abstract class Webpage {
 		);
 
 		if($this->config->site->use_nice_uris == 1) {
-			if(!($scriptName = basename($this->request->getScriptName(), '.php')) === 'index') {
+			if(($scriptName = basename($this->request->getScriptName(), '.php')) !== 'index') {
 				$urlSegments[] = $scriptName;
 			}
 		}
