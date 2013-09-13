@@ -23,7 +23,7 @@ use vxPHP\Request\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.4 2013-09-13
+ * @version 1.20.5 2013-09-13
  *
  */
 
@@ -870,20 +870,22 @@ abstract class Webpage {
 			}
 		}
 
+		$urlSegments = array(
+			$this->request->getSchemeAndHttpHost()
+		);
+
 		if($this->config->site->use_nice_uris == 1) {
-			if(($scriptName = basename($this->request->getScriptName(), '.php')) === 'index') {
-				$scriptName = '';
+			if(!($scriptName = basename($this->request->getScriptName(), '.php')) === 'index') {
+				$urlSegments[] = $scriptName;
 			}
 		}
 		else {
-			$scriptName = trim($this->request->getScriptName(), '/');
+			$urlSegments[] = trim($this->request->getScriptName(), '/');
 		}
 
 		header(
 			'Location: ' .
-			$this->request->getSchemeAndHttpHost() .
-			'/' .
-			$scriptName .
+			implode('/', $urlSegments) .
 			'/' .
 			$destinationPageId,
 			TRUE,
