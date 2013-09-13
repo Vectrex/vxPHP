@@ -23,7 +23,7 @@ use vxPHP\Request\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.3 2013-09-10
+ * @version 1.20.4 2013-09-13
  *
  */
 
@@ -288,15 +288,18 @@ abstract class Webpage {
 
 		if(
 			!isset($this->config->menus[$id]) ||
-			!count($this->config->menus[$id]->getEntries()) && $this->config->menus[$id]->getType() == 'static'
+			!count($this->config->menus[$id]->getEntries()) &&
+			$this->config->menus[$id]->getType() == 'static'
 		) {
 			return '';
 		}
 
 		// get menu
+
 		$m = $this->config->menus[$id];
 
 		// authenticate complete menu if necessary
+
 		if(!$this->authenticateMenu($m)) {
 			return '';
 		}
@@ -314,8 +317,9 @@ abstract class Webpage {
 			$this->clearSelectedMenuEntries($m);
 
 			// walk tree, add dynamic menus along the way until an active entry is reached
+			// use route id to identify current page in case path segment is empty (e.g. splash page)
 
-			$this->walkMenuTree($m, $this->pathSegments);
+			$this->walkMenuTree($m, $this->pathSegments[0] === '' ? array($this->route->getRouteId()) : $this->pathSegments);
 
 			// cache menu for multiple renderings
 
