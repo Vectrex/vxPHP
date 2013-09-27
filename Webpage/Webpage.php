@@ -23,7 +23,7 @@ use vxPHP\Request\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.20.6 2013-09-13
+ * @version 1.20.7 2013-09-27
  *
  */
 
@@ -463,21 +463,6 @@ abstract class Webpage {
 				break;
 			}
 		}
-	}
-
-	/**
-	 * insert dynamic entries
-	 *
-	 * @param Menu $m
-	 */
-	private function insertDynamicEntries(Menu $m) {
-
-		if(count($m->getDynamicEntriesNdx())) {
-			if(method_exists($this, 'buildDynamicEntries')) {
-				$this->buildDynamicEntries($m);
-			}
-		}
-
 	}
 
 	private function setMetaValue($name) {
