@@ -18,7 +18,7 @@ use vxPHP\Application\Webpage\NiceURI;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.3 2013-10-05
+ * @version 0.9.4 2013-10-05
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -263,8 +263,8 @@ class SimpleTemplate {
 		$text = preg_replace_callback(
 			array(
 				'~<img(.*?)\s+src=("|\')(.*?)#([\w\s\.\|]+)\2(.*?)>~i',
-				'~<img(.*?)\s+src=("|\')(.*?)\2.*?(width|height)=("|\')(\d+)\5.*?(width|height)=("|\')(\d+)\8.*?>~i',
-				'~<img(.*?)\s+src=("|\')(.*?)\2.*?style=("|\').*?(width|height):\s*(\d+)px;.*?(width|height):\s*(\d+)px.*?\4.*?>~i',
+				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2.*?\s+(width|height|src)=("|\')(.*?)\5.*?\s+(width|height|src)=("|\')(.*?)\8.*?>~i',
+				'~<img.*?\s+(style|src)=("|\')(.*?)\2.*?\s+(style|src)=("|\')(.*?)\5.*?>~i',
 				'~url\s*\(("|\'|)(.*?)#([\w\s\.\|]+)\1\)~i'
 			),
 			__CLASS__.'::parseCallbackCachedImages',
@@ -275,43 +275,76 @@ class SimpleTemplate {
 	private static function parseCallbackCachedImages($matches) {
 
 		// <img src="..." style="width: ...; height: ...">
-		if(count($matches) == 9) {
-			// $matches[3] - File
-			// $matches[5] - "width"/"height"
-			// $matches[6] - dimension 1
-			// $matches[7] - "width"/"height"
-			// $matches[8] - dimension 2
 
-			if($matches[5] === $matches[7]) {
+		if(count($matches) === 7) {
+
+			// $matches[1, 4] - src|style
+			// $matches[3, 6] - path|rules
+
+			if($matches[2] == 'src') {
+				$src	= $matches[3];
+				$style	= $matches[6];
+			}
+
+			else {
+				$src	= $matches[6];
+				$style	= $matches[3];
+			}
+
+			// analyze dimensions
+
+			if(!preg_match('~(width|height):\s*(\d+)px;.*?(width|height):\s*(\d+)px~', $style, $dimensions)) {
 				return $matches[0];
 			}
 
-			$pi			= pathinfo($matches[3]);
-			$actions	= $matches[5] == 'width' ? "resize {$matches[6]} {$matches[8]}" : "resize {$matches[8]} {$matches[6]}";
+			if($dimensions[1] == 'width') {
+				$width	= $dimensions[2];
+				$height = $dimensions[4];
+			}
+			else {
+				$width	= $dimensions[4];
+				$height = $dimensions[2];
+			}
+
+			$pi			= pathinfo($src);
+			$actions	= "resize $width $height";
 		}
 
 		// <img src="..." width="..." height="...">
-		else if(count($matches) == 10) {
-			// $matches[3] - File
-			// $matches[4] - "width"/"height"
-			// $matches[6] - dimension 1
-			// $matches[7] - "width"/"height"
-			// $matches[9] - dimension 2
 
-			if(strtolower($matches[4]) === strtolower($matches[7])) {
-				return $matches[0];
+		else if(count($matches) === 10) {
+
+			// $matches[1, 4, 7] - src|width|height
+			// $matches[3, 6, 9] - path|dimension 1|dimension 2
+
+			foreach($matches as $ndx => $m) {
+
+				$m = strtolower($m);
+
+				if($m === 'src') {
+					$src = $matches[$ndx + 2];
+				}
+				else if($m === 'height') {
+					$height = (int) $matches[$ndx + 2];
+				}
+				else if($m === 'width') {
+					$width = (int) $matches[$ndx + 2];
+				}
+
 			}
 
-			$pi			= pathinfo($matches[3]);
-			$actions	= strtolower($matches[4]) == 'width' ? "resize {$matches[6]} {$matches[9]}" : "resize {$matches[9]} {$matches[6]}";
+			$pi			= pathinfo($src);
+			$actions	= "resize $width $height";
 		}
 
 		// url(...#...)
 		else if (count($matches) == 4) {
+
 			// $matches[2] - File
 			// $matches[3] - Modifiers
 
-			$pi			= pathinfo($matches[2]);
+			$src		= $matches[2];
+			$pi			= pathinfo($src);
 			$actions	= $matches[3];
 		}
 
@@ -320,17 +353,30 @@ class SimpleTemplate {
 			// $matches[3] - File
 			// $matches[4] - Modifiers
 
-			$pi			= pathinfo($matches[3]);
+			$src		= $matches[3];
+			$pi			= pathinfo($src);
 			$actions	= $matches[4];
 		}
 
 		$pi['extension'] = isset($pi['extension']) ? ".{$pi['extension']}" : '';
 
-		$dest	= $pi['dirname'].DIRECTORY_SEPARATOR.FilesystemFolder::CACHE_PATH.DIRECTORY_SEPARATOR."{$pi['filename']}{$pi['extension']}@$actions{$pi['extension']}";
-		$path	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.ltrim($dest, DIRECTORY_SEPARATOR);
+		$dest =
+			$pi['dirname'] .
+			DIRECTORY_SEPARATOR .
+			FilesystemFolder::CACHE_PATH.DIRECTORY_SEPARATOR .
+			"{$pi['filename']}{$pi['extension']}@$actions{$pi['extension']}";
+
+		$path =
+			rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) .
+			DIRECTORY_SEPARATOR.ltrim($dest, DIRECTORY_SEPARATOR);
 
 		if(!file_exists($path)) {
-			$cachePath	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.ltrim($pi['dirname'],DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.FilesystemFolder::CACHE_PATH;
+			$cachePath =
+				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) .
+				DIRECTORY_SEPARATOR .
+				ltrim($pi['dirname'],DIRECTORY_SEPARATOR) .
+				DIRECTORY_SEPARATOR .
+				FilesystemFolder::CACHE_PATH;
 
 			if(!file_exists($cachePath)) {
 				if(!@mkdir($cachePath)) {
@@ -357,10 +403,10 @@ class SimpleTemplate {
 
 		// @TODO this _assumes_ that $matches[3] occurs only once
 
-		if(count($matches) >= 9) {
-			return str_replace($matches[3], $dest, $matches[0]);
+		if(count($matches) === 10 || count($matches) === 7) {
+			return str_replace($src, $dest, $matches[0]);
 		}
-		if(count($matches) == 6) {
+		if(count($matches) === 6) {
 			return "<img{$matches[1]} src={$matches[2]}$dest{$matches[2]}{$matches[5]}>";
 		}
 		else {
