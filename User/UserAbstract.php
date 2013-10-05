@@ -8,6 +8,7 @@ use vxPHP\User\Util;
 
 use vxPHP\Database\Exception\MysqldbiException;
 use vxPHP\Mail\Email;
+use vxPHP\Application\Application;
 
 /**
  * abstract base class for for admins and members
@@ -158,7 +159,7 @@ abstract class UserAbstract {
 				throw new UserException("User '$dataOrId' does not exist.", UserException::USER_DOES_NOT_EXIST);
 			}
 
-			$rows = $GLOBALS['db']->doPreparedQuery("
+			$rows = $db = Application::getInstance()->getDb()->doPreparedQuery("
 				SELECT
 					a.*,
 					ag.Privilege_Level,
@@ -226,7 +227,7 @@ abstract class UserAbstract {
 		}
 
 		try {
-			$GLOBALS['db']->updateRecord('admin', $this->adminid, $set);
+			$db = Application::getInstance()->getDb()->updateRecord('admin', $this->adminid, $set);
 			foreach($set as $k => $v) {
 				$k = strtolower($k);
 				$this->$k = $v;
@@ -245,7 +246,7 @@ abstract class UserAbstract {
 	 * @return sucess
 	 */
 	public function delete() {
-		return $GLOBALS['db']->deleteRecord('admin', $this->adminid);
+		return $db = Application::getInstance()->getDb()->deleteRecord('admin', $this->adminid);
 	}
 
 	/**
@@ -269,7 +270,7 @@ abstract class UserAbstract {
 	}
 
 	protected function queryNotifications() {
-		return $GLOBALS['db']->doPreparedQuery("
+		return $db = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
 				Alias
 			FROM
@@ -284,7 +285,8 @@ abstract class UserAbstract {
 	 * @param array $notification_aliases
 	 */
 	public function setNotifications(Array $aliases) {
-		$db = $GLOBALS['db'];
+
+		$db = $db = Application::getInstance()->getDb();
 
 		if(!isset($this->id)) {
 			return;

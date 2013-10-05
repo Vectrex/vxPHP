@@ -68,7 +68,7 @@ class Util {
 	 */
 	public static function isAvailableId($id) {
 
-		$rows = $GLOBALS['db']->doPreparedQuery('SELECT adminID FROM admin WHERE Email = ?', array((string) $id));
+		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE Email = ?', array((string) $id));
 		return empty($rows);
 
 	}
@@ -83,7 +83,7 @@ class Util {
 
 		$users = array();
 
-		$rows = $GLOBALS['db']->doPreparedQuery('
+		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('
 			SELECT
 				Email
 			FROM
@@ -116,7 +116,7 @@ class Util {
 
 		$users = array();
 
-		$rows = $GLOBALS['db']->doPreparedQuery('
+		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('
 			SELECT
 				Email
 			FROM

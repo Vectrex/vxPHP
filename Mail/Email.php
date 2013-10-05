@@ -4,12 +4,13 @@ namespace vxPHP\Mail;
 
 use vxPHP\Mail\MailerInterface;
 use vxPHP\Mail\Exception\MailerException;
+use vxPHP\Application\Application;
 
 /**
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
- * 
- * @version 0.2.12 2013-02-05
+ *
+ * @version 0.2.13 2013-10-05
  */
 
 class Email {
@@ -42,9 +43,9 @@ class Email {
 		$this->sig		= $sig;
 		$this->htmlMail	= $htmlMail;
 
-		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8'; 
+		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8';
 	}
-	
+
 	public static function setDebug($state) {
 		self::$debug = (boolean) $state;
 	}
@@ -76,7 +77,7 @@ class Email {
 	public function setCc(array $cc) {
 		$this->cc = $cc;
 	}
-	
+
 	public function setHtmlMail($flag) {
 		$this->htmlMail = $flag;
 	}
@@ -111,8 +112,9 @@ class Email {
 
 		// check for configured mailer
 
-		if(is_null($this->mailer) && isset($GLOBALS['config']->mail->mailer)) {
-			$mailer = $GLOBALS['config']->mail->mailer;
+		if(is_null($this->mailer) && !is_null(Application::getInstance()->getConfig()->mail->mailer)) {
+
+			$mailer = Application::getInstance()->getConfig()->mail->mailer;
 			$reflection = new \ReflectionClass($mailer->class);
 			$this->mailer = $reflection->newInstanceArgs(array($mailer->host, $mailer->port));
 
@@ -121,7 +123,7 @@ class Email {
 			}
 			else {
 				$this->mailer->setCredentials($mailer->user, $mailer->pass);
-			} 
+			}
 		}
 
 		if(is_null($this->mailer)) {
@@ -132,7 +134,7 @@ class Email {
 
 			foreach($this->headers as $k => $v) {
 				$headers[] = "$k: $v";
-			} 
+			}
 
 			return mail($this->receiver, $this->subject, $this->msg, implode(self::CRLF, $headers));
 		}
@@ -148,7 +150,7 @@ class Email {
 				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
 				$this->mailer->setHeaders(array_merge(
 					array(
-						'To'		=> $this->receiver, 
+						'To'		=> $this->receiver,
 						'Subject'	=> $this->subject
 					),
 					$this->headers
@@ -169,7 +171,7 @@ class Email {
 
 	/**
 	 * explicitly set mailer
-	 * 
+	 *
 	 * @param Mailer $mailer
 	 */
 	public function setMailer(MailerInterface $mailer) {
@@ -206,7 +208,7 @@ class Email {
 		else {
 			$this->headers['Content-type'] = 'text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}";
 		}
-		
+
 	}
 	private function buildMsg() {
 

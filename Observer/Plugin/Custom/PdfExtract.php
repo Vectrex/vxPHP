@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.1.3, 2012-04-24
+ * @version 0.1.4, 2013-10-05
  * @author Gregor Kofler
  */
 
@@ -9,6 +9,7 @@ use vxPHP\Observer\Plugin\Plugin;
 use vxPHP\Observer\SubjectInterface;
 use vxPHP\File\MetaFile;
 use vxPHP\Util\Uuid;
+use vxPHP\Application\Application;
 
 class PdfExtract extends Plugin {
 
@@ -37,17 +38,31 @@ class PdfExtract extends Plugin {
 	 * @throws PdfExtractException
 	 */
   	public function __construct() {
-		if(!isset($GLOBALS['config']->binaries)) {
+
+  		if(is_null(Application::getInstance()->getConfig()->binaries)) {
 			throw new PdfExtractException('Binaries not configured!');
 		}
-		if(!isset($GLOBALS['config']->binaries->executables['pdf_to_text']) || !isset($GLOBALS['config']->binaries->executables['convert'])) {
+
+		$binaries = Application::getInstance()->getConfig()->binaries;
+
+		if(
+			!isset($binaries->executables['pdf_to_text']) ||
+			!isset($binaries->executables['convert'])
+		) {
 			throw new PdfExtractException('Executables not configured!');
 		}
-		$this->pdfToTextCommand = $GLOBALS['config']->binaries->path.$GLOBALS['config']->binaries->executables['pdf_to_text']['file'];
+		$this->pdfToTextCommand =
+			$binaries->path .
+			$binaries->executables['pdf_to_text']['file'];
+
 		if(!file_exists($this->pdfToTextCommand)) {
 			throw new PdfExtractException("Executable {$this->pdfToTextCommand} not found!");
 		}
-		$this->convertCommand = $GLOBALS['config']->binaries->path.$GLOBALS['config']->binaries->executables['convert']['file'];
+
+		$this->convertCommand =
+			$binaries->path .
+			$binaries->executables['convert']['file'];
+
 		if(!file_exists($this->convertCommand)) {
 			throw new PdfExtractException("Executable {$this->convertCommand} not found!");
 		}
@@ -87,7 +102,7 @@ class PdfExtract extends Plugin {
 		parent::configure($configXML);
 
 		foreach($this->observedFolders as &$f) {
-			$f = rtrim($f, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$f = rtrim($f, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 		}
 	}
 
@@ -108,7 +123,7 @@ class PdfExtract extends Plugin {
 			return;
 		}
 
-		switch($GLOBALS['eventDispatcher']->getEventType()) {
+		switch(Application::getInstance()->getEventDispatcher()->getEventType()) {
 
 			case 'afterMetafileCreate':
 				$this->extract($file);
@@ -174,7 +189,8 @@ class PdfExtract extends Plugin {
 	 * @return Boolean success
 	 */
 	private function createDbEntry($metafilesID, $pageNdx, $temporaryFilename) {
-		return $GLOBALS['db']->insertRecord($this->table,
+
+		return Application::getInstance()->getDb()->insertRecord($this->table,
 			array(
 				'filesID'	=> $metafilesID,
 				'Page'		=> $pageNdx,
@@ -199,7 +215,7 @@ class PdfExtract extends Plugin {
 	 * @param MetaFile $file
 	 */
 	private function doPurge(MetaFile $file) {
-		$GLOBALS['db']->deleteRecord($this->table, array('filesID' => $file->getId()));
+		Application::getInstance()->getDb()->deleteRecord($this->table, array('filesID' => $file->getId()));
 	}
 }
 

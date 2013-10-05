@@ -11,6 +11,7 @@ use vxPHP\File\FilesystemFile;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Observer\SubjectInterface;
 use vxPHP\Database\Mysqldbi;
+use vxPHP\Application\Application;
 
 /**
  * mapper for metafiles
@@ -19,7 +20,7 @@ use vxPHP\Database\Mysqldbi;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.1 2013-06-18
+ * @version 0.6.2 2013-10-05
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -28,11 +29,6 @@ class MetaFile implements SubjectInterface {
 
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
-
-	/**
-	 * @var Mysqldbi
-	 */
-	private static	$db;
 
 	/**
 	 * @var FilesystemFile
@@ -58,9 +54,6 @@ class MetaFile implements SubjectInterface {
 	 * @return MetaFile
 	 */
 	public static function getInstance($path = NULL, $id = NULL) {
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
 		if(isset($path)) {
 			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
 						$path :
@@ -109,11 +102,7 @@ class MetaFile implements SubjectInterface {
 
 		if(count($toRetrieveById)) {
 
-			if(!isset(self::$db)) {
-				self::$db = $GLOBALS['db'];
-			}
-
-			$rows = self::$db->doPreparedQuery('
+			$rows = Application::getInstance()->getDb()->doPreparedQuery('
 				SELECT
 					f.*,
 					CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
@@ -180,13 +169,9 @@ class MetaFile implements SubjectInterface {
 
 		if(count($toRetrieveByPath)) {
 
-			if(!isset(self::$db)) {
-				self::$db = $GLOBALS['db'];
-			}
-
 			$where = array_fill(0, count($toRetrieveByPath) / 3, 'f.File = ? AND fo.Path IN (?, ?)');
 
-			$rows = self::$db->doPreparedQuery('
+			$rows = Application::getInstance()->getDb()->doPreparedQuery('
 				SELECT
 					f.*,
 					CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
@@ -226,9 +211,6 @@ class MetaFile implements SubjectInterface {
 	 * @return array metafiles
 	 */
 	public static function getMetaFilesInFolder(MetaFolder $folder, $callBackSort = NULL) {
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
 
 		// instance all filesystem files in folder, to speed up things
 
@@ -236,7 +218,7 @@ class MetaFile implements SubjectInterface {
 
 		$result = array();
 
-		$files = self::$db->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE fo.foldersID = ?", array((int) $folder->getId()));
+		$files = Application::getInstance()->getDb()->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE fo.foldersID = ?", array((int) $folder->getId()));
 
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
@@ -279,13 +261,10 @@ class MetaFile implements SubjectInterface {
 	 *
 	 */
 	public static function getFilesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
 
 		$result = array();
 
-		$files = self::$db->doPreparedQuery("
+		$files = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
 				f.*,
 				CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) AS FullPath
@@ -334,15 +313,12 @@ class MetaFile implements SubjectInterface {
 	 * @return array metafiles with mimetype 'image/jpeg', 'image/png', 'image/gif'
 	 */
 	public static function getImagesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
 
 		$result = array();
 
 		$mimeTypes = array('image/jpeg', 'image/png', 'image/gif');
 
-		$files = self::$db->doPreparedQuery("
+		$files = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
 				f.*,
 				CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath
@@ -391,9 +367,6 @@ class MetaFile implements SubjectInterface {
 	 * @return boolean is_available
 	 */
 	public static function isFilenameAvailable($filename, MetaFolder $f) {
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
 
 		// $filename is not available, if metafile with $filename is already instantiated
 
@@ -403,7 +376,21 @@ class MetaFile implements SubjectInterface {
 
 		// check whether $filename is found in database entries
 
-		return count(self::$db->doPreparedQuery("SELECT filesID FROM files WHERE foldersID = ? AND ( File LIKE ? OR Obscured_Filename LIKE ? )", array((int) $f->getId(), (string) $filename, (string) $filename))) === 0;
+		return count(
+			Application::getInstance()->
+			getDb()->
+			doPreparedQuery("
+				SELECT
+					filesID
+				FROM
+					files
+				WHERE
+					foldersID = ? AND
+					( File LIKE ? OR Obscured_Filename LIKE ? )
+				",
+				array((int) $f->getId(), (string) $filename, (string) $filename)
+			)
+		) === 0;
 	}
 
 	/**
@@ -446,8 +433,10 @@ class MetaFile implements SubjectInterface {
 	 * @return array
 	 */
 	private function getDbEntryByPath($path) {
+
 		$pathinfo = pathinfo($path);
-		$rows = self::$db->doPreparedQuery(
+
+		$rows = Application::getInstance()->getDb()->doPreparedQuery(
 			"SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path IN(?, ?) LIMIT 1",
 			array(
 				$pathinfo['basename'],
@@ -465,7 +454,8 @@ class MetaFile implements SubjectInterface {
 	}
 
 	private function getDbEntryById($id) {
-		$rows = self::$db->doPreparedQuery(
+
+		$rows = Application::getInstance()->getDb()->doPreparedQuery(
 			"SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.filesID = ?",
 			array((int) $id)
 		);
@@ -626,7 +616,7 @@ class MetaFile implements SubjectInterface {
 		}
 
 		try {
-			self::$db->preparedExecute("UPDATE files SET File = ? WHERE filesID = ?", array($to, $this->id));
+			Application::getInstance()->getDb()->preparedExecute("UPDATE files SET File = ? WHERE filesID = ?", array($to, $this->id));
 		}
 
 		catch(\Exception $e) {
@@ -665,7 +655,7 @@ class MetaFile implements SubjectInterface {
 		// update reference in db
 
 		try {
-			self::$db->preparedExecute("UPDATE files SET foldersID = ? WHERE filesID = ?", array($destination->getId(), $this->id));
+			Application::getInstance()->getDb()->preparedExecute("UPDATE files SET foldersID = ? WHERE filesID = ?", array($destination->getId(), $this->id));
 		}
 		catch(\Exception $e) {
 			throw new MetaFileException("Moving '{$this->getFilename()}' to '{$destination->getFullPath()}' failed.");
@@ -689,7 +679,7 @@ class MetaFile implements SubjectInterface {
 	public function delete($keepFilesystemFile = FALSE) {
 		EventDispatcher::getInstance()->notify($this, 'beforeMetafileDelete');
 
-		if(self::$db->deleteRecord('files', $this->id)) {
+		if(Application::getInstance()->getDb()->deleteRecord('files', $this->id)) {
 			unset(self::$instancesById[$this->id]);
 			unset(self::$instancesByPath[$this->filesystemFile->getPath()]);
 
@@ -737,7 +727,7 @@ class MetaFile implements SubjectInterface {
 	 * commit changes to metadata by writing data to database
 	 */
 	private function commit() {
-		if(!self::$db->updateRecord('files', $this->id, $this->data)) {
+		if(!Application::getInstance()->getDb()->updateRecord('files', $this->id, $this->data)) {
 			throw new MetaFileException("Data commit of file '{$this->filesystemFile->getFilename()}' failed.");
 		}
 	}

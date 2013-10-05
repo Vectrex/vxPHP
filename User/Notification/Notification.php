@@ -2,11 +2,12 @@
 
 namespace vxPHP\User\Notification;
 
+use vxPHP\Application\Application;
 /**
  * mapper class for notifications
- * 
+ *
  * @author Gregor Kofler
- * @version 0.1.2 2012-04-20
+ * @version 0.1.3 2013-09-05
  */
 class Notification {
 	private		$id,
@@ -61,9 +62,10 @@ class Notification {
 		return $result;
 	}
 
-	
+
 	private static function queryAllNotifications() {
-		$rows = $GLOBALS['db']->doQuery("
+
+		$rows = Application::getInstance()->getDb()->doQuery("
 			SELECT
 				notificationsID as id,
 				n.Alias,

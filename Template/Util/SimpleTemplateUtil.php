@@ -4,12 +4,13 @@ namespace vxPHP\Template\Util;
 
 use vxPHP\File\FilesystemFolder;
 use vxPHP\File\Exception\FilesystemFolderException;
+use vxPHP\Application\Application;
 
 /**
  * helper class to sync and update templates both in filesystem and database
  *
  * @author Gregor Kofler
- * @version 0.3.8 2013-09-08
+ * @version 0.3.9 2013-10-05
  *
  */
 
@@ -28,9 +29,10 @@ class SimpleTemplateUtil {
 
 	public static function syncTemplates() {
 
-		$db = &$GLOBALS['db'];
+		$config	= Application::getInstance()->getConfig();
+		$db		= Application::getInstance()->getDb();
 
-		$locales = empty($GLOBALS['config']->site->locales) ? array() : $GLOBALS['config']->site->locales;
+		$locales = empty($config->site->locales) ? array() : $config->site->locales;
 
 		// fetch file info
 
@@ -147,11 +149,7 @@ class SimpleTemplateUtil {
 	 */
 	public static function getPageMetaData($pageId, $locale = '') {
 
-		$db = &$GLOBALS['db'];
-
-		if(empty($db)) {
-			return FALSE;
-		}
+		$db = Application::getInstance()->getDb();
 
 		if($db->tableExists('pages') && $db->tableExists('revisions')) {
 			$data = $db->doPreparedQuery("
@@ -252,7 +250,8 @@ class SimpleTemplateUtil {
 	 * @param string $locale of template
 	 */
 	private static function insertTemplate($data, $locale = 'universal') {
-		$db = &$GLOBALS['db'];
+
+		$db = Application::getInstance()->getDb();
 
 		$alias = strtoupper(basename($data['Template']->getFilename(), '.htm'));
 
@@ -307,12 +306,14 @@ class SimpleTemplateUtil {
 	}
 
 	private static function insertRevision($row, $locale = 'universal') {
-		$db = &$GLOBALS['db'];
+
+		$config	= Application::getInstance()->getConfig();
+		$db		= Application::getInstance()->getDb();
 
 		$row			= self::sanitizeTemplateData($row);
 		$row['Rawtext']	= self::extractRawtext($row['Markup']);
 
-		if(!empty($locale) && $locale != 'universal' && in_array($locale, $GLOBALS['config']->site->locales)) {
+		if(!empty($locale) && $locale != 'universal' && in_array($locale, $config->site->locales)) {
 			$row['Locale'] = $locale;
 			$localeSQL = "r.Locale = '$locale'";
 		}
@@ -327,18 +328,20 @@ class SimpleTemplateUtil {
 	}
 
 	private static function deleteOldRevisions($pagesID, $locale = 'universal') {
-		$db = &$GLOBALS['db'];
+
+		$config	= Application::getInstance()->getConfig();
+		$db		= Application::getInstance()->getDb();
 
 		if(empty(self::$maxPageRevisions)) {
-			self::$maxPageRevisions =	isset($GLOBALS['config']->site->max_page_revisions) &&
-										is_numeric($GLOBALS['config']->site->max_page_revisions) ?
-										((int) $GLOBALS['config']->site->max_page_revisions > 0 ? (int) $GLOBALS['config']->site->max_page_revisions : 1) :
+			self::$maxPageRevisions =	isset($config->site->max_page_revisions) &&
+										is_numeric($config->site->max_page_revisions) ?
+										((int) $config->site->max_page_revisions > 0 ? (int) $config->site->max_page_revisions : 1) :
 										5;
 		}
 
 		$delIds = array();
 
-		$localeSQL = !empty($locale) && $locale != 'universal' && in_array($locale, $GLOBALS['config']->site->locales) ?
+		$localeSQL = !empty($locale) && $locale != 'universal' && in_array($locale, $config->site->locales) ?
 			"Locale = '$locale'" :
 			"(Locale IS NULL OR Locale = '')";
 

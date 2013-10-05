@@ -10,12 +10,13 @@ use vxPHP\Form\FormElement\ImageElement;
 use vxPHP\Form\FormElement\CheckboxElement;
 
 use vxPHP\Template\SimpleTemplate;
-use vxPHP\Request\Request;
-use vxPHP\Request\ParameterBag;
+use vxPHP\Http\Request;
+use vxPHP\Http\ParameterBag;
+use vxPHP\Application\Application;
 
 /**
  * Template Engine for Forms
- * @version 1.1.12 2013-02-24
+ * @version 1.1.13 2013-10-05
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -585,7 +586,7 @@ class HtmlForm {
 	 * enable APC upload if supported by server
 	 */
 	public function enableApcUpload() {
-		$this->allowApcUpload = $GLOBALS['config']->server['apc_on'];
+		$this->allowApcUpload = !is_null(Application::getInstance()->getConfig()->server['apc_on']);
 	}
 
 	/**

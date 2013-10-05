@@ -6,16 +6,19 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Util\Rex;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Image\ImageModifier;
-use vxPHP\Request\NiceURI;
-use vxPHP\Request\Router;
-use vxPHP\Request\Request;
-use vxPHP\Webpage\Menu\Menu;
+
+use vxPHP\Http\Router;
+use vxPHP\Http\Request;
+
+use vxPHP\Application\Application;
+use vxPHP\Application\Menu\Menu;
+use vxPHP\Application\Webpage\NiceURI;
 
 /**
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.2 2013-09-12
+ * @version 0.9.3 2013-10-05
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -211,7 +214,7 @@ class SimpleTemplate {
 		$pref = 'mailto:';
 		$text = '';
 		$href = '';
-		$encoding = strtoupper($GLOBALS['config']->site->default_encoding);
+		$encoding = strtoupper(Application::getInstance()->getConfig()->site->default_encoding);
 
 		$len = strlen($pref);
 
@@ -473,7 +476,7 @@ class SimpleTemplate {
 		}
 
 		if(empty($niceUri)) {
-			$niceUri = $GLOBALS['config']->site->use_nice_uris == 1;
+			$niceUri = Application::getInstance()->getConfig()->site->use_nice_uris == 1;
 		}
 
 		$matches[4] = html_entity_decode($matches[4]);
@@ -512,12 +515,14 @@ class SimpleTemplate {
 		static $niceUri;
 		static $menuEntryLookup = array();
 
+		$config = Application::getInstance()->getConfig();
+
 		if(is_null($script)) {
 			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
 		}
 
 		if(empty($niceUri)) {
-			$niceUri = $GLOBALS['config']->site->use_nice_uris == 1;
+			$niceUri = $config->site->use_nice_uris == 1;
 		}
 
 		$matchSegments = explode('/', $matches[3]);
@@ -545,7 +550,7 @@ class SimpleTemplate {
 		}
 
 		else {
-			foreach($GLOBALS['config']->menus as $menu) {
+			foreach($config->menus as $menu) {
 
 				if($menu->getScript() !== $script) {
 					continue;
@@ -604,7 +609,9 @@ class SimpleTemplate {
 	 */
 	public static function translatePhrase($phrase) {
 
-		$locale = isset($GLOBALS['config']->site->current_locale) ? $GLOBALS['config']->site->current_locale : '';
+		$config = Application::getInstance()->getConfig();
+
+		$locale = isset($config->site->current_locale) ? $config->site->current_locale : '';
 
 		if(empty($locale)) {
 			return '';
@@ -612,8 +619,8 @@ class SimpleTemplate {
 
 		self::getPhrases($locale);
 
-		if(isset($GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$phrase])) {
-			return $GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$phrase];
+		if(isset($GLOBALS['phrases'][$config->site->current_locale][$phrase])) {
+			return $GLOBALS['phrases'][$config->site->current_locale][$phrase];
 		}
 
 		self::storePhrase($phrase);
@@ -626,14 +633,18 @@ class SimpleTemplate {
 	 *  @return "translated" phrase
 	 */
 	private static function storePhrase($phrase, $key = NULL) {
+
 		$path = defined('LOCALE_PATH') ? LOCALE_PATH : '';
-		$locales = $GLOBALS['config']->site->locales;
+
+		$locales = Application::getInstance()->getConfig()->site->locales;
+
 		if(!isset($key)) {
 			$key = $phrase;
 			$phrase = ucfirst(str_replace('_', ' ', $phrase));
 		}
 
 		foreach($locales as $l) {
+
 			if(!isset($GLOBALS['phrases'][$l][$key])) {
 				$GLOBALS['phrases'][$l][$key] = $phrase;
 				$handle = @fopen($path.$l.'.phrases', 'a');
@@ -657,11 +668,15 @@ class SimpleTemplate {
 	 * @param string $text parsed text
 	 */
 	public static function parseTemplateLocales(&$text) {
+
 		if(empty($text) || self::$suppressLocales) {
 			return;
 		}
 
-		$locale = isset($GLOBALS['config']->site->current_locale) ? $GLOBALS['config']->site->current_locale : '';
+		$config = Application::getInstance()->getConfig();
+
+		$locale = isset($config->site->current_locale) ? $config->site->current_locale : '';
+
 		if(empty($locale)) {
 			$text = preg_replace(array(
 				'@\{![a-z0-9_]+\}@i',
@@ -674,10 +689,11 @@ class SimpleTemplate {
 	}
 
 	private static function translatePhraseCallback($matches) {
-		if(
-			!empty($GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$matches[1]])) {
-				return $GLOBALS['phrases'][$GLOBALS['config']->site->current_locale][$matches[1]];
+
+		if(!empty($GLOBALS['phrases'][$config->site->current_locale][$matches[1]])) {
+			return $GLOBALS['phrases'][$config->site->current_locale][$matches[1]];
 		}
+
 		if(isset($matches[3])) {
 			return self::storePhrase($matches[3], $matches[1]);
 		}
@@ -687,6 +703,7 @@ class SimpleTemplate {
 	}
 
 	private static function getPhrases($locale) {
+
 		if(
 			!isset($GLOBALS['phrases'][$locale]) &&
 			file_exists((defined('LOCALE_PATH') ? LOCALE_PATH : '').$locale.'.phrases')
@@ -725,6 +742,7 @@ class SimpleTemplate {
 	 * @param string $counted add code for counting clicks on link
 	 */
 	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE, $counted = FALSE) {
+
 		if (empty($link)) {
 			return FALSE;
 		}
@@ -742,7 +760,7 @@ class SimpleTemplate {
 		}
 
 		else {
-			if(!$ext && $GLOBALS['config']->site->use_nice_uris) {
+			if(!$ext && Application::getInstance()->getConfig()->site->use_nice_uris) {
 				$link = NiceURI::toNice($link);
 			}
 			else if($ext && $counted) {
@@ -798,7 +816,7 @@ class SimpleTemplate {
 		if(defined('TPL_PATH')) {
 			$path .=  TPL_PATH;
 		}
-		$subpath = basename($GLOBALS['config']->getDocument(), '.php');
+		$subpath = basename(Application::getInstance()->getConfig()->getDocument(), '.php');
 		$path .= file_exists($path.$subpath) ? "$subpath/" : '';
 		return $path;
 	}

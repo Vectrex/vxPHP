@@ -4,6 +4,7 @@ namespace vxPHP\Database;
 
 use vxPHP\Database\Exception\MysqldbiException;
 use vxPHP\Database\MysqldbiStatement;
+use vxPHP\Application\Application;
 
 /**
  * mysqldbi
@@ -12,11 +13,10 @@ use vxPHP\Database\MysqldbiStatement;
  *
  * @extends mysqli
  *
- * @version 4.10.1 2013-09-12
+ * @version 4.11.0 2013-10-05
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
- * @todo avoid required $GLOBALS['config']
  */
 
 class Mysqldbi extends \mysqli {
@@ -54,21 +54,14 @@ class Mysqldbi extends \mysqli {
 	public	$numRows,
 			$affectedRows;
 
-	public function __construct($dbname = '', $dbhost = '', $dbuser = '', $dbpass = '') {
-		if(!isset($GLOBALS['config'])) {
-			throw new MysqldbiException('Missing config object!');
-		}
-		$c = &$GLOBALS['config'];
-		if($dbname == '' &&(!isset($c->db) || !isset($c->db->name))) {
-			throw new MysqldbiException('Database credentials not configured!');
-		}
+	public function __construct(array $config = array()) {
 
-		$this->logtype	= isset($c->db->logtype) && strtolower($c->db->logtype) == 'xml' ? 'xml' : 'plain';
+		$this->logtype	= isset($config['logtype']) && strtolower($config['logtype']) == 'xml' ? 'xml' : 'plain';
 
-		$this->host		= $dbhost != '' ? $dbhost : $c->db->host;
-		$this->user		= $dbuser != '' ? $dbuser : $c->db->user;
-		$this->pass		= $dbpass != '' ? $dbpass : $c->db->pass;
-		$this->dbname	= $dbname != '' ? $dbname : $c->db->name;
+		$this->host		= !empty($config['host']) 	? $config['host']	: '';
+		$this->dbname	= !empty($config['dbname'])	? $config['dbname']	: '';
+		$this->user		= !empty($config['user'])	? $config['user']	: '';
+		$this->pass		= !empty($config['pass'])	? $config['pass']	: '';
 
 		@parent::__construct($this->host, $this->user, $this->pass, $this->dbname);
 
@@ -81,7 +74,7 @@ class Mysqldbi extends \mysqli {
 				$this->set_charset($this->charsetMap[strtolower(DEFAULT_ENCODING)]);
 			}
 			else {
-				throw new MysqldbiException("Character set '".DEFAULT_ENCODING."' not mapped or supported.");
+				throw new MysqldbiException("Character set '" . DEFAULT_ENCODING . "' not mapped or supported.");
 			}
 		}
 		else {

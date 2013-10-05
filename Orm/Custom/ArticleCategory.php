@@ -4,12 +4,13 @@ namespace vxPHP\Orm\Custom;
 
 use vxPHP\Orm\Custom\Exception\ArticleCategoryException;
 use vxPHP\Orm\Custom\Article;
+use vxPHP\Application\Application;
 
 /**
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.2.0a 2013-04-06
+ * @version 0.2.1 2013-10-05
  */
 
 class ArticleCategory {
@@ -60,7 +61,8 @@ class ArticleCategory {
 	 * @throws ArticleCategoryException
 	 */
 	public function save() {
-		$db		= &$GLOBALS['db'];
+
+		$db		= Application::getInstance()->getDb();
 		$data	= array();
 
 		if(is_null($this->parentCategory)) {
@@ -177,7 +179,7 @@ class ArticleCategory {
 
 		if(!is_null($this->id)) {
 			if(is_null($this->r) && is_null($this->l) && is_null($this->level)) {
-				$rows = $GLOBALS['db']->doPreparedQuery("SELECT r, l, level FROM articlecategories c WHERE articlecategoriesID = ?", array((int) $this->id));
+				$rows = Application::getInstance()->getDb()->doPreparedQuery("SELECT r, l, level FROM articlecategories c WHERE articlecategoriesID = ?", array((int) $this->id));
 			}
 		}
 		return array('r' => $this->r, 'l' => $this->l, 'level' => $this->level);
@@ -191,7 +193,8 @@ class ArticleCategory {
 	 * @return \vxPHP\Orm\Custom\ArticleCategory
 	 */
 	public static function getInstance($id) {
-		$db = &$GLOBALS['db'];
+
+		$db = Application::getInstance()->getDb();
 
 		if(is_numeric($id)) {
 			$id = (int) $id;
@@ -259,7 +262,7 @@ class ArticleCategory {
 	 */
 	public static function getInstances(array $ids) {
 
-		$db = &$GLOBALS['db'];
+		$db = Application::getInstance()->getDb();
 
 		$toRetrieveById		= array();
 		$toRetrieveByAlias	= array();
@@ -351,7 +354,7 @@ class ArticleCategory {
 
 		$cat = array();
 
-		foreach($GLOBALS['db']->doQuery("SELECT articlecategoriesID FROM articlecategories", TRUE) as $r) {
+		foreach(Application::getInstance()->getDb()->doQuery("SELECT articlecategoriesID FROM articlecategories", TRUE) as $r) {
 			$cat[] = self::getInstance($r['articlecategoriesID']);
 		}
 

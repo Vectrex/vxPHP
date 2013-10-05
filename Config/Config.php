@@ -4,22 +4,22 @@ namespace vxPHP\Config;
 
 use vxPHP\Config\Exception\ConfigException;
 
-use vxPHP\Webpage\Menu\Menu;
-use vxPHP\Webpage\MenuEntry\MenuEntry;
-use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
+use vxPHP\Application\Menu\Menu;
+use vxPHP\Application\MenuEntry\MenuEntry;
+use vxPHP\Application\MenuEntry\DynamicMenuEntry;
 
 use vxPHP\Observer\EventDispatcher;
 
-use vxPHP\Request\NiceURI;
-use vxPHP\Request\Request;
-use vxPHP\Request\Route;
-use vxPHP\Request\Router;
+use vxPHP\Application\Webpage\NiceURI;
+use vxPHP\Http\Request;
+use vxPHP\Http\Route;
+use vxPHP\Http\Router;
 
 /**
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.0 2013-09-08
+ * @version 0.9.1 2013-10-05
  *
  * @todo refresh() method
  */
@@ -34,25 +34,22 @@ class Config {
 			$menus,
 			$server;
 
-	/**
-	 * takes up all $_GET parameters,
-	 * either copied directly or after parsing a nice_uri
-	 */
-	public $_get = array();
-
 	public $locales =  array(
 		'de' => array('de', 'de_DE', 'deu_deu'),
 		'en' => array('en', 'en_GB', 'en_US', 'eng')
 	);
 
+			/**
+			 * @var Config
+			 */
 	private static $instance;
 
-	private		$isLocalhost,
-				$xmlFile,
-				$xmlFileTS,
-				$sections = array(),
-				$config,
-				$plugins = array();
+	private	$isLocalhost,
+			$xmlFile,
+			$xmlFileTS,
+			$sections = array(),
+			$config,
+			$plugins = array();
 
 	/**
 	 * create config instance

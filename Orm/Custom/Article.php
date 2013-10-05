@@ -14,22 +14,19 @@ use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
 use vxPHP\Database\Mysqldbi;
+use vxPHP\Application\Application;
 
 /**
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.7 2013-06-19
+ * @version 0.6.8 2013-10-05
  */
 
 class Article implements SubjectInterface {
 
 	private static	$instancesById,
-					$instancesByAlias,
-					/**
-					 * @var Mysqldbi
-					 */
-					$db;
+					$instancesByAlias;
 
 	private	$id,
 			$alias,
@@ -136,9 +133,7 @@ class Article implements SubjectInterface {
 	 */
 	public function save() {
 
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
+		$db = Application::getInstance()->getDb();
 
 		if(is_null($this->headline) || trim($this->headline) == '') {
 			throw new ArticleException("Headline not set. Article can't be inserted", ArticleException::ARTICLE_HEADLINE_NOT_SET);
@@ -154,7 +149,7 @@ class Article implements SubjectInterface {
 
 			// update
 
-			$this->alias = self::$db->getAlias($this->headline, 'articles', $this->id);
+			$this->alias = $db->getAlias($this->headline, 'articles', $this->id);
 
 			$cols = array_merge(
 				(array) $this->getData(),
@@ -171,14 +166,14 @@ class Article implements SubjectInterface {
 				)
 			);
 
-			self::$db->updateRecord('articles', $this->id, $cols);
+			$db->updateRecord('articles', $this->id, $cols);
 		}
 
 		else {
 
 			// insert
 
-			$this->alias = self::$db->getAlias($this->headline, 'articles');
+			$this->alias = $db->getAlias($this->headline, 'articles');
 
 			$cols = array_merge(
 				(array) $this->getData(),
@@ -195,7 +190,7 @@ class Article implements SubjectInterface {
 				)
 			);
 
-			$this->id = self::$db->insertRecord('articles', $cols);
+			$this->id = $db->insertRecord('articles', $cols);
 
 			// set file references
 
@@ -223,7 +218,7 @@ class Article implements SubjectInterface {
 
 			// delete record
 
-			$GLOBALS['db']->deleteRecord('articles', $this->id);
+			Application::getInstance()->getDb()->deleteRecord('articles', $this->id);
 
 			// delete instance references
 
@@ -556,9 +551,7 @@ class Article implements SubjectInterface {
 	 */
 	public static function getInstance($id) {
 
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
+		$db = Application::getInstance()->getDb();
 
 		if(is_numeric($id)) {
 			$id = (int) $id;
@@ -576,7 +569,7 @@ class Article implements SubjectInterface {
 			$col = 'Alias';
 		}
 
-		$rows = self::$db->doPreparedQuery("
+		$rows = $db->doPreparedQuery("
 			SELECT
 				a.*
 			FROM
@@ -606,9 +599,7 @@ class Article implements SubjectInterface {
 	 */
 	public static function getInstances(array $ids) {
 
-		if(!isset(self::$db)) {
-			self::$db = $GLOBALS['db'];
-		}
+		$db = Application::getInstance()->getDb();
 
 		$toRetrieveById		= array();
 		$toRetrieveByAlias	= array();
@@ -639,7 +630,7 @@ class Article implements SubjectInterface {
 			}
 
 			if(count($where)) {
-				$rows = self::$db->doPreparedQuery('
+				$rows = $db->doPreparedQuery('
 					SELECT
 						a.*
 					FROM
@@ -675,7 +666,7 @@ class Article implements SubjectInterface {
 	public static function getArticlesForCategory(ArticleCategory $category) {
 		$articles = array();
 
-		$rows = $GLOBALS['db']->doPreparedQuery('SELECT * FROM articles WHERE articlecategoriesID = ?', array($category->getId()));
+		$rows = Application::getInstance()->getDb()->doPreparedQuery('SELECT * FROM articles WHERE articlecategoriesID = ?', array($category->getId()));
 
 		foreach($rows as $r) {
 			if(!isset(self::$instancesById[$r['articlesID']])) {
