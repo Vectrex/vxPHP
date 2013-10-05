@@ -5,14 +5,15 @@ namespace vxPHP\File;
 use vxPHP\File\MimeTypeGetter;
 use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\EventDispatcher;
+use vxPHP\Application\Application;
 
 /**
  * mapper for filesystem files
- * 
+ *
  * @author Gregor Kofler
- * 
+ *
  * @version 0.4.0 2012-11-19
- * 
+ *
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
 
@@ -35,15 +36,15 @@ class FilesystemFile {
 		if(isset(self::$instances[$path])) {
 			unset(self::$instances[$path]);
 		}
-	} 
+	}
 
 	/**
 	 * constructs mapper for filesystem files
 	 * if folder is provided a bulk generation is assumed and certain checks are omitted
-	 * 
+	 *
 	 * @param string $path
 	 * @param FilesystemFolder $folder
-	 * 
+	 *
 	 * @throws FilesystemFileException
 	 */
 	private function __construct($path, FilesystemFolder $folder = NULL) {
@@ -57,7 +58,7 @@ class FilesystemFile {
 			if(!$this->fileInfo->getPathInfo()->isLink() && version_compare(PHP_VERSION, '5.3.2') <= 0) {
 				$realPath = $this->fileInfo->getPathInfo()->getRealPath();
 			}
-			
+
 			else {
 				$realPath = $this->fileInfo->getPath();
 
@@ -84,7 +85,7 @@ class FilesystemFile {
 	/**
 	 * retrieve mime type
 	 * requires MimeTypeGetter
-	 *  
+	 *
 	 * @param bool $force forces re-read of mime type
 	 */
 	public function getMimetype($force = false) {
@@ -97,7 +98,7 @@ class FilesystemFile {
 	/**
 	 * check whether mime type indicates web image
 	 * (i.e. image/jpeg, image/gif, image/png)
-	 *  
+	 *
 	 * @param bool $force forces re-read of mime type
 	 */
 	public function isWebImage($force = false) {
@@ -106,14 +107,14 @@ class FilesystemFile {
 		}
 		return preg_match('~^image/(p?jpeg|png|gif)$~', $this->mimetype);
 	}
-	
+
 	/**
 	 * retrieve filename
 	 */
 	public function getFilename() {
 		return $this->filename;
 	}
-	
+
 	/**
 	 * retrieves physical path of file
 	 */
@@ -132,7 +133,7 @@ class FilesystemFile {
 		}
 		return FALSE;
 	}
-	
+
 	/**
 	 * return filesystem folder of file
 	 */
@@ -142,7 +143,7 @@ class FilesystemFile {
 
 	/**
 	 * rename file
-	 * 
+	 *
 	 * @param string $to new filename
 	 * @throws FilesystemFileException
 	 */
@@ -177,12 +178,12 @@ class FilesystemFile {
 	/**
 	 * move file into new folder,
 	 * orphaned cache entries are deleted, new cache entries are not generated
-	 * 
+	 *
 	 * @param FilesystemFolder $destination
 	 * @throws FilesystemFileException
-	 */	
+	 */
 	public function move(FilesystemFolder $destination) {
-		
+
 		// already in destination folder, nothing to do
 
 		if($destination === $this->folder) {
@@ -207,7 +208,7 @@ class FilesystemFile {
 
 	/**
 	 * updates names of cache entries
-	 * 
+	 *
  	 * @param string $to new filename
 	 */
 	private function renameCacheEntries($to) {
@@ -223,7 +224,7 @@ class FilesystemFile {
 
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($filename, $this->filename) !== 0 
+					strpos($filename, $this->filename) !== 0
 				) {
 					continue;
 				}
@@ -260,7 +261,7 @@ class FilesystemFile {
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($fileinfo->getFilename(), $this->filename) !== 0 
+					strpos($fileinfo->getFilename(), $this->filename) !== 0
 				) {
 					continue;
 				}
@@ -276,7 +277,7 @@ class FilesystemFile {
 	public function clearCacheEntries() {
 		$this->deleteCacheEntries();
 	}
-	
+
 	/**
 	 * retrieve information about cached files
 	 * @return array information
@@ -292,7 +293,7 @@ class FilesystemFile {
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($fileinfo->getFilename(), $this->filename) !== 0 
+					strpos($fileinfo->getFilename(), $this->filename) !== 0
 				) {
 					continue;
 				}
@@ -310,12 +311,13 @@ class FilesystemFile {
 	 * @throws FilesystemFileException
 	 */
 	public function createMetaFile() {
-		global $db;
+
+		$db = Application::getInstance()->getDb();
 
 		$relPath = $this->folder->getPath();
-		
+
 		if(strpos($relPath, $_SERVER['DOCUMENT_ROOT']) === 0) {
-			$relPath = ltrim(substr_replace($relPath, '', 0, strlen($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR); 
+			$relPath = ltrim(substr_replace($relPath, '', 0, strlen($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR);
 		}
 
 		if(count($db->doPreparedQuery(
@@ -326,7 +328,7 @@ class FilesystemFile {
 		}
 
 		$mf = $this->folder->createMetaFolder();
-		
+
 		if(!($filesID = $db->insertRecord('files', array(
 			'foldersID'	=> $mf->getId(),
 			'File'		=> $this->filename,
@@ -343,7 +345,7 @@ class FilesystemFile {
 
 	/**
 	 * return all filesystem files instances within a certain folder
-	 * 
+	 *
 	 * @param FilesystemFolder $folder
 	 * @return Array filesystem files
 	 */
@@ -351,7 +353,7 @@ class FilesystemFile {
 
 		$path = $folder->getPath();
 		$files = array();
-		
+
 		$glob = glob($path.'*', GLOB_NOSORT);
 
 		if($glob !== FALSE) {
@@ -372,8 +374,8 @@ class FilesystemFile {
 	/**
 	 * uploads file from $_FILES[$fileInputName] to $dir
 	 * if $name is omitted, the filename of the uploaded file is kept
-	 * filename is sanitized 
-	 * 
+	 * filename is sanitized
+	 *
 	 * @param string $fileInputName
 	 * @param FilesystemFolder $dir
 	 * @param string $name
@@ -394,7 +396,7 @@ class FilesystemFile {
 		}
 
 		// other error
-	
+
 		if($_FILES[$fileInputName]['error'] != 0) {
 			return FALSE;
 		}
@@ -408,7 +410,7 @@ class FilesystemFile {
 		if(!move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $dir->getPath().$fn)) {
 			return FALSE;
 		}
-	
+
 		return self::getInstance($dir->getPath().$fn);
 	}
 
@@ -421,7 +423,7 @@ class FilesystemFile {
 	 * @return string
 	 */
 	private static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
-	
+
 		$filename = str_replace(
 			array(' ', 'ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'),
 			array('_', 'ae', 'oe', 'ue', 'Ae', 'Oe', 'Ue', 'ss'),
