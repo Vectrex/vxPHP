@@ -2,7 +2,6 @@
 
 namespace vxPHP\Application;
 
-use vxPHP\Application\Exception\WebpageException;
 use vxPHP\Application\Menu\Menu;
 use vxPHP\Application\MenuEntry\MenuEntry;
 use vxPHP\Template\SimpleTemplate;
@@ -23,7 +22,7 @@ use vxPHP\Http\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 1.21.0 2013-10-05
+ * @version 1.22.0 2013-10-06
  *
  */
 
@@ -337,7 +336,7 @@ abstract class Webpage {
 		// instantiate optional decorator class
 
 		if(!empty($decorator)) {
-			$className = "vxPHP\\Webpage\\Menu\\Decorator\\MenuDecorator$decorator";
+			$className = __NAMESPACE__ . '\\Menu\\Decorator\\MenuDecorator' . $decorator;
 			$m = new $className($m);
 		}
 
