@@ -3,8 +3,9 @@
 namespace vxPHP\Application\Menu\Decorator;
 
 use vxPHP\Application\Menu\Decorator\MenuDecorator;
+use vxPHP\Application\Menu\MenuInterface;
 
-class MenuDecoratorMultiColumn extends MenuDecorator {
+class MenuDecoratorMultiColumn extends MenuDecorator implements MenuInterface {
 
 	public function render($showSubmenus = FALSE, $forceActive = FALSE, $entriesPerColumn) {
 

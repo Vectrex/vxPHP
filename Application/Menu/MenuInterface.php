@@ -3,7 +3,7 @@ namespace vxPHP\Application\Menu;
 
 interface MenuInterface {
 
-	public function render();
+	public function render($showSubmenus, $forceActive, $renderOptions);
 
 }
 

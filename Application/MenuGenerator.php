@@ -12,6 +12,7 @@ use vxPHP\Application\MenuEntry\MenuEntry;
 use vxPHP\Http\Route;
 use vxPHP\Config\Config;
 use vxPHP\Application\Exception\MenuGeneratorException;
+use vxPHP\Application\Menu\MenuInterface;
 
 /**
  * Wrapper class for rendering menus
@@ -21,7 +22,7 @@ use vxPHP\Application\Exception\MenuGeneratorException;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.1, 2013-10-10
+ * @version 0.2.2, 2013-10-10
  *
  * @throws MenuGeneratorException
  */
@@ -62,6 +63,11 @@ class MenuGenerator {
 	 * @var Menu
 	 */
 	protected $menu;
+
+	/**
+	 * @var string
+	 */
+	protected $decorator;
 
 	/**
 	 * @var string
@@ -118,22 +124,10 @@ class MenuGenerator {
 
 		$this->menu = $this->config->menus[$id];
 
-		// instantiate optional decorator class
-
-		if(!empty($decorator)) {
-			try {
-				$className = __NAMESPACE__ . '\\Menu\\Decorator\\MenuDecorator' . $decorator;
-				$this->menu = new $className($this->menu);
-			}
-			catch(\Exception $e) {
-
-			}
-		}
-
 		$this->id				= $id;
 		$this->level			= $level;
-		$this->menu				= $this->config->menus[$id];
 		$this->forceActiveMenu	= (boolean) $forceActiveMenu;
+		$this->decorator		= $decorator;
 		$this->renderArgs		= $renderArgs;
 	}
 
@@ -221,6 +215,17 @@ class MenuGenerator {
 		}
 
 		// output
+
+		// instantiate optional decorator class
+
+		if(!empty($this->decorator)) {
+			try {
+				$className = __NAMESPACE__ . '\\Menu\\Decorator\\MenuDecorator' . $this->decorator;
+				$m = new $className($m);
+			}
+			catch(\Exception $e) {
+			}
+		}
 
 		$markup = sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, $this->forceActiveMenu, $this->renderArgs));
 
@@ -345,7 +350,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenu(Menu $m) {
+	protected function authenticateMenu(MenuInterface $m) {
 
 		if(is_null($m->getAuth())) {
 			return TRUE;
@@ -405,7 +410,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenuByTableRowAccess(Menu $m) {
+	protected function authenticateMenuByTableRowAccess(MenuInterface $m) {
 
 		$p = $m->getAuthParameters();
 
@@ -426,7 +431,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenuByMiscRules(Menu $m) {
+	protected function authenticateMenuByMiscRules(MenuInterface $m) {
 		return FALSE;
 	}
 

@@ -11,7 +11,7 @@ use vxPHP\Application\MenuEntry\DynamicMenuEntry;
  * Menu class
  *
  * manages a complete menu
- * @version 0.7.0 2013-06-15
+ * @version 0.7.1 2013-10-10
  */
 class Menu implements MenuInterface {
 
@@ -336,7 +336,7 @@ class Menu implements MenuInterface {
 	 *
 	 * @see \vxPHP\Application\Menu\MenuInterface::render()
 	 */
-	public function render($showSubmenus = FALSE, $forceActive = FALSE) {
+	public function render($showSubmenus = FALSE, $forceActive = FALSE, $options = NULL) {
 		$this->showSubmenus = $showSubmenus;
 		$this->forceActive = $forceActive;
 
