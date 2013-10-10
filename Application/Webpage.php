@@ -2,10 +2,7 @@
 
 namespace vxPHP\Application;
 
-use vxPHP\Application\Menu\Menu;
-use vxPHP\Application\MenuEntry\MenuEntry;
 use vxPHP\Template\SimpleTemplate;
-use vxPHP\User\UserAbstract;
 use vxPHP\User\Admin;
 use vxPHP\Util\JSMin;
 use vxPHP\Template\Util\SimpleTemplateUtil;
