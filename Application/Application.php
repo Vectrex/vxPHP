@@ -15,6 +15,8 @@ use vxPHP\Application\Exception\ApplicationException;
  */
 class Application {
 
+	public static $version = '2.2.0';
+
 			/**
 			 * @var Application
 			 */
