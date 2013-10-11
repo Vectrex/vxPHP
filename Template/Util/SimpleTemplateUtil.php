@@ -149,37 +149,38 @@ class SimpleTemplateUtil {
 	 */
 	public static function getPageMetaData($pageId, $locale = '') {
 
-		$db = Application::getInstance()->getDb();
+		if(($db = Application::getInstance()->getDb())) {
 
-		if($db->tableExists('pages') && $db->tableExists('revisions')) {
-			$data = $db->doPreparedQuery("
-				SELECT
-					r.Title,
-					a.Name,
-					r.Keywords,
-					r.Description,
-					r.templateUpdated as lastChanged,
-					IFNULL(r.locale, '') AS locale_sort
-				FROM
-					revisions r
-					INNER JOIN pages p ON r.pagesID = p.pagesID
-					LEFT JOIN admin a ON r.authorID = a.adminID
-				WHERE
-					p.Alias = ? AND
-					r.locale IS NULL OR r.locale = ?
-				ORDER BY
-					locale_sort DESC, active DESC, r.lastUpdated DESC
-				LIMIT 1
-				",
-				array(
-					strtoupper($pageId),
-					$locale
-				)
-			);
+			if($db->tableExists('pages') && $db->tableExists('revisions')) {
+				$data = $db->doPreparedQuery("
+					SELECT
+						r.Title,
+						a.Name,
+						r.Keywords,
+						r.Description,
+						r.templateUpdated as lastChanged,
+						IFNULL(r.locale, '') AS locale_sort
+					FROM
+						revisions r
+						INNER JOIN pages p ON r.pagesID = p.pagesID
+						LEFT JOIN admin a ON r.authorID = a.adminID
+					WHERE
+						p.Alias = ? AND
+						r.locale IS NULL OR r.locale = ?
+					ORDER BY
+						locale_sort DESC, active DESC, r.lastUpdated DESC
+					LIMIT 1
+					",
+					array(
+						strtoupper($pageId),
+						$locale
+					)
+				);
 
-			if(!empty($data[0])) {
-				unset($data[0]['locale_sort']);
-				return $data[0];
+				if(!empty($data[0])) {
+					unset($data[0]['locale_sort']);
+					return $data[0];
+				}
 			}
 		}
 

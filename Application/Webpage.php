@@ -19,7 +19,7 @@ use vxPHP\Http\StatusCode;
  * handles xmlHttpRequests of clients
  *
  * @author Gregor Kofler
- * @version 2.0.0 2013-10-10
+ * @version 2.0.1 2013-10-11
  *
  */
 
@@ -81,13 +81,16 @@ abstract class Webpage {
 
 		// set up references required in controllers
 
-		$this->config	= Application::getInstance()->getConfig();
-		$this->db		= Application::getInstance()->getDb();
+		$this->config = Application::getInstance()->getConfig();
 
 		$this->request			= Request::createFromGlobals();
 		$this->route			= Router::getRouteFromPathInfo();
 		$this->currentDocument	= basename($this->request->getScriptName());
 		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
+
+		// database can be optional
+
+		$this->db = Application::getInstance()->getDb();
 
 		// skip script name
 
