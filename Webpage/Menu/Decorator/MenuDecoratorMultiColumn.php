@@ -1,9 +1,9 @@
 <?php
 
-namespace vxPHP\Application\Menu\Decorator;
+namespace vxPHP\Webpage\Menu\Decorator;
 
-use vxPHP\Application\Menu\Decorator\MenuDecorator;
-use vxPHP\Application\Menu\MenuInterface;
+use vxPHP\Webpage\Menu\Decorator\MenuDecorator;
+use vxPHP\Webpage\Menu\MenuInterface;
 
 class MenuDecoratorMultiColumn extends MenuDecorator implements MenuInterface {
 

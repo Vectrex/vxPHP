@@ -1,9 +1,9 @@
 <?php
 
-namespace vxPHP\Application\MenuEntry\Decorator;
+namespace vxPHP\Webpage\MenuEntry\Decorator;
 
-use vxPHP\Application\MenuEntry\Decorator\MenuEntryDecorator;
-use vxPHP\Application\Webpage\NiceURI;
+use vxPHP\Webpage\MenuEntry\Decorator\MenuEntryDecorator;
+use vxPHP\Webpage\NiceURI;
 
 /**
  * menu entry decorator which won't sanitize menu entry text

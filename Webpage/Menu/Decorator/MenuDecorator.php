@@ -1,9 +1,9 @@
 <?php
 
-namespace vxPHP\Application\Menu\Decorator;
+namespace vxPHP\Webpage\Menu\Decorator;
 
-use vxPHP\Application\Menu\Menu;
-use vxPHP\Application\Menu\MenuInterface;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\Menu\MenuInterface;
 
 /**
  * abstract class for various menu decorators

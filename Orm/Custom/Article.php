@@ -13,7 +13,6 @@ use vxPHP\User\Admin;
 use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Application;
 
 /**

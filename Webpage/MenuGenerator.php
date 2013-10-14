@@ -1,18 +1,19 @@
 <?php
 
-namespace vxPHP\Application;
+namespace vxPHP\Webpage;
 
 use vxPHP\Http\Request;
-use vxPHP\Template\SimpleTemplate;
 use vxPHP\Http\Router;
-use vxPHP\Application\Menu\Menu;
 use vxPHP\User\Admin;
 use vxPHP\User\UserAbstract;
-use vxPHP\Application\MenuEntry\MenuEntry;
 use vxPHP\Http\Route;
 use vxPHP\Config\Config;
-use vxPHP\Application\Exception\MenuGeneratorException;
-use vxPHP\Application\Menu\MenuInterface;
+use vxPHP\Template\SimpleTemplate;
+use vxPHP\Webpage\Exception\MenuGeneratorException;
+use vxPHP\Webpage\Menu\MenuInterface;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\MenuEntry\MenuEntry;
+use vxPHP\Application\Application;
 
 /**
  * Wrapper class for rendering menus

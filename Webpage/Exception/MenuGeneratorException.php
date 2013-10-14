@@ -1,5 +1,5 @@
 <?php
-namespace vxPHP\Application\Exception;
+namespace vxPHP\Webpage\Exception;
 
 class MenuGeneratorException extends \Exception {
 

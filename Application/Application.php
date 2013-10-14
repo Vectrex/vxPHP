@@ -5,13 +5,12 @@ namespace vxPHP\Application;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Config\Config;
 use vxPHP\Observer\EventDispatcher;
-use vxPHP\Application\Exception\ApplicationException;
 
 /**
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.1.1 2013-10-11
+ * @version 0.1.2 2013-10-15
  */
 class Application {
 

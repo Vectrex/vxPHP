@@ -1,10 +1,10 @@
 <?php
 
-namespace vxPHP\Application\Menu\MenuDecorator;
+namespace vxPHP\Webpage\Menu\MenuDecorator;
 
-use vxPHP\Application\Menu\Decorator\MenuDecorator;
-use vxPHP\Application\MenuEntry\Decorator\MenuEntryDecoratorAllowMarkup;
-use vxPHP\Application\Menu\MenuInterface;
+use vxPHP\Webpage\Menu\Decorator\MenuDecorator;
+use vxPHP\Webpage\MenuEntry\Decorator\MenuEntryDecoratorAllowMarkup;
+use vxPHP\Webpage\Menu\MenuInterface;
 
 class MenuDecoratorAllowMarkup extends MenuDecorator implements MenuInterface {
 	public function render($showSubmenus = FALSE, $forceActive = FALSE, $options = NULL) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Application\Webpage;
+namespace vxPHP\Webpage;
 
 use vxPHP\Application\Application;
 /**

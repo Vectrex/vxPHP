@@ -4,12 +4,13 @@ namespace vxPHP\User;
 
 use vxPHP\User\User;
 use vxPHP\User\Exception\UserException;
+use vxPHP\Application\Application;
 
 /**
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 0.2.0
+ * @version 0.2.1 2013-10-15
  */
 
 class Util {

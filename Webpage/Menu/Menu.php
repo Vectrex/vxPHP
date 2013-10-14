@@ -1,11 +1,11 @@
 <?php
 
-namespace vxPHP\Application\Menu;
+namespace vxPHP\Webpage\Menu;
 
-use vxPHP\Application\Menu\MenuInterface;
+use vxPHP\Webpage\Menu\MenuInterface;
 
-use vxPHP\Application\MenuEntry\MenuEntry;
-use vxPHP\Application\MenuEntry\DynamicMenuEntry;
+use vxPHP\Webpage\MenuEntry\MenuEntry;
+use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 
 /**
  * Menu class
@@ -334,7 +334,7 @@ class Menu implements MenuInterface {
 	/**
 	 * renders the menu and all entries
 	 *
-	 * @see \vxPHP\Application\Menu\MenuInterface::render()
+	 * @see \vxPHP\Webpage\Menu\MenuInterface::render()
 	 */
 	public function render($showSubmenus = FALSE, $forceActive = FALSE, $options = NULL) {
 		$this->showSubmenus = $showSubmenus;

@@ -11,8 +11,8 @@ use vxPHP\Http\Router;
 use vxPHP\Http\Request;
 
 use vxPHP\Application\Application;
-use vxPHP\Application\Menu\Menu;
-use vxPHP\Application\Webpage\NiceURI;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\NiceURI;
 
 /**
  * A simple template system

@@ -1,5 +1,5 @@
 <?php
-namespace vxPHP\Application\Menu;
+namespace vxPHP\Webpage\Menu;
 
 interface MenuInterface {
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace vxPHP\Application\MenuEntry;
+namespace vxPHP\Webpage\MenuEntry;
 
-use vxPHP\Application\Menu\Menu;
-use vxPHP\Application\MenuEntry\MenuEntryInterface;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\MenuEntry\MenuEntryInterface;
 use vxPHP\Application\Application;
 
 /**

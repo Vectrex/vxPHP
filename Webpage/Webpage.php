@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Application;
+namespace vxPHP\Webpage;
 
 use vxPHP\Template\SimpleTemplate;
 use vxPHP\User\Admin;
@@ -12,6 +12,7 @@ use vxPHP\Http\Request;
 use vxPHP\Http\Router;
 use vxPHP\Util\LocalesFactory;
 use vxPHP\Http\StatusCode;
+use vxPHP\Application\Application;
 
 /**
  * Parent class for webpages,

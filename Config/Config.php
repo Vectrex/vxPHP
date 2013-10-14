@@ -4,16 +4,12 @@ namespace vxPHP\Config;
 
 use vxPHP\Config\Exception\ConfigException;
 
-use vxPHP\Application\Menu\Menu;
-use vxPHP\Application\MenuEntry\MenuEntry;
-use vxPHP\Application\MenuEntry\DynamicMenuEntry;
+use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\MenuEntry\MenuEntry;
+use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 
 use vxPHP\Observer\EventDispatcher;
-
-use vxPHP\Application\Webpage\NiceURI;
-use vxPHP\Http\Request;
 use vxPHP\Http\Route;
-use vxPHP\Http\Router;
 
 /**
  * Config

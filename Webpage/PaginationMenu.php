@@ -1,5 +1,5 @@
 <?php
-namespace vxPHP\Application;
+namespace vxPHP\Webpage;
 
 class PaginationMenu {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace vxPHP\Application\MenuEntry;
+namespace vxPHP\Webpage\MenuEntry;
 
-use vxPHP\Application\MenuEntry\MenuEntry;
+use vxPHP\Webpage\MenuEntry\MenuEntry;
 
 class DynamicMenuEntry extends MenuEntry {
 	public function __construct($page, $attributes) {

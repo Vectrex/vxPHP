@@ -4,7 +4,6 @@ namespace vxPHP\Database;
 
 use vxPHP\Database\Exception\MysqldbiException;
 use vxPHP\Database\MysqldbiStatement;
-use vxPHP\Application\Application;
 
 /**
  * mysqldbi
