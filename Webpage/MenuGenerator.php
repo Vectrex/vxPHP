@@ -14,6 +14,7 @@ use vxPHP\Webpage\Menu\MenuInterface;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
+use vxPHP\Util\LocalesFactory;
 
 /**
  * Wrapper class for rendering menus
@@ -23,7 +24,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.2, 2013-10-10
+ * @version 0.2.3, 2013-10-15
  *
  * @throws MenuGeneratorException
  */
@@ -180,6 +181,18 @@ class MenuGenerator {
 			// use route id to identify current page in case path segment is empty (e.g. splash page)
 
 			$this->pathSegments = explode('/', trim($this->request->getPathInfo(), '/'));
+
+			// skip script name
+
+			if($this->config->site->use_nice_uris && basename($this->request->getScriptName()) != 'index.php') {
+				array_shift($this->pathSegments);
+			}
+
+			// skip locale if one found
+
+			if(count($this->pathSegments) && in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
+				array_shift($this->pathSegments);
+			}
 
 			$this->walkMenuTree($this->menu, $this->pathSegments[0] === '' ? array($this->route->getRouteId()) : $this->pathSegments);
 
