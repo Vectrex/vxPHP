@@ -74,9 +74,7 @@ abstract class Webpage {
 				$js					= array(),
 				$compressJS			= FALSE,
 				$useTimestamps		= TRUE,
-				$metaData			= array(),
-				$primedMenus		= array(),	// cache for menus, when shown several times on page
-				$forceActiveMenu;
+				$metaData			= array();
 
 	public function __construct() {
 
@@ -244,16 +242,6 @@ abstract class Webpage {
 	}
 
 	/**
-	 * activates or deactivates
-	 * "active" menu entries (selected entries are clickable)
-	 *
-	 * @param unknown_type $state
-	 */
-	public function setForceActiveMenu($state) {
-		$this->forceActiveMenu = (boolean) $state;
-	}
-
-	/**
 	 * retrieve a single html head meta value
 	 *
 	 * @param string $name
@@ -362,31 +350,6 @@ abstract class Webpage {
 		$tmpRelPath = str_replace('\\', '/', $tmpRelPath);
 
 		return "<script type='text/javascript' src='{$tmpRelPath}{$fn}'></script>";
-	}
-
-	/**
-	 * fallback method for authenticating page access on observe_table/observe_row level
-	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
-	 *
-	 * @return isAuthenticated
-	 */
-	protected function authenticateByTableRowAccess() {
-
-		$authParameters = $this->route->getAuthParameters();
-
-		if(is_null($authParameters)) {
-			return FALSE;
-		}
-
-		$tables = preg_split('/\s*,\s*/', trim($authParameters));
-		$admin = Admin::getInstance();
-
-		$matching = array_intersect($tables, $admin->getTableAccess());
-		return !empty($matching);
-	}
-
-	protected function authenticateByMiscRules() {
-		return FALSE;
 	}
 
 	/**

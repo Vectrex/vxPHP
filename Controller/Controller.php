@@ -7,7 +7,7 @@ namespace vxPHP\Controller;
  * @author Gregor Kofler
  *
  */
-abstract class Controller implements ControllerInterface {
+abstract class Controller {
 	// TODO - Insert your code here
 
 	/**
@@ -16,6 +16,12 @@ abstract class Controller implements ControllerInterface {
 
 		// TODO - Insert your code here
 	}
-}
 
-?>
+	public function redirect() {
+
+	}
+
+	public function generateError() {
+
+	}
+}

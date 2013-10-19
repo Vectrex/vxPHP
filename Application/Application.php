@@ -62,6 +62,13 @@ class Application {
 
 			$this->config->createConst();
 			$this->config->attachPlugins();
+
+			if(!ini_get('date.timezone')) {
+
+				// @todo allow configuration in site.ini.xml
+
+				date_default_timezone_set('Europe/Vienna');
+			}
 		}
 
 		catch (\Exception $e) {
