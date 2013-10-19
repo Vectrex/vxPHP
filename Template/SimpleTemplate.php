@@ -18,7 +18,7 @@ use vxPHP\Webpage\NiceURI;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.5 2013-10-19
+ * @version 0.9.6 2013-10-19
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -436,72 +436,6 @@ class SimpleTemplate {
 		else {
 			return "url({$matches[1]}$dest{$matches[1]})";
 		}
-	}
-
-	public static function parseVideoThumbs(&$text) {
-		$text = preg_replace_callback(
-			'~<a\s+(.*?)href=("|\')(.*?)\.(avi|flv|mov)#([\w\s\.\/]+)\2(.*?)>(.*?)</a>~is',
-			__CLASS__.'::parseCallbackVideoThumb',
-			$text
-		);
-	}
-
-	private static function parseCallbackVideoThumb($matches) {
-		// $matches[1] leading attributes
-		// $matches[2] quote char
-		// $matches[3] filename
-		// $matches[4] extension
-		// $matches[5] action(s)
-		// $matches[6] trailing attributes
-		// $matches[7] contained text node
-
-		$action		= preg_split('~\s+~', $matches[5]);
-
-		if(
-			count($action) < 4 ||
-			$action[0] !== 'thumb' ||
-			!is_numeric($action[1]) ||
-			!is_numeric($action[2]) ||
-			!is_numeric($action[3])
-		) {
-			return $matches[0];
-		}
-
-		$pi			= pathinfo("{$matches[3]}.{$matches[4]}");
-		$filePath	= FilesystemFolder::getInstance(rtrim($_SERVER['DOCUMENT_ROOT'], '/').'/'.$pi['dirname']);
-
-		$src		= "{$pi['filename']}.{$pi['extension']}";
-		$dest		= "$src@{$matches[5]}.jpg";
-
-		if(!file_exists($filePath->getPath().$src)) {
-			return $matches[0];
-		}
-
-		$seconds	= (float) $action[1];
-		$width		= (int) $action[2];
-		$height		= (int) $action[3];
-
-		if(!($cachePath = $filePath->getCachePath())) {
-			$cachePath = $filePath->createCache();
-		}
-
-		if(!file_exists($cachePath.$dest)) {
-			exec("ffmpeg -i \"{$filePath->getPath()}$src\" -vframes 1 -an -s {$width}x{$height} -ss $seconds \"$cachePath$dest\"");
-
-			// ffmpeg failed
-			if(!file_exists($cachePath.$dest)) {
-				return $matches[0];
-			}
-
-			var_dump(IMG_SITE_PATH.$action[4]);
-			if(!empty($action[4]) && file_exists(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).IMG_SITE_PATH.$action[4])) {
-				$iE = new ImageModifier($cachePath.$dest);
-				$iE->watermark(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).IMG_SITE_PATH.$action[4]);
-				$iE->export($cachePath.$dest);
-			}
-		}
-
-		return "<a {$matches[1]}href={$matches[2]}{$matches[3]}.{$matches[4]}{$matches[2]}{$matches[6]}><img src='".$filePath->getRelativePath().FilesystemFolder::CACHE_PATH.'/'.$dest."' alt=''></a>";
 	}
 
 	/**

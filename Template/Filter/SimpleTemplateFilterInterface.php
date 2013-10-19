@@ -10,8 +10,12 @@ namespace vxPHP\SimpleTemplate\Filter;
 interface SimpleTemplateFilterInterface {
 
 	/**
+	 * apply filter to template string
+	 * template string is passed by reference
 	 *
 	 * @param string $templateString
+	 *
+	 * @return void
 	 */
-	public static function parse(&$templateString);
+	public function apply(&$templateString);
 }
