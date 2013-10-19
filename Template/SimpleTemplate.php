@@ -18,7 +18,7 @@ use vxPHP\Webpage\NiceURI;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 0.9.4 2013-10-05
+ * @version 0.9.5 2013-10-19
  *
  * @todo regEx for shorten_text-filter breaks with boundary within tag or entity
  * @todo rework filter regexp
@@ -30,7 +30,8 @@ class SimpleTemplate {
 	private static	$showProtocol = FALSE,
 					$suppressLocales = FALSE;
 
-	private		$file,
+	private		$path,
+				$file,
 				$rawContent,
 				$dir,
 				$contents,
@@ -43,6 +44,7 @@ class SimpleTemplate {
 		$request		= Request::createFromGlobals();
 		$serverBag		= $request->server;
 		$this->locale	= Router::getLocaleFromPathInfo();
+		$this->file		= $file;
 
 		$path =
 			realpath($serverBag->get('DOCUMENT_ROOT')) .
@@ -55,20 +57,17 @@ class SimpleTemplate {
 				$this->locale->getLocaleString() . DIRECTORY_SEPARATOR .
 				$file
 			)) {
-				$this->file = $path . $this->locale->getLocaleString() . DIRECTORY_SEPARATOR . $file;
+				$path .= $this->locale->getLocaleString() . DIRECTORY_SEPARATOR;
 			}
 		}
 
-		if(is_null($this->file)) {
-			if (file_exists($path.$file)) {
-				$this->file = $path . $file;
-			}
-			else {
-				throw new SimpleTemplateException("Template file '{$path}{$file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
-			}
+		$this->path = $path;
+
+		if (!file_exists($this->path . $this->file)) {
+			throw new SimpleTemplateException("Template file '{$this->path}{$this->file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
 		}
 
-		$this->rawContent = file_get_contents($this->file);
+		$this->rawContent = file_get_contents($this->path . $this->file);
 		$this->initFilters();
 	}
 
@@ -76,6 +75,11 @@ class SimpleTemplate {
 		return preg_match('~<\\?(php)?.*?\\?>~', $this->rawContent);
 	}
 
+	/**
+	 * output parsed template
+	 *
+	 * @return Ambigous string
+	 */
 	public function display() {
 		$this->fillBuffer();
 
@@ -88,6 +92,12 @@ class SimpleTemplate {
 		return $this->contents;
 	}
 
+	/**
+	 * assign value to variable, which is the available within template
+	 *
+	 * @param string $var
+	 * @param mixed $value
+	 */
 	public function assign($var, $value = '') {
 		if(is_array($var)) {
 			foreach($var as $k => $v) {
@@ -96,6 +106,19 @@ class SimpleTemplate {
 			}
 		}
 		$this->$var = $value;
+	}
+
+	/**
+	 * include another template file
+	 * does only path handling
+	 *
+	 * @param unknown $templateFile
+	 */
+	private function includeFile($templateFile) {
+
+		$tpl = $this;
+		eval('?>' . file_get_contents($this->path . $templateFile));
+
 	}
 
 	/**
@@ -239,13 +262,14 @@ class SimpleTemplate {
 	}
 
 	/**
-	 * fetches template file via include
+	 * fetches template file and evals content
 	 * immediate output supressed by output buffering
 	 */
 	private function fillBuffer() {
 		$tpl = $this;
 		ob_start();
-		eval("?>{$this->rawContent}");
+
+		eval('?>' . $this->rawContent);
 		$this->contents = ob_get_contents();
 		ob_end_clean();
 	}
