@@ -131,7 +131,11 @@ class MenuGenerator {
 		$this->decorator		= $decorator;
 		$this->renderArgs		= $renderArgs;
 
-		self::$forceActiveMenu	= (boolean) $forceActiveMenu;
+		// if $forceActiveMenu was initialized before, it will not be overwritten
+
+		if(is_null(self::$forceActiveMenu)) {
+			self::$forceActiveMenu	= (boolean) $forceActiveMenu;
+		}
 
 	}
 
