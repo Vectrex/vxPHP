@@ -24,7 +24,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.3, 2013-10-15
+ * @version 0.2.4, 2013-10-21
  *
  * @throws MenuGeneratorException
  */
@@ -33,7 +33,7 @@ class MenuGenerator {
 	/**
 	 * @var boolean
 	 */
-	protected $forceActiveMenu;
+	protected static $forceActiveMenu;
 
 	/**
 	 * @var array
@@ -128,9 +128,11 @@ class MenuGenerator {
 
 		$this->id				= $id;
 		$this->level			= $level;
-		$this->forceActiveMenu	= (boolean) $forceActiveMenu;
 		$this->decorator		= $decorator;
 		$this->renderArgs		= $renderArgs;
+
+		self::$forceActiveMenu	= (boolean) $forceActiveMenu;
+
 	}
 
 	/**
@@ -152,7 +154,7 @@ class MenuGenerator {
 
 	public static function setForceActiveMenu($state) {
 
-		$this->forceActiveMenu = (boolean) $state;
+		self::$forceActiveMenu = (boolean) $state;
 
 	}
 
@@ -241,7 +243,7 @@ class MenuGenerator {
 			}
 		}
 
-		$markup = sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, $this->forceActiveMenu, $this->renderArgs));
+		$markup = sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, self::$forceActiveMenu, $this->renderArgs));
 
 		// apply template parsers and filters
 
