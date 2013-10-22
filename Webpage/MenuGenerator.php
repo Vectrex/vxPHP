@@ -8,7 +8,6 @@ use vxPHP\User\Admin;
 use vxPHP\User\UserAbstract;
 use vxPHP\Http\Route;
 use vxPHP\Config\Config;
-use vxPHP\Template\SimpleTemplate;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\MenuInterface;
 use vxPHP\Webpage\Menu\Menu;
@@ -24,7 +23,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.4, 2013-10-21
+ * @version 0.2.6, 2013-10-22
  *
  * @throws MenuGeneratorException
  */
@@ -247,12 +246,8 @@ class MenuGenerator {
 			}
 		}
 
-		$markup = sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, self::$forceActiveMenu, $this->renderArgs));
+		return sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, self::$forceActiveMenu, $this->renderArgs));
 
-		// apply template parsers and filters
-
-		SimpleTemplate::parseTemplateLocales($markup);
-		return $markup;
 	}
 
 	/**
