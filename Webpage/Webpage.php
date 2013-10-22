@@ -2,8 +2,6 @@
 
 namespace vxPHP\Webpage;
 
-use vxPHP\Template\SimpleTemplate;
-use vxPHP\User\Admin;
 use vxPHP\Util\JSMin;
 use vxPHP\Template\Util\SimpleTemplateUtil;
 use vxPHP\Database\Mysqldbi;
@@ -13,6 +11,7 @@ use vxPHP\Http\Router;
 use vxPHP\Util\LocalesFactory;
 use vxPHP\Http\StatusCode;
 use vxPHP\Application\Application;
+use vxPHP\Template\Filter\LocalizedPhrases;
 
 /**
  * Parent class for webpages,
@@ -230,7 +229,7 @@ abstract class Webpage {
 				}
 			</script>';
 
-		SimpleTemplate::parseTemplateLocales($html);
+		LocalizedPhrases::create()->apply($html);
 		$this->html .= $html;
 		return $html;
 	}

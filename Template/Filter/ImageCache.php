@@ -1,22 +1,25 @@
 <?php
 
-namespace vxPHP\SimpleTemplate\Filter;
+namespace vxPHP\Template\Filter;
 
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Image\ImageModifier;
+
 /**
+ * This filter replaces images which are set to specific sizes by optimized resized images in caches
+ * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
  * @author Gregor Kofler
  *
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
 
-			/**
-			 * @var array
-			 *
-			 * markup possibilities to which the filter will be applied
-			 */
+	/**
+	 * @var array
+	 *
+	 * markup possibilities to which the filter will be applied
+	 */
 	private	$markupToMatch = array(
 				'~<img(.*?)\s+src=("|\')(.*?)#([\w\s\.\|]+)\2(.*?)>~i',
 				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2.*?\s+(width|height|src)=("|\')(.*?)\5.*?\s+(width|height|src)=("|\')(.*?)\8.*?>~i',
@@ -40,6 +43,13 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 	}
 
+	/**
+	 * replaces the matched string
+	 *
+	 * @param array $matches
+	 * @throws SimpleTemplateException
+	 * @return string
+	 */
 	private function filterCallBack($matches) {
 
 		// <img src="..." style="width: ...; height: ...">

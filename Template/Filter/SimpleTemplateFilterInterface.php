@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\SimpleTemplate\Filter;
+namespace vxPHP\Template\Filter;
 
 /**
  *

@@ -1,15 +1,15 @@
 <?php
 
-namespace vxPHP\SimpleTemplate\Filter;
+namespace vxPHP\Template\Filter;
 
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Http\Request;
 use vxPHP\Application\Application;
 
 /**
+ * Simple filter that replaces both href attribute values and image src values into site-"compatible" URLs
  *
  * @author Gregor Kofler
- *
  */
 class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
 
@@ -28,9 +28,9 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		);
 
 		$templateString = preg_replace_callback(
-				'~<a(.*?)\s+href=("|\')\$\/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
-				array($this, 'filterHref'),
-				$templateString
+			'~<a(.*?)\s+href=("|\')\$\/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
+			array($this, 'filterHref'),
+			$templateString
 		);
 
 		$templateString = preg_replace_callback(
@@ -55,8 +55,11 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		static $script;
 		static $niceUri;
 		static $menuEntryLookup = array();
+		static $config;
 
-		$config = Application::getInstance()->getConfig();
+		if(is_null($config)) {
+			$config = Application::getInstance()->getConfig();
+		}
 
 		if(is_null($script)) {
 			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
@@ -145,7 +148,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 * @param array $matches
 	 * @return string
 	 */
-	private static function filterHref($matches) {
+	private function filterHref($matches) {
 
 		static $script;
 		static $niceUri;
@@ -186,7 +189,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 * @param array $matches
 	 * @return string
 	 */
-	private static function filterImgSrc($matches) {
+	private function filterImgSrc($matches) {
 
 		return "<img{$matches[1]} src={$matches[2]}".IMG_SITE_PATH."{$matches[3]}{$matches[2]}{$matches[4]}>";
 

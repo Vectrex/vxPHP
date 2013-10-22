@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\SimpleTemplate\Filter;
+namespace vxPHP\Template\Filter;
 
 /**
  * @author Gregor Kofler
@@ -14,5 +14,5 @@ abstract class SimpleTemplateFilter {
 		return new static();
 	}
 
-	public abstract function apply();
+	public abstract function apply(&$templateString);
 }
