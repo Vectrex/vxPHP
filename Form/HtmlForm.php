@@ -13,10 +13,12 @@ use vxPHP\Template\SimpleTemplate;
 use vxPHP\Http\Request;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Application\Application;
+use vxPHP\Template\Filter\AnchorHref;
+use vxPHP\Template\Filter\LocalizedPhrases;
 
 /**
  * Template Engine for Forms
- * @version 1.1.13 2013-10-05
+ * @version 1.1.14 2013-10-23
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -289,8 +291,11 @@ class HtmlForm {
 			$this->primeTemplate();
 			$this->insertFormFields();
 
-			SimpleTemplate::parseTemplateLinks($this->html);
-			SimpleTemplate::parseTemplateLocales($this->html);
+			LocalizedPhrases::create()->apply(
+				AnchorHref::create()->apply(
+					$this->html
+				)
+			);
 
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
