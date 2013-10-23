@@ -6,7 +6,7 @@ use vxPHP\Application\Application;
 /**
  * @author Gregor Kofler
  *
- * @version 0.2.1 2013-10-05
+ * @version 0.2.2 2013-10-24
  *
  * @todo currently a stub
  * @todo proper interface for controllers + type hints
