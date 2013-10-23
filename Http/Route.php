@@ -189,15 +189,10 @@ class Route {
 		else {
 			$query = '';
 		}
-		header(
-			'Location: ' .
-			implode('/', $urlSegments) .
-			'/' .
-			$this->redirect .
-			$query,
-			TRUE,
-			$statusCode
-		);
+
+		$response = new Response();
+		$response->headers->set('Location', implode('/', $urlSegments) . '/' . $this->redirect . $query);
+		$response->setStatusCode($statusCode)->sendHeaders();
 		exit();
 
 	}
