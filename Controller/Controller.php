@@ -6,6 +6,9 @@ use vxPHP\Http\Response;
 use vxPHP\Http\JsonResponse;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Http\Request;
+use vxPHP\Application\Application;
+use vxPHP\Http\Router;
+use vxPHP\Util\LocalesFactory;
 /**
  * Abstract parent class for all controllers
  *
