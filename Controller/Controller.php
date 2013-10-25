@@ -14,7 +14,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.0 2013-10-24
+ * @version 0.1.1 2013-10-25
  *
  */
 abstract class Controller {
@@ -85,6 +85,17 @@ abstract class Controller {
 
 		$this->prepareForXhr();
 		$this->execute()->send();
+	}
+
+	/**
+	 * convenience function to allow instantiation and output by chaining
+	 *
+	 * @return \vxPHP\Controller\Controller
+	 */
+	public static function create() {
+
+		return new static();
+
 	}
 
 	/**
