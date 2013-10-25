@@ -14,7 +14,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.1 2013-10-25
+ * @version 0.1.2 2013-10-25
  *
  */
 abstract class Controller {
@@ -84,7 +84,21 @@ abstract class Controller {
 		}
 
 		$this->prepareForXhr();
+	}
+
+	/**
+	 * renders a complete response
+	 * including headers
+	 */
+	public function renderResponse() {
 		$this->execute()->send();
+	}
+
+	/**
+	 * renders content of response
+	 */
+	public function render() {
+		$this->execute()->sendContent();
 	}
 
 	/**
