@@ -269,7 +269,7 @@ abstract class Controller {
 	/**
 	 * the actual controller functionality implemented in the individual controllers
 	 *
-	 * returns a Response or JsonResponse object
+	 * @return Response, JsonResponse
 	 */
 	abstract protected function execute();
 }
