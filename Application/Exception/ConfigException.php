@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Config\Exception;
+namespace vxPHP\Application\Exception;
 
 class ConfigException extends \Exception {
 }

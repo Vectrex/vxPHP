@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.1 2013-10-05
+ * @version 0.9.2 2013-10-26
  *
  * @todo refresh() method
  */
@@ -28,7 +28,8 @@ class Config {
 			$binaries,
 			$routes,
 			$menus,
-			$server;
+			$server,
+			$controllerPath;
 
 	public $locales =  array(
 		'de' => array('de', 'de_DE', 'deu_deu'),
@@ -68,6 +69,7 @@ class Config {
 
 		$this->parseConfig();
 		$this->getServerConfig();
+		$this->setControllerPath();
 
 		unset($this->config);
 	}
@@ -89,6 +91,28 @@ class Config {
 		return self::$instance;
 	}
 
+	/**
+	 * set path to controller classes
+	 * Route reads this path
+	 *
+	 * @todo remove hard coded path configuration
+	 * @todo handle non-web environment
+	 */
+	private function setControllerPath() {
+
+		$this->controllerPath =
+			rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
+			'src' . DIRECTORY_SEPARATOR .
+			'controller' . DIRECTORY_SEPARATOR;
+	}
+
+	/**
+	 * iterates through the sections of the config file
+	 * and calls init function
+	 *
+	 * @throws ConfigException
+	 * @return void
+	 */
 	private function parseConfig() {
 
 		try {
@@ -307,8 +331,8 @@ class Config {
 
 			$pageId	= (string) $a->id;
 
-			if(isset($a->class)) {
-				$parameters['controller'] = (string) $a->class;
+			if(isset($a->controller)) {
+				$parameters['controller'] = (string) $a->controller;
 			}
 
 			if(isset($a->auth)) {

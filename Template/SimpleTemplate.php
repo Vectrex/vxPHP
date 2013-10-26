@@ -19,7 +19,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.0.0 2013-10-23
+ * @version 1.1.0 2013-10-27
  *
  */
 
@@ -41,22 +41,7 @@ class SimpleTemplate {
 		$this->locale	= Router::getLocaleFromPathInfo();
 		$this->file		= $file;
 
-		$path =
-			realpath($serverBag->get('DOCUMENT_ROOT')) .
-			(defined('TPL_PATH') ? TPL_PATH : '') .
-			(basename($request->getScriptName(), '.php') !== 'index' ? (basename($request->getScriptName(), '.php') . DIRECTORY_SEPARATOR) : '');
-
-		if(!is_null($this->locale)) {
-			if(file_exists(
-				$path .
-				$this->locale->getLocaleString() . DIRECTORY_SEPARATOR .
-				$file
-			)) {
-				$path .= $this->locale->getLocaleString() . DIRECTORY_SEPARATOR;
-			}
-		}
-
-		$this->path = $path;
+		$this->path		= realpath($serverBag->get('DOCUMENT_ROOT')) . (defined('TPL_PATH') ? TPL_PATH : '');
 
 		if (!file_exists($this->path . $this->file)) {
 			throw new SimpleTemplateException("Template file '{$this->path}{$this->file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
@@ -77,9 +62,11 @@ class SimpleTemplate {
 	/**
 	 * output parsed template
 	 *
-	 * @return Ambigous string
+	 * @return string
 	 */
 	public function display() {
+
+		$this->extend();
 
 		$this->fillBuffer();
 
@@ -114,6 +101,17 @@ class SimpleTemplate {
 	}
 
 	/**
+	 * appends filter to filter queue
+	 *
+	 * @param SimpleTemplateFilterInterface $filter
+	 */
+	public function addFilter(SimpleTemplateFilterInterface $filter) {
+
+		array_push($this->filters, $filter);
+
+	}
+
+	/**
 	 * include another template file
 	 * does only path handling
 	 *
@@ -136,14 +134,45 @@ class SimpleTemplate {
 	}
 
 	/**
-	 * appends filter to filter queue
+	 * allow extension of a parent template with current template
 	 *
-	 * @param SimpleTemplateFilterInterface $filter
+	 * searches in current rawContent for
+	 * <!-- { extend: parent_template.php @ content_block } -->
+	 * and in template to extend for
+	 * <!-- { block: content_block } -->
+	 *
+	 * current rawContent is then replaced by parent rawContent with current rawContent filled in
+	 *
+	 * @throws SimpleTemplateException
 	 */
-	public function addFilter(SimpleTemplateFilterInterface $filter) {
+	private function extend() {
 
-		array_push($this->filters, $filter);
+		$extendRegExp = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
+		if(preg_match($extendRegExp, $this->rawContent, $matches)) {
+
+			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
+
+			$extendedContent = file_get_contents($this->path . $matches[1]);
+
+			if(preg_match($blockRegExp, $extendedContent)) {
+
+				$this->rawContent = preg_replace(
+					$blockRegExp,
+					preg_replace(
+						$extendRegExp,
+						'',
+						$this->rawContent
+					),
+					$extendedContent
+				);
+
+			}
+
+			else {
+				throw new SimpleTemplateException("Could not extend with '{$matches[1]}' at '{$matches[2]}'.", SimpleTemplateException::TEMPLATE_INVALID_NESTING);
+			}
+		}
 	}
 
 	/**

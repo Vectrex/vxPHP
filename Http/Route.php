@@ -3,19 +3,25 @@
 namespace vxPHP\Http;
 
 use vxPHP\Application\Application;
+use vxPHP\Controller\Controller;
+
 /**
+ *
  * @author Gregor Kofler
  *
- * @version 0.2.2 2013-10-24
+ * @version 0.3.0 2013-10-26
  *
- * @todo currently a stub
- * @todo proper interface for controllers + type hints
  */
 class Route {
 
 	private $routeId,
 			$wildcard,
 			$scriptName,
+			$controllerString,
+
+			/**
+			 * @var Controller
+			 */
 			$controller,
 			$redirect,
 			$auth,
@@ -47,12 +53,12 @@ class Route {
 			$this->setAuthParameters($parameters['authParameters']);
 		}
 
-		if(isset($parameters['controller'])) {
-			$this->setController($parameters['controller']);
-		}
-
 		if(isset($parameters['redirect'])) {
 			$this->setRedirect($parameters['redirect']);
+		}
+
+		if(isset($parameters['controller'])) {
+			$this->controllerString = $parameters['controller'];
 		}
 	}
 
@@ -131,17 +137,35 @@ class Route {
 	}
 
 	/**
-	 * @return string $controller
+	 * returns controller assigned to route
+	 * path to controlleres is retrieved from Config instance
+	 *
+	 * @return Controller $controller
 	 */
 	public function getController() {
+
+		$classPath	= explode('/', $this->controllerString);
+		$className	= ucfirst(array_pop($classPath)) . 'Controller';
+
+		require_once Application::getInstance()->getConfig()->controllerPath . rtrim(implode(DIRECTORY_SEPARATOR, $classPath), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $className . '.php';
+
+		$this->controller = new $className();
+
 		return $this->controller;
 	}
 
 	/**
-	 * @param string $controller
+	 * @param string $controllerString
 	 */
-	public function setController($controller) {
-		$this->controller = $controller;
+	public function setControllerString($controllerString) {
+		$this->controllerString = $controllerString;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getControllerString() {
+		return $this->controllerString;
 	}
 
 	/**
