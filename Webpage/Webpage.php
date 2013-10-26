@@ -5,13 +5,13 @@ namespace vxPHP\Webpage;
 use vxPHP\Util\JSMin;
 use vxPHP\Template\Util\SimpleTemplateUtil;
 use vxPHP\Database\Mysqldbi;
-use vxPHP\Config\Config;
 use vxPHP\Http\Request;
 use vxPHP\Http\Router;
 use vxPHP\Util\LocalesFactory;
 use vxPHP\Http\StatusCode;
 use vxPHP\Application\Application;
 use vxPHP\Template\Filter\LocalizedPhrases;
+use vxPHP\Application\Config;
 
 /**
  * Parent class for webpages,

@@ -3,7 +3,7 @@
 namespace vxPHP\Application;
 
 use vxPHP\Database\Mysqldbi;
-use vxPHP\Config\Config;
+use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
 
 /**

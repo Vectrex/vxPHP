@@ -117,12 +117,21 @@ class SimpleTemplate {
 	 * include another template file
 	 * does only path handling
 	 *
-	 * @param unknown $templateFile
+	 * @param string $templateFile
 	 */
 	private function includeFile($templateFile) {
 
 		$tpl = $this;
 		eval('?>' . file_get_contents($this->path . $templateFile));
+
+	}
+
+	/**
+	 * include controller output
+	 *
+	 * @param Controller $controller
+	 */
+	private function includeController($controller) {
 
 	}
 

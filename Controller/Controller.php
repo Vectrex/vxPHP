@@ -7,6 +7,7 @@ use vxPHP\Http\JsonResponse;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Http\Request;
 use vxPHP\Application\Application;
+use vxPHP\Application\Config;
 use vxPHP\Http\Router;
 use vxPHP\Util\LocalesFactory;
 /**

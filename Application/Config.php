@@ -1,8 +1,8 @@
 <?php
 
-namespace vxPHP\Config;
+namespace vxPHP\Application;
 
-use vxPHP\Config\Exception\ConfigException;
+use vxPHP\Application\Exception\ConfigException;
 
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;

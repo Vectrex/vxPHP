@@ -7,12 +7,12 @@ use vxPHP\Http\Router;
 use vxPHP\User\Admin;
 use vxPHP\User\UserAbstract;
 use vxPHP\Http\Route;
-use vxPHP\Config\Config;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\MenuInterface;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
+use vxPHP\Application\Config;
 use vxPHP\Util\LocalesFactory;
 
 /**
