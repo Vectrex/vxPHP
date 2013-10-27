@@ -19,7 +19,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.1.1 2013-10-27
+ * @version 1.2.0 2013-10-28
  *
  */
 
@@ -87,6 +87,7 @@ class SimpleTemplate {
 	 *
 	 * @param SimpleTemplate $childTemplate
 	 * @param string $blockName
+	 * @return SimpleTemplate
 	 */
 	public function insertTemplateAt(SimpleTemplate $childTemplate, $blockName) {
 
@@ -101,6 +102,43 @@ class SimpleTemplate {
 		else {
 			throw new SimpleTemplateException("Could not insert child template at '$blockName'.", SimpleTemplateException::TEMPLATE_INVALID_NESTING);
 		}
+
+		return $this;
+	}
+
+	/**
+	 * assign value to variable, which is the available within template
+	 *
+	 * @param string $var
+	 * @param mixed $value
+	 * @return SimpleTemplate
+	 */
+	public function assign($var, $value = '') {
+
+		if(is_array($var)) {
+			foreach($var as $k => $v) {
+				$this->$k = $v;
+				return;
+			}
+		}
+
+		$this->$var = $value;
+
+		return $this;
+	}
+
+	/**
+	 * appends filter to filter queue
+	 *
+	 * @param SimpleTemplateFilterInterface $filter
+	 * @return SimpleTemplate
+	 */
+	public function addFilter(SimpleTemplateFilterInterface $filter) {
+
+		array_push($this->filters, $filter);
+
+		return $this;
+
 	}
 
 	/**
@@ -127,35 +165,6 @@ class SimpleTemplate {
 	}
 
 	/**
-	 * assign value to variable, which is the available within template
-	 *
-	 * @param string $var
-	 * @param mixed $value
-	 */
-	public function assign($var, $value = '') {
-
-		if(is_array($var)) {
-			foreach($var as $k => $v) {
-				$this->$k = $v;
-				return;
-			}
-		}
-
-		$this->$var = $value;
-	}
-
-	/**
-	 * appends filter to filter queue
-	 *
-	 * @param SimpleTemplateFilterInterface $filter
-	 */
-	public function addFilter(SimpleTemplateFilterInterface $filter) {
-
-		array_push($this->filters, $filter);
-
-	}
-
-	/**
 	 * include another template file
 	 * does only path handling
 	 *
@@ -174,7 +183,6 @@ class SimpleTemplate {
 	 * @param Controller $controller
 	 */
 	private function includeController($controller) {
-
 	}
 
 	/**
