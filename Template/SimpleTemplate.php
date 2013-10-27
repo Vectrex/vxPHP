@@ -19,7 +19,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.1.0 2013-10-27
+ * @version 1.1.1 2013-10-27
  *
  */
 
@@ -34,6 +34,11 @@ class SimpleTemplate {
 				$filters = array(),
 				$ignoreLocales;
 
+	/**
+	 * initialize template based on $file
+	 *
+	 * @param string $file
+	 */
 	public function __construct($file) {
 
 		$request		= Request::createFromGlobals();
@@ -51,12 +56,51 @@ class SimpleTemplate {
 	}
 
 	/**
+	 * static method to allow method chaining
+	 *
+	 * @param string $file
+	 */
+	public static function create($file) {
+		return new static($file);
+	}
+
+	/**
 	 * check whether template file contains any PHP escape characters
 	 *
 	 * @return boolean
 	 */
 	public function containsPHP() {
 		return 1 === preg_match('~<\\?(php)?.*?\\?>~', $this->rawContent);
+	}
+
+	/**
+	 * return the plain file content of template file
+	 *
+	 * @return string
+	 */
+	public function getRawContent() {
+ 		return $this->rawContent;
+	}
+
+	/**
+	 * explicitly insert template at $blockName position
+	 *
+	 * @param SimpleTemplate $childTemplate
+	 * @param string $blockName
+	 */
+	public function insertTemplateAt(SimpleTemplate $childTemplate, $blockName) {
+
+		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
+
+		if(preg_match($blockRegExp, $this->rawContent)) {
+
+			$this->rawContent = preg_replace($blockRegExp, $childTemplate->getRawContent(), $this->rawContent);
+
+		}
+
+		else {
+			throw new SimpleTemplateException("Could not insert child template at '$blockName'.", SimpleTemplateException::TEMPLATE_INVALID_NESTING);
+		}
 	}
 
 	/**
