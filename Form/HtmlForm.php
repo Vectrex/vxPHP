@@ -653,11 +653,17 @@ class HtmlForm {
 	/**
 	 * add miscellaneous markup and text to form
 	 *
-	 * @param string $markup_id
-	 * @param mixed $markup_value
+	 * @param string $id
+	 * @param string $value
+	 *
+	 * @return HtmlForm
 	 */
 	public function addMiscHtml($id, $value) {
+
 		$this->miscHtml[$id] = $value;
+
+		return $this;
+
 	}
 
 	/**
