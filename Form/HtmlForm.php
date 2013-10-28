@@ -77,6 +77,25 @@ class HtmlForm {
 	}
 
 	/**
+	 * Create instance
+	 * allows chaining
+	 *
+	 * @param string $template filename
+	 * @param string $action attribute
+	 * @param string $submit method
+	 * @param string $encoding type
+	 * @param string $css class
+	 * @param string $misc string
+	 *
+	 * @return HtmlForm
+	 *
+	 */
+
+	public static function create($template = NULL, $action = FALSE, $method = 'POST', $type = FALSE, $css = FALSE) {
+		return new static($template, $action, $method, $type, $css);
+	}
+
+	/**
 	 * initialize parameter bag
 	 * parameterbag is either supplied, or depending on request method retrieved from request object
 	 *
