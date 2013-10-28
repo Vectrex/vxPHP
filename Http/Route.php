@@ -147,7 +147,14 @@ class Route {
 		$classPath	= explode('/', $this->controllerString);
 		$className	= ucfirst(array_pop($classPath)) . 'Controller';
 
-		require_once Application::getInstance()->getConfig()->controllerPath . rtrim(implode(DIRECTORY_SEPARATOR, $classPath), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $className . '.php';
+		if(count($classPath)) {
+			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
+		}
+		else {
+			$classPath = '';
+		}
+
+		require_once Application::getInstance()->getConfig()->controllerPath . $classPath . $className . '.php';
 
 		$this->controller = new $className();
 

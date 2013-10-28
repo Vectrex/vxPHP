@@ -18,7 +18,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
 
 /**
  * Template Engine for Forms
- * @version 1.1.14 2013-10-23
+ * @version 1.2.0 2013-10-28
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -81,6 +81,8 @@ class HtmlForm {
 	 * parameterbag is either supplied, or depending on request method retrieved from request object
 	 *
 	 * @param ParameterBag $bag
+	 * @return HtmlForm
+	 *
 	 */
 	public function bindRequestParameters(ParameterBag $bag = NULL) {
 
@@ -107,6 +109,8 @@ class HtmlForm {
 				$this->setElementRequestValue($element);
 			}
 		}
+
+		return $this;
 	}
 
 	/**
@@ -114,7 +118,9 @@ class HtmlForm {
 	 * 'GET' and 'POST' are the only allowed values
 	 *
 	 * @param string $method
+	 * @return HtmlForm
 	 * @throws HtmlFormException
+	 *
 	 */
 	public function setMethod($method) {
 
@@ -124,6 +130,8 @@ class HtmlForm {
 		}
 		$this->method = $method;
 
+		return $this;
+
 	}
 
 	/**
@@ -131,10 +139,14 @@ class HtmlForm {
 	 * @todo auto convert action to nice uri and vice versa
 	 *
 	 * @param string $action
+	 * @return HtmlForm
+	 *
 	 */
 	public function setAction($action) {
 
 		$this->action = htmlspecialchars($action, ENT_QUOTES);
+
+		return $this;
 
 	}
 
@@ -143,7 +155,9 @@ class HtmlForm {
 	 * 'application/x-www-form-urlencoded' and 'multipart/form-data' are the only allowed values
 	 *
 	 * @param string $method
+	 * @return HtmlForm
 	 * @throws HtmlFormException
+	 *
 	 */
 	public function setEncType($type) {
 
@@ -155,6 +169,8 @@ class HtmlForm {
 
 		$this->type = $type;
 
+		return $this;
+
 	}
 
 	/**
@@ -162,6 +178,8 @@ class HtmlForm {
 	 *
 	 * @param string $attr
 	 * @param string $value
+	 * @return HtmlForm
+	 *
 	 */
 	public function setAttribute($attr, $value) {
 
@@ -180,18 +198,25 @@ class HtmlForm {
 			default:
 				$this->attributes[$attr] = $value;
 		}
+
+		return $this;
+
 	}
 
 	/**
 	 * sets sevaral form attributes stored in associative array
 	 *
 	 * @param array $attrs
+	 * @return HtmlForm
+	 *
 	 */
 	public function setAttributes(array $attrs) {
 
 		foreach($attrs as $k => $v) {
 			$this->setAttribute($k, $v);
 		}
+
+		return $this;
 
 	}
 
@@ -322,7 +347,8 @@ class HtmlForm {
 	 * deliver all valid form values
 	 *
 	 * @param boolean $getSubmits,deliver submit buttons when TRUE, defaults to FALSE
-	 * @return array valid_form_values
+	 * @return array
+	 *
 	 */
 	public function getValidFormValues($getSubmits = FALSE) {
 
@@ -369,7 +395,8 @@ class HtmlForm {
 	 * checkbox elements will be checked when their value equals form value
 	 *
 	 * @param array $values
-	 * @return void
+	 * @return HtmlForm
+	 *
 	 */
 	public function setInitFormValues(array $values) {
 
@@ -392,13 +419,16 @@ class HtmlForm {
 				}
 			}
 		}
+
+		return $this;
+
 	}
 
 	/**
 	 * retrieve form errors
 	 * $result is either FALSE if no error found, or array with errors
 	 *
-	 * @return $result
+	 * @return array
 	 */
 	public function getFormErrors() {
 
@@ -457,6 +487,8 @@ class HtmlForm {
 	/**
 	 * validate form by checking validity of each form element
 	 * error flags are stored in HtmlForm::formErrors
+	 *
+	 * @return HtmlForm
 	 */
 	public function validate() {
 
@@ -478,42 +510,60 @@ class HtmlForm {
 				}
 			}
 		}
+
+		return $this;
+
 	}
 
 	/**
 	 * initialize a miscellaneous template variable
 	 * array values allow "dynamic" loops an if-else constructs
 	 *
-	 * @param string $name_of_var
-	 * @param mixed $value_of_var
+	 * @param string $name name of variable
+	 * @param mixed $value value of variable
+	 * @return HtmlForm
+	 *
 	 */
 	public function initVar($name, $val) {
+
 		$this->vars[$name] = $val;
+
+		return $this;
+
 	}
 
 	/**
 	 * add custom error and force error message in template
 	 *
-	 * @param string $error_name
-	 * @param mixed $error_name_index
+	 * @param string $errorName
+	 * @param mixed $errorNameIndex
+ 	 * @return HtmlForm
 	 */
-	public function setError($err, $ndx = NULL) {
-		if(is_null($ndx)) {
-			$this->formErrors[$err] = TRUE;
+	public function setError($errorName, $errorNameIndex = NULL) {
+
+		if(is_null($errorNameIndex)) {
+			$this->formErrors[$errorName] = TRUE;
 		}
 		else {
-			$this->formErrors[$err][$ndx] = TRUE;
+			$this->formErrors[$errorName][$errorNameIndex] = TRUE;
 		}
+
+		return $this;
+
 	}
 
 	/**
 	 * add form element to form
 	 *
 	 * @param FormElement $e
+	 * @return HtmlForm
+	 *
 	 */
 	public function addElement(FormElement $e) {
 
 		$this->elements[$e->getName()] = $e;
+
+		return $this;
 
 	}
 
@@ -521,6 +571,8 @@ class HtmlForm {
 	 * add several form elements stored in array to form
 	 *
 	 * @param array $e
+	 * @return HtmlForm
+	 *
 	 */
 	public function addElementArray(array $e) {
 
@@ -530,6 +582,8 @@ class HtmlForm {
 			$name = preg_replace('~\[\w+\]$~i', '', $name);
 			$this->elements[$name] = $e;
 		}
+
+		return $this;
 
 	}
 
