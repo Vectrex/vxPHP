@@ -2,7 +2,7 @@
 /**
  * response in JSON format
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Igor Wiedler <igor@wiedler.ch>, Gregor Kofler
  *
  */
@@ -31,7 +31,7 @@ class JsonResponse extends Response {
 			$responseData = new \stdClass();
 		}
 
-		$this->setData($responseData);
+		$this->setPayload($responseData);
 	}
 
 	/**
