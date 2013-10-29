@@ -6,6 +6,7 @@ use vxPHP\File\MimeTypeGetter;
 use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Application;
+use vxPHP\Http\Request;
 
 /**
  * mapper for filesystem files
@@ -375,6 +376,8 @@ class FilesystemFile {
 	 * uploads file from $_FILES[$fileInputName] to $dir
 	 * if $name is omitted, the filename of the uploaded file is kept
 	 * filename is sanitized
+	 *
+	 * @todo replace using $_FILES superglobals with FileBag
 	 *
 	 * @param string $fileInputName
 	 * @param FilesystemFolder $dir

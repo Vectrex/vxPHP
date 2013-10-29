@@ -265,7 +265,7 @@ abstract class Controller {
 
 		// handle request for apc upload poll, this will not be left to individual controller
 
-		if($this->xhrBag->get('httpRequest') === 'apcPoll') {
+		if($this->xhrBag && $this->xhrBag->get('httpRequest') === 'apcPoll') {
 
 			$id = $this->xhrBag->get('id');
 			if($this->config->server['apc_on'] && $id) {
