@@ -15,7 +15,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.2 2013-10-25
+ * @version 0.1.3 2013-10-30
  *
  */
 abstract class Controller {
@@ -197,9 +197,9 @@ abstract class Controller {
 			$echo = json_decode($this->xhrBag->get('xmlHttpRequest'));
 			unset($echo->echo);
 
-			$r->setContent(array(
+			$r->setPayload(array(
 				'echo'		=> $echo,
-				'response'	=> $r->getContent()
+				'response'	=> json_decode($r->getContent())
 			));
 		}
 
