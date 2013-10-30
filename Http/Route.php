@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.0 2013-10-26
+ * @version 0.3.1 2013-10-30
  *
  */
 class Route {
@@ -156,9 +156,7 @@ class Route {
 
 		require_once Application::getInstance()->getConfig()->controllerPath . $classPath . $className . '.php';
 
-		$this->controller = new $className();
-
-		return $this->controller;
+		return new $className();
 	}
 
 	/**
