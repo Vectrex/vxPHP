@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.1 2013-10-30
+ * @version 0.3.2 2013-10-31
  *
  */
 class Route {
@@ -18,14 +18,10 @@ class Route {
 			$wildcard,
 			$scriptName,
 			$controllerString,
-
-			/**
-			 * @var Controller
-			 */
-			$controller,
 			$redirect,
 			$auth,
-			$authParameters;
+			$authParameters,
+			$url;
 
 	/**
 	 *
@@ -95,20 +91,6 @@ class Route {
 	}
 
 	/**
-	 * @return string $path
-	 */
-	public function getPath() {
-		return $this->path;
-	}
-
-	/**
-	 * @param string $path
-	 */
-	public function setPath($path) {
-		$this->path = $path;
-	}
-
-	/**
 	 * @return the $auth
 	 */
 	public function getAuth() {
@@ -157,6 +139,36 @@ class Route {
 		require_once Application::getInstance()->getConfig()->controllerPath . $classPath . $className . '.php';
 
 		return new $className();
+	}
+
+	/**
+	 * get URL of this route
+	 * considers mod_rewrite settings (nice_uri)
+	 *
+	 * @return string
+	 */
+	public function getUrl() {
+
+		if(!$this->url) {
+
+			$urlSegments = array();
+
+			if(Application::getInstance()->getConfig()->site->use_nice_uris) {
+
+				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
+					$urlSegments[] = $scriptName;
+				}
+			}
+
+			else {
+				$urlSegments[] = $this->scriptName;
+			}
+			$urlSegments[] = $this->routeId;
+
+			$this->url = implode('/', $urlSegments);
+		}
+
+		return $this->url;
 	}
 
 	/**
