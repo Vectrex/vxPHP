@@ -12,7 +12,7 @@ use vxPHP\Database\MysqldbiStatement;
  *
  * @extends mysqli
  *
- * @version 4.11.0 2013-10-05
+ * @version 4.11.1 2013-11-01
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -579,13 +579,11 @@ class Mysqldbi extends \mysqli {
 	 *
 	 * @return string reformated datestring
 	 */
-	public function formatDate($dat, $locale = NULL) {
+	public function formatDate($dat, $locale) {
 
 		if(empty($dat)) {
 			return '';
 		}
-
-		$locale = !isset($locale) ? (!defined('SITE_LOCALE') ? 'de' : SITE_LOCALE) : $locale;
 
 		$tmp = preg_split('/( |\.|\/|-)/', $dat);
 
@@ -610,7 +608,7 @@ class Mysqldbi extends \mysqli {
 	 * @return float stripped decimal
 	 */
 	public function formatDecimal($dec) {
-		if(trim($dec) == ''){
+		if(trim($dec) == '') {
 			return NULL;
 		}
 		if(substr($dec, 0, 1) == '+') { $dec = substr($dec, 1); }

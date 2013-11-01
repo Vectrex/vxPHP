@@ -14,12 +14,13 @@ use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
 use vxPHP\Template\Filter\ImageCache;
 use vxPHP\Template\Filter\AnchorHref;
 use vxPHP\Template\Filter\LocalizedPhrases;
+use vxPHP\Application\Locale\Locale;
 
 /**
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.0 2013-10-28
+ * @version 1.2.1 2013-11-01
  *
  */
 
@@ -30,6 +31,9 @@ class SimpleTemplate {
 				$rawContent,
 				$dir,
 				$contents,
+				/**
+				 * @var Locale
+				 */
 				$locale,
 				$filters = array(),
 				$ignoreLocales;
@@ -43,7 +47,7 @@ class SimpleTemplate {
 
 		$request		= Request::createFromGlobals();
 		$serverBag		= $request->server;
-		$this->locale	= Router::getLocaleFromPathInfo();
+		$this->locale	= Application::getInstance()->getCurrentLocale();
 		$this->file		= $file;
 
 		$this->path		= realpath($serverBag->get('DOCUMENT_ROOT')) . (defined('TPL_PATH') ? TPL_PATH : '');

@@ -5,12 +5,14 @@ namespace vxPHP\Application;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
+use vxPHP\Application\Locale\Locale;
+use vxPHP\Application\Exception\ApplicationException;
 
 /**
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.1.2 2013-10-15
+ * @version 0.2.0 2013-11-01
  */
 class Application {
 
@@ -35,6 +37,16 @@ class Application {
 			 * @var EventDispatcher
 			 */
 	private	$eventDispatcher;
+
+			/**
+			 * @var array
+			 */
+	private $locales = array();
+
+			/**
+			 * @var Locale
+			 */
+	private $currentLocale;
 
 	/**
 	 * constructor
@@ -69,6 +81,12 @@ class Application {
 
 				date_default_timezone_set('Europe/Vienna');
 			}
+
+			// initialize available locales
+
+			if(isset($this->config->site->locales)) {
+				$this->locales = array_fill_keys($this->config->site->locales, NULL);
+			}
 		}
 
 		catch (\Exception $e) {
@@ -81,6 +99,8 @@ class Application {
 
 	}
 
+	private function __clone() {}
+
 	/**
 	 * get Application instance
 	 *
@@ -92,8 +112,6 @@ class Application {
 		}
 		return self::$instance;
 	}
-
-	private function __clone() {}
 
 	/**
 	 * returns default database object reference
@@ -125,6 +143,75 @@ class Application {
 	public function getEventDispatcher() {
 
 		return $this->eventDispatcher;
+
+	}
+
+	/**
+	 * returns an array with available Locale instances
+	 * because of lazy instantiation, missing instances are created now
+	 *
+	 * @return array
+	 */
+	public function getAvailableLocales() {
+
+		foreach($this->locales as $id => $l) {
+			if(!$l) {
+				$this->locales[$id] = new Locale($id);
+			}
+		}
+
+		return $this->locales;
+	}
+
+	/**
+	 * checks whether locale can be instantiated
+	 * at this point instance might not have been created
+	 *
+	 * @param string $localeId
+	 * @return boolean
+	 */
+	public function hasLocale($localeId) {
+		return array_key_exists(strtolower($localeId), $this->locales);
+	}
+
+	/**
+	 *
+	 * @param string $localeId
+	 */
+	public function getLocale($localeId) {
+
+		$localeId = strtolower($localeId);
+
+		if(!array_key_exists($localeId, $this->locales)) {
+			throw new ApplicationException("Locale '$localeId' does not exist.", ApplicationException::INVALID_LOCALE);
+		}
+
+		if(is_null($this->locales[$localeId])) {
+			$this->locales[$localeId] = new Locale($localeId);
+		}
+
+		return $this->locales[$localeId];
+	}
+
+	/**
+	 * get the currently selected locale
+	 *
+	 * @return Locale
+	 */
+	public function getCurrentLocale() {
+
+		return $this->currentLocale;
+
+	}
+
+	/**
+	 * set the current locale
+	 *
+	 * @param Locale $locale
+	 */
+	public function setCurrentLocale(Locale $locale) {
+
+		$this->currentLocale = $locale;
 
 	}
 }

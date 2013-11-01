@@ -13,7 +13,6 @@ use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
-use vxPHP\Util\LocalesFactory;
 
 /**
  * Wrapper class for rendering menus
@@ -23,7 +22,7 @@ use vxPHP\Util\LocalesFactory;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.6, 2013-10-22
+ * @version 0.2.7, 2013-11-01
  *
  * @throws MenuGeneratorException
  */
@@ -195,7 +194,7 @@ class MenuGenerator {
 
 			// skip locale if one found
 
-			if(count($this->pathSegments) && in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
+			if(count($this->pathSegments) && Application::getInstance()->hasLocale($this->pathSegments[0])) {
 				array_shift($this->pathSegments);
 			}
 

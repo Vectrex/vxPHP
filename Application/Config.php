@@ -31,11 +31,6 @@ class Config {
 			$server,
 			$controllerPath;
 
-	public $locales =  array(
-		'de' => array('de', 'de_DE', 'deu_deu'),
-		'en' => array('en', 'en_GB', 'en_US', 'eng')
-	);
-
 			/**
 			 * @var Config
 			 */
@@ -265,12 +260,6 @@ class Config {
 				if(!empty($locale->attributes()->default)) {
 					$this->site->default_locale = (string) $locale->attributes()->value;
 				}
-			}
-			if(isset($this->site->default_locale)) {
-				$this->site->current_locale = $this->site->default_locale;
-			}
-			else {
-				$this->site->current_locale = $this->site->locales[0];
 			}
 		}
 	}

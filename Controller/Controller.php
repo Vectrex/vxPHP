@@ -9,13 +9,13 @@ use vxPHP\Http\Request;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
 use vxPHP\Http\Router;
-use vxPHP\Util\LocalesFactory;
+
 /**
  * Abstract parent class for all controllers
  *
  * @author Gregor Kofler
  *
- * @version 0.1.3 2013-10-30
+ * @version 0.1.4 2013-11-01
  *
  */
 abstract class Controller {
@@ -80,7 +80,7 @@ abstract class Controller {
 
 		// skip locale if one found
 
-		if(count($this->pathSegments) && in_array($this->pathSegments[0], LocalesFactory::getAllowedLocales())) {
+		if(count($this->pathSegments) && Application::getInstance()->hasLocale($this->pathSegments[0])) {
 			array_shift($this->pathSegments);
 		}
 

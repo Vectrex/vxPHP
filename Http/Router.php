@@ -2,7 +2,6 @@
 
 namespace vxPHP\Http;
 
-use vxPHP\Util\LocalesFactory;
 use vxPHP\User\UserAbstract;
 use vxPHP\User\Admin;
 use vxPHP\Application\Application;
@@ -11,7 +10,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.1 2013-10-05
+ * @version 0.2.2 2013-11-01
  *
  */
 class Router {
@@ -27,6 +26,7 @@ class Router {
 		$request		= Request::createFromGlobals();
 		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
 		$script			= basename($request->getScriptName());
+		$application	= Application::getInstance();
 
 		// skip if pathinfo matches script name
 
@@ -34,9 +34,10 @@ class Router {
 			array_shift($pathSegments);
 		}
 
-		// skip locale if one found
+		// when locale is found, set it as current locale in application
 
-		if(count($pathSegments) && in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
+		if(count($pathSegments) && $application->hasLocale($pathSegments[0])) {
+			$application->setCurrentLocale($application->getLocale($pathSegments[0]));
 			array_shift($pathSegments);
 		}
 
@@ -72,22 +73,6 @@ class Router {
 
 		return self::getRouteFromConfig($scriptName, array($routeId));
 
-	}
-
-	/**
-	 * extract locale string from path
-	 * the locale string is assumed to be first in path
-	 *
-	 * @return \vxPHP\Util\Locale
-	 */
-	public static function getLocaleFromPathInfo() {
-
-		$request		= Request::createFromGlobals();
-		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
-
-		if(in_array($pathSegments[0], LocalesFactory::getAllowedLocales())) {
-			return LocalesFactory::getLocale(array_shift($pathSegments));
-		}
 	}
 
 	/**

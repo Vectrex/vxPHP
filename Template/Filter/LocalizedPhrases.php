@@ -21,9 +21,10 @@ class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFil
 	 */
 	public function apply(&$templateString) {
 
-		$config = Application::getInstance()->getConfig();
+		$application	= Application::getInstance();
+		$config			= $application->getConfig();
 
-		$locale = isset($config->site->current_locale) ? $config->site->current_locale : '';
+		$locale = $application->getCurrentLocale();
 
 		// without locale replace placeholders with their identifier
 
