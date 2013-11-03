@@ -101,7 +101,7 @@ class Router {
 
 		foreach($routes[$scriptName] as $match => $route) {
 
-			if(preg_match('~(/|^)' . $match .'(/|$)~', $pathToCheck)) {
+			if(preg_match('~(?:/|^)' . $match .'(?:/|$)~', $pathToCheck)) {
 
 				// if a route has been found previously, choose the more "precise" one
 

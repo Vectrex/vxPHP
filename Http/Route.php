@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0 2013-11-03
+ * @version 0.5.0 2013-11-03
  *
  */
 class Route {
@@ -216,21 +216,36 @@ class Route {
 	 */
 	public function getPathParameter($name, $default = NULL) {
 
+		// lazy initialization of parameters
+
+		if(empty($this->pathParameters)) {
+
+			// extract names
+
+			if(preg_match_all('~\{(.*?)\}(?:\?|/|)~', $this->path, $matches)) {
+
+				$names = array_map('strtolower', $matches[1]);
+
+				// extract values
+
+				if(preg_match('~' . $this->match . '~', Request::createFromGlobals()->getPathInfo(), $values)) {
+
+					array_shift($values);
+
+					if(count($values) === count($names)) {
+						$this->pathParameters = array_combine($names, $values);
+					}
+				}
+			}
+
+		}
+
 		if(isset($this->pathParameters[strtolower($name)])) {
 			return $this->pathParameters[strtolower($name)];
 		}
+
 		return $default;
 
-	}
-
-	/**
-	 * set a path parameter
-	 *
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function setPathParameter($name, $value) {
-		$this->pathParameters[strtolower($name)] = $value;
 	}
 
 	/**
