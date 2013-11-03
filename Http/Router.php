@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.0 2013-11-03
+ * @version 0.3.1 2013-11-03
  *
  */
 class Router {
@@ -23,14 +23,20 @@ class Router {
 	 */
 	public static function getRouteFromPathInfo() {
 
-		$request		= Request::createFromGlobals();
-		$pathSegments	= explode('/' , trim($request->getPathInfo(), '/'));
-		$script			= basename($request->getScriptName());
 		$application	= Application::getInstance();
+		$request		= Request::createFromGlobals();
+		$script			= basename($request->getScriptName());
+
+		if(!($path = trim($request->getPathInfo(), '/'))) {
+			$pathSegments = array();
+		}
+		else {
+			$pathSegments	= explode('/' , $path);
+		}
 
 		// skip if pathinfo matches script name
 
-		if($application->getConfig()->site->use_nice_uris && basename($script, '.php') === $pathSegments[0]) {
+		if(count($pathSegments) && $application->getConfig()->site->use_nice_uris && basename($script, '.php') === $pathSegments[0]) {
 			array_shift($pathSegments);
 		}
 

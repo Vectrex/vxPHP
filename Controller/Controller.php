@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.5 2013-11-03
+ * @version 0.1.6 2013-11-03
  *
  */
 abstract class Controller {
@@ -70,7 +70,10 @@ abstract class Controller {
 
 		$this->request			= Request::createFromGlobals();
 		$this->currentDocument	= basename($this->request->getScriptName());
-		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
+
+		if($path = trim($this->request->getPathInfo(), '/')) {
+			$this->pathSegments		= explode('/', $path);
+		}
 
 		$this->config			= $application->getConfig();
 		$this->route			= $application->getCurrentRoute();
