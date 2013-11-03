@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.2 2013-10-26
+ * @version 0.9.3 2013-11-03
  *
  * @todo refresh() method
  */
@@ -324,6 +324,18 @@ class Config {
 				$parameters['controller'] = (string) $a->controller;
 			}
 
+			// $ndx will be used for route lookup
+
+			if(isset($a->path)) {
+				$ndx = preg_replace('~\{.*?\}~', '([^/]+)', (string) $a->path);
+				$parameters['path'] = (string) $a->path;
+			}
+			else {
+				$ndx = $pageId;
+			}
+
+			$parameters['match'] = $ndx;
+
 			if(isset($a->auth)) {
 
 				$auth = strtoupper(trim((string) $a->auth));
@@ -343,8 +355,7 @@ class Config {
 			}
 
 
-			$this->routes[$scriptName][$pageId] = new Route($pageId, $scriptName, $parameters);
-
+			$this->routes[$scriptName][$ndx] = new Route($pageId, $scriptName, $parameters);
 		}
 	}
 

@@ -7,12 +7,13 @@ use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
+use vxPHP\Http\Route;
 
 /**
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.0 2013-11-01
+ * @version 0.2.1 2013-11-03
  */
 class Application {
 
@@ -47,6 +48,11 @@ class Application {
 			 * @var Locale
 			 */
 	private $currentLocale;
+
+			/**
+			 * @var Route
+			 */
+	private $currentRoute;
 
 	/**
 	 * constructor
@@ -213,5 +219,23 @@ class Application {
 
 		$this->currentLocale = $locale;
 
+	}
+
+	/**
+	 * set the current route, avoids re-parsing of path
+	 *
+	 * @param Route $route
+	 */
+	public function setCurrentRoute(Route $route) {
+		$this->currentRoute = $route;
+	}
+
+	/**
+	 * get the currently active route
+	 *
+	 * @return Route
+	 */
+	public function getCurrentRoute() {
+		return $this->currentRoute;
 	}
 }

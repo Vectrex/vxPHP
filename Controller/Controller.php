@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.4 2013-11-01
+ * @version 0.1.5 2013-11-03
  *
  */
 abstract class Controller {
@@ -66,11 +66,18 @@ abstract class Controller {
 
 		// set up references required in controllers
 
-		$this->config			= Application::getInstance()->getConfig();
+		$application			= Application::getInstance();
+
 		$this->request			= Request::createFromGlobals();
-		$this->route			= Router::getRouteFromPathInfo();
 		$this->currentDocument	= basename($this->request->getScriptName());
 		$this->pathSegments		= explode('/', trim($this->request->getPathInfo(), '/'));
+
+		$this->config			= $application->getConfig();
+		$this->route			= $application->getCurrentRoute();
+
+		if(is_null($this->route)) {
+			$this->route = Router::getRouteFromPathInfo();
+		}
 
 		// skip script name
 

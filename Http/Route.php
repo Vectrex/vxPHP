@@ -9,19 +9,21 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.2 2013-10-31
+ * @version 0.4.0 2013-11-03
  *
  */
 class Route {
 
 	private $routeId,
-			$wildcard,
+			$path,
 			$scriptName,
 			$controllerString,
 			$redirect,
 			$auth,
 			$authParameters,
-			$url;
+			$url,
+			$match,
+			$pathParameters = array();
 
 	/**
 	 *
@@ -29,33 +31,42 @@ class Route {
 	 * @param string $scriptName, name of assigned script
 	 * @param string $auth, authentication information
 	 * @param \vxPHP\Application\Webpage $controller
-	 * @param boolean $hasWildcard, TRUE when route matches several page identifiers with same leading characters
 	 */
 	public function __construct($routeId, $scriptName, array $parameters = array()) {
-
-		if(substr($routeId, -1) == '*') {
-			$routeId = substr($routeId, 0, -1);
-			$this->wildcard = TRUE;
-		}
 
 		$this->routeId		= $routeId;
 		$this->scriptName	= $scriptName;
 
+		if(isset($parameters['path'])) {
+			$this->path = $parameters['path'];
+		}
+		else {
+			$this->path = $routeId;
+		}
+
 		if(isset($parameters['auth'])) {
-			$this->setAuth($parameters['auth']);
+			$this->auth = $parameters['auth'];
 		}
 
 		if(isset($parameters['authParameters'])) {
-			$this->setAuthParameters($parameters['authParameters']);
+			$this->authParameters = $parameters['authParameters'];
 		}
 
 		if(isset($parameters['redirect'])) {
-			$this->setRedirect($parameters['redirect']);
+			$this->redirect = $parameters['redirect'];
 		}
 
 		if(isset($parameters['controller'])) {
 			$this->controllerString = $parameters['controller'];
 		}
+
+		if(isset($parameters['match'])) {
+			$this->match = $parameters['match'];
+		}
+		else {
+			$this->match = $routeId;
+		}
+
 	}
 
 	/**
@@ -84,10 +95,6 @@ class Route {
 	 */
 	private function setScriptName($scriptName) {
 		$this->scriptName = $scriptName;
-	}
-
-	public function hasWildcard() {
-		return !!$this->wildcard;
 	}
 
 	/**
@@ -197,6 +204,33 @@ class Route {
 	 */
 	public function setRedirect($redirect) {
 		$this->redirect = $redirect;
+	}
+
+	/**
+	 * get path parameter
+	 *
+	 * @param string $name
+	 * @param string $default
+	 *
+	 * @return string
+	 */
+	public function getPathParameter($name, $default = NULL) {
+
+		if(isset($this->pathParameters[strtolower($name)])) {
+			return $this->pathParameters[strtolower($name)];
+		}
+		return $default;
+
+	}
+
+	/**
+	 * set a path parameter
+	 *
+	 * @param string $name
+	 * @param string $value
+	 */
+	public function setPathParameter($name, $value) {
+		$this->pathParameters[strtolower($name)] = $value;
 	}
 
 	/**

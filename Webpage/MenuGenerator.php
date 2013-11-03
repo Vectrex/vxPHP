@@ -22,7 +22,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.7, 2013-11-01
+ * @version 0.2.8, 2013-11-03
  *
  * @throws MenuGeneratorException
  */
@@ -101,14 +101,20 @@ class MenuGenerator {
 	 */
 	public function __construct($id = NULL, $level = FALSE, $forceActiveMenu = NULL, $decorator = NULL, $renderArgs = NULL) {
 
-		$this->config	= Application::getInstance()->getConfig();
+		$application = Application::getInstance();
+
+		$this->config = $application->getConfig();
 
 		if(empty($id) && !is_null($this->config->menus)) {
 			throw new MenuGeneratorException();
 		}
 
 		$this->request	= Request::createFromGlobals();
-		$this->route	= Router::getRouteFromPathInfo();
+		$this->route	= $application->getCurrentRoute();
+
+		if(is_null($this->route)) {
+			$this->route = Router::getRouteFromPathInfo();
+		}
 
 		if(empty($id)) {
 			$id = array_shift(array_keys($this->config->menus));

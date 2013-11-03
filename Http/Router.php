@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.2 2013-11-01
+ * @version 0.3.0 2013-11-03
  *
  */
 class Router {
@@ -30,11 +30,11 @@ class Router {
 
 		// skip if pathinfo matches script name
 
-		if(basename($script, '.php') === $pathSegments[0]) {
+		if($application->getConfig()->site->use_nice_uris && basename($script, '.php') === $pathSegments[0]) {
 			array_shift($pathSegments);
 		}
 
-		// when locale is found, set it as current locale in application
+		// when locale is found, set it as current locale in application and skip it
 
 		if(count($pathSegments) && $application->hasLocale($pathSegments[0])) {
 			$application->setCurrentLocale($application->getLocale($pathSegments[0]));
@@ -71,8 +71,11 @@ class Router {
 	 */
 	public static function getRoute($routeId, $scriptName = 'index.php') {
 
-		return self::getRouteFromConfig($scriptName, array($routeId));
-
+		foreach(Application::getInstance()->getConfig()->routes[$scriptName] as $route) {
+			if($route->getRouteId() === $routeId) {
+				return $route;
+			}
+		}
 	}
 
 	/**
@@ -92,30 +95,33 @@ class Router {
 			return array_shift($routes[$scriptName]);
 		}
 
-		// iterate over $pathSegments and try to find route ("normal" pages with controller)
+		$pathToCheck = implode('/', $pathSegments);
 
-		$segs = $pathSegments;
+		// iterate over routes and try to find the "best" match
 
-		while($segment = array_pop($segs)) {
+		foreach($routes[$scriptName] as $match => $route) {
 
-			if(isset($routes[$scriptName]) && in_array($segment, array_keys($routes[$scriptName]))) {
-				return $routes[$scriptName][$segment];
-			}
-		}
+			if(preg_match('~(/|^)' . $match .'(/|$)~', $pathToCheck)) {
 
-		// iterate over $pathSegments, try to find match with possible wildcard routes
+				// if a route has been found previously, choose the more "precise" one
 
-		$segs = $pathSegments;
-
-		foreach($routes[$scriptName] as $id => $route) {
-
-			if($route->hasWildcard()) {
-				for($i = count($segs); $i--;) {
-					if(strpos($id, $segs[i]) === 0) {
-						return $route;
+				if(isset($foundRoute)) {
+					if(strlen($route->getPath()) > strlen($foundRoute->getPath())) {
+						$foundRoute = $route;
 					}
 				}
+
+				else {
+					$foundRoute = $route;
+				}
 			}
+
+		}
+
+		// return "normal" route, if found
+
+		if(isset($foundRoute)) {
+			return $foundRoute;
 		}
 
 		// default route as fallback (if available)
