@@ -70,6 +70,13 @@ class Route {
 	}
 
 	/**
+	 * prevent caching of path parameters
+	 */
+	public function __destruct() {
+		$this->pathParameters = array();
+	}
+
+	/**
 	 * @return string $page
 	 */
 	public function getRouteId() {
