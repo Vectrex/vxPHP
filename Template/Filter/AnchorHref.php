@@ -7,7 +7,8 @@ use vxPHP\Http\Request;
 use vxPHP\Application\Application;
 
 /**
- * Simple filter that replaces both href attribute values and image src values into site-"compatible" URLs
+ * Simple filter that replaces href attribute values beginning with $ into route ids
+ * both simple route ids and paths with route ids are parsed
  *
  * @author Gregor Kofler
  */
@@ -30,12 +31,6 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		$templateString = preg_replace_callback(
 			'~<a(.*?)\s+href=("|\')\$\/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
 			array($this, 'filterHref'),
-			$templateString
-		);
-
-		$templateString = preg_replace_callback(
-			'~<img(.*?)\s+src=("|\')\$([^"\']+)\2(.*?)>~i',
-			array($this, 'filterImgSrc'),
 			$templateString
 		);
 
@@ -181,17 +176,5 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		$uri = implode('/', $uriParts) . $matches[4];
 
 		return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
-	}
-
-	/**
-	 * callback to turn src attribute of image tag to match ressources in IMG_SITE_PATH folder
-	 *
-	 * @param array $matches
-	 * @return string
-	 */
-	private function filterImgSrc($matches) {
-
-		return "<img{$matches[1]} src={$matches[2]}".IMG_SITE_PATH."{$matches[3]}{$matches[2]}{$matches[4]}>";
-
 	}
 }

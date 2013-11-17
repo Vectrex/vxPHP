@@ -13,6 +13,7 @@ use vxPHP\Webpage\NiceURI;
 use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
 use vxPHP\Template\Filter\ImageCache;
 use vxPHP\Template\Filter\AnchorHref;
+use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
 
@@ -20,7 +21,7 @@ use vxPHP\Application\Locale\Locale;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.1 2013-11-01
+ * @version 1.2.2 2013-11-17
  *
  */
 
@@ -157,6 +158,7 @@ class SimpleTemplate {
 		$this->fillBuffer();
 
 		$this->addFilter(new AnchorHref());
+		$this->addFilter(new AssetsPath());
 		$this->addFilter(new ImageCache());
 
 		if(!$this->ignoreLocales) {

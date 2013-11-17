@@ -8,16 +8,17 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Route;
+use vxPHP\Http\Request;
 
 /**
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.1 2013-11-03
+ * @version 0.2.2 2013-11-17
  */
 class Application {
 
-	public static $version = '2.2.0';
+	public static $version = '2.3.0';
 
 			/**
 			 * @var Application
@@ -53,6 +54,20 @@ class Application {
 			 * @var Route
 			 */
 	private $currentRoute;
+
+			/**
+			 * the absolute path to web assets (e.g. "/var/www/mydomain/web")
+			 *
+			 * @var string
+			 */
+	private $relativeAssetsPath;
+
+			/**
+			 * the relative path to web assets below document root (e.g. "web/")
+			 *
+			 * @var string
+			 */
+	private $absoluteAssetsPath;
 
 	/**
 	 * constructor
@@ -93,6 +108,14 @@ class Application {
 			if(isset($this->config->site->locales)) {
 				$this->locales = array_fill_keys($this->config->site->locales, NULL);
 			}
+
+			// set assets path
+
+			if(isset($this->config->paths['assets_path'])) {
+				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $this->config->paths['assets_path']['subdir']);
+				$this->relativeAssetsPath = $this->config->paths['assets_path']['subdir'];
+			}
+
 		}
 
 		catch (\Exception $e) {
@@ -150,6 +173,33 @@ class Application {
 
 		return $this->eventDispatcher;
 
+	}
+
+	/**
+	 * get the currently active route
+	 *
+	 * @return Route
+	 */
+	public function getCurrentRoute() {
+		return $this->currentRoute;
+	}
+
+	/**
+	 * get relative path to web assets
+	 *
+	 * @return string
+	 */
+	public function getRelativeAssetsPath() {
+		return $this->relativeAssetsPath;
+	}
+
+	/**
+	 * get absolute path to web assets
+	 *
+	 * @return string
+	 */
+	public function getAbsoluteAssetsPath() {
+		return $this->absoluteAssetsPath;
 	}
 
 	/**
@@ -228,14 +278,5 @@ class Application {
 	 */
 	public function setCurrentRoute(Route $route) {
 		$this->currentRoute = $route;
-	}
-
-	/**
-	 * get the currently active route
-	 *
-	 * @return Route
-	 */
-	public function getCurrentRoute() {
-		return $this->currentRoute;
 	}
 }
