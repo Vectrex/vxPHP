@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.2 2013-10-05
+ * @version 0.6.3 2013-11-18
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -54,10 +54,12 @@ class MetaFile implements SubjectInterface {
 	 * @return MetaFile
 	 */
 	public static function getInstance($path = NULL, $id = NULL) {
+
 		if(isset($path)) {
+
 			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
 						$path :
-						rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+						Application::getInstance()->getAbsoluteAssetsPath() . $path;
 
 			if(!isset(self::$instancesByPath[$lookup])) {
 				$mf = new self($path);
@@ -65,15 +67,20 @@ class MetaFile implements SubjectInterface {
 				self::$instancesById[$mf->getId()]	= $mf;
 			}
 			return self::$instancesByPath[$lookup];
+
 		}
+
 		else if(isset($id)) {
+
 			if(!isset(self::$instancesById[$id])) {
 				$mf = new self(NULL, $id);
 				self::$instancesById[$id]								= $mf;
 				self::$instancesByPath[$mf->filesystemFile->getPath()]	= $mf;
 			}
 			return self::$instancesById[$id];
+
 		}
+
 		else {
 			throw new MetaFileException("Either file id or path required.");
 		}
@@ -152,7 +159,7 @@ class MetaFile implements SubjectInterface {
 
 			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
 						$path :
-						rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+						Application::getInstance()->getAbsoluteAssetsPath() . $path;
 
 			$lookupPaths[] = $lookup;
 
@@ -160,8 +167,8 @@ class MetaFile implements SubjectInterface {
 				$pathinfo = pathinfo($lookup);
 
 				$toRetrieveByPath[] = $pathinfo['basename'];
-				$toRetrieveByPath[] = $pathinfo['dirname'].DIRECTORY_SEPARATOR;
-				$toRetrieveByPath[] = str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR, '', $pathinfo['dirname']).DIRECTORY_SEPARATOR;
+				$toRetrieveByPath[] = $pathinfo['dirname'] . DIRECTORY_SEPARATOR;
+				$toRetrieveByPath[] = str_replace(Application::getInstance()->getAbsoluteAssetsPath(), '', $pathinfo['dirname']) . DIRECTORY_SEPARATOR;
 			}
 		}
 
@@ -441,7 +448,7 @@ class MetaFile implements SubjectInterface {
 			array(
 				$pathinfo['basename'],
 				$pathinfo['dirname'].DIRECTORY_SEPARATOR,
-				str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR, '', $pathinfo['dirname']).DIRECTORY_SEPARATOR
+				str_replace(Application::getInstance()->getAbsoluteAssetsPath(), '', $pathinfo['dirname']) . DIRECTORY_SEPARATOR
 			)
 		);
 

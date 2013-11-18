@@ -13,7 +13,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.8 2013-10-05
+ * @version 0.5.9 2013-11-18
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -22,6 +22,9 @@ class MetaFolder {
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
 
+			/**
+			 * @var FilesystemFolder
+			 */
 	private $filesystemFolder,
 			$fullPath,
 			$name;
@@ -30,7 +33,15 @@ class MetaFolder {
 			$data,
 			$level, $l, $r,
 			$obscure_files,
+
+			/**
+			 * @var array
+			 */
 			$metaFiles,
+
+			/**
+			 * @var array
+			 */
 			$metaFolders;
 
 	/**
@@ -42,9 +53,9 @@ class MetaFolder {
 	public static function getInstance($path = NULL, $id = NULL) {
 
 		if(isset($path)) {
-			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-			$lookup = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+			$lookup = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : Application::getInstance()->getAbsoluteAssetsPath() . $path;
 
 			if(!isset(self::$instancesByPath[$lookup])) {
 				$mf = new self($path);
@@ -74,19 +85,23 @@ class MetaFolder {
 	 * @param integer $id of metafolder
 	 */
 	private function __construct($path = NULL, $id = NULL, $dbEntry = NULL) {
+
 		if(isset($path)) {
 			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-			$this->fullPath = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$path;
+			$this->fullPath = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : Application::getInstance()->getAbsoluteAssetsPath() . $path;
 			$this->data = $this->getDbEntryByPath($path);
 		}
+
 		else if(isset($id)) {
 			$this->data = $this->getDbEntryById($id);
-			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$this->data['Path'];
+			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['Path'];
 		}
+
 		else if(isset($dbEntry)) {
 			$this->data = $dbEntry;
-			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$this->data['Path'];
+			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['Path'];
 		}
+
 		$this->filesystemFolder = FilesystemFolder::getInstance($this->fullPath);
 
 		$this->id				= $this->data['foldersID'];
@@ -98,10 +113,12 @@ class MetaFolder {
 	}
 
 	private function getDbEntryByPath($path) {
+
 		if(substr($path, 0, 1) == DIRECTORY_SEPARATOR) {
-			$altPath = trim(str_replace($_SERVER['DOCUMENT_ROOT'], '', $path), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$altPath = trim(str_replace(Application::getInstance()->getAbsoluteAssetsPath(), '', $path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		}
+
 		else {
 			$altPath = $this->fullPath;
 		}
@@ -365,8 +382,8 @@ class MetaFolder {
 
 			$db = Application::getInstance()->getDb();
 
-			if(strpos($f->getPath(), $_SERVER['DOCUMENT_ROOT']) === 0) {
-				$metaData['Path'] = trim(substr($f->getPath(), strlen($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			if(strpos($f->getPath(), Application::getInstance()->getAbsoluteAssetsPath()) === 0) {
+				$metaData['Path'] = trim(substr($f->getPath(), strlen(Application::getInstance()->getAbsoluteAssetsPath())), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			}
 			else {
 				$metaData['Path'] = rtrim($f->getPath(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;

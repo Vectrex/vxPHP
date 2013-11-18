@@ -5,6 +5,7 @@ namespace vxPHP\Template\Filter;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Image\ImageModifier;
+use vxPHP\Application\Application;
 
 /**
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
@@ -141,26 +142,21 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		$pi['extension'] = isset($pi['extension']) ? ".{$pi['extension']}" : '';
 
 		$dest =
-			$pi['dirname'] .
-			DIRECTORY_SEPARATOR .
-			FilesystemFolder::CACHE_PATH.DIRECTORY_SEPARATOR .
+			$pi['dirname'] . DIRECTORY_SEPARATOR .
+			FilesystemFolder::CACHE_PATH . DIRECTORY_SEPARATOR .
 			$pi['filename'] .
 			$pi['extension'] .
 			'@' .
 			$actions .
 			$pi['extension'];
 
-		$path =
-			rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) .
-			DIRECTORY_SEPARATOR.ltrim($dest, DIRECTORY_SEPARATOR);
+		$path = Application::getInstance()->getAbsoluteAssetsPath() . ltrim($dest, DIRECTORY_SEPARATOR);
 
 		if(!file_exists($path)) {
 
 			$cachePath =
-				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) .
-				DIRECTORY_SEPARATOR .
-				ltrim($pi['dirname'],DIRECTORY_SEPARATOR) .
-				DIRECTORY_SEPARATOR .
+				Application::getInstance()->getAbsoluteAssetsPath() .
+				ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
 				FilesystemFolder::CACHE_PATH;
 
 			if(!file_exists($cachePath)) {
@@ -174,10 +170,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 			$actions	= explode('|', $actions);
 			$imgEdit	= new ImageModifier(
-				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) .
-				DIRECTORY_SEPARATOR .
-				$pi['dirname'] .
-				DIRECTORY_SEPARATOR .
+				Application::getInstance()->getAbsoluteAssetsPath() .
+				$pi['dirname'] . DIRECTORY_SEPARATOR .
 				$pi['basename']
 			);
 

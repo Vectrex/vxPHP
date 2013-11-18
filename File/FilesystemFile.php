@@ -13,7 +13,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0 2012-11-19
+ * @version 0.4.1 2013-11-18
  *
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -64,7 +64,7 @@ class FilesystemFile {
 				$realPath = $this->fileInfo->getPath();
 
 				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
-					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$realPath;
+					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $realPath;
 				}
 			}
 
@@ -124,15 +124,15 @@ class FilesystemFile {
 	}
 
 	/**
-	 * returns path relative to DOCUMENT_ROOT
+	 * returns path relative to assets path root
+	 *
 	 * @param boolean $force
-	 * @return boolean FALSE when path not within DOCUMENT_ROOT, relative path otherwise
+	 * @return string
 	 */
 	public function getRelativePath($force = FALSE) {
-		if($this->folder->getRelativePath($force) !== FALSE) {
-			return $this->folder->getRelativePath().$this->filename;
-		}
-		return FALSE;
+
+		return $this->folder->getRelativePath() . $this->filename;
+
 	}
 
 	/**

@@ -5,13 +5,14 @@ namespace vxPHP\File;
 use vxPHP\File\Exception\FilesystemFolderException;
 use vxPHP\File\Exception\MetaFolderException;
 use vxPHP\File\FilesystemFile;
+use vxPHP\Application\Application;
 
 /**
  * mapper for filesystem folders
  *
  * @author Gregor Kofler
  *
- * @version 0.3.3 2012-11-08
+ * @version 0.3.4 2013-11-18
  *
  * @todo test delete()
  */
@@ -58,17 +59,20 @@ class FilesystemFolder {
 	}
 
 	/**
-	 * returns path relative to DOCUMENT_ROOT
+	 * returns path relative to assets path root
 	 *
 	 * @param boolean $force
-	 * @return boolean FALSE when path not within DOCUMENT_ROOT, relative path otherwise
+	 * @return string
 	 */
 	public function getRelativePath($force = FALSE) {
+
 		if(!isset($this->relPath) || $force) {
-			$relPath = preg_replace('~^'.preg_quote(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR, '~').'~', '', $this->path, -1, $replaced);
+			$relPath = preg_replace('~^' . preg_quote(Application::getInstance()->getAbsoluteAssetsPath(), '~').'~', '', $this->path, -1, $replaced);
 			$this->relPath = $replaced === 0 ? FALSE : $relPath;
 		}
+
 		return $this->relPath;
+
 	}
 
 	/**

@@ -14,7 +14,7 @@ use vxPHP\Http\Request;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.2 2013-11-17
+ * @version 0.2.3 2013-11-18
  */
 class Application {
 
@@ -114,6 +114,10 @@ class Application {
 			if(isset($this->config->paths['assets_path'])) {
 				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $this->config->paths['assets_path']['subdir']);
 				$this->relativeAssetsPath = $this->config->paths['assets_path']['subdir'];
+			}
+			else {
+				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+				$this->relativeAssetsPath = '';
 			}
 
 		}

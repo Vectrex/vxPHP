@@ -12,7 +12,7 @@ use vxPHP\Database\MysqldbiStatement;
  *
  * @extends mysqli
  *
- * @version 4.11.1 2013-11-01
+ * @version 4.11.2 2013-11-18
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -741,7 +741,7 @@ class Mysqldbi extends \mysqli {
 			return;
 		}
 
-		$logfile	= rtrim($_SERVER['DOCUMENT_ROOT'], '/').(defined('MYSQL_LOG_PATH') ? MYSQL_LOG_PATH : '/').'mysql.log'.($this->logtype == 'xml' ? '.xml' : '');
+		$logfile	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . (defined('MYSQL_LOG_PATH') ? MYSQL_LOG_PATH : DIRECTORY_SEPARATOR) . 'mysql.log' . ($this->logtype == 'xml' ? '.xml' : '');
 
 		/*
 		 * logfile XML style
