@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.4 2013-11-18
+ * @version 0.3.5 2013-11-20
  *
  * @todo test delete()
  */
@@ -68,7 +68,7 @@ class FilesystemFolder {
 
 		if(!isset($this->relPath) || $force) {
 			$relPath = preg_replace('~^' . preg_quote(Application::getInstance()->getAbsoluteAssetsPath(), '~').'~', '', $this->path, -1, $replaced);
-			$this->relPath = $replaced === 0 ? FALSE : $relPath;
+			$this->relPath = $replaced === 0 ? NULL : $relPath;
 		}
 
 		return $this->relPath;
