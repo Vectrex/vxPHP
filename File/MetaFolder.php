@@ -13,7 +13,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.9 2013-11-18
+ * @version 0.5.10 2013-11-21
  *
  * @todo won't know about drive letters on windows systems
  */
@@ -55,7 +55,7 @@ class MetaFolder {
 		if(isset($path)) {
 			$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-			$lookup = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : Application::getInstance()->getAbsoluteAssetsPath() . $path;
+			$lookup = Application::getInstance()->extendToAbsoluteAssetsPath($path);
 
 			if(!isset(self::$instancesByPath[$lookup])) {
 				$mf = new self($path);
@@ -88,7 +88,7 @@ class MetaFolder {
 
 		if(isset($path)) {
 			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-			$this->fullPath = substr($path, 0, 1) == DIRECTORY_SEPARATOR ? $path : Application::getInstance()->getAbsoluteAssetsPath() . $path;
+			$this->fullPath = Application::getInstance()->extendToAbsoluteAssetsPath($path);
 			$this->data = $this->getDbEntryByPath($path);
 		}
 
@@ -114,9 +114,8 @@ class MetaFolder {
 
 	private function getDbEntryByPath($path) {
 
-		if(substr($path, 0, 1) == DIRECTORY_SEPARATOR) {
+		if(strpos($path, Application::getInstance()->getAbsoluteAssetsPath()) === 0) {
 			$altPath = trim(str_replace(Application::getInstance()->getAbsoluteAssetsPath(), '', $path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-
 		}
 
 		else {

@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.3 2013-11-18
+ * @version 0.6.4 2013-11-21
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -57,9 +57,7 @@ class MetaFile implements SubjectInterface {
 
 		if(isset($path)) {
 
-			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
-						$path :
-						Application::getInstance()->getAbsoluteAssetsPath() . $path;
+			$lookup = Application::getInstance()->extendToAbsoluteAssetsPath($path);
 
 			if(!isset(self::$instancesByPath[$lookup])) {
 				$mf = new self($path);
@@ -157,9 +155,7 @@ class MetaFile implements SubjectInterface {
 
 		foreach($paths as $path) {
 
-			$lookup =	substr($path, 0, 1) == DIRECTORY_SEPARATOR ?
-						$path :
-						Application::getInstance()->getAbsoluteAssetsPath() . $path;
+			$lookup = Application::getInstance()->extendToAbsoluteAssetsPath($path);
 
 			$lookupPaths[] = $lookup;
 

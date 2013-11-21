@@ -150,7 +150,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			$actions .
 			$pi['extension'];
 
-		$path = Application::getInstance()->getAbsoluteAssetsPath() . ltrim($dest, DIRECTORY_SEPARATOR);
+		$path = Application::getInstance()->exgetAbsoluteAssetsPath() . ltrim($dest, DIRECTORY_SEPARATOR);
 
 		if(!file_exists($path)) {
 

@@ -14,7 +14,7 @@ use vxPHP\Http\Request;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.3 2013-11-18
+ * @version 0.2.4 2013-11-21
  */
 class Application {
 
@@ -75,7 +75,7 @@ class Application {
 	 * create configuration object, database object
 	 * set up dispatcher and plugins
 	 */
-	private function __construct($configFile = NULL) {
+	private function __construct($configFile) {
 
 		try {
 			if(is_null($configFile)) {
@@ -137,11 +137,12 @@ class Application {
 	/**
 	 * get Application instance
 	 *
+	 * @param string ini file name
 	 * @return \vxPHP\Application\Application
 	 */
-	public static function getInstance() {
+	public static function getInstance($configFile = NULL) {
 		if(is_null(self::$instance)) {
-			self::$instance = new Application();
+			self::$instance = new Application($configFile);
 		}
 		return self::$instance;
 	}
@@ -204,6 +205,25 @@ class Application {
 	 */
 	public function getAbsoluteAssetsPath() {
 		return $this->absoluteAssetsPath;
+	}
+
+	/**
+	 * tries to interpret $path as relative path within assets path
+	 * if $path is an absolute path (starting with "/" or "c:\") it is returned unchanged
+	 * otherwise $path is extended with Application::absoluteAssetsPath to the left
+	 *
+	 * @param string $path
+	 */
+	public function extendToAbsoluteAssetsPath($path) {
+
+		if(strpos($path, DIRECTORY_SEPARATOR) === 0 || strpos($path, ':\\') === 1) {
+			return $path;
+		}
+
+		else {
+			return $this->getAbsoluteAssetsPath() . $path;
+		}
+
 	}
 
 	/**

@@ -13,7 +13,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.1 2013-11-18
+ * @version 0.4.2 2013-11-21
  *
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -318,7 +318,7 @@ class FilesystemFile {
 		$relPath = $this->folder->getPath();
 
 		if(strpos($relPath, $_SERVER['DOCUMENT_ROOT']) === 0) {
-			$relPath = ltrim(substr_replace($relPath, '', 0, strlen($_SERVER['DOCUMENT_ROOT'])), DIRECTORY_SEPARATOR);
+			$relPath = $this->folder->getRelativePath();
 		}
 
 		if(count($db->doPreparedQuery(

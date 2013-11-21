@@ -57,7 +57,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		}
 
 		if(is_null($script)) {
-			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
+			$script = basename(trim(Request::createFromGlobals()->getScriptName(), '/'));
 		}
 
 		if(empty($niceUri)) {
