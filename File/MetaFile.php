@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.4 2013-11-21
+ * @version 0.6.5 2013-11-22
  *
  * @TODO merge rename() with commit()
  * @TODO cleanup getImagesForReference()
@@ -415,7 +415,7 @@ class MetaFile implements SubjectInterface {
 		}
 
 		$this->id				= $this->data['filesID'];
-		$this->filesystemFile	= FilesystemFile::getInstance($this->data['FullPath']);
+		$this->filesystemFile	= FilesystemFile::getInstance(Application::getInstance()->extendToAbsoluteAssetsPath($this->data['FullPath']));
 		$this->metaFolder		= MetaFolder::getInstance($this->filesystemFile->getFolder()->getPath());
 
 		// when record features an obscured_filename, the FilesystemFile is bound to this obscured filename, while the metafile always references the non-obscured filename

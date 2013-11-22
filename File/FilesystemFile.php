@@ -13,7 +13,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.2 2013-11-21
+ * @version 0.4.3 2013-11-22
  *
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -50,30 +50,20 @@ class FilesystemFile {
 	 */
 	private function __construct($path, FilesystemFolder $folder = NULL) {
 
-		if($folder || file_exists($path)) {
-			$this->fileInfo	= new \SplFileInfo($path);
-			$this->filename	= $this->fileInfo->getFilename();
-
-			// workaround for bugs in PHP 5.3.2 on Ubuntu 10.04 (isLink(), getRealPath())
-
-			if(!$this->fileInfo->getPathInfo()->isLink() && version_compare(PHP_VERSION, '5.3.2') <= 0) {
-				$realPath = $this->fileInfo->getPathInfo()->getRealPath();
-			}
-
-			else {
-				$realPath = $this->fileInfo->getPath();
-
-				if(substr($realPath, 0, 1) !== DIRECTORY_SEPARATOR) {
-					$realPath = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $realPath;
-				}
-			}
-
-			$this->folder = $folder ? $folder : FilesystemFolder::getInstance($realPath);
+		if($folder) {
+			$path = $folder->getPath() . $path;
+		}
+		else {
+			$path = realpath($path);
 		}
 
-		else {
+		if(!file_exists($path)) {
 			throw new FilesystemFileException("File $path does not exist!", FilesystemFileException::FILE_DOES_NOT_EXIST);
 		}
+
+		$this->folder	= $folder ? $folder : FilesystemFolder::getInstance(pathinfo($path, PATHINFO_DIRNAME));
+		$this->filename	= pathinfo($path, PATHINFO_BASENAME);
+		$this->fileInfo	= new \SplFileInfo($path);
 	}
 
 	/**
@@ -91,7 +81,7 @@ class FilesystemFile {
 	 */
 	public function getMimetype($force = false) {
 		if(!isset($this->mimetype) || $force) {
-			$this->mimetype = MimeTypeGetter::get($this->folder->getPath().$this->filename);
+			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return $this->mimetype;
 	}
@@ -104,7 +94,7 @@ class FilesystemFile {
 	 */
 	public function isWebImage($force = false) {
 		if(!isset($this->mimetype) || $force) {
-			$this->mimetype = MimeTypeGetter::get($this->folder->getPath().$this->filename);
+			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return preg_match('~^image/(p?jpeg|png|gif)$~', $this->mimetype);
 	}
@@ -120,7 +110,7 @@ class FilesystemFile {
 	 * retrieves physical path of file
 	 */
 	public function getPath() {
-		return $this->folder->getPath().$this->filename;
+		return $this->folder->getPath() . $this->filename;
 	}
 
 	/**
@@ -150,8 +140,8 @@ class FilesystemFile {
 	 */
 	public function rename($to) {
 		$from		= $this->filename;
-		$oldpath	= $this->folder->getPath().$from;
-		$newpath	= $this->folder->getPath().$to;
+		$oldpath	= $this->folder->getPath() . $from;
+		$newpath	= $this->folder->getPath() . $to;
 
 		// name is unchanged, nothing to do
 
@@ -191,8 +181,8 @@ class FilesystemFile {
 			return;
 		}
 
-		$oldpath	= $this->folder->getPath().$this->filename;
-		$newpath	= $destination->getPath().$this->filename;
+		$oldpath	= $this->folder->getPath() . $this->filename;
+		$newpath	= $destination->getPath() . $this->filename;
 
 		if(@rename($oldpath, $newpath)) {
 			$this->clearCacheEntries();
@@ -231,7 +221,7 @@ class FilesystemFile {
 				}
 
 				$renamed = substr_replace($filename, $to, 0, strlen($this->filename));
-				rename($fileinfo->getRealPath(), $fileinfo->getPath().DIRECTORY_SEPARATOR.$renamed);
+				rename($fileinfo->getRealPath(), $fileinfo->getPath() . DIRECTORY_SEPARATOR . $renamed);
 			}
 		}
 	}
@@ -315,17 +305,23 @@ class FilesystemFile {
 
 		$db = Application::getInstance()->getDb();
 
-		$relPath = $this->folder->getPath();
+		if(count($db->doPreparedQuery("
+			SELECT
+				f.filesID
+			FROM
+				files f
+				INNER JOIN folders fo ON fo.foldersID = f.foldersID
+			WHERE
+				f.File = ? AND
+				fo.Path = ?
+			LIMIT 1",
 
-		if(strpos($relPath, $_SERVER['DOCUMENT_ROOT']) === 0) {
-			$relPath = $this->folder->getRelativePath();
-		}
-
-		if(count($db->doPreparedQuery(
-			"SELECT f.filesID FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path IN (?, ?) LIMIT 1",
-			array($this->filename, $relPath, $this->folder->getPath())
+			array(
+				$this->filename,
+				$this->folder->getRelativePath()
+			)
 		))) {
-			throw new FilesystemFileException("Metafile '{$this->filename}' in '{$relPath}' already exists.", FilesystemFileException::METAFILE_ALREADY_EXISTS);
+			throw new FilesystemFileException("Metafile '{$this->filename}' in '{$this->folder->getRelativePath()}' already exists.", FilesystemFileException::METAFILE_ALREADY_EXISTS);
 		}
 
 		$mf = $this->folder->createMetaFolder();

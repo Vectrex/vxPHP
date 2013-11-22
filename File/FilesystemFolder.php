@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.5 2013-11-20
+ * @version 0.3.6 2013-11-22
  *
  * @todo test delete()
  */
@@ -28,7 +28,7 @@ class FilesystemFolder {
 	private $relPath;
 
 	public static function getInstance($path) {
-		$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+		$path = rtrim(realpath($path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
@@ -91,7 +91,7 @@ class FilesystemFolder {
 			$glob .= ".$extension";
 		}
 		foreach(array_filter(glob($glob), 'is_file') as $f) {
-			$result[] = FilesystemFile::getInstance($f);
+			$result[] = FilesystemFile::getInstance($f, $this);
 		}
 
 		return $result;
@@ -103,8 +103,9 @@ class FilesystemFolder {
 	 * @return Array
 	 */
 	public function getFolders() {
+
 		$result = array();
-		$files = glob($this->path.'*', GLOB_ONLYDIR);
+		$files = glob($this->path . '*', GLOB_ONLYDIR);
 
 		if($files) {
 			foreach($files as $f) {
