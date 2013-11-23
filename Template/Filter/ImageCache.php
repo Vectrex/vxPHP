@@ -142,7 +142,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		$pi['extension'] = isset($pi['extension']) ? ".{$pi['extension']}" : '';
 
 		$dest =
-			$pi['dirname'] . DIRECTORY_SEPARATOR .
+			ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
 			FilesystemFolder::CACHE_PATH . DIRECTORY_SEPARATOR .
 			$pi['filename'] .
 			$pi['extension'] .
@@ -150,14 +150,11 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			$actions .
 			$pi['extension'];
 
-		$path = Application::getInstance()->getAbsoluteAssetsPath() . ltrim($dest, DIRECTORY_SEPARATOR);
+		$path = Application::getInstance()->extendToAbsoluteAssetsPath($dest);
 
 		if(!file_exists($path)) {
 
-			$cachePath =
-				Application::getInstance()->getAbsoluteAssetsPath() .
-				ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
-				FilesystemFolder::CACHE_PATH;
+			$cachePath = dirname($path);
 
 			if(!file_exists($cachePath)) {
 				if(!@mkdir($cachePath)) {
@@ -169,11 +166,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			// create cachefile
 
 			$actions	= explode('|', $actions);
-			$imgEdit	= new ImageModifier(
-				Application::getInstance()->getAbsoluteAssetsPath() .
-				$pi['dirname'] . DIRECTORY_SEPARATOR .
-				$pi['basename']
-			);
+			$imgEdit	= new ImageModifier(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $pi['basename']));
 
 			foreach($actions as $a) {
 				$params = preg_split('~\s+~', $a);
@@ -191,13 +184,13 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		// @TODO this _assumes_ that $matches[3] occurs only once
 
 		if(count($matches) === 10 || count($matches) === 7) {
-			return str_replace($src, $dest, $matches[0]);
+			return str_replace($src, '/' . $dest, $matches[0]);
 		}
 		if(count($matches) === 6) {
-			return "<img{$matches[1]} src={$matches[2]}$dest{$matches[2]}{$matches[5]}>";
+			return "<img{$matches[1]} src={$matches[2]}/$dest{$matches[2]}{$matches[5]}>";
 		}
 		else {
-			return "url({$matches[1]}$dest{$matches[1]})";
+			return "url({$matches[1]}/$dest{$matches[1]})";
 		}
 
 	}
