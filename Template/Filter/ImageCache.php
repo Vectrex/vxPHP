@@ -183,14 +183,22 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		// @TODO this _assumes_ that $matches[3] occurs only once
 
+		$relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
+
 		if(count($matches) === 10 || count($matches) === 7) {
-			return str_replace($src, '/' . $dest, $matches[0]);
+			return str_replace($src, '/' . $relAssetsPath . $dest, $matches[0]);
 		}
 		if(count($matches) === 6) {
-			return "<img{$matches[1]} src={$matches[2]}/$dest{$matches[2]}{$matches[5]}>";
+			return
+				'<img' .
+				$matches[1] .
+				' src=' .
+				$matches[2] . '/' . $relAssetsPath . $dest . $matches[2] .
+				$matches[5] .
+				'>';
 		}
 		else {
-			return "url({$matches[1]}/$dest{$matches[1]})";
+			return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
 		}
 
 	}

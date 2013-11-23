@@ -35,7 +35,16 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			$templateString
 		);
 
-		// change path of href and src attributes when asset_path and use_nice_uris is set in the configuration
+		// change path of src attributes when asset_path is set and use_nice_uris is not set in the configuration
+		// only relative links (without protocol) are matched
+
+		$templateString = preg_replace_callback(
+			'~<(.*?)\s+src=("|\')(?![a-z]+://).*?([^"\']+)\2(.*?)>~i',
+			function($matches) use ($assetPath) {
+				return '<' . $matches[1] . ' src='. $matches[2] . $assetPath . rtrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
+			},
+			$templateString
+		);
 
 		//@todo
 	}
