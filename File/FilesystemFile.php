@@ -348,19 +348,20 @@ class FilesystemFile {
 	 */
 	public static function getFilesystemFilesInFolder(FilesystemFolder $folder) {
 
-		$path = $folder->getPath();
 		$files = array();
 
-		$glob = glob($path.'*', GLOB_NOSORT);
+		$glob = glob($folder->getPath() . '*', GLOB_NOSORT);
 
 		if($glob !== FALSE) {
 
 			foreach($glob as $f) {
 				if(!is_dir($f)) {
-					if(!isset(self::$instances[$path.$f])) {
-						self::$instances[$path.$f] = new self($path.$f, $folder);
+
+					if(!isset(self::$instances[$f])) {
+						self::$instances[$f] = new self(basename($f), $folder);
 					}
-					$files[] = self::$instances[$path.$f];
+
+					$files[] = self::$instances[$f];
 				}
 			}
 		}
