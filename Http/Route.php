@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.1 2013-11-03
+ * @version 0.5.2 2013-11-23
  *
  */
 class Route {
@@ -174,9 +174,11 @@ class Route {
 
 		if(!$this->url) {
 
+			$application = Application::getInstance();
+
 			$urlSegments = array();
 
-			if(Application::getInstance()->getConfig()->site->use_nice_uris) {
+			if($application->getConfig()->site->use_nice_uris) {
 
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
 					$urlSegments[] = $scriptName;
@@ -184,8 +186,10 @@ class Route {
 			}
 
 			else {
+				$urlSegments[] = trim($application->getRelativeAssetsPath(), '/');
 				$urlSegments[] = $this->scriptName;
 			}
+
 			$urlSegments[] = $this->routeId;
 
 			$this->url = implode('/', $urlSegments);
@@ -273,13 +277,14 @@ class Route {
 	 */
 	public function redirect($queryParams = array(),  $statusCode = 303) {
 
-		$request = Request::createFromGlobals();
+		$request		= Request::createFromGlobals();
+		$application	= Application::getInstance();
 
 		$urlSegments = array(
 			$request->getSchemeAndHttpHost()
 		);
 
-		if(Application::getInstance()->getConfig()->site->use_nice_uris) {
+		if($application->getConfig()->site->use_nice_uris) {
 			if(($scriptName = basename($request->getScriptName(), '.php')) !== 'index') {
 				$urlSegments[] = $scriptName;
 			}

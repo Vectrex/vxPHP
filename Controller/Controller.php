@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.6 2013-11-03
+ * @version 0.1.8 2013-11-23
  *
  */
 abstract class Controller {
@@ -134,6 +134,8 @@ abstract class Controller {
 	 */
 	protected function redirect($path = NULL, $document = NULL, $queryParams = array(), $statusCode = 303) {
 
+		$application = Application::getInstance();
+
 		if(is_null($path)) {
 			$this->route->redirect($queryParams, $statusCode);
 		}
@@ -146,13 +148,13 @@ abstract class Controller {
 				$this->request->getSchemeAndHttpHost()
 		);
 
-		if(Application::getInstance()->getConfig()->site->use_nice_uris == 1) {
+		if($application->getConfig()->site->use_nice_uris == 1) {
 			if($document !== 'index.php') {
 				$urlSegments[] = basename($document, '.php');
 			}
 		}
 		else {
-			$urlSegments[] = $document;
+			$urlSegments[] = ltrim($application->getRelativeAssetsPath(), '/') . $document;
 		}
 
 		$urlSegments[] = trim($path, '/');

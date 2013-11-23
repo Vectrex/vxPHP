@@ -108,25 +108,27 @@ class MenuEntry implements MenuEntryInterface {
 
 	public function render() {
 
+		$application = Application::getInstance();
+
 		// check display attribute
 
 		if(isset($this->attributes->display) && $this->attributes->display == 'none') {
 			return FALSE;
 		}
 
-		if(Application::getInstance()->getConfig()->site->use_nice_uris == 1) {
+		if($application->getConfig()->site->use_nice_uris == 1) {
 
 			if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
-				$script = '';
+				$script = '/';
 			}
 
 			else {
-				$script .= '/';
+				$script = '/'. $script . '/';
 			}
 		}
 
 		else {
-			$script = $this->menu->getScript() . '/';
+			$script = $application->getRelativeAssetsPath() . $this->menu->getScript() . '/';
 		}
 
 		if(is_null($this->href)) {
@@ -140,10 +142,7 @@ class MenuEntry implements MenuEntryInterface {
 					$pathSegments[] = $e->getPage();
 				} while ($e = $e->menu->getParentEntry());
 
-				$this->href =
-					'/' .
-					$script .
-					implode('/', array_reverse($pathSegments));
+				$this->href = $script . implode('/', array_reverse($pathSegments));
 
 			}
 

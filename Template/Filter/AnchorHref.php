@@ -51,6 +51,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		static $niceUri;
 		static $menuEntryLookup = array();
 		static $config;
+		static $assetsPath;
 
 		if(is_null($config)) {
 			$config = Application::getInstance()->getConfig();
@@ -119,7 +120,11 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 				}
 			}
 			else {
-				$uriParts[] = $script;
+				if(is_null($assetsPath)) {
+					$assetsPath = Application::getInstance()->getRelativeAssetsPath();
+				}
+
+				$uriParts[] = ltrim($assetsPath, '/') . $script;
 			}
 			if(count($pathSegments)) {
 				$uriParts[] = implode('/', array_reverse($pathSegments));
