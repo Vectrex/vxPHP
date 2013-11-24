@@ -21,32 +21,56 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 */
 	public function apply(&$templateString) {
 
-		if(!$assetPath = Application::getInstance()->getRelativeAssetsPath()) {
-			$assetPath = '/';
+		$application = Application::getInstance();
+
+		if(!$assetsPath = $application->getRelativeAssetsPath()) {
+			$assetsPath = '/';
 		}
 
 		// extend <img src="$..." ...> with path to site images
 
 		$templateString = preg_replace_callback(
 			'~<img(.*?)\s+src=("|\')\$([^"\']+)\2(.*?)>~i',
-			function($matches) use ($assetPath) {
-				return '<img' . $matches[1] . ' src='. $matches[2] . $assetPath . 'img/site/' . $matches[3] . $matches[2] . $matches[4] . '>';
+			function($matches) use ($assetsPath) {
+				return '<img' . $matches[1] . ' src='. $matches[2] . $assetsPath . 'img/site/' . $matches[3] . $matches[2] . $matches[4] . '>';
 			},
 			$templateString
 		);
 
-		// change path of src attributes when asset_path is set and use_nice_uris is not set in the configuration
+		// change path of src and href attributes when asset_path is set and use_nice_uris is not set in the configuration
 		// only relative links (without protocol) are matched
+		// when nice uris are used URL rewriting does the job, when no assets path is set, everything is in place already
 
-		$templateString = preg_replace_callback(
-			'~<(.*?)\s+src=("|\')(?![a-z]+://).*?([^"\']+)\2(.*?)>~i',
-			function($matches) use ($assetPath) {
-				return '<' . $matches[1] . ' src='. $matches[2] . $assetPath . rtrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
-			},
-			$templateString
-		);
+		if($application->getRelativeAssetsPath() && !$application->getConfig()->site->use_nice_uris) {
 
-		//@todo
+			// src attributes
+
+			$templateString = preg_replace_callback(
+				'~<(.*?)\s+src=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
+				function($matches) use ($assetsPath) {
+					return '<' . $matches[1] . ' src='. $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
+				},
+				$templateString
+			);
+
+			// href attributes
+
+			$templateString = preg_replace_callback(
+				'~<(.*?)\s+href=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
+				function($matches) use ($assetsPath) {
+
+					// check whether this URL has already the assets path prefixed and contains a script - in this case don't change the URL
+
+					if(preg_match('~^' . $assetsPath . '\w+\.php~', $matches[3])) {
+						return $matches[0];
+					}
+
+					return '<' . $matches[1] . ' href='. $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
+				},
+				$templateString
+			);
+
+		}
 	}
 
 }

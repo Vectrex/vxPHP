@@ -21,7 +21,7 @@ use vxPHP\Application\Locale\Locale;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.2 2013-11-17
+ * @version 1.2.3 2013-11-24
  *
  */
 
@@ -158,8 +158,8 @@ class SimpleTemplate {
 		$this->fillBuffer();
 
 		$this->addFilter(new AnchorHref());
-		$this->addFilter(new AssetsPath());
 		$this->addFilter(new ImageCache());
+		$this->addFilter(new AssetsPath());
 
 		if(!$this->ignoreLocales) {
 			$this->addFilter(new LocalizedPhrases());

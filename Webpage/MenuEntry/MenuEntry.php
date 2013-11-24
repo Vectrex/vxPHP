@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.3.3 2013-10-05
+ * @version 0.3.4 2013-10-24
  */
 class MenuEntry implements MenuEntryInterface {
 	protected static	$count = 1;
@@ -128,7 +128,7 @@ class MenuEntry implements MenuEntryInterface {
 		}
 
 		else {
-			$script = $application->getRelativeAssetsPath() . $this->menu->getScript() . '/';
+			$script = $this->menu->getScript() . '/';
 		}
 
 		if(is_null($this->href)) {

@@ -7,7 +7,7 @@ use vxPHP\Application\Application;
  * provides static low level methods to convert nice uris to plain uris and vice-versa
  *
  * @author Gregor Kofler
- * @version 0.9.1 2013-10-05
+ * @version 0.9.2 2013-11-24
  *
  */
 class NiceURI {
@@ -21,8 +21,7 @@ class NiceURI {
 	 * @var array
 	 */
 	private static $knownBasenames = array(
-		'admin',
-		'embedded'
+		'admin'
 	);
 
 	/**
@@ -71,12 +70,10 @@ class NiceURI {
 		$uri = 'index.php';
 
 		if(in_array($parts[0], self::$knownBasenames)) {
-			$uri = $parts[0] . '.php';
+			$uri = Application::getInstance()->getRelativeAssetsPath() . array_shift($parts) . '.php';
 		}
 
-		array_shift($parts);
-
-		return $uri .= implode('/', $parts);
+		return Application::getInstance()->getRelativeAssetsPath() . $uri . implode('/', $parts);
 
 	}
 
@@ -105,6 +102,7 @@ class NiceURI {
 		else if(!$isPlain && !Application::getInstance()->getConfig()->site->use_nice_uris) {
 			$uri = self::toPlain($uri);
 		}
+
 		return $uri;
 	}
 }
