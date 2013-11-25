@@ -14,7 +14,7 @@ use vxPHP\Http\Request;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.4 2013-11-21
+ * @version 0.2.5 2013-11-25
  */
 class Application {
 
@@ -221,7 +221,17 @@ class Application {
 		}
 
 		else {
-			return $this->getAbsoluteAssetsPath() . $path;
+
+			$pathSegments	= explode(DIRECTORY_SEPARATOR, $path);
+
+			// eliminate doubling of assets path
+			// a subdir with the name of the assets path as a child of the assets path will *not* work
+
+			if($pathSegments[0] === trim($this->getRelativeAssetsPath(), '/')) {
+				array_shift($pathSegments);
+			}
+
+			return $this->getAbsoluteAssetsPath() . implode(DIRECTORY_SEPARATOR, $pathSegments);
 		}
 
 	}
