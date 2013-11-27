@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.2 2013-11-23
+ * @version 0.5.3 2013-11-27
  *
  */
 class Route {
@@ -186,13 +186,17 @@ class Route {
 			}
 
 			else {
-				$urlSegments[] = trim($application->getRelativeAssetsPath(), '/');
+
+				if($application->getRelativeAssetsPath()) {
+					$urlSegments[] = trim($application->getRelativeAssetsPath(), '/');
+				}
+
 				$urlSegments[] = $this->scriptName;
 			}
 
 			$urlSegments[] = $this->routeId;
 
-			$this->url = implode('/', $urlSegments);
+			$this->url = '/' . implode('/', $urlSegments);
 		}
 
 		return $this->url;
