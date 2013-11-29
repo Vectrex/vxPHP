@@ -21,7 +21,7 @@ use vxPHP\Application\Locale\Locale;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.3 2013-11-24
+ * @version 1.2.4 2013-11-29
  *
  */
 
@@ -307,7 +307,7 @@ class SimpleTemplate {
 		}
 
 		else {
-			if(!$ext && Application::getInstance()->getConfig()->site->use_nice_uris) {
+			if(!$ext && Application::getInstance()->hasNiceUris()) {
 				$link = NiceURI::toNice($link);
 			}
 			else if($ext && $counted) {

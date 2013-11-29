@@ -547,7 +547,8 @@ class MetaFile implements SubjectInterface {
 	}
 
 	/**
-	 * returns path relative to DOCUMENT_ROOT
+	 * returns path relative to assets path root
+	 * NULL if file is outside assets path
 	 *
 	 * @param boolean $force
 	 * @return string

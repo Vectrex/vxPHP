@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.1 2013-11-03
+ * @version 0.3.2 2013-11-29
  *
  */
 class Router {
@@ -36,7 +36,7 @@ class Router {
 
 		// skip if pathinfo matches script name
 
-		if(count($pathSegments) && $application->getConfig()->site->use_nice_uris && basename($script, '.php') === $pathSegments[0]) {
+		if(count($pathSegments) && $application->hasNiceUris() && basename($script, '.php') === $pathSegments[0]) {
 			array_shift($pathSegments);
 		}
 

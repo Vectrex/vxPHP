@@ -116,7 +116,7 @@ class MenuEntry implements MenuEntryInterface {
 			return FALSE;
 		}
 
-		if($application->getConfig()->site->use_nice_uris == 1) {
+		if($application->hasNiceUris()) {
 
 			if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
 				$script = '/';

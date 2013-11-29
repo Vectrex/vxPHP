@@ -22,7 +22,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.8, 2013-11-03
+ * @version 0.2.9, 2013-11-29
  *
  * @throws MenuGeneratorException
  */
@@ -48,6 +48,11 @@ class MenuGenerator {
 	 * @var Config
 	 */
 	protected $config;
+
+	/**
+	 * @var boolean
+	 */
+	protected $useNiceUris;
 
 	/**
 	 * @var Request
@@ -103,7 +108,8 @@ class MenuGenerator {
 
 		$application = Application::getInstance();
 
-		$this->config = $application->getConfig();
+		$this->config		= $application->getConfig();
+		$this->useNiceUris	= $application->hasNiceUris();
 
 		if(empty($id) && !is_null($this->config->menus)) {
 			throw new MenuGeneratorException();
@@ -194,7 +200,7 @@ class MenuGenerator {
 
 			// skip script name
 
-			if($this->config->site->use_nice_uris && basename($this->request->getScriptName()) != 'index.php') {
+			if($this->useNiceUris && basename($this->request->getScriptName()) != 'index.php') {
 				array_shift($this->pathSegments);
 			}
 

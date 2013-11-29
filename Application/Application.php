@@ -69,6 +69,13 @@ class Application {
 			 */
 	private $absoluteAssetsPath;
 
+			/**
+			 * indicates the use of webserver rewriting for beautified URLs
+			 *
+			 * @var boolean
+			 */
+	private $useNiceUris;
+
 	/**
 	 * constructor
 	 *
@@ -119,6 +126,8 @@ class Application {
 				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 				$this->relativeAssetsPath = '';
 			}
+
+			$this->useNiceUris = !!$this->config->site->use_nice_uris;
 
 		}
 
@@ -196,6 +205,15 @@ class Application {
 	 */
 	public function getRelativeAssetsPath() {
 		return $this->relativeAssetsPath;
+	}
+
+	/**
+	 * retrieve setting for nice uris
+	 *
+	 * @return boolean
+	 */
+	public function hasNiceUris() {
+		return $this->useNiceUris;
 	}
 
 	/**

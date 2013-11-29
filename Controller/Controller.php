@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.8 2013-11-23
+ * @version 0.1.9 2013-11-29
  *
  */
 abstract class Controller {
@@ -84,7 +84,7 @@ abstract class Controller {
 
 		// skip script name
 
-		if($this->config->site->use_nice_uris && $this->currentDocument != 'index.php') {
+		if($application->hasNiceUris() && $this->currentDocument != 'index.php') {
 			array_shift($this->pathSegments);
 		}
 
@@ -148,7 +148,7 @@ abstract class Controller {
 				$this->request->getSchemeAndHttpHost()
 		);
 
-		if($application->getConfig()->site->use_nice_uris == 1) {
+		if($application->hasNiceUris()) {
 			if($document !== 'index.php') {
 				$urlSegments[] = basename($document, '.php');
 			}

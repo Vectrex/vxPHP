@@ -41,7 +41,7 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		// only relative links (without protocol) are matched
 		// when nice uris are used URL rewriting does the job, when no assets path is set, everything is in place already
 
-		if($application->getRelativeAssetsPath() && !$application->getConfig()->site->use_nice_uris) {
+		if($application->getRelativeAssetsPath() && !$application->hasNiceUris()) {
 
 			// src attributes
 

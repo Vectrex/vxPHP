@@ -13,7 +13,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.3 2013-11-22
+ * @version 0.4.4 2013-11-29
  *
  * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
  */
@@ -121,7 +121,9 @@ class FilesystemFile {
 	 */
 	public function getRelativePath($force = FALSE) {
 
-		return $this->folder->getRelativePath() . $this->filename;
+		if(!is_null($this->folder->getRelativePath())) {
+			return $this->folder->getRelativePath() . $this->filename;
+		}
 
 	}
 

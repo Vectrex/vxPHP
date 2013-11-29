@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.3 2013-11-27
+ * @version 0.5.4 2013-11-29
  *
  */
 class Route {
@@ -178,7 +178,7 @@ class Route {
 
 			$urlSegments = array();
 
-			if($application->getConfig()->site->use_nice_uris) {
+			if($application->hasNiceUris()) {
 
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
 					$urlSegments[] = $scriptName;
@@ -288,7 +288,7 @@ class Route {
 			$request->getSchemeAndHttpHost()
 		);
 
-		if($application->getConfig()->site->use_nice_uris) {
+		if($application->hasNiceUris()) {
 			if(($scriptName = basename($request->getScriptName(), '.php')) !== 'index') {
 				$urlSegments[] = $scriptName;
 			}

@@ -54,15 +54,14 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		static $assetsPath;
 
 		if(is_null($config)) {
-			$config = Application::getInstance()->getConfig();
+			$application = Application::getInstance();
+
+			$config		= $application->getConfig();
+			$niceUri	= $application->hasNiceUris();
 		}
 
 		if(is_null($script)) {
 			$script = basename(trim(Request::createFromGlobals()->getScriptName(), '/'));
-		}
-
-		if(empty($niceUri)) {
-			$niceUri = $config->site->use_nice_uris == 1;
 		}
 
 		$matchSegments = explode('/', $matches[3]);

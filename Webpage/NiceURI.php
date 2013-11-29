@@ -96,10 +96,10 @@ class NiceURI {
 	public static function autoConvert($uri) {
 		$isPlain = self::isPlainURI($uri);
 
-		if($isPlain && Application::getInstance()->getConfig()->site->use_nice_uris) {
+		if($isPlain && Application::getInstance()->hasNiceUris()) {
 			$uri = self::toNice($uri);
 		}
-		else if(!$isPlain && !Application::getInstance()->getConfig()->site->use_nice_uris) {
+		else if(!$isPlain && !Application::getInstance()->hasNiceUris()) {
 			$uri = self::toPlain($uri);
 		}
 
