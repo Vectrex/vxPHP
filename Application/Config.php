@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.4 2013-12-03
+ * @version 0.9.6 2013-12-03
  *
  * @todo refresh() method
  */
@@ -28,8 +28,7 @@ class Config {
 			$binaries,
 			$routes,
 			$menus,
-			$server,
-			$controllerPath;
+			$server;
 
 			/**
 			 * @var Config
@@ -41,7 +40,8 @@ class Config {
 			$xmlFileTS,
 			$sections = array(),
 			$config,
-			$plugins = array();
+			$plugins = array(),
+			$controllerPath;
 
 	/**
 	 * create config instance
@@ -64,7 +64,18 @@ class Config {
 
 		$this->parseConfig();
 		$this->getServerConfig();
-		$this->setControllerPath();
+
+		// are we in an web environment? Then we assume that controllers are in {web_root}/src/Controller
+
+		if(!empty($_SERVER)) {
+
+			$this->setControllerPath(
+				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
+				'src' . DIRECTORY_SEPARATOR .
+				'controller'
+			);
+
+		}
 
 		unset($this->config);
 	}
@@ -90,15 +101,23 @@ class Config {
 	 * set path to controller classes
 	 * Route reads this path
 	 *
-	 * @todo remove hard coded path configuration
-	 * @todo handle non-web environment
+	 * @param string $controllerPath
 	 */
-	private function setControllerPath() {
+	public function setControllerPath($controllerPath) {
 
-		$this->controllerPath =
-			rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
-			'src' . DIRECTORY_SEPARATOR .
-			'controller' . DIRECTORY_SEPARATOR;
+		$this->controllerPath = rtrim($controllerPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+	}
+
+	/**
+	 * get path to controller classes
+	 *
+	 * @return string
+	 */
+	public function getControllerPath() {
+
+		return $this->controllerPath;
+
 	}
 
 	/**
