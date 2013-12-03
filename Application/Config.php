@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.3 2013-11-03
+ * @version 0.9.4 2013-12-03
  *
  * @todo refresh() method
  */
@@ -114,7 +114,7 @@ class Config {
 
 			// determine server context
 
-			$this->isLocalhost = !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
+			$this->isLocalhost = !isset($_SERVER) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
 			// allow parsing of specific sections
 
