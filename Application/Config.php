@@ -114,7 +114,7 @@ class Config {
 
 			// determine server context
 
-			$this->isLocalhost = !isset($_SERVER) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
+			$this->isLocalhost = empty($_SERVER) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
 			// allow parsing of specific sections
 
