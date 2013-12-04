@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.6 2013-12-03
+ * @version 0.9.8 2013-12-04
  *
  * @todo refresh() method
  */
@@ -31,9 +31,11 @@ class Config {
 			$server;
 
 			/**
-			 * @var Config
+			 * array of Config instances
+			 *
+			 * @var array
 			 */
-	private static $instance;
+	private static $instances;
 
 	private	$isLocalhost,
 			$xmlFile,
@@ -65,7 +67,7 @@ class Config {
 		$this->parseConfig();
 		$this->getServerConfig();
 
-		// are we in an web environment? Then we assume that controllers are in {web_root}/src/Controller
+		// are we in an web environment? Then we assume that controllers are in {web_root}/src/controller
 
 		if(!empty($_SERVER)) {
 
@@ -82,19 +84,32 @@ class Config {
 
 	private function __clone() {}
 
+	/**
+	 * get Config instance
+	 * singletons are created for a specific config file with same sections
+	 *
+	 * @param unknown $xmlFile
+	 * @param array $sections
+	 * @return \vxPHP\Application\Config
+	 */
 	public static function getInstance($xmlFile, array $sections = array()) {
+
+		$hashKey = $xmlFile . '_' . implode('#', $sections);
+
 		if(
-			isset($_SESSION['CONFIG']->xmlFileTS) &&
-			$_SESSION['CONFIG']->xmlFileTS == filemtime($xmlFile)
+			isset($_SESSION['_config'][$hashKey]->xmlFileTS) &&
+			$_SESSION['_config'][$hashKey]->xmlFileTS == filemtime($xmlFile) &&
+			!isset(self::$instances[$hashKey])
 		) {
-			self::$instance = $_SESSION['CONFIG'];
-			return self::$instance;
+			self::$instances[$hashKey] = $_SESSION['_config'][$hashKey];
 		}
-		if(is_null(self::$instance)) {
-			self::$instance = new Config($xmlFile, $sections);
+
+		if(is_null(self::$instances[$hashKey])) {
+			self::$instances[$hashKey] = new self($xmlFile, $sections);
 		}
-		$_SESSION['CONFIG'] = self::$instance;
-		return self::$instance;
+
+		$_SESSION['_config'][$hashKey] = self::$instances[$hashKey];
+		return self::$instances[$hashKey];
 	}
 
 	/**
@@ -131,9 +146,9 @@ class Config {
 
 		try {
 
-			// determine server context
+			// determine server context, missing SERVER_ADDR assumes localhost/CLI
 
-			$this->isLocalhost = empty($_SERVER) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
+			$this->isLocalhost = !isset($_SERVER['SERVER_ADDR']) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
 			// allow parsing of specific sections
 
