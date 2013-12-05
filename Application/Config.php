@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.8 2013-12-04
+ * @version 0.9.9 2013-12-05
  *
  * @todo refresh() method
  */
@@ -42,8 +42,7 @@ class Config {
 			$xmlFileTS,
 			$sections = array(),
 			$config,
-			$plugins = array(),
-			$controllerPath;
+			$plugins = array();
 
 	/**
 	 * create config instance
@@ -66,18 +65,6 @@ class Config {
 
 		$this->parseConfig();
 		$this->getServerConfig();
-
-		// are we in an web environment? Then we assume that controllers are in {web_root}/src/controller
-
-		if(!empty($_SERVER)) {
-
-			$this->setControllerPath(
-				rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
-				'src' . DIRECTORY_SEPARATOR .
-				'controller'
-			);
-
-		}
 
 		unset($this->config);
 	}
@@ -110,29 +97,6 @@ class Config {
 
 		$_SESSION['_config'][$hashKey] = self::$instances[$hashKey];
 		return self::$instances[$hashKey];
-	}
-
-	/**
-	 * set path to controller classes
-	 * Route reads this path
-	 *
-	 * @param string $controllerPath
-	 */
-	public function setControllerPath($controllerPath) {
-
-		$this->controllerPath = rtrim($controllerPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-
-	}
-
-	/**
-	 * get path to controller classes
-	 *
-	 * @return string
-	 */
-	public function getControllerPath() {
-
-		return $this->controllerPath;
-
 	}
 
 	/**

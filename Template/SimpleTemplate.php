@@ -21,7 +21,7 @@ use vxPHP\Application\Locale\Locale;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.4 2013-11-29
+ * @version 1.2.5 2013-12-05
  *
  */
 
@@ -46,12 +46,13 @@ class SimpleTemplate {
 	 */
 	public function __construct($file) {
 
+		$application	= Application::getInstance();
 		$request		= Request::createFromGlobals();
-		$serverBag		= $request->server;
-		$this->locale	= Application::getInstance()->getCurrentLocale();
+
+		$this->locale	= $application->getCurrentLocale();
 		$this->file		= $file;
 
-		$this->path		= realpath($serverBag->get('DOCUMENT_ROOT')) . (defined('TPL_PATH') ? TPL_PATH : '');
+		$this->path		= $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
 		if (!file_exists($this->path . $this->file)) {
 			throw new SimpleTemplateException("Template file '{$this->path}{$this->file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
@@ -288,7 +289,7 @@ class SimpleTemplate {
 	 * @param string miscstr additional string with attributes or handlers
 	 * @param string $counted add code for counting clicks on link
 	 */
-	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE, $counted = FALSE) {
+	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE) {
 
 		if (empty($link)) {
 			return FALSE;
@@ -310,9 +311,7 @@ class SimpleTemplate {
 			if(!$ext && Application::getInstance()->hasNiceUris()) {
 				$link = NiceURI::toNice($link);
 			}
-			else if($ext && $counted) {
-				$link = 'countclick.php?uri='.urlencode($link).(isset($_SERVER['REQUEST_URI']) ? '&referer='.urlencode($_SERVER['REQUEST_URI']) : '');
-			}
+
 			$link = htmlspecialchars($link);
 		}
 
@@ -355,16 +354,5 @@ class SimpleTemplate {
 		if(strlen($src) <= $len) { return $text; }
 		$ret = substr($src,0,$len+1);
 		return substr($ret,0,strrpos($ret,' ')).' &hellip;';
-	}
-
-	private function getPath() {
-		$path = rtrim($_SERVER['DOCUMENT_ROOT'], '/');
-
-		if(defined('TPL_PATH')) {
-			$path .=  TPL_PATH;
-		}
-		$subpath = basename(Application::getInstance()->getConfig()->getDocument(), '.php');
-		$path .= file_exists($path.$subpath) ? "$subpath/" : '';
-		return $path;
 	}
 }

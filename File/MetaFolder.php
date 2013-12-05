@@ -202,7 +202,7 @@ class MetaFolder {
 	}
 
 	/**
-	 * returns path relative to DOCUMENT_ROOT
+	 * returns path relative to root path of application
 	 * @param boolean $force
 	 *
 	 * @return string

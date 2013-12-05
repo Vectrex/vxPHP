@@ -1,7 +1,7 @@
 <?php
 /**
  * PDF Extract
- * @version 0.1.4, 2013-10-05
+ * @version 0.1.5, 2013-12-05
  * @author Gregor Kofler
  */
 
@@ -67,16 +67,13 @@ class PdfExtract extends Plugin {
 			throw new PdfExtractException("Executable {$this->convertCommand} not found!");
 		}
 
-		$tmpDir	=	defined('TMP_PATH') ?
-					(rtrim(TMP_PATH, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR) :
-					rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR;
+		$this->tmpDir = Application::getInstance()->getRootPath() . (defined('TMP_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TMP_PATH, '/')) : 'tmp');
 
-		if(!is_dir($tmpDir)) {
-			if(!mkdir($tmpDir, 0777)) {
+		if(!is_dir($this->tmpDir)) {
+			if(!mkdir($this->tmpDir, 0777)) {
 				throw new PdfExtractException("TMP_PATH not defined.");
 			}
 		}
-		$this->tmpDir = $tmpDir;
 
 		/*
 		try {

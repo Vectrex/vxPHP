@@ -18,7 +18,8 @@ use vxPHP\Template\Filter\LocalizedPhrases;
 
 /**
  * Template Engine for Forms
- * @version 1.2.0 2013-10-28
+ *
+ * @version 1.2.1 2013-12-05
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -785,15 +786,10 @@ class HtmlForm {
 			return TRUE;
 		}
 
-		$path = '';
+		$path = Application::getInstance()->getRootPath() . (defined('FORMTEMPLATES_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(FORMTEMPLATES_PATH, '/')) : '');
 
-		if(!file_exists($path.$this->tplFile)) {
-
-			$path = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR).(defined('FORMTEMPLATES_PATH') ? FORMTEMPLATES_PATH : '');
-
-			if(!file_exists($path.$this->tplFile)) {
-				throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.", HtmlFormException::TEMPLATE_FILE_NOT_FOUND);
-			}
+		if(!file_exists($path . $this->tplFile)) {
+			throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.", HtmlFormException::TEMPLATE_FILE_NOT_FOUND);
 		}
 
 		$this->template = @file_get_contents($path.$this->tplFile);

@@ -14,11 +14,11 @@ use vxPHP\Http\Request;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.5 2013-11-25
+ * @version 0.2.6 2013-12-05
  */
 class Application {
 
-	public static $version = '2.3.0';
+	public static $version = '2.4.0';
 
 			/**
 			 * @var Application
@@ -56,18 +56,32 @@ class Application {
 	private $currentRoute;
 
 			/**
-			 * the absolute path to web assets (e.g. "/var/www/mydomain/web")
+			 * the absolute path to the top level directory of the application (e.g. "/var/www/mydomain/")
+			 *
+			 * @var string
+			 */
+	private $rootPath;
+
+			/**
+			 * the absolute path to web assets (e.g. "/var/www/mydomain/web/")
+			 *
+			 * @var string
+			 */
+	private $absoluteAssetsPath;
+
+			/**
+			 * the relative path to web assets below the root path (e.g. "web/")
 			 *
 			 * @var string
 			 */
 	private $relativeAssetsPath;
 
 			/**
-			 * the relative path to web assets below document root (e.g. "web/")
+			 * path to controllers
 			 *
 			 * @var string
 			 */
-	private $absoluteAssetsPath;
+	private $controllerPath;
 
 			/**
 			 * indicates the use of webserver rewriting for beautified URLs
@@ -114,17 +128,6 @@ class Application {
 
 			if(isset($this->config->site->locales)) {
 				$this->locales = array_fill_keys($this->config->site->locales, NULL);
-			}
-
-			// set assets path
-
-			if(isset($this->config->paths['assets_path'])) {
-				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $this->config->paths['assets_path']['subdir']);
-				$this->relativeAssetsPath = $this->config->paths['assets_path']['subdir'];
-			}
-			else {
-				$this->absoluteAssetsPath = rtrim(Request::createFromGlobals()->server->get('DOCUMENT_ROOT'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-				$this->relativeAssetsPath = '';
 			}
 
 			$this->useNiceUris = !!$this->config->site->use_nice_uris;
@@ -199,15 +202,6 @@ class Application {
 	}
 
 	/**
-	 * get relative path to web assets
-	 *
-	 * @return string
-	 */
-	public function getRelativeAssetsPath() {
-		return $this->relativeAssetsPath;
-	}
-
-	/**
 	 * retrieve setting for nice uris
 	 *
 	 * @return boolean
@@ -217,12 +211,93 @@ class Application {
 	}
 
 	/**
+	 * get relative path to web assets
+	 * directory separator is always '/'
+	 *
+	 * @return string
+	 */
+	public function getRelativeAssetsPath() {
+		return $this->relativeAssetsPath;
+	}
+
+	/**
+	 * get absolute path to controller classes
+	 *
+	 * @return string
+	 */
+	public function getControllerPath() {
+
+		// lazy init
+
+		if(is_null($this->controllerPath)) {
+
+			$this->controllerPath =
+				$this->rootPath .
+				'src' . DIRECTORY_SEPARATOR .
+				'controller' . DIRECTORY_SEPARATOR;
+
+		}
+
+		return $this->controllerPath;
+	}
+
+	/**
+	 * set absolute assets path
+	 * the relative assets path is updated
+	 *
+	 * @param string $path
+	 * @throws ApplicationException
+	 */
+	public function setAbsoluteAssetsPath($path) {
+
+		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+		if(!is_null($this->rootPath) && 0 !== strpos($path, $this->rootPath)) {
+			throw new ApplicationException("'$path' not within application path '{$this->rootPath}'", ApplicationException::PATH_MISMATCH);
+		}
+
+		$this->absoluteAssetsPath = $path;
+		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', $this->absoluteAssetsPath));
+	}
+
+	/**
 	 * get absolute path to web assets
+	 * directory separator is platform dependent
 	 *
 	 * @return string
 	 */
 	public function getAbsoluteAssetsPath() {
 		return $this->absoluteAssetsPath;
+	}
+
+	/**
+	 * get absolute path to application root
+	 * directory separator is platform dependent
+	 *
+	 * @return string
+	 */
+	public function getRootPath() {
+		return $this->rootPath;
+	}
+
+	/**
+	 * set root path of application
+	 * if an assetspath is set, the relative assets path is updated
+	 *
+	 * @param string $path
+	 * @throws ApplicationException
+	 */
+	public function setRootPath($path) {
+
+		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+		if(!is_null($this->absoluteAssetsPath) && 0 !== strpos($this->absoluteAssetsPath, $path)) {
+			throw new ApplicationException("'$path' not a parent of assets path '{$this->absoluteAssetsPath}'", ApplicationException::PATH_MISMATCH);
+		}
+
+		$this->rootPath = $path;
+		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', (string) $this->absoluteAssetsPath));
+
 	}
 
 	/**

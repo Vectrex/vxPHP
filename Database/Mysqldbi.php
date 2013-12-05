@@ -4,6 +4,7 @@ namespace vxPHP\Database;
 
 use vxPHP\Database\Exception\MysqldbiException;
 use vxPHP\Database\MysqldbiStatement;
+use vxPHP\Application\Application;
 
 /**
  * mysqldbi
@@ -741,7 +742,11 @@ class Mysqldbi extends \mysqli {
 			return;
 		}
 
-		$logfile	= rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . (defined('MYSQL_LOG_PATH') ? MYSQL_LOG_PATH : DIRECTORY_SEPARATOR) . 'mysql.log' . ($this->logtype == 'xml' ? '.xml' : '');
+		$logfile =
+			Application::getInstance()->getRootPath() .
+			(defined('MYSQL_LOG_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(MYSQL_LOG_PATH, '/')) : '') .
+			'mysql.log' .
+			($this->logtype == 'xml' ? '.xml' : '');
 
 		/*
 		 * logfile XML style
