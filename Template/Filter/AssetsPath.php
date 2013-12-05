@@ -23,7 +23,7 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$application = Application::getInstance();
 
-		if(!$assetsPath = $application->getRelativeAssetsPath()) {
+		if($application->hasNiceUris() || !($assetsPath = $application->getRelativeAssetsPath())) {
 			$assetsPath = '/';
 		}
 
