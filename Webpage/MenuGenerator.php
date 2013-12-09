@@ -8,7 +8,6 @@ use vxPHP\User\Admin;
 use vxPHP\User\UserAbstract;
 use vxPHP\Http\Route;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
-use vxPHP\Webpage\Menu\MenuInterface;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
@@ -22,7 +21,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.9, 2013-11-29
+ * @version 0.3.0, 2013-12-08
  *
  * @throws MenuGeneratorException
  */
@@ -87,14 +86,14 @@ class MenuGenerator {
 	/**
 	 * @var array
 	 */
-	protected $renderArgs;
+	protected $renderArgs = array();
 
 	/**
 	 * sets active menu entries, allows addition of dynamic entries and
 	 * prints level $level of a menu, identified by $id
 	 *
 	 * $decorator identifies a decorator class - MenuDecorator{$decorator}
-	 * $renderArgs are additional parameter passed to Menu::render()
+	 * $renderArgs are additional parameters passed to Menu::render()
 	 *
 	 * @param string $id
 	 * @param integer $level (if NULL, the full menu tree is printed)
@@ -139,7 +138,10 @@ class MenuGenerator {
 		$this->id				= $id;
 		$this->level			= $level;
 		$this->decorator		= $decorator;
-		$this->renderArgs		= $renderArgs;
+
+		if(!is_null($renderArgs)) {
+			$this->renderArgs = $renderArgs;
+		}
 
 		// if $forceActiveMenu was initialized before, it will not be overwritten
 
@@ -246,19 +248,33 @@ class MenuGenerator {
 
 		// output
 
-		// instantiate optional decorator class
+		// instantiate renderer class, defaults to SimpleListRenderer
 
 		if(!empty($this->decorator)) {
-			try {
-				$className = __NAMESPACE__ . '\\Menu\\Decorator\\MenuDecorator' . $this->decorator;
-				$m = new $className($m);
-			}
-			catch(\Exception $e) {
-			}
+			$rendererName = $this->decorator;
+		}
+		else {
+			$rendererName = 'SimpleList';
 		}
 
-		return sprintf('<div id="%s">%s</div>', $css, $m->render($this->level === FALSE, self::$forceActiveMenu, $this->renderArgs));
+		$className = __NAMESPACE__ . '\\Menu\\Renderer\\' . $rendererName . 'Renderer';
 
+		$renderer = new $className($m);
+		$renderer->setParameters($this->renderArgs);
+
+		// enable or disable display of submenus
+
+		$m->setShowSubmenus($this->level === FALSE);
+
+		// enable or disable always active menu
+
+		$m->setForceActive(self::$forceActiveMenu);
+
+		return sprintf(
+			'<div id="%s">%s</div>',
+			$css,
+			$renderer->render()
+		);
 	}
 
 	/**
@@ -376,7 +392,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenu(MenuInterface $m) {
+	protected function authenticateMenu(Menu $m) {
 
 		if(is_null($m->getAuth())) {
 			return TRUE;
@@ -436,7 +452,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenuByTableRowAccess(MenuInterface $m) {
+	protected function authenticateMenuByTableRowAccess(Menu $m) {
 
 		$p = $m->getAuthParameters();
 
@@ -457,7 +473,7 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @return boolean
 	 */
-	protected function authenticateMenuByMiscRules(MenuInterface $m) {
+	protected function authenticateMenuByMiscRules(Menu $m) {
 		return FALSE;
 	}
 

@@ -2,8 +2,6 @@
 
 namespace vxPHP\Webpage\Menu;
 
-use vxPHP\Webpage\Menu\MenuInterface;
-
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 
@@ -11,9 +9,9 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * Menu class
  *
  * manages a complete menu
- * @version 0.7.1 2013-10-10
+ * @version 0.7.2 2013-12-08
  */
-class Menu implements MenuInterface {
+class Menu {
 
 	protected	$id,
 				$script,
@@ -329,23 +327,5 @@ class Menu implements MenuInterface {
 	 */
 	public function getDynamicEntries() {
 		return $this->dynamicEntries;
-	}
-
-	/**
-	 * renders the menu and all entries
-	 *
-	 * @see \vxPHP\Webpage\Menu\MenuInterface::render()
-	 */
-	public function render($showSubmenus = FALSE, $forceActive = FALSE, $options = NULL) {
-		$this->showSubmenus = $showSubmenus;
-		$this->forceActive = $forceActive;
-
-		$markup = '';
-
-		foreach($this->entries as $e) {
-			$markup .= $e->render();
-		}
-
-		return sprintf('<ul>%s</ul>', $markup);
 	}
 }

@@ -3,16 +3,15 @@
 namespace vxPHP\Webpage\MenuEntry;
 
 use vxPHP\Webpage\Menu\Menu;
-use vxPHP\Webpage\MenuEntry\MenuEntryInterface;
 use vxPHP\Application\Application;
 
 /**
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.3.5 2013-10-27
+ * @version 0.3.6 2013-12-08
  */
-class MenuEntry implements MenuEntryInterface {
+class MenuEntry {
 	protected static	$count = 1;
 	protected			$menu,
 						$auth,
@@ -97,39 +96,10 @@ class MenuEntry implements MenuEntryInterface {
 		return $this->page;
 	}
 
-	public function getAttributes() {
-		return $this->attributes;
-	}
-
-	public function setAttribute($attr, $value) {
-		$this->attributes->$attr = $value;
-	}
-
-
-	public function render() {
-
-		$application = Application::getInstance();
-
-		// check display attribute
-
-		if(isset($this->attributes->display) && $this->attributes->display == 'none') {
-			return FALSE;
-		}
-
-		if($application->hasNiceUris()) {
-
-			if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
-				$script = '/';
-			}
-
-			else {
-				$script = '/'. $script . '/';
-			}
-		}
-
-		else {
-			$script = '/' . $this->menu->getScript() . '/';
-		}
+	/**
+	 * get href attribute value of menu entry
+	 */
+	public function getHref() {
 
 		if(is_null($this->href)) {
 
@@ -139,8 +109,23 @@ class MenuEntry implements MenuEntryInterface {
 				$e = $this;
 
 				do {
-					$pathSegments[] = $e->getPage();
+					$pathSegments[] = $e->page;
 				} while ($e = $e->menu->getParentEntry());
+
+				if(Application::getInstance()->hasNiceUris()) {
+
+					if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
+						$script = '/';
+					}
+
+					else {
+						$script = '/'. $script . '/';
+					}
+				}
+
+				else {
+					$script = '/' . $this->menu->getScript() . '/';
+				}
 
 				$this->href = $script . implode('/', array_reverse($pathSegments));
 
@@ -151,47 +136,17 @@ class MenuEntry implements MenuEntryInterface {
 				$this->href = $this->page;
 
 			}
-
 		}
 
-		$sel = $this->menu->getSelectedEntry();
-
-		if(isset($this->attributes->text)) {
-
-			if(!isset($sel) || $sel !== $this) {
-				$markup = sprintf(
-					'<li class="%s"><a href="%s">%s</a>',
-					preg_replace('~[^\w]~', '_', $this->page),
-					$this->href,
-					htmlspecialchars($this->attributes->text)
-				);
-			}
-
-			else {
-				if((!isset($this->subMenu) || is_null($this->subMenu->getSelectedEntry())) && !$this->menu->getForceActive()) {
-					$markup = sprintf(
-						'<li class="active %s"><span>%s</span>',
-						preg_replace('~[^\w]~', '_', $this->page),
-						htmlspecialchars($this->attributes->text)
-					);
-				}
-
-				else {
-					$markup = sprintf(
-						'<li class="active %s"><a href="%s">%s</a>',
-						preg_replace('~[^\w]~', '_', $this->page),
-						$this->href,
-						htmlspecialchars($this->attributes->text)
-					);
-				}
-
-				if(isset($this->subMenu) && $this->menu->getShowSubmenus()) {
-					$markup .= $this->subMenu->render($this->menu->getShowSubmenus(), $this->menu->getForceActive());
-				}
-			}
-			return $markup.'</li>';
-		}
-
-		return '';
+		return $this->href;
 	}
+
+	public function getAttributes() {
+		return $this->attributes;
+	}
+
+	public function setAttribute($attr, $value) {
+		$this->attributes->$attr = $value;
+	}
+
 }
