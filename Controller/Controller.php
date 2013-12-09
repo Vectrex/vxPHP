@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.9 2013-11-29
+ * @version 0.1.10 2013-12-09
  *
  */
 abstract class Controller {
@@ -120,6 +120,31 @@ abstract class Controller {
 	public static function create() {
 
 		return new static();
+
+	}
+
+	/**
+	 * determines controller class name from $controllerPath
+	 * and returns a controller instance
+	 *
+	 * @param $controllerPath
+	 * @return Controller
+	 */
+	public static function createControllerFromPath($controllerPath) {
+
+		$classPath	= explode('/', $controllerPath);
+		$className	= ucfirst(array_pop($classPath)) . 'Controller';
+
+		if(count($classPath)) {
+			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
+		}
+		else {
+			$classPath = '';
+		}
+
+		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
+
+		return new $className();
 
 	}
 

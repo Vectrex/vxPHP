@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.6 2013-12-05
+ * @version 0.5.7 2013-12-09
  *
  */
 class Route {
@@ -133,26 +133,15 @@ class Route {
 	}
 
 	/**
-	 * returns controller assigned to route
-	 * path to controlleres is retrieved from Config instance
+	 * returns controller instance assigned to route
+	 * path to controllers is retrieved from Config instance
 	 *
 	 * @return Controller $controller
 	 */
 	public function getController() {
 
-		$classPath	= explode('/', $this->controllerString);
-		$className	= ucfirst(array_pop($classPath)) . 'Controller';
+		return Controller::createControllerFromPath($this->controllerString);
 
-		if(count($classPath)) {
-			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
-		}
-		else {
-			$classPath = '';
-		}
-
-		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
-
-		return new $className();
 	}
 
 	/**
