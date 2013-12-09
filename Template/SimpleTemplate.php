@@ -16,12 +16,13 @@ use vxPHP\Template\Filter\AnchorHref;
 use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
+use vxPHP\Controller\Controller;
 
 /**
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.5 2013-12-05
+ * @version 1.2.6 2013-12-09
  *
  */
 
@@ -187,9 +188,13 @@ class SimpleTemplate {
 	/**
 	 * include controller output
 	 *
-	 * @param Controller $controller
+	 * @param string $controllerPath
+	 * @return string
 	 */
-	private function includeController($controller) {
+	private function includeControllerResponse($controllerPath) {
+
+		return Controller::createControllerFromPath($controllerPath)->render();
+
 	}
 
 	/**
