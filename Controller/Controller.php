@@ -15,7 +15,7 @@ use vxPHP\Http\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.10 2013-12-09
+ * @version 0.1.11 2013-12-11
  *
  */
 abstract class Controller {
@@ -102,14 +102,28 @@ abstract class Controller {
 	 * including headers
 	 */
 	public function renderResponse() {
-		$this->execute()->send();
+
+		if(($method = $this->route->getMethodName())) {
+			$this->$method()->send();
+		}
+		else {
+			$this->execute()->send();
+		}
+
 	}
 
 	/**
 	 * renders content of response
 	 */
 	public function render() {
-		$this->execute()->sendContent();
+
+		if(($method = $this->route->getMethodName())) {
+			$this->$method()->sendContent();
+		}
+		else {
+			$this->execute()->sendContent();
+		}
+
 	}
 
 	/**

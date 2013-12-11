@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.7 2013-12-09
+ * @version 0.5.8 2013-12-10
  *
  */
 class Route {
@@ -18,6 +18,7 @@ class Route {
 			$path,
 			$scriptName,
 			$controllerString,
+			$methodName,
 			$redirect,
 			$auth,
 			$authParameters,
@@ -58,6 +59,10 @@ class Route {
 
 		if(isset($parameters['controller'])) {
 			$this->controllerString = $parameters['controller'];
+		}
+
+		if(isset($parameters['method'])) {
+			$this->methodName = $parameters['method'];
 		}
 
 		if(isset($parameters['match'])) {
@@ -141,6 +146,12 @@ class Route {
 	public function getController() {
 
 		return Controller::createControllerFromPath($this->controllerString);
+
+	}
+
+	public function getMethodName() {
+
+		return $this->methodName;
 
 	}
 
