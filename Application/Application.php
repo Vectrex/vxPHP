@@ -14,7 +14,7 @@ use vxPHP\Http\Request;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.6 2013-12-05
+ * @version 0.2.7 2014-01-11
  */
 class Application {
 
@@ -110,7 +110,8 @@ class Application {
 					'host'		=> $this->config->db->host,
 					'dbname'	=> $this->config->db->name,
 					'user'		=> $this->config->db->user,
-					'pass'		=> $this->config->db->pass
+					'pass'		=> $this->config->db->pass,
+					'logtype'	=> $this->config->db->logtype
 				));
 			}
 

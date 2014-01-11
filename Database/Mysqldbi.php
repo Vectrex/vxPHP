@@ -13,7 +13,7 @@ use vxPHP\Application\Application;
  *
  * @extends mysqli
  *
- * @version 4.11.2 2013-11-18
+ * @version 4.11.3 2014-01-11
  * @author Gregor Kofler
  *
  * @todo execute is "ambiguous" as deprecated alias for mysqli_stmt_execute
@@ -738,13 +738,17 @@ class Mysqldbi extends \mysqli {
 	 * @param boolean $wasPrepared
 	 */
 	protected function logQuery($wasPrepared) {
+
 		if (!$this->logErrors) {
 			return;
 		}
 
-		$logfile =
+		$logPath =
 			Application::getInstance()->getRootPath() .
-			(defined('MYSQL_LOG_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(MYSQL_LOG_PATH, '/')) : '') .
+			(defined('MYSQL_LOG_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(MYSQL_LOG_PATH, '/')) : '');
+
+		$logfile =
+			$logPath .
 			'mysql.log' .
 			($this->logtype == 'xml' ? '.xml' : '');
 
@@ -806,7 +810,7 @@ class Mysqldbi extends \mysqli {
 			));
 			array_push($logtext, "</error_log>");
 
-			$tmp = tempnam(defined('MYSQL_LOG_PATH') ? MYSQL_LOG_PATH : '', 'tmp_');
+			$tmp = tempnam($logPath, 'tmp_');
 
 			if ($tmp !== FALSE && ($handle = fopen($tmp, 'w'))) {
 				flock($handle, LOCK_EX);
