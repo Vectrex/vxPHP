@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.8 2013-12-10
+ * @version 0.6.0 2014-02-12
  *
  */
 class Route {
@@ -24,14 +24,14 @@ class Route {
 			$authParameters,
 			$url,
 			$match,
+			$placeholders,
 			$pathParameters = array();
 
 	/**
 	 *
 	 * @param string $route id, the route identifier
 	 * @param string $scriptName, name of assigned script
-	 * @param string $auth, authentication information
-	 * @param \vxPHP\Application\Webpage $controller
+	 * @param array $parameters, collection of route parameters
 	 */
 	public function __construct($routeId, $scriptName, array $parameters = array()) {
 
@@ -68,6 +68,11 @@ class Route {
 		if(isset($parameters['match'])) {
 			$this->match = $parameters['match'];
 		}
+
+		if(isset($parameters['placeholders'])) {
+			$this->placeholders = $parameters['placeholders'];
+		}
+
 		else {
 			$this->match = $routeId;
 		}
@@ -244,21 +249,37 @@ class Route {
 
 		if(empty($this->pathParameters)) {
 
-			// extract names
+			// collect all placeholder names
 
-			if(preg_match_all('~\{(.*?)\}(?:\?|/|)~', $this->path, $matches)) {
+			$names = array();
 
-				$names = array_map('strtolower', $matches[1]);
+			foreach($this->placeholders as $p) {
+				$names[] = $p['name'];
+			}
 
-				// extract values
+			// extract values
 
-				if(preg_match('~' . $this->match . '~', Request::createFromGlobals()->getPathInfo(), $values)) {
+			if(preg_match('~' . $this->match . '~', Request::createFromGlobals()->getPathInfo(), $values)) {
 
-					array_shift($values);
+				array_shift($values);
 
-					if(count($values) === count($names)) {
-						$this->pathParameters = array_combine($names, $values);
+				// if not all parameters are set, try to fill up with defaults
+
+				$offset = count($values);
+
+				if($offset < count($names)) {
+					while($offset < count($names)) {
+						if(isset($this->placeholders[$offset]['default'])) {
+							$values[] = $this->placeholders[$offset]['default'];
+						}
+						++$offset;
 					}
+				}
+
+				// only set parameters when count of placeholders matches count of values, that can be evaluated
+
+				if(count($values) === count($names)) {
+					$this->pathParameters = array_combine($names, $values);
 				}
 			}
 

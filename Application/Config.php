@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.10 2013-12-10
+ * @version 0.9.11 2014-02-12
  *
  * @todo refresh() method
  */
@@ -330,17 +330,56 @@ class Config {
 				$parameters['method'] = (string) $a->method;
 			}
 
-			// $ndx will be used for route lookup
+			// when no path is defined $ndx will be used for route lookup
 
 			if(isset($a->path)) {
-				$ndx = preg_replace('~\{.*?\}~', '([^/]+)', (string) $a->path);
+
+				// extract route parameters and default values
+
+				if(preg_match_all('~\{(.*?)(?:=(.*?))?\}~', (string) $a->path, $matches)) {
+
+					$rex = (string) $a->path;
+
+					$placeholders = array();
+
+					if(!empty($matches[1])) {
+
+						foreach($matches[1] as $ndx => $name) {
+
+							if(!empty($matches[2][$ndx])) {
+
+								$placeholders[] = array('name' => strtolower($name), 'default' => $matches[2][$ndx]);
+
+								// turn this path parameter into regexp and make it optional
+
+								$rex = preg_replace('~\/{.*?\}~', '(?:/([^/]+))?', $rex, 1);
+
+							}
+
+							else {
+
+								$placeholders[] = array('name' => strtolower($name));
+
+								// turn this path parameter into regexp
+
+								$rex = preg_replace('~\{.*?\}~', '([^/]+)', $rex, 1);
+
+							}
+						}
+					}
+
+					$parameters['placeholders'] = $placeholders;
+				}
+
 				$parameters['path'] = (string) $a->path;
-			}
-			else {
-				$ndx = $pageId;
+
 			}
 
-			$parameters['match'] = $ndx;
+			else {
+				$rex = $pageId;
+			}
+
+			$parameters['match'] = $rex;
 
 			if(isset($a->auth)) {
 
@@ -361,7 +400,7 @@ class Config {
 			}
 
 
-			$this->routes[$scriptName][$ndx] = new Route($pageId, $scriptName, $parameters);
+			$this->routes[$scriptName][$rex] = new Route($pageId, $scriptName, $parameters);
 		}
 	}
 
