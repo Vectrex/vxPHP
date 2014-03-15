@@ -21,7 +21,7 @@ use vxPHP\Database\Mysqldbi;
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.2.1 2013-05-24
+ * @version 0.2.2 2014-03-15
  */
 class ArticleQuery extends Query implements QueryInterface {
 
@@ -33,22 +33,36 @@ class ArticleQuery extends Query implements QueryInterface {
 	 */
 	public function __construct(Mysqldbi $dbConnection) {
 
-		$this->selectSql = 'SELECT articlesID FROM articles';
+		$this->table		= 'articles';
+		$this->alias		= 'a';
+		$this->columns		= array('a.articlesID');
+
 		parent::__construct($dbConnection);
 
 	}
 
 	/**
-	 * add appropriate WHERE clause that filters for $category
+	 * add WHERE clause that filters for $category
 	 *
 	 * @param ArticleCategory $category
 	 * @return ArticleQuery
 	 */
 	public function filterByCategory(ArticleCategory $category) {
 
-		$this->addCondition("articlecategoriesID = ?", $category->getId());
+		$this->addCondition("a.articlecategoriesID = ?", $category->getId());
 		return $this;
 
+	}
+
+	/**
+	 * add WHERE clause that filters for article category aliases
+	 *
+	 * @param array $categoryNames
+	 */
+	public function filterByCategoryNames(array $categoryNames) {
+		$this->innerJoin('articlecategories c', 'c.articlecategoriesID = a.articlecategoriesID');
+		$this->addCondition('c.Alias', $categoryNames, 'IN');
+		return $this;
 	}
 
 	/**

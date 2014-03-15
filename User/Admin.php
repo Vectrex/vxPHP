@@ -6,7 +6,7 @@ use vxPHP\User\UserAbstract;
 
 /**
  * extension of the user class, providing admin functionality in a singleton pattern
- * 
+ *
  * @author Gregor Kofler
  * @version 0.3.2 2011-11-08
  */
@@ -16,7 +16,11 @@ class Admin extends UserAbstract {
 	private $storeInSession;
 	private static $instance;
 
-	public static function getInstance($storeInSession = true) {
+	/**
+	 * @param boolean $storeInSession
+	 * @return \vxPHP\User\Admin
+	 */
+	public static function getInstance($storeInSession = TRUE) {
 		if(!empty($storeInSession) && !empty($_SESSION['user'])) {
 			self::$instance = unserialize($_SESSION['user']);
 			return self::$instance;

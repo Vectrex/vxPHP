@@ -8,7 +8,7 @@ use vxPHP\Database\Mysqldbi;
  * interface for custom ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.1 2013-05-24
+ * @version 0.1.2 2014-03-15
  */
 interface QueryInterface {
 
@@ -17,6 +17,14 @@ interface QueryInterface {
 	public function sortBy($columnName, $asc);
 	public function select();
 	public function count();
+
+	/**
+	 * dumps SQL string of current query
+	 * (invokes building of SQL string if not already built)
+	 *
+	 * @return sqlString
+	 */
+	public function dumpSql();
 
 	/**
 	 *

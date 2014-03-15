@@ -18,13 +18,13 @@ use vxPHP\Orm\Exception\QueryException;
  * 				select();
  *
  * @author Gregor Kofler
- * @version 0.1.1 2013-05-24
+ * @version 0.1.2 2014-03-15
  */
 class MetaFileQuery extends Query implements QueryInterface {
 
 	public function __construct(Mysqldbi $dbConnection) {
 
-		$this->selectSql = 'SELECT * FROM files';
+		$this->table = 'files';
 		parent::__construct($dbConnection);
 
 	}

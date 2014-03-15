@@ -9,7 +9,7 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.3 2013-05-24
+ * @version 0.1.4 2014-03-15
  */
 abstract class Query implements QueryInterface {
 
@@ -18,13 +18,15 @@ abstract class Query implements QueryInterface {
 	 */
 	protected	$dbConnection;
 
-	protected	$whereClauses = array (),
-				$columnSorts = array (),
-				$valuesToBind = array (),
-				$selectSql,
+	protected	$columns		= array(),
+				$table,
+				$alias,
+				$innerJoins		= array(),
+				$whereClauses	= array (),
+				$columnSorts	= array (),
+				$valuesToBind	= array (),
 				$sql,
 				$lastQuerySql;
-
 
 	/**
 	 * provide initial database connection
@@ -42,14 +44,34 @@ abstract class Query implements QueryInterface {
 	 * add WHERE clause that filters articles where $columnName matches $value
 	 *
 	 * @param string $columnName
-	 * @param string|number $value
+	 * @param string|number|array $value
 	 * @return ArticleQuery
 	 */
 	public function filter($columnName, $value) {
 
-		$this->addCondition("$columnName = ?", $value);
+		if(is_array($value)) {
+			$this->addCondition($columnName, $value, 'IN');
+		}
+
+		else {
+			$this->addCondition($columnName, $value, '=');
+		}
 		return $this;
 
+	}
+
+	/**
+	 *
+	 * @param unknown $table
+	 * @param unknown $on
+	 */
+	public function innerJoin($table, $on) {
+
+		$join			= new \stdClass();
+		$join->table	= $table;
+		$join->on		= $on;
+
+		$this->innerJoins[] = $join;
 	}
 
 	/**
@@ -130,19 +152,36 @@ abstract class Query implements QueryInterface {
 
 	}
 
+	/**
+	 * @see \vxPHP\Orm\QueryInterface::dumpSql()
+	 */
+	public function dumpSql() {
+
+		if(!$this->sql) {
+			$this->buildQueryString();
+		}
+
+		return $this->sql;
+
+	}
+
 
 	/**
 	 * stores WHERE clause and values which must be bound
+	 * when an operator is supplied, $conditionOrColumn will hold a column name,
+	 * otherwise a condition including comparison operator
 	 *
-	 * @param string $conditionString
-	 * @param unknown $value
+	 * @param string $conditionOrColumn
+	 * @param string|number|array $value
+	 * @param string $operator
 	 */
-	protected function addCondition($conditionString, $value) {
+	protected function addCondition($conditionOrColumn, $value, $operator = NULL) {
 
 		$condition = new \stdClass();
 
-		$condition->conditionString = $conditionString;
-		$condition->value			= $value;
+		$condition->conditionOrColumn	= $conditionOrColumn;
+		$condition->value				= $value;
+		$condition->operator			= strtoupper($operator);
 
 		$this->whereClauses[] = $condition;
 
@@ -150,21 +189,78 @@ abstract class Query implements QueryInterface {
 
 	/**
 	 * builds query string by parsing WHERE and ORDER BY clauses
+	 * @todo column names are currently masked in MySQL style
+	 * @todo incomplete masking (e.g. ON clauses)
 	 */
 	protected function buildQueryString() {
 
 		$w = array();
 		$s = array();
 
-		foreach($this->whereClauses as $where) {
-			$w[] = $where->conditionString;
+		// start SQL statement
+
+		$this->sql = 'SELECT ';
+
+		// add columns
+
+		if(!$this->columns || !count($this->columns)) {
+			$this->sql .= '*';
 		}
+		else {
+			$this->sql .= sprintf('`%s`', str_replace('.', '`.`', implode('`,`', $this->columns)));
+		}
+
+		// add table
+
+		$this->sql .= sprintf(' FROM `%s`', str_replace('.', '`.`', $this->table));
+
+		// add alias
+
+		if($this->alias) {
+			$this->sql .= sprintf(' `%s`', $this->alias);
+		}
+
+		// add INNER JOINs
+
+		foreach($this->innerJoins as $join) {
+			$this->sql .= sprintf(' INNER JOIN `%s` ON %s', preg_replace('/\s+/', '` `', trim($join->table)), $join->on);
+		}
+
+		// build WHERE clause
+
+		foreach($this->whereClauses as $where) {
+
+			// complete condition when no operator set
+
+			if(!$where->operator) {
+				$w[] = $where->conditionOrColumn;
+			}
+
+			// otherwise parse operator
+
+			else {
+				if($where->operator === 'IN') {
+					$w[] = sprintf(
+						'`%s` IN (%s)',
+						str_replace('.', '`.`', $where->conditionOrColumn),
+						implode(', ', array_fill(0, count($where->value), '?'))
+					);
+				}
+				else {
+					$w[] = sprintf(
+						'`%s` %s ?',
+						str_replace('.', '`.`', $where->conditionOrColumn),
+						$where->operator
+					);
+				}
+			}
+		}
+
+		// build SORT clause
 
 		foreach($this->columnSorts as $sort) {
 			$s[] = $sort->column . ($sort->asc ? '' : ' DESC');
 		}
-
-		$this->sql = $this->selectSql;
 
 		if(count($w)) {
 			$this->sql .= ' WHERE (' . implode(') AND (', $w) .')';
