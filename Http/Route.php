@@ -9,7 +9,7 @@ use vxPHP\Controller\Controller;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2014-02-12
+ * @version 0.6.1 2014-03-16
  *
  */
 class Route {
@@ -25,7 +25,7 @@ class Route {
 			$url,
 			$match,
 			$placeholders,
-			$pathParameters = array();
+			$pathParameters;
 
 	/**
 	 *
@@ -83,7 +83,7 @@ class Route {
 	 * prevent caching of path parameters
 	 */
 	public function __destruct() {
-		$this->pathParameters = array();
+		unset ($this->pathParameters);
 	}
 
 	/**
@@ -247,7 +247,7 @@ class Route {
 
 		// lazy initialization of parameters
 
-		if(empty($this->pathParameters)) {
+		if(is_null($this->pathParameters) && !is_null($this->placeholders)) {
 
 			// collect all placeholder names
 
