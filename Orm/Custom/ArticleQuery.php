@@ -7,6 +7,7 @@ use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleCategory;
 
 use vxPHP\Database\Mysqldbi;
+use vxPHP\Orm\Custom\Exception\ArticleException;
 
 /**
  * query object which returns an array of Article objects
@@ -74,11 +75,10 @@ class ArticleQuery extends Query implements QueryInterface {
 
 		$this->buildQueryString();
 		$this->buildValuesArray();
-		$rows = $this->executeQuery();
 
 		$ids = array();
 
-		foreach($rows as $row) {
+		foreach($this->executeQuery() as $row) {
 			$ids[] = $row['articlesID'];
 		}
 
@@ -90,23 +90,44 @@ class ArticleQuery extends Query implements QueryInterface {
 	 *
 	 * @param number $rows
 	 * @return array
+	 * @throws \RangeException
 	 */
 	public function selectFirst($rows = 1) {
 
+		if(empty($this->columnSorts)) {
+			throw new \RangeException("'" . __METHOD__ . "' requires a SORT criteria.");
+		}
+
+		return $this->selectFromTo(0, $rows - 1);
+	}
+
+	/**
+	/* (non-PHPdoc)
+	 * @see \vxPHP\Orm\Query::selectFromTo()
+	 * @throws \RangeException
+	 */
+	public function selectFromTo($from, $to) {
+
+		if(empty($this->columnSorts)) {
+			throw new \RangeException("'" . __METHOD__ . "' requires a SORT criteria.");
+		}
+
+		if($to < $from) {
+			throw new \RangeException("'to' value is less than 'from' value.");
+		}
+
 		$this->buildQueryString();
 		$this->buildValuesArray();
-
-		$this->sql .= " LIMIT $rows";
-
-		$rows = $this->executeQuery();
+		$this->sql .= ' LIMIT ' . (int) $from . ', ' . ($to - $from + 1);
 
 		$ids = array();
 
-		foreach($rows as $row) {
+		foreach($this->executeQuery() as $row) {
 			$ids[] = $row['articlesID'];
 		}
 
 		return Article::getInstances($ids);
+
 	}
 
 	/**
@@ -117,14 +138,4 @@ class ArticleQuery extends Query implements QueryInterface {
 		// TODO: Auto-generated method stub
 
 	}
-
-	/**
-	/* (non-PHPdoc)
-	 * @see \vxPHP\Orm\Query::selectFromTo()
-	 */
-	public function selectFromTo($from, $to) {
-		// TODO: Auto-generated method stub
-
-	}
-
 }

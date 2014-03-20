@@ -147,10 +147,7 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @see \vxPHP\Orm\QueryInterface::selectFromTo()
 	 */
-	public function selectFromTo($from, $to) {
-		// TODO: Auto-generated method stub
-
-	}
+	abstract public function selectFromTo($from, $to);
 
 	/**
 	 * @see \vxPHP\Orm\QueryInterface::dumpSql()
