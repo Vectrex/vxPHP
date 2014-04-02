@@ -5,13 +5,10 @@ namespace vxPHP\Image;
 use vxPHP\Image\Exception\ImageModifierException;
 
 /**
- *
- * wraps some image manipulation functionality
- * for gdlib
- *
+ * implements ImageModfier for gdLib
+ * 
  * @author Gregor Kofler
- * @version 0.5.0 2014-04-01
- *
+ * @version 0.5.1 2014-04-02
  */
 class Gd extends ImageModifier {
 
@@ -92,15 +89,10 @@ class Gd extends ImageModifier {
 	}
 
 	/**
-	 * performs crop-"command"
-	 * 
-	 * @param stdClass $src
-	 * @param int $top
-	 * @param int $left
-	 * @param int $bottom
-	 * @param int $right
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_crop()
 	 */
-	private function do_crop($src, $top, $left, $bottom, $right) {
+	protected function do_crop($src, $top, $left, $bottom, $right) {
 
 		$dst = new \stdClass();
 		$dst->width		= $src->width - $left - $right;
@@ -124,13 +116,10 @@ class Gd extends ImageModifier {
 	}
 
 	/**
-	 * performs resize-"command"
-	 * 
-	 * @param stdClass $src
-	 * @param int $width
-	 * @param int $height
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_resize()
 	 */
-	private function do_resize($src, $width, $height) {
+	protected function do_resize($src, $width, $height) {
 
 		$dst = new \stdClass();
 		$dst->resource	= imagecreatetruecolor($width, $height);
@@ -162,12 +151,10 @@ class Gd extends ImageModifier {
 	}
 
 	/**
-	 * performs "watermark"-command
-	 * 
-	 * @param stdClass $src
-	 * @param string $watermarkFile
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_watermark()
 	 */
-	private function do_watermark($src, $watermarkFile) {
+	protected function do_watermark($src, $watermarkFile) {
 
 		$stamp			= imagecreatefrompng($watermarkFile);
 		$stampWidth		= imagesx($stamp);
@@ -196,11 +183,10 @@ class Gd extends ImageModifier {
 	}
 
 	/**
-	 * performs "bw"-command
-	 * 
-	 * @param stdClass $src
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
 	 */
-	private function do_greyscale($src) {
+	protected function do_greyscale($src) {
 
 		$dst = new \stdClass();
 		$dst->resource	= imagecreatetruecolor($src->width, $src->height);
@@ -257,12 +243,15 @@ class Gd extends ImageModifier {
 
 		else {
 			switch($mimetype) {
+
 				case 'image/jpeg':
 					imagejpeg($src->resource, $this->path, 90);
 					break;
+
 				case 'image/png':
 					imagepng($src->resource, $this->path, 5);
 					break;
+
 				case 'image/gif':
 					imagegif($src->resource, $this->path);
 					break;

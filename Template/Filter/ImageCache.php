@@ -4,15 +4,14 @@ namespace vxPHP\Template\Filter;
 
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Template\Exception\SimpleTemplateException;
-use vxPHP\Image\ImageModifier;
 use vxPHP\Application\Application;
+use vxPHP\Image\ImageModifierFactory;
 
 /**
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
  * @author Gregor Kofler
- *
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
 
@@ -166,14 +165,14 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			// create cachefile
 
 			$actions	= explode('|', $actions);
-			$imgEdit	= new ImageModifier(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $pi['basename']));
+			$imgEdit	= ImageModifierFactory::create(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $pi['basename']));
 
 			foreach($actions as $a) {
 				$params = preg_split('~\s+~', $a);
 
 				$method = array_shift($params);
 
-				if(method_exists('vxPHP\\Image\\ImageModifier', $method)) {
+				if(method_exists($imgEdit, $method)) {
 					call_user_func_array(array($imgEdit, $method), $params);
 				}
 			}

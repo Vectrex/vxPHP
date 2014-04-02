@@ -5,6 +5,12 @@ namespace vxPHP\Image;
 use vxPHP\Image\ImageModifier;
 use vxPHP\Image\Exception\ImageModifierException;
 
+/**
+ * implements ImageModfier for Imagick
+ *
+ * @author Gregor Kofler
+ * @version 0.1.0 2014-04-02
+ */
 class ImageMagick extends ImageModifier {
 
 	private $src;

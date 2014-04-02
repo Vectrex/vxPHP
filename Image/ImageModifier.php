@@ -3,6 +3,13 @@
 namespace vxPHP\Image;
 
 use vxPHP\Image\Exception\ImageModifierException;
+
+/**
+ * wraps some image manipulation functionality
+ *
+ * @author Gregor Kofler
+ * @version 0.5.1 2014-04-02
+ */
 abstract class ImageModifier {
 
 	protected	$queue,
@@ -121,7 +128,7 @@ abstract class ImageModifier {
 		$todo->method		= __FUNCTION__;
 		$todo->parameters	= array($top, $right, $bottom, $left);
 
-		$this->queue->append($todo);
+		$this->queue[] = $todo;
 		
 	}
 
@@ -225,7 +232,8 @@ abstract class ImageModifier {
 		$todo->method		= __FUNCTION__;
 		$todo->parameters	= array($width, $height);
 
-		$this->queue->append($todo);
+		$this->queue[] = $todo;
+
 	}
 
 	/**
@@ -252,7 +260,8 @@ abstract class ImageModifier {
 		$todo->method		= __FUNCTION__;
 		$todo->parameters	= array($args[0]);
 
-		$this->queue->append($todo);
+		$this->queue[] = $todo;
+
 	}
 
 	/**
@@ -265,33 +274,44 @@ abstract class ImageModifier {
 		$todo->method		= __FUNCTION__;
 		$todo->parameters	= array();
 
-		$this->queue->append($todo);
+		$this->queue[] = $todo;
 
 	}
 
 	/**
 	 * performs crop-"command"
-	 *
-	 * @throws ImageModifierException
+	 * 
+	 * @param stdClass $src
+	 * @param int $top
+	 * @param int $left
+	 * @param int $bottom
+	 * @param int $right
 	 */
-	abstract private function do_crop();
+	abstract protected function do_crop($src, $top, $left, $bottom, $right);
 
 	/**
 	 * performs resize-"command"
-	 *
-	 * @throws ImageModifierException
+	 * 
+	 * @param stdClass $src
+	 * @param int $width
+	 * @param int $height
 	 */
-	abstract private function do_resize();
-	
+	abstract protected function do_resize($src, $width, $height);
+		
 	/**
 	 * performs "watermark"-command
+	 * 
+	 * @param stdClass $src
+	 * @param string $watermarkFile
 	 */
-	abstract private function do_watermark();
-
+	abstract protected function do_watermark($src, $watermarkFile);
+	
 	/**
 	 * performs "bw"-command
+	 * 
+	 * @param stdClass $src
 	 */
-	abstract private function do_greyscale();
+	abstract protected function do_greyscale($src);
 
 	/**
 	 * exports resulting image
