@@ -13,38 +13,50 @@ use vxPHP\Image\Exception\ImageModifierException;
  */
 class ImageMagick extends ImageModifier {
 
+	/**
+	 * @var \stdClass
+	 */
 	private $src;
 	
+	/**
+	 * 
+	 * @param unknown $file
+	 * @throws ImageModifierException
+	 */
 	public function __construct($file) {
-		
-		$src = new \stdClass();
 		
 		if(!file_exists($file)) {
 			throw new ImageModifierException("File $file doesn't exist.");
 		}
 		
 		try {
-			$src->ressource = new \Imagick($file);
-			$info = $src->ressource->identifyimage();
+			$img = new \Imagick($file);
+			$info = $img->identifyimage();
 		}
 		catch(\ImagickException $e) {
 			throw new ImageModifierException("Imagick reports error for file $file.");
 		}
 
-		$this->file		= $file;
-		$this->mimeType	= $info['format'];
+		$this->file			= $file;
+		$this->mimeType		= strtolower(array_shift(explode(' ', $info['format'])));
+		$this->srcWidth		= $info['geometry']['width'];
+		$this->srcHeight	= $info['geometry']['height'];
 
-		$src->width		= $info['geometry']['width'];
-		$src->height	= $info['geometry']['height'];
-
-		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
+		if(!in_array($this->mimeType, $this->supportedFormats)) {
 			throw new ImageModifierException("File $file is not of type ".implode(', ', $this->supportedFormats).".");
 		}
 		
-		$this->src = $src;
+		$src			= new \stdClass();
+		$src->resource	= $img;
+		$this->src		= $src;
+		$this->queue	= array();
+
 	}
 	
 	public function __destruct() {
+		if(isset($this->src)) {
+			$this->src->resource->clear();
+		}
 	}
 	
 	/**
@@ -52,94 +64,50 @@ class ImageMagick extends ImageModifier {
 	 * @see \vxPHP\Image\ImageModifier::export()
 	 */
 	public function export($path = NULL, $mimetype = NULL) {
+		
+		foreach($this->queue as $step) {
+			call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($this->src), $step->parameters));
+		}
+
+		// @todo
+		
 	}
 	
-	private function do_crop() {
-
-		$args = func_get_args();
-
-		$src = array_shift($args);
-
-		$srcAspectRatio = $src->width / $src->height;
-
-		// single float value given, represents aspect ratio of cropped image
-
-		if(count($args) == 1) {
-			if(!is_numeric($args[0]) || $args[0] <= 0) {
-				throw new ImageModifierException('Invalid dimension(s) for do_crop(): ' . $args[0]);
-			}
-
-			if($srcAspectRatio <= $args[0]) {
-
-				// width determines
-				$left = $right = 0;
-
-				// choose upper portion
-				$top	= round(($src->height - $src->width / $args[0]) / 3);
-				$bottom	= round(($src->height - $src->width / $args[0]) * 2 / 3);
-			}
-			else {
-
-				// height determines
-				$top	= $bottom	= 0;
-				$left	= $right	= round(($src->width - $src->height * $args[0]) / 2);
-			}
-		}
-
-		// width and height given
-
-		else if(count($args) == 2) {
-
-			$width	= (int) $args[0];
-			$height	= (int) $args[1];
-
-			if($width > 0 && $height > 0) {
-				$left = $right = round(($src->width - $width) / 2);
-
-				if($srcAspectRatio >= 1) {
-					// landscape
-					$top = $bottom = round(($src->height - $height) / 2);
-				}
-				else {
-					// portrait
-					$top	= round(($src->height - $height) / 3);
-					$bottom	= round(($src->height - $height) * 2 / 3);
-				}
-			}
-
-			else {
-				throw new ImageModifierException('Invalid dimension(s) for do_crop(): ' . $width . ', ' . $height);
-			}
-		}
-
-		// top, left, bottom, right
-
-		else if(count($args) == 4) {
-			$top	= (int) $args[0];
-			$right	= (int) $args[1];
-			$bottom	= (int) $args[2];
-			$left	= (int) $args[3];
-		}
-		else {
-			throw new ImageModifierException('Insufficient arguments for do_crop()');
-		}
-
-		if(!$top && !$bottom && !$left && !$right) {
-			throw new ImageModifierException('Invalid boundaries for do_crop()');
-		}
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_crop()
+	 */
+	protected function do_crop($src, $top, $left, $bottom, $right) {
 
 		$src->resource->cropImage($right - $left, $bottom - $top, $left, $top);
 		return $src;
+
 	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_resize()
+	 */
+	protected function do_resize($src, $width, $height) {
+
+		$src->resource->resizeImage($width, $height, \Imagick::FILTER_CATROM, 1, FALSE);
+		return $src;
 		
-		
-	private function do_resize() {
 	}
 	
-	private function do_watermark() {
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_watermark()
+	 */
+	protected function do_watermark($src, $watermarkFile) {
+		return $src;
 	}
 
-	private function do_greyscale() {
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
+	 */
+	protected function do_greyscale($src) {
+		return $src;
 	}
 }

@@ -12,7 +12,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  */
 class Gd extends ImageModifier {
 
-	private	$source,
+	private	$src,
 			$destinationBuffer,
 			$bufferNdx = 0,
 			$imageWasAltered = FALSE;
@@ -61,7 +61,7 @@ class Gd extends ImageModifier {
 		$src->width			= $info[0];
 		$src->height		= $info[1];
 
-		$this->source				= $src;
+		$this->src					= $src;
 		$this->queue				= array();
 		$this->destinationBuffer	= array(new \stdClass(), new \stdClass());
 	}
@@ -70,8 +70,8 @@ class Gd extends ImageModifier {
 	 * cleanup resources upon destruct
 	 */
 	public function __destruct() {
-		if(isset($this->source->resource)) {
-			imagedestroy($this->source->resource);
+		if(isset($this->src->resource)) {
+			imagedestroy($this->src->resource);
 		}
 		if(isset($this->destinationBuffer[0]->resource)) {
 			imagedestroy($this->destinationBuffer[0]->resource);
@@ -212,11 +212,11 @@ class Gd extends ImageModifier {
      */
 	public function export($path = NULL, $mimetype = NULL) {
 
-		$src = $this->source;
+		$src = $this->src;
 		$dst = $this->destinationBuffer[0];
 
 		foreach($this->queue as $step) {
-			$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, "do_{$step->method}"), array_merge(array($src), $step->parameters));
+			$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($src), $step->parameters));
 
 			// action did not alter source
 			if(!$this->destinationBuffer[$this->bufferNdx]) {

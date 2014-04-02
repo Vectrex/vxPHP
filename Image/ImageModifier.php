@@ -287,7 +287,7 @@ abstract class ImageModifier {
 	 * @param int $bottom
 	 * @param int $right
 	 */
-	abstract protected function do_crop($src, $top, $left, $bottom, $right);
+	abstract protected function do_crop(\stdClass $src, $top, $left, $bottom, $right);
 
 	/**
 	 * performs resize-"command"
@@ -296,7 +296,7 @@ abstract class ImageModifier {
 	 * @param int $width
 	 * @param int $height
 	 */
-	abstract protected function do_resize($src, $width, $height);
+	abstract protected function do_resize(\stdClass $src, $width, $height);
 		
 	/**
 	 * performs "watermark"-command
@@ -304,14 +304,14 @@ abstract class ImageModifier {
 	 * @param stdClass $src
 	 * @param string $watermarkFile
 	 */
-	abstract protected function do_watermark($src, $watermarkFile);
+	abstract protected function do_watermark(\stdClass $src, $watermarkFile);
 	
 	/**
 	 * performs "bw"-command
 	 * 
 	 * @param stdClass $src
 	 */
-	abstract protected function do_greyscale($src);
+	abstract protected function do_greyscale(\stdClass $src);
 
 	/**
 	 * exports resulting image
