@@ -27,7 +27,7 @@ class MenuEntry {
 		$this->id			= self::$count++;
 		$this->page			= $page;
 		$this->localPage	= (boolean) $localPage;
-		$this->attributes	= new \StdClass();
+		$this->attributes	= new \stdClass();
 
 		foreach($attributes as $attr => $value) {
 			$attr = strtolower($attr);

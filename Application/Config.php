@@ -207,7 +207,7 @@ class Config {
 				throw new ConfigException('Malformed "site.ini.xml"! Missing path for binaries.');
 			}
 
-			$this->binaries = new \StdClass;
+			$this->binaries = new \stdClass;
 			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
 			foreach($e[0]->executable as $v) {
@@ -226,7 +226,7 @@ class Config {
 	 */
 	private function parseSiteSettings(\SimpleXMLElement $site) {
 
-		$this->site = new \StdClass;
+		$this->site = new \stdClass;
 
 		$this->site->use_nice_uris = FALSE;
 

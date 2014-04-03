@@ -8,14 +8,13 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.1 2014-04-02
+ * @version 0.5.3 2014-04-03
  */
 class Gd extends ImageModifier {
 
 	private	$src,
 			$destinationBuffer,
-			$bufferNdx = 0,
-			$imageWasAltered = FALSE;
+			$bufferNdx = 0;
 
 	/**
 	 * initializes object with optional filename
@@ -40,7 +39,7 @@ class Gd extends ImageModifier {
 		$this->mimeType	= $info['mime'];
 
 		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
-			throw new ImageModifierException("File $file is not of type ".implode(', ', $this->supportedFormats).".");
+			throw new ImageModifierException("File $file is not of type '" . implode("', '", $this->supportedFormats) . "'.");
 		}
 
 		switch($this->mimeType) {
@@ -82,17 +81,10 @@ class Gd extends ImageModifier {
 	}
 
 	/**
-	 * flips buffers when several manipulating steps are queued
-	 */
-	private function flipBuffer() {
-		$this->bufferNdx = ++$this->bufferNdx % 2;
-	}
-
-	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_crop()
 	 */
-	protected function do_crop($src, $top, $left, $bottom, $right) {
+	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right) {
 
 		$dst = new \stdClass();
 		$dst->width		= $src->width - $left - $right;
@@ -119,7 +111,7 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_resize()
 	 */
-	protected function do_resize($src, $width, $height) {
+	protected function do_resize(\stdClass $src, $width, $height) {
 
 		$dst = new \stdClass();
 		$dst->resource	= imagecreatetruecolor($width, $height);
@@ -154,7 +146,7 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_watermark()
 	 */
-	protected function do_watermark($src, $watermarkFile) {
+	protected function do_watermark(\stdClass $src, $watermarkFile) {
 
 		$stamp			= imagecreatefrompng($watermarkFile);
 		$stampWidth		= imagesx($stamp);
@@ -186,7 +178,7 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
 	 */
-	protected function do_greyscale($src) {
+	protected function do_greyscale(\stdClass $src) {
 
 		$dst = new \stdClass();
 		$dst->resource	= imagecreatetruecolor($src->width, $src->height);
@@ -212,36 +204,33 @@ class Gd extends ImageModifier {
      */
 	public function export($path = NULL, $mimetype = NULL) {
 
-		$src = $this->src;
-		$dst = $this->destinationBuffer[0];
-
-		foreach($this->queue as $step) {
-			$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($src), $step->parameters));
-
-			// action did not alter source
-			if(!$this->destinationBuffer[$this->bufferNdx]) {
-				continue;
-			}
-			else {
-				$this->imageWasAltered = TRUE;
-			}
-
-			$src = $this->destinationBuffer[$this->bufferNdx];
-			$this->flipBuffer();
-		}
-
-		$this->path = isset($path) ? $path : $this->$file;
-
-		if(!isset($mimetype)) {
+		if(!$mimetype) {
 			$mimetype = $this->mimeType;
 		}
+		
+		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $mimetype)) {
+			throw new ImageModifierException("$mimetype not supported by export.");
+		}
+
+		$this->path = $path ? $path : $this->$file;
 
 		// if image was not altered, create only copy
-		if($this->mimeType == $mimetype && !$this->imageWasAltered) {
+
+		if($this->mimeType == $mimetype && !count($this->queue)) {
 			copy($this->file, $this->path);
 		}
 
 		else {
+			
+			$src = $this->src;
+			$dst = $this->destinationBuffer[0];
+			
+			foreach($this->queue as $step) {
+				$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($src), $step->parameters));
+				$src = $this->destinationBuffer[$this->bufferNdx];
+				$this->bufferNdx = ++$this->bufferNdx % 2;
+			}
+			
 			switch($mimetype) {
 
 				case 'image/jpeg':
