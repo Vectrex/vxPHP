@@ -16,7 +16,7 @@ class ImageModifierFactory {
 	 * 
 	 * associative array containing possible class => required extension combinations
 	 */
-	private static $options = array('ImageMagick' => 'imagick', 'Gd' => 'gd');
+	private static $options = array('Gd' => 'gd', 'ImageMagick' => 'imagick');
 
 	private static $preferedOption;
 	
