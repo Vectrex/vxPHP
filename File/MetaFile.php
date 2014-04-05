@@ -12,6 +12,7 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Observer\SubjectInterface;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Application;
+use vxPHP\User\User;
 
 /**
  * mapper for metafiles
@@ -20,10 +21,11 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.5 2013-11-22
+ * @version 0.7.0 2014-04-05
  *
- * @TODO merge rename() with commit()
- * @TODO cleanup getImagesForReference()
+ * @todo merge rename() with commit()
+ * @todo cleanup getImagesForReference()
+ * @todo allow update of createdBy user
  */
 class MetaFile implements SubjectInterface {
 
@@ -42,8 +44,18 @@ class MetaFile implements SubjectInterface {
 
 	private	$id,
 			$isObscured,
-			$data;
+			$data,
 
+			/**
+			 * @var UserAbstract
+			 */
+			$createdBy,
+
+			/**
+			 * @var UserAbstract
+			 */
+			$updatedBy;
+	
 	/**
 	 * returns MetaFile instance alternatively identified by its path or its primary key in the database
 	 *
@@ -507,6 +519,60 @@ class MetaFile implements SubjectInterface {
 		return $this->data['referencedID'];
 	}
 
+	/**
+	 * get user instance which created database entry of metafile
+	 * the creator is considered immutable
+	 *
+	 * @return NULL|\vxPHP\User\User
+	 */
+	public function getCreatedBy() {
+	
+		if(is_null($this->createdBy)) {
+				
+			// no user was stored with instance
+	
+			if(empty($this->data['createdBy'])) {
+				return NULL;
+			}
+				
+			// retrieve user instance and store it for subsequent calls
+				
+			else {
+				$this->createdBy = new User();
+				$this->createdBy->setUser($this->data['createdBy']);
+			}
+		}
+	
+		return $this->createdBy;
+	}
+	
+	/**
+	 * get user instance which last updated database entry of metafile
+	 * the updater can be changed
+	 *
+	 * @return NULL|\vxPHP\User\User
+	 */
+	public function getUpdatedBy() {
+	
+		if(is_null($this->updatedBy)) {
+	
+			// no user was stored with instance
+	
+			if(empty($this->data['updatedBy'])) {
+				return NULL;
+			}
+	
+			// retrieve user instance and store it for subsequent calls
+	
+			else {
+				$this->updatedBy = new User();
+				$this->updatedBy->setUser($this->data['updatedBy']);
+			}
+		}
+	
+		return $this->updatedBy;
+	}
+	
 	/**
 	 * retrieve mime type
 	 *

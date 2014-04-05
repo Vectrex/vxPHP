@@ -5,6 +5,8 @@ namespace vxPHP\File;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\File\Exception\MetaFolderException;
 use vxPHP\Application\Application;
+use vxPHP\User\UserAbstract;
+use vxPHP\User\User;
 
 /**
  * mapper for metafolder
@@ -13,9 +15,10 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.10 2013-11-21
+ * @version 0.6.0 2014-04-05
  *
- * @todo won't know about drive letters on windows systems
+ * @todo compatibility checks on windows systems
+ * @todo allow update of createdBy user
  */
 class MetaFolder {
 
@@ -35,6 +38,16 @@ class MetaFolder {
 			$obscure_files,
 
 			/**
+			 * @var UserAbstract
+			 */
+			$createdBy,
+			
+			/**
+			 * @var UserAbstract
+			 */
+			$updatedBy,
+
+			/**
 			 * @var array
 			 */
 			$metaFiles,
@@ -43,7 +56,7 @@ class MetaFolder {
 			 * @var array
 			 */
 			$metaFolders;
-
+	
 	/**
 	 * retrieve metafolder instance by either primary key of db entry
 	 * or path - both relative and absolute paths are allowed
@@ -110,6 +123,7 @@ class MetaFolder {
 		$this->r				= (int) $this->data['r'];
 		$this->obscure_files	= (boolean) $this->data['Obscure_Files'];
 		$this->name				= basename($this->fullPath);
+		
 	}
 
 	private function getDbEntryByPath($path) {
@@ -178,7 +192,61 @@ class MetaFolder {
 	public function getName() {
 		return $this->name;
 	}
+	
+	/**
+	 * get user instance which created database entry of metafolder
+	 * the creator is considered immutable
+	 * 
+	 * @return NULL|\vxPHP\User\User
+	 */
+	public function getCreatedBy() {
+		
+		if(is_null($this->createdBy)) {
+			
+			// no user was stored with instance
 
+			if(empty($this->data['createdBy'])) {
+				return NULL;
+			}
+			
+			// retrieve user instance and store it for subsequent calls
+			
+			else {
+				$this->createdBy = new User();
+				$this->createdBy->setUser($this->data['createdBy']);
+			}
+		}
+
+		return $this->createdBy;
+	}
+
+	/**
+	 * get user instance which last updated database entry of metafolder
+	 * the updater can be changed
+	 *
+	 * @return NULL|\vxPHP\User\User
+	 */
+	public function getUpdatedBy() {
+	
+		if(is_null($this->updatedBy)) {
+				
+			// no user was stored with instance
+	
+			if(empty($this->data['updatedBy'])) {
+				return NULL;
+			}
+				
+			// retrieve user instance and store it for subsequent calls
+				
+			else {
+				$this->updatedBy = new User();
+				$this->updatedBy->setUser($this->data['updatedBy']);
+			}
+		}
+	
+		return $this->updatedBy;
+	}
+	
 	/**
 	 * @return array
 	 */
