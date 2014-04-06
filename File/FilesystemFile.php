@@ -7,15 +7,14 @@ use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Application;
 use vxPHP\Http\Request;
+use vxPHP\User\Admin;
 
 /**
  * mapper for filesystem files
  *
  * @author Gregor Kofler
  *
- * @version 0.4.4 2013-11-29
- *
- * @todo properly deal with 10.04 Ubuntu bug (PHP 5.3.2)
+ * @version 0.4.5 2014-04-06
  */
 
 class FilesystemFile {
@@ -326,12 +325,14 @@ class FilesystemFile {
 			throw new FilesystemFileException("Metafile '{$this->filename}' in '{$this->folder->getRelativePath()}' already exists.", FilesystemFileException::METAFILE_ALREADY_EXISTS);
 		}
 
-		$mf = $this->folder->createMetaFolder();
+		$mf			= $this->folder->createMetaFolder();
+		$user		= Admin::getInstance();
 
 		if(!($filesID = $db->insertRecord('files', array(
-			'foldersID'	=> $mf->getId(),
-			'File'		=> $this->filename,
-			'Mimetype'	=> $this->getMimetype()
+			'foldersID'		=> $mf->getId(),
+			'File'			=> $this->filename,
+			'Mimetype'		=> $this->getMimetype(),
+			'createdBy'		=> is_null($user) ? NULL : $user->getAdminId()
 		)))) {
 			throw new FilesystemFileException("Could not create metafile for '{$this->filename}'.", FilesystemFileException::METAFILE_CREATION_FAILED);
 		}
