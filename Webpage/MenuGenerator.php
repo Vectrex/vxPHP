@@ -21,7 +21,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.0, 2013-12-08
+ * @version 0.3.1, 2014-04-06
  *
  * @throws MenuGeneratorException
  */
@@ -404,12 +404,20 @@ class MenuGenerator {
 			return FALSE;
 		}
 
-		// unhide all menu entries
+		// unhide all menu entries, in case privileges have changed
 
 		foreach($m->getEntries() as $e) {
 			$e->setAttribute('display', NULL);
 		}
 
+		// superadmin sees everything
+
+		if($admin->hasSuperAdminPrivileges()) {
+			return TRUE;
+		}
+
+		// handle different authentication levels
+		
 		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
 			if($this->authenticateMenuByTableRowAccess($m)) {
 				foreach($m->getEntries() as $e) {
@@ -439,8 +447,17 @@ class MenuGenerator {
 		}
 
 		if($m->getAuth() >= $admin->getPrivilegeLevel()) {
+
+			foreach($m->getEntries() as $e) {
+				if(!$e->isAuthenticatedBy($admin->getPrivilegeLevel())) {
+					$e->setAttribute('display', 'none');
+				}
+			}
+			
 			return TRUE;
 		}
+
+		// optional custom fallback
 
 		return $this->authenticateMenuByMiscRules($m);
 	}

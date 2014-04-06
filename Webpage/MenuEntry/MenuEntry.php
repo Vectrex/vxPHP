@@ -9,7 +9,7 @@ use vxPHP\Application\Application;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.3.6 2013-12-08
+ * @version 0.3.7 2014-04-06
  */
 class MenuEntry {
 	protected static	$count = 1;
@@ -77,7 +77,7 @@ class MenuEntry {
 	}
 
 	public function isAuthenticatedBy($privilege) {
-		return isset($this->auth) && $privilege >= $this->auth;
+		return isset($this->auth) && $privilege <= $this->auth;
 	}
 
 	public function refersLocalPage() {

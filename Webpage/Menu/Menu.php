@@ -9,7 +9,7 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * Menu class
  *
  * manages a complete menu
- * @version 0.7.2 2013-12-08
+ * @version 0.7.3 2014-04-06
  */
 class Menu {
 
@@ -291,7 +291,7 @@ class Menu {
 	 * @return boolean
 	 */
 	public function isAuthenticatedBy($privilege) {
-		return isset($this->auth) && $privilege >= $this->auth;
+		return isset($this->auth) && $privilege <= $this->auth;
 	}
 
 	/**
