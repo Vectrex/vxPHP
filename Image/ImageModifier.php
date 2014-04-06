@@ -8,7 +8,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.5.1 2014-04-02
+ * @version 0.5.2 2014-04-06
  */
 abstract class ImageModifier {
 
@@ -130,6 +130,9 @@ abstract class ImageModifier {
 
 		$this->queue[] = $todo;
 		
+		$this->srcWidth		= $this->srcWidth - $left - $right;
+		$this->srcHeight	= $this->srcHeight - $top - $bottom;
+
 	}
 
 	/**
@@ -233,6 +236,9 @@ abstract class ImageModifier {
 		$todo->parameters	= array($width, $height);
 
 		$this->queue[] = $todo;
+		
+		$this->srcWidth		= $width;
+		$this->srcHeight	= $height;
 
 	}
 
