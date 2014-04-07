@@ -9,7 +9,6 @@ use vxPHP\Observer\SubjectInterface;
 use vxPHP\Observer\EventDispatcher;
 
 use vxPHP\User\User;
-use vxPHP\User\Admin;
 use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
@@ -143,7 +142,7 @@ class Article implements SubjectInterface {
 		}
 
 		EventDispatcher::getInstance()->notify($this, 'beforeArticleSave');
-
+		
 		if(!is_null($this->id)) {
 
 			// update
@@ -161,7 +160,7 @@ class Article implements SubjectInterface {
 					'Display_until'			=> is_null($this->displayUntil) ? NULL : $this->displayUntil->format('Y-m-d H:i:s'),
 					'customFlags'			=> $this->customFlags,
 					'customSort'			=> $this->customSort,
-					'updatedBy'				=> Admin::getInstance()->getAdminId()
+					'updatedBy'				=> $this->updatedBy ? $this->updatedBy->getAdminId() : NULL
 				)
 			);
 
@@ -185,7 +184,8 @@ class Article implements SubjectInterface {
 					'Display_until'			=> is_null($this->displayUntil) ? NULL : $this->displayUntil->format('Y-m-d H:i:s'),
 					'customFlags'			=> $this->customFlags,
 					'customSort'			=> $this->customSort,
-					'createdBy'				=> Admin::getInstance()->getAdminId()
+					'updatedBy'				=> $this->createdBy ? $this->createdBy->getAdminId() : NULL,
+					'createdBy'				=> $this->createdBy ? $this->createdBy->getAdminId() : NULL
 				)
 			);
 
@@ -271,12 +271,33 @@ class Article implements SubjectInterface {
 	}
 
 	/**
+	 * set user which created the article
+	 * will only be effective with first save of article
+	 * 
+	 * @param User $user
+	 */
+	public function setCreatedBy(User $user) {
+		if(is_null($this->createdBy)) {
+			$this->createdBy = $user;
+		}
+	}
+
+	/**
 	 * get user which created article
 	 *
 	 * @return User
 	 */
 	public function getCreatedBy() {
 		return $this->createdBy;
+	}
+
+	/**
+	 * set user which updated the article
+	 * 
+	 * @param User $user
+	 */
+	public function setUpdatedBy(User $user) {
+		$this->updatedBy = $user;
 	}
 
 	/**
@@ -482,15 +503,15 @@ class Article implements SubjectInterface {
 		// set admin information
 
 		try {
-			$article->createdBy = new User();
-			$article->createdBy->setUser($articleData['createdBy']);
+			$article->createdBy = User::getInstance($articleData['createdBy']);
 		}
+		catch(\InvalidArgumentException $e) {}
 		catch(UserException $e) {}
 
 		try {
-			$article->updatedBy = new User();
-			$article->updatedBy->setUser($articleData['updatedBy']);
+			$article->updatedBy = User::getInstance($articleData['updatedBy']);
 		}
+		catch(\InvalidArgumentException $e) {}
 		catch(UserException $e) {}
 
 		// set date information

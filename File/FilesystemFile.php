@@ -7,7 +7,7 @@ use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Application;
 use vxPHP\Http\Request;
-use vxPHP\User\Admin;
+use vxPHP\User\User;
 
 /**
  * mapper for filesystem files
@@ -326,7 +326,7 @@ class FilesystemFile {
 		}
 
 		$mf			= $this->folder->createMetaFolder();
-		$user		= Admin::getInstance();
+		$user		= User::getSessionUser();
 
 		if(!($filesID = $db->insertRecord('files', array(
 			'foldersID'		=> $mf->getId(),

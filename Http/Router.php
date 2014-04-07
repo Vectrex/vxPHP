@@ -2,9 +2,8 @@
 
 namespace vxPHP\Http;
 
-use vxPHP\User\UserAbstract;
-use vxPHP\User\Admin;
 use vxPHP\Application\Application;
+use vxPHP\User\User;
 
 /**
  *
@@ -141,17 +140,17 @@ class Router {
 	 * check whether authentication level required by route is met by user
 	 *
 	 * @param Route $route
-	 * @param UserAbstract $user
+	 * @param User $user
 	 * @return boolean
 	 */
-	private static function authenticateRoute(Route $route, UserAbstract $user = NULL) {
+	private static function authenticateRoute(Route $route, User $user = NULL) {
 
 		$auth = $route->getAuth();
 
 		if(!is_null($auth)) {
 
-			if(is_null($user)) {
-				$user = Admin::getInstance();
+			if(is_null($user) && !($user = User::getSessionUser())) {
+				return FALSE;
 			}
 
 			if(!$user->isAuthenticated()) {

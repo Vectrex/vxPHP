@@ -385,8 +385,8 @@ class Config {
 
 				$auth = strtoupper(trim((string) $a->auth));
 
-				if(defined("vxPHP\\User\\UserAbstract::AUTH_$auth")) {
-					$auth = constant("vxPHP\\User\\UserAbstract::AUTH_$auth");
+				if(defined("vxPHP\\User\\User::AUTH_$auth")) {
+					$auth = constant("vxPHP\\User\\User::AUTH_$auth");
 
 					if(isset($a->auth_parameters)) {
 						$parameters['authParameters'] = trim((string) $a->auth_parameters);
@@ -442,8 +442,8 @@ class Config {
 			// if auth level is defined, additional authentication parameters can be set
 
 			$menuAuth = strtoupper(trim((string) $a->auth));
-			if(defined("vxPHP\\User\\UserAbstract::AUTH_$menuAuth")) {
-				$m->setAuth(constant("vxPHP\\User\\UserAbstract::AUTH_$menuAuth"));
+			if(defined("vxPHP\\User\\User::AUTH_$menuAuth")) {
+				$m->setAuth(constant("vxPHP\\User\\User::AUTH_$menuAuth"));
 
 				if(isset($a->auth_parameters)) {
 					$m->setAuthParameters((string) $a->auth_parameters);

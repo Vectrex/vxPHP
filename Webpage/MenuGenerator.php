@@ -4,14 +4,13 @@ namespace vxPHP\Webpage;
 
 use vxPHP\Http\Request;
 use vxPHP\Http\Router;
-use vxPHP\User\Admin;
-use vxPHP\User\UserAbstract;
 use vxPHP\Http\Route;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
+use vxPHP\User\User;
 
 /**
  * Wrapper class for rendering menus
@@ -398,9 +397,9 @@ class MenuGenerator {
 			return TRUE;
 		}
 
-		$admin = Admin::getInstance();
+		$admin = User::getSessionUser();
 
-		if(!$admin->isAuthenticated()) {
+		if(!$admin || !$admin->isAuthenticated()) {
 			return FALSE;
 		}
 
@@ -418,7 +417,7 @@ class MenuGenerator {
 
 		// handle different authentication levels
 		
-		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_TABLE) {
+		if($m->getAuth() === User::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= User::AUTH_OBSERVE_TABLE) {
 			if($this->authenticateMenuByTableRowAccess($m)) {
 				foreach($m->getEntries() as $e) {
 					if(!$this->authenticateMenuEntry($e)) {
@@ -432,7 +431,7 @@ class MenuGenerator {
 			}
 		}
 
-		if($m->getAuth() === UserAbstract::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= UserAbstract::AUTH_OBSERVE_ROW) {
+		if($m->getAuth() === User::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= User::AUTH_OBSERVE_ROW) {
 			if($this->authenticateMenuByTableRowAccess($m)) {
 				foreach($m->getEntries() as $e) {
 					if(!$this->authenticateMenuEntry($e)) {
@@ -477,8 +476,13 @@ class MenuGenerator {
 			return FALSE;
 		}
 
+		$admin = User::getSessionUser();
+		
+		if(!$admin) {
+			return FALSE;
+		}
+
 		$tables = preg_split('/\s*,\s*/', trim($p));
-		$admin = Admin::getInstance();
 
 		$matching = array_intersect($tables, $admin->getTableAccess());
 		return !empty($matching);
@@ -509,8 +513,13 @@ class MenuGenerator {
 			return FALSE;
 		}
 
+		$admin = User::getSessionUser();
+		
+		if(!$admin) {
+			return FALSE;
+		}
+
 		$tables = preg_split('/\s*,\s*/', trim($p));
-		$admin = Admin::getInstance();
 
 		return !array_intersect($tables, $admin->getTableAccess());
 
