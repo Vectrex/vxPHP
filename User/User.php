@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
 
 /**
  * @author Gregor Kofler
- * @version 0.5.10a 2013-02-05
+ * @version 0.6.0 2014-04-07
  */
 
 class User {

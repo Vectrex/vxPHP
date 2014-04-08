@@ -18,7 +18,7 @@ use vxPHP\Application\Application;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.6.8 2013-10-05
+ * @version 0.7.0 2014-04-07
  */
 
 class Article implements SubjectInterface {

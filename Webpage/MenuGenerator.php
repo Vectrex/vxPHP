@@ -20,7 +20,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.1, 2014-04-06
+ * @version 0.4.0, 2014-04-07
  *
  * @throws MenuGeneratorException
  */

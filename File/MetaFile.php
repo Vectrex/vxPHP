@@ -21,7 +21,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2014-04-05
+ * @version 0.7.1 2014-04-07
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -47,12 +47,12 @@ class MetaFile implements SubjectInterface {
 			$data,
 
 			/**
-			 * @var UserAbstract
+			 * @var User
 			 */
 			$createdBy,
 
 			/**
-			 * @var UserAbstract
+			 * @var User
 			 */
 			$updatedBy;
 	
@@ -538,8 +538,7 @@ class MetaFile implements SubjectInterface {
 			// retrieve user instance and store it for subsequent calls
 				
 			else {
-				$this->createdBy = new User();
-				$this->createdBy->setUser($this->data['createdBy']);
+				$this->createdBy = User::getInstance($this->data['createdBy']);
 			}
 		}
 	
@@ -565,8 +564,7 @@ class MetaFile implements SubjectInterface {
 			// retrieve user instance and store it for subsequent calls
 	
 			else {
-				$this->updatedBy = new User();
-				$this->updatedBy->setUser($this->data['updatedBy']);
+				$this->createdBy = User::getInstance($this->data['updatedBy']);
 			}
 		}
 	

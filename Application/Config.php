@@ -15,7 +15,7 @@ use vxPHP\Http\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.12 2014-04-06
+ * @version 0.9.13 2014-04-07
  *
  * @todo refresh() method
  */

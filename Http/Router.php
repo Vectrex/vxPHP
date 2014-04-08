@@ -9,7 +9,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.2 2013-11-29
+ * @version 0.3.3 2014-04-07
  *
  */
 class Router {

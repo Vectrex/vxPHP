@@ -14,7 +14,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.5 2014-04-06
+ * @version 0.4.6 2014-04-07
  */
 
 class FilesystemFile {
