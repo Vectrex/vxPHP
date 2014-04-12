@@ -18,7 +18,7 @@ use vxPHP\Application\Application;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.7.0 2014-04-07
+ * @version 0.8.0 2014-04-12
  */
 
 class Article implements SubjectInterface {
@@ -32,7 +32,16 @@ class Article implements SubjectInterface {
 			$data,
 			$customFlags,
 			$customSort,
-			$referencingFiles,
+
+			/**
+			 * @var array
+			 */
+			$linkedFiles,
+			
+			/**
+			 * @var boolean
+			 */
+			$updateLinkedFiles,
 			$previouslySavedValues,
 			$dataCols = array('Teaser', 'Content');
 
@@ -87,7 +96,7 @@ class Article implements SubjectInterface {
 	 * checks whether an article was changed when compared to the data used for instancing
 	 * evaluates to TRUE for a new article
 	 *
-	 * @todo changes to referencingFiles are currently ignored
+	 * @todo changes of linked files are currently ignored
 	 *
 	 * @return boolean
 	 */
@@ -96,7 +105,7 @@ class Article implements SubjectInterface {
 		if(is_null($this->previouslySavedValues)) {
 			return TRUE;
 		}
-
+		
 		foreach(array_keys(get_object_vars($this->previouslySavedValues)) as $p) {
 			if(is_array($this->previouslySavedValues->$p)) {
 				if(count(array_diff_assoc($this->previouslySavedValues->$p, $this->$p)) > 0) {
@@ -128,6 +137,7 @@ class Article implements SubjectInterface {
 	 * store new article in database or update changes to existing article
 	 *
 	 * @throws ArticleException
+	 * @todo consider transactions
 	 */
 	public function save() {
 
@@ -191,14 +201,36 @@ class Article implements SubjectInterface {
 
 			$this->id = $db->insertRecord('articles', $cols);
 
-			// set file references
+		}
+		
+		// store link information for linked files if linked files were changed in any way
+		
+		if($this->updateLinkedFiles) {
 
-			if(!is_null($this->referencingFiles)) {
-				foreach($this->referencingFiles as $f) {
-					$f->setMetaData(array('referenced_Table' => 'articles', 'referencedID' => $this->id));
-				}
+			// delete all previous entries
+	
+			$db->deleteRecord('articles_files', array('articlesID' => $this->id), TRUE);
+			
+			// save new references and use position in array as customSort value
+
+			foreach($this->linkedFiles as $sortPosition => $file) {
+				$db->insertRecord('articles_files', array(
+					'articlesID'	=> $this->id,
+					'filesID'		=> $file->getId(),
+					'customSort'	=> $sortPosition
+				));
+			}
+			
+			$this->updateLinkedFiles = FALSE;
+		}
+		
+
+		if(!is_null($this->referencingFiles)) {
+			foreach($this->referencingFiles as $f) {
+				$f->setMetaData(array('referenced_Table' => 'articles', 'referencedID' => $this->id));
 			}
 		}
+		
 
 		EventDispatcher::getInstance()->notify($this, 'afterArticleSave');
 
@@ -206,6 +238,9 @@ class Article implements SubjectInterface {
 
 	/**
 	 * delete article, unlink references in metafiles
+	 * 
+	 * @todo consider transactions
+	 * 
 	 */
 	public function delete() {
 
@@ -217,7 +252,8 @@ class Article implements SubjectInterface {
 
 			// delete record
 
-			Application::getInstance()->getDb()->deleteRecord('articles', $this->id);
+			$db = Application::getInstance()->getDb(); 
+			$db->deleteRecord('articles', $this->id);
 
 			// delete instance references
 
@@ -226,9 +262,16 @@ class Article implements SubjectInterface {
 
 			// unlink referenced files
 
+			foreach($this->linkedFiles as $file) {
+				$file->unlinkArticle($this);
+			}
+			
+			
 			foreach($this->getReferencingFiles() as $f) {
 				$f->setMetaData(array('referenced_Table' => '', 'referencedID' => ''));
 			}
+
+			$db->deleteRecord('articles_files', array('articlesID' => $this->id));
 
 			EventDispatcher::getInstance()->notify($this, 'afterArticleDelete');
 
@@ -236,18 +279,97 @@ class Article implements SubjectInterface {
 	}
 
 	/**
-	 *
+	 * link a metafile to the article; additionally links article to metaFile
+	 * when $sortPosition is set, the file reference is moved to this position within the files array
+	 * 
+	 * @param MetaFile $file
+	 * @param int $sortPosition
+	 */
+	public function linkMetaFile(MetaFile $file, $sortPosition = NULL) {
+
+		// get all linked files if not done previously
+
+		if(is_null($this->linkedFiles)) {
+			$this->getLinkedMetaFiles();
+		}
+
+		if(!in_array($file, $this->linkedFiles)) {
+
+			// append file when no sort position is set or sort position beyond linked files length
+
+			if(is_null($sortPosition) || !is_numeric($sortPosition) || (int) $sortPosition >= count($this->linkedFiles)) {
+				$this->linkedFiles[] = $file;
+			}
+			
+			// otherwise insert reference at given position
+
+			else {
+				array_splice($this->files, $sortPosition, 0, $file);
+			}
+
+			$file->linkArticle($this);
+			$this->updateLinkedFiles = TRUE;
+
+		}
+	}
+	
+	/**
+	 * remove a file reference
+	 * ensures proper re-ordering of files array
+	 * 
 	 * @param MetaFile $file
 	 */
-	public function addMetafile(MetaFile $file) {
+	public function unlinkMetaFile(MetaFile $file) {
 
-		if(!in_array($file, $this->referencingFiles)) {
-			$this->referencingFiles[] = $file;
+		// get all linked files if not done previously
 
-			// set reference when article already saved
+		if(is_null($this->linkedFiles)) {
+			$this->getLinkedMetaFiles();
+		}
 
-			if(!is_null($this->id)) {
-				$file->setMetaData(array('referenced_Table' => 'articles', 'referencedID' => $this->id));
+		// remove file reference if file is linked and ensure continuous numeric indexes
+
+		if(($pos = array_search($file, $this->linkedFiles, TRUE)) !== FALSE) {
+			array_splice($this->linkedFiles, $pos, 1);
+
+			$file->unlinkArticle($this);
+			$this->updateLinkedFiles = TRUE;
+				
+		}
+	}
+	
+	/**
+	 * set custom sort value $file
+	 * 
+	 * @param MetaFile $file
+	 * @param int $sortPosition
+	 */
+	public function setCustomSortOfMetaFile(MetaFile $file, $sortPosition) {
+
+		// get all linked files if not done previously
+		
+		if(is_null($this->linkedFiles)) {
+			$this->getLinkedMetaFiles();
+		}
+
+		// is $file linked?
+
+		if(($pos = array_search($file, $this->linkedFiles, TRUE)) !== FALSE) {
+		
+			// is $sortPosition valid and different from current position
+
+			if(is_numeric($sortPosition) && (int) $sortPosition !== $pos) {
+
+				// remove at old position
+
+				array_splice($this->linkedFiles, $pos, 1);
+				
+				// insert at new position
+				
+				array_splice($this->linkedFiles, $sortPosition, 0, array($file));
+
+				$this->updateLinkedFiles = TRUE;
+
 			}
 		}
 	}
@@ -479,6 +601,20 @@ class Article implements SubjectInterface {
 			$this->referencingFiles = MetaFile::getFilesForReference($this->id, 'articles', 'sortByCustomSort');
 		}
 		return $this->referencingFiles;
+	}
+	
+	/**
+	 * returns array of MetaFile instances linked to the article
+	 * 
+	 * @return array
+	 */
+	public function getLinkedMetaFiles() {
+
+		if(!is_null($this->id) && is_null($this->linkedFiles)) {
+			$this->linkedFiles = MetaFile::getFilesForArticle($this);
+		}
+
+		return $this->linkedFiles;
 	}
 
 	/**
