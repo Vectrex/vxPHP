@@ -13,6 +13,7 @@ use vxPHP\Observer\SubjectInterface;
 use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Application;
 use vxPHP\User\User;
+use vxPHP\Orm\Custom\Article;
 
 /**
  * mapper for metafiles
@@ -21,7 +22,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.1 2014-04-07
+ * @version 0.8.0 2014-04-12
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -264,21 +265,17 @@ class MetaFile implements SubjectInterface {
 	}
 
 	/**
-	 * return all metafile instances referencing a certain row in certain table
-	 * also handy for caching
-	 *
-	 * @param int $referencedId
-	 * @param string $referencedTable
+	 * return all metafile instances linked to an article
+	 * 
+	 * @param Article $article
 	 * @param callback $callBackSort
 	 * @throws MetaFileException
-	 *
-	 * @return array metafiles
-	 *
+	 * @return array:\vxPHP\File\MetaFile
 	 */
-	public static function getFilesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
+	public static function getFilesForArticle(Article $article, $callBackSort = NULL) {
 
 		$result = array();
-
+		
 		$files = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
 				f.*,
@@ -286,11 +283,13 @@ class MetaFile implements SubjectInterface {
 			FROM
 				files f
 				INNER JOIN folders fo ON f.foldersID = fo.foldersID
+				INNER JOIN articles_files af ON af.filesID = f.filesID
 			WHERE
-				referencedID = ? AND
-				referenced_Table = ?
-				", array((int) $referencedId, (string) $referencedTable));
-
+				af.articlesID = ?
+			ORDER BY
+				af.customSort
+			", array($article->getId()));
+		
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
 				$file = self::$instancesById[$f['filesID']];
@@ -302,7 +301,7 @@ class MetaFile implements SubjectInterface {
 			}
 			$result[] = $file;
 		}
-
+		
 		if(is_null($callBackSort)) {
 			return $result;
 		}
@@ -317,18 +316,19 @@ class MetaFile implements SubjectInterface {
 		else {
 			throw new MetaFileException("'$callBackSort' is not callable.");
 		}
+		
 	}
-
+	
 	/**
-	 * @param int $referencedId
-	 * @param string $referencedTable
+	 * return all metafile instances linked to an article with mimetype 'image/jpeg', 'image/png', 'image/gif'
+	 *
+	 * @param Article $article
 	 * @param callback $callBackSort
 	 * @throws MetaFileException
-	 *
-	 * @return array metafiles with mimetype 'image/jpeg', 'image/png', 'image/gif'
+	 * @return array:\vxPHP\File\MetaFile
 	 */
-	public static function getImagesForReference($referencedId, $referencedTable, $callBackSort = NULL) {
-
+	public static function getImagesForArticle(Article $article, $callBackSort = NULL) {
+		
 		$result = array();
 
 		$mimeTypes = array('image/jpeg', 'image/png', 'image/gif');
@@ -340,12 +340,14 @@ class MetaFile implements SubjectInterface {
 			FROM
 				files f
 				INNER JOIN folders fo ON f.foldersID = fo.foldersID
+				INNER JOIN articles_files af ON af.filesID = f.filesID
 			WHERE
-				referencedID = ? AND
-				referenced_Table = ? AND
-				Mimetype IN ('".implode("','", $mimeTypes)."')
-				", array((int) $referencedId, (string) $referencedTable));
-
+				af.articlesID = ?
+				AND f.Mimetype IN ('".implode("','", $mimeTypes)."')
+			ORDER BY
+				af.customSort
+			", array($article->getId()));
+				
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
 				$file = self::$instancesById[$f['filesID']];
@@ -502,23 +504,23 @@ class MetaFile implements SubjectInterface {
 	}
 
 	/**
-	 * get referenced table stored with metafile in database entry
-	 *
-	 * @return string table
+	 * stub, might be dropped entirely
+	 * 
+	 * @param Article $article
 	 */
-	public function getReferencedTable() {
-		return $this->data['referenced_Table'];
+	public function linkArticle(Article $article) {
+		
 	}
 
 	/**
-	 * get referenced id stored with metafile in database entry
+	 * stub, might be dropped entirely
 	 *
-	 * @return integer
+	 * @param Article $article
 	 */
-	public function getReferencedId() {
-		return $this->data['referencedID'];
+	public function unlinkArticle(Article $article) {
+	
 	}
-
+	
 	/**
 	 * get user instance which created database entry of metafile
 	 * the creator is considered immutable

@@ -5,6 +5,7 @@ use vxPHP\Database\Mysqldbi;
 use vxPHP\Orm\Query;
 use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Exception\QueryException;
+use vxPHP\Orm\Custom\Article;
 
 /**
  * query object which returns an array of MetaFile objects
@@ -18,13 +19,13 @@ use vxPHP\Orm\Exception\QueryException;
  * 				select();
  *
  * @author Gregor Kofler
- * @version 0.1.2 2014-03-15
+ * @version 0.1.3 2014-04-12
  */
 class MetaFileQuery extends Query implements QueryInterface {
 
 	public function __construct(Mysqldbi $dbConnection) {
 
-		$this->table = 'files';
+		$this->table = 'files f';
 		parent::__construct($dbConnection);
 
 	}
@@ -37,29 +38,25 @@ class MetaFileQuery extends Query implements QueryInterface {
 	 */
 	public function filterByFolder(MetaFolder $folder) {
 
-		$this->addCondition("foldersID = ?", $folder->getId());
+		$this->addCondition("f.foldersID = ?", $folder->getId());
 		return $this;
 
 	}
 
 	/**
-	 * add appropriate WHERE clause that filters metafiles referencing
-	 * given $referencedId in $referencedTable
+	 * add appropriate WHERE clause that filters metafiles linked to given article
 	 *
-	 * @param string $referencedTable
-	 * @param int $referencedId
+	 * @param Article $article
 	 * @return MetaFileQuery
 	 */
 
-	public function filterByReference($referencedTable, $referencedId) {
+	public function filterByArticle(Article $article) {
 
-		if(!is_numeric($referencedId)) {
-			throw new QueryException("Invalid 'referencedId' for " . __CLASS__ . '::' . __METHOD__);
+		if($article->getId()) {
+			$this->innerJoin('articles_files af', 'af.filesID = f.filesID');
+			$this->addCondition("af.articlesID = ?", $article->getId());
 		}
-
-		$this->addCondition("referenced_Table = ?", $referencedTable);
-		$this->addCondition("referencedID = ?", (int) $referencedId);
-
+			
 		return $this;
 
 	}
