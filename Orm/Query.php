@@ -9,7 +9,7 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.4 2014-03-15
+ * @version 0.1.5 2014-04-12
  */
 abstract class Query implements QueryInterface {
 
@@ -209,7 +209,7 @@ abstract class Query implements QueryInterface {
 
 		// add table
 
-		$this->sql .= sprintf(' FROM `%s`', str_replace('.', '`.`', $this->table));
+		$this->sql .= sprintf(' FROM `%s`', preg_replace('/\s+/', '` `', $this->table));
 
 		// add alias
 
