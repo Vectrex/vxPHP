@@ -18,7 +18,7 @@ use vxPHP\Application\Application;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.8.0 2014-04-12
+ * @version 0.8.1 2014-04-13
  */
 
 class Article implements SubjectInterface {
@@ -223,14 +223,6 @@ class Article implements SubjectInterface {
 			
 			$this->updateLinkedFiles = FALSE;
 		}
-		
-
-		if(!is_null($this->referencingFiles)) {
-			foreach($this->referencingFiles as $f) {
-				$f->setMetaData(array('referenced_Table' => 'articles', 'referencedID' => $this->id));
-			}
-		}
-		
 
 		EventDispatcher::getInstance()->notify($this, 'afterArticleSave');
 
@@ -266,11 +258,6 @@ class Article implements SubjectInterface {
 				$file->unlinkArticle($this);
 			}
 			
-			
-			foreach($this->getReferencingFiles() as $f) {
-				$f->setMetaData(array('referenced_Table' => '', 'referencedID' => ''));
-			}
-
 			$db->deleteRecord('articles_files', array('articlesID' => $this->id));
 
 			EventDispatcher::getInstance()->notify($this, 'afterArticleDelete');
@@ -591,18 +578,6 @@ class Article implements SubjectInterface {
 		}
 	}
 
-	/**
-	 * returns array of files referencing this article
-	 *
-	 * @return array
-	 */
-	public function getReferencingFiles() {
-		if(!is_null($this->id) && is_null($this->referencingFiles)) {
-			$this->referencingFiles = MetaFile::getFilesForReference($this->id, 'articles', 'sortByCustomSort');
-		}
-		return $this->referencingFiles;
-	}
-	
 	/**
 	 * returns array of MetaFile instances linked to the article
 	 * 
