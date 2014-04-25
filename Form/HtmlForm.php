@@ -19,7 +19,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
 /**
  * Template Engine for Forms
  *
- * @version 1.2.1 2013-12-05
+ * @version 1.3.0 2014-04-25
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -260,15 +260,6 @@ class HtmlForm {
 
 		foreach($this->elements as $name => $e) {
 
-			if($e instanceof ImageElement && !is_null($this->requestValues->get($name . '_x'))) {
-				$this->clickedSubmit = $e;
-				return $e;
-			}
-			else if($e instanceof FormElement && $e->canSubmit() && !is_null($this->requestValues->get($name))) {
-				$this->clickedSubmit = $e;
-				return $e;
-			}
-
 			if(is_array($e)) {
 
 				// needed for submits via XHR, since arrays are returned as plain text
@@ -288,7 +279,7 @@ class HtmlForm {
 				foreach($e as $k => $ee) {
 
 					if(
-						$ee instanceof ImageElement &&
+						$ee instanceof \vxPHP\Form\FormElement\ImageElement &&
 						($arr = $this->requestValues->get($name . '_x')) &&
 						isset($arr[$k])
 					) {
@@ -298,9 +289,8 @@ class HtmlForm {
 					}
 
 					else if(
-						$ee instanceof FormElement &&
 						$ee->canSubmit() &&
-						($arr = $this->requestValues->get($name . '_x')) &&
+						($arr = $this->requestValues->get($name)) &&
 						isset($arr[$k])
 					) {
 						$this->clickedSubmit = $ee;
@@ -309,6 +299,16 @@ class HtmlForm {
 					}
 				}
 			}
+
+			else if($e instanceof \vxPHP\Form\FormElement\ImageElement && !is_null($this->requestValues->get($name . '_x'))) {
+				$this->clickedSubmit = $e;
+				return $e;
+			}
+			else if($e->canSubmit() && !is_null($this->requestValues->get($name))) {
+				$this->clickedSubmit = $e;
+				return $e;
+			}
+
 		}
 	}
 
@@ -380,29 +380,29 @@ class HtmlForm {
 
 		foreach($this->elements as $name => $e) {
 
-			if($e instanceof FormElement) {
-				if(
-					$e->canSubmit() && !$getSubmits ||
-					!$e->isValid() ||
-					$e instanceof CheckboxElement && !$this->requestValues->get($name)
-				) {
-					continue;
-				}
-				$tmp[$name] = $e->getFilteredValue();
-			}
-
-			else {
+			if(is_array($e)) {
 				$tmp[$name] = array();
 				foreach($e as $ndx => $elem) {
 					if(
-						$elem->canSubmit() && !$getSubmits ||
-						!$elem->isValid() ||
-						$elem instanceof CheckboxElement && !($arr = $this->requestValues->get($name)) && !isset($arr[$ndx])
+							$elem->canSubmit() && !$getSubmits ||
+							!$elem->isValid() ||
+							$elem instanceof \vxPHP\Form\FormElement\CheckboxElement && (!($arr = $this->requestValues->get($name)) || !isset($arr[$ndx]))
 					) {
 						continue;
 					}
 					$tmp[$name][$ndx] = $elem->getFilteredValue();
 				}
+			}
+
+			else {
+				if(
+					$e->canSubmit() && !$getSubmits ||
+					!$e->isValid() ||
+					$e instanceof \vxPHP\Form\FormElement\CheckboxElement && !$this->requestValues->get($name)
+				) {
+					continue;
+				}
+				$tmp[$name] = $e->getFilteredValue();
 			}
 		}
 
@@ -423,9 +423,9 @@ class HtmlForm {
 		$this->initFormValues = $values;
 
 		foreach($values as $name => $value) {
-			if(isset($this->elements[$name]) && $this->elements[$name] instanceof FormElement) {
+			if(isset($this->elements[$name]) && is_object($this->elements[$name])) {
 
-				if($this->elements[$name] instanceof CheckboxElement) {
+				if($this->elements[$name] instanceof \vxPHP\Form\FormElement\CheckboxElement) {
 					if(empty($this->requestValues)) {
 						$this->elements[$name]->setChecked($this->elements[$name]->getValue() == $value);
 					}
@@ -515,19 +515,18 @@ class HtmlForm {
 		$this->formErrors = array();
 
 		foreach($this->elements as $name => $e) {
-			if($e instanceof FormElement) {
-				if(!$e->isValid()) {
-					$this->formErrors[$name] = TRUE;
-				}
-			}
-
-			else {
+			
+			if(is_array($e)) {
 				foreach($e as $ndx => $elem) {
 					if(!isset($this->formErrors[$name])) {
 						$this->formErrors[$name] = array();
 					}
 					$this->formErrors[$name][$ndx] = !$elem->isValid();
 				}
+			}
+
+			else if(!$e->isValid()) {
+				$this->formErrors[$name] = TRUE;
 			}
 		}
 
@@ -617,7 +616,7 @@ class HtmlForm {
 
 		// flagging of checkboxes
 
-		if($e instanceof CheckboxElement) {
+		if($e instanceof \vxPHP\Form\FormElement\CheckboxElement) {
 			$e->setChecked(!!$this->requestValues->get($name));
 		}
 
@@ -633,11 +632,11 @@ class HtmlForm {
 
 	private function setElementArrayRequestValue($name) {
 
+		$values = $this->requestValues->get($name, $this->requestValues->get($name, NULL, TRUE));
+
 		foreach($this->elements[$name] as $k => $e) {
 
-			$values = $this->requestValues->get($name);
-
-			if($e instanceof CheckboxElement) {
+			if($e instanceof \vxPHP\Form\FormElement\CheckboxElement) {
 				$e->setChecked(!is_null($values) && isset($values[$k]));
 			}
 			else {
