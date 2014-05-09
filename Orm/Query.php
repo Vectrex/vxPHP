@@ -9,7 +9,7 @@ use vxPHP\Orm\QueryInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.5 2014-04-12
+ * @version 0.1.6 2014-05-09
  */
 abstract class Query implements QueryInterface {
 
@@ -72,6 +72,8 @@ abstract class Query implements QueryInterface {
 		$join->on		= $on;
 
 		$this->innerJoins[] = $join;
+		
+		return $this;
 	}
 
 	/**
