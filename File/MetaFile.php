@@ -14,6 +14,7 @@ use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Orm\Custom\Article;
+use vxPHP\Orm\Custom\ArticleQuery;
 
 /**
  * mapper for metafiles
@@ -22,7 +23,7 @@ use vxPHP\Orm\Custom\Article;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.0 2014-04-12
+ * @version 0.8.2 2014-05-09
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -55,7 +56,11 @@ class MetaFile implements SubjectInterface {
 			/**
 			 * @var User
 			 */
-			$updatedBy;
+			$updatedBy,
+			/**
+			 * @var Article[]
+			 */
+			$linkedArticles;
 	
 	/**
 	 * returns MetaFile instance alternatively identified by its path or its primary key in the database
@@ -520,7 +525,26 @@ class MetaFile implements SubjectInterface {
 	public function unlinkArticle(Article $article) {
 	
 	}
-	
+
+	/**
+	 * get all articles linked to a file
+	 * 
+	 * @return Article[]
+	 */
+	public function getLinkedArticles() {
+
+		if(is_null($this->linkedArticles)) {
+
+			$this->linkedArticles = ArticleQuery::create(Application::getInstance()->getDb())
+				->innerJoin('articles_files af', 'a.articlesID = af.articlesID')
+				->where('af.filesID = ?', array($this->id))
+				->select();
+
+		}
+		
+		return $this->linkedArticles;
+	}
+
 	/**
 	 * get user instance which created database entry of metafile
 	 * the creator is considered immutable
