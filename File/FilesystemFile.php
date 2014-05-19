@@ -14,7 +14,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.6 2014-04-07
+ * @version 0.4.7 2014-05-20
  */
 
 class FilesystemFile {
@@ -25,6 +25,10 @@ class FilesystemFile {
 				$mimetype,
 				$fileInfo;
 
+	/**
+	 * @param string $path
+	 * @return FilesystemFile;
+	 */
 	public static function getInstance($path) {
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
@@ -425,7 +429,7 @@ class FilesystemFile {
 	 * @param integer $starting_index used in renamed file
 	 * @return string
 	 */
-	private static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
+	public static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
 
 		$filename = str_replace(
 			array(' ', 'ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'),
