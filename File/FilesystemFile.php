@@ -14,7 +14,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.7 2014-05-20
+ * @version 0.4.8 2014-05-21
  */
 
 class FilesystemFile {
@@ -317,8 +317,8 @@ class FilesystemFile {
 				files f
 				INNER JOIN folders fo ON fo.foldersID = f.foldersID
 			WHERE
-				f.File = ? AND
-				fo.Path = ?
+				f.File  COLLATE utf8_bin = ? AND
+				fo.Path COLLATE utf8_bin = ?
 			LIMIT 1",
 
 			array(
