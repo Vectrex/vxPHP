@@ -22,7 +22,7 @@ use vxPHP\Orm\Custom\Exception\ArticleException;
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.2.2 2014-03-15
+ * @version 0.2.3 2014-06-16
  */
 class ArticleQuery extends Query implements QueryInterface {
 
@@ -57,12 +57,32 @@ class ArticleQuery extends Query implements QueryInterface {
 
 	/**
 	 * add WHERE clause that filters for article category aliases
-	 *
+	 * 
 	 * @param array $categoryNames
+	 * @return \vxPHP\Orm\Custom\ArticleQuery
 	 */
 	public function filterByCategoryNames(array $categoryNames) {
 		$this->innerJoin('articlecategories c', 'c.articlecategoriesID = a.articlecategoriesID');
 		$this->addCondition('c.Alias', $categoryNames, 'IN');
+		return $this;
+	}
+	
+	/**
+	 * add WHERE clause that returns articles where $date is between Article::displayFrom and Article::displayUntil
+	 * $date defaults to current date
+	 * 
+	 * @param \DateTime $date
+	 * @return \vxPHP\Orm\Custom\ArticleQuery
+	 */
+	public function filterByDisplayFromToUntil(\DateTime $date = NULL) {
+
+		if(!$date) {
+			$date = new \DateTime();
+		}
+		
+		$this->addCondition("a.Display_from IS NULL OR a.Display_from <= ?", $date->format('Y-m-d'));
+		$this->addCondition("a.Display_until IS NULL OR a.Display_until >= ?", $date->format('Y-m-d'));
+
 		return $this;
 	}
 
