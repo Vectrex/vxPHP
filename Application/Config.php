@@ -9,7 +9,7 @@ use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 
 use vxPHP\Observer\EventDispatcher;
-use vxPHP\Http\Route;
+use vxPHP\Routing\Route;
 
 /**
  * Config

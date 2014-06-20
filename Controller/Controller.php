@@ -8,7 +8,7 @@ use vxPHP\Http\ParameterBag;
 use vxPHP\Http\Request;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
-use vxPHP\Http\Router;
+use vxPHP\Routing\Router;
 
 /**
  * Abstract parent class for all controllers
@@ -32,7 +32,7 @@ abstract class Controller {
 	protected $currentDocument = NULL;
 
 	/**
-	 * @var \vxPHP\Http\Route
+	 * @var \vxPHP\Routing\Route
 	 */
 	protected $route;
 

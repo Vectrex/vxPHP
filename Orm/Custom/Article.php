@@ -581,7 +581,7 @@ class Article implements SubjectInterface {
 	/**
 	 * returns array of MetaFile instances linked to the article
 	 * 
-	 * @return array
+	 * @return MetaFile[]
 	 */
 	public function getLinkedMetaFiles() {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Http;
+namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
 use vxPHP\Controller\Controller;

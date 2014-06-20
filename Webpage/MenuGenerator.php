@@ -3,8 +3,8 @@
 namespace vxPHP\Webpage;
 
 use vxPHP\Http\Request;
-use vxPHP\Http\Router;
-use vxPHP\Http\Route;
+use vxPHP\Routing\Router;
+use vxPHP\Routing\Route;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;

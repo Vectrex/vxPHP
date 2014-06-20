@@ -7,7 +7,7 @@ use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
-use vxPHP\Http\Route;
+use vxPHP\Routing\Route;
 use vxPHP\Http\Request;
 
 /**

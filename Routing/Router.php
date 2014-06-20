@@ -1,9 +1,10 @@
 <?php
 
-namespace vxPHP\Http;
+namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
 use vxPHP\User\User;
+use vxPHP\Http\Request;
 
 /**
  *
@@ -18,7 +19,7 @@ class Router {
 	 * returns controller class for page
 	 * the page id is second along the path behind an optional locale string
 	 *
-	 * @return \vxPHP\Http\Route
+	 * @return \vxPHP\Routing\Route
 	 */
 	public static function getRouteFromPathInfo() {
 
@@ -72,7 +73,7 @@ class Router {
 	 * @param string $routeId
 	 * @param string $scriptName
 	 *
-	 * @return \vxPHP\Http\Route
+	 * @return \vxPHP\Routing\Route
 	 */
 	public static function getRoute($routeId, $scriptName = 'index.php') {
 
@@ -88,7 +89,7 @@ class Router {
 	 * @param string $scriptName (e.g. index.php, admin.php)
 	 * @array $pathSegments
 	 *
-	 * @return \vxPHP\Http\Route
+	 * @return \vxPHP\Routing\Route
 	 */
 	private static function getRouteFromConfig($scriptName, array $pathSegments = NULL) {
 

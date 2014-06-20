@@ -5,7 +5,7 @@ namespace vxPHP\Template;
 use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Util\Rex;
 
-use vxPHP\Http\Router;
+use vxPHP\Routing\Router;
 use vxPHP\Http\Request;
 
 use vxPHP\Application\Application;
