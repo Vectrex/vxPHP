@@ -4,12 +4,14 @@ namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
 use vxPHP\Controller\Controller;
+use vxPHP\Http\Request;
+use vxPHP\Http\Response;
 
 /**
  *
  * @author Gregor Kofler
  *
- * @version 0.6.1 2014-03-16
+ * @version 0.6.2 2014-06-25
  *
  */
 class Route {
