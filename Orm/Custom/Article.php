@@ -18,7 +18,7 @@ use vxPHP\Application\Application;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.8.1 2014-04-13
+ * @version 0.8.2 2014-08-11
  */
 
 class Article implements SubjectInterface {
@@ -254,8 +254,10 @@ class Article implements SubjectInterface {
 
 			// unlink referenced files
 
-			foreach($this->linkedFiles as $file) {
-				$file->unlinkArticle($this);
+			if(!is_null($this->linkedFiles)) {
+				foreach($this->linkedFiles as $file) {
+					$file->unlinkArticle($this);
+				}
 			}
 			
 			$db->deleteRecord('articles_files', array('articlesID' => $this->id));
