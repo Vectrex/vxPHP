@@ -1,5 +1,5 @@
 {
-	"name" : "Vectrex/vxPHP",
+	"name" : "vectrex/vxphp",
 	"type" : "framework",
 	"description" : "lean PHP framework for web applications",
 	"homepage" : "https://github.com/Vectrex/vxPHP",
@@ -10,19 +10,18 @@
 		"web application"
 	],
 	"authors" : [{
-		"name" : "Gregor Kofler",
-		"email" : "info@gregorkofler.com",
-		"homepage" : "http://gregorkofler.com",
-		"role" : "Developer"
-	}],
-	"require": {
-	    "php": ">=5.3.0"
+			"name" : "Gregor Kofler",
+			"email" : "info@gregorkofler.com",
+			"homepage" : "http://gregorkofler.com",
+			"role" : "Developer"
+		}
+	],
+	"require" : {
+		"php" : ">=5.3.0"
 	},
-	
-	"autoload": {
-	    "psr-0": {
-	        "vxPHP": "src"
-	    }
+	"autoload" : {
+		"psr-0" : {
+			"vxPHP" : "src"
+		}
 	}
-	
 }
