@@ -1,9 +1,21 @@
 {
-	"name" : "vxPHP",
-	"authors" : [{
-			"name" : "Gregor Kofler",
-			"email" : "info@gregorkofler.com"
-		}
+	"name" : "Vectrex/vxPHP",
+	"type" : "framework",
+	"description" : "lean PHP framework for web applications",
+	"homepage" : "https://github.com/Vectrex/vxPHP",
+	"license" : "MIT",
+	"keywords" : [
+		"framework",
+		"PHP",
+		"web application"
 	],
-	"keywords" : []
+	"authors" : [{
+		"name" : "Gregor Kofler",
+		"email" : "info@gregorkofler.com",
+		"homepage" : "http://gregorkofler.com",
+		"role" : "Developer"
+	}],
+	"require": {
+	    "php": ">=5.3.0"
+	}
 }
