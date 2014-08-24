@@ -20,8 +20,8 @@
 		"php" : ">=5.3.0"
 	},
 	"autoload" : {
-		"psr-0" : {
-			"vxPHP" : "src"
+		"psr-4" : {
+			"vxPHP\\" : "src/"
 		}
 	}
 }
