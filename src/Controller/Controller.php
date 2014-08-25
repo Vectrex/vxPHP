@@ -15,7 +15,7 @@ use vxPHP\Routing\Router;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.11 2013-12-11
+ * @version 0.1.12 2014-08-25
  *
  */
 abstract class Controller {
@@ -233,7 +233,7 @@ abstract class Controller {
 	}
 
 	/**
-	 * add an echo property to a JsonResponse
+	 * add an echo property to a JsonResponse, if request indicates that echo was requested
 	 * useful with vxJS.xhr based widgets
 	 *
 	 * @param JsonResponse $r
@@ -241,6 +241,8 @@ abstract class Controller {
 	 */
 	protected function addEchoToJsonResponse(JsonResponse $r) {
 
+		// handle JSON encoded request data
+		
 		if($this->isXhr && $this->xhrBag && $this->xhrBag->get('echo') == 1) {
 
 			// echo is the original xmlHttpRequest sans echo property
@@ -248,12 +250,31 @@ abstract class Controller {
 			$echo = json_decode($this->xhrBag->get('xmlHttpRequest'));
 			unset($echo->echo);
 
+		}
+		
+		// handle plain POST or GET data
+		
+		else {
+
+			if($this->request->getMethod() === 'POST' && $this->request->request->get('echo')) {
+				$echo = $this->request->request->all();
+				unset($echo['echo']);
+			}
+
+			else if($this->request->query->get('echo')) {
+				$echo = $this->request->query->all();
+				unset($echo['echo']);
+			}
+
+		}
+
+		if(isset($echo)) {
 			$r->setPayload(array(
 				'echo'		=> $echo,
 				'response'	=> json_decode($r->getContent())
 			));
 		}
-
+		
 		return $r;
 
 	}
@@ -268,8 +289,6 @@ abstract class Controller {
 	 * this method is geared to fully support the vxJS.widget.xhrForm()
 	 */
 	private function prepareForXhr() {
-
-		$parameters = array();
 
 		// do we have a GET XHR?
 
