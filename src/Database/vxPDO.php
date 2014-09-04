@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.7.0, 2014-09-04
+ * @version 0.8.0, 2014-09-04
  */
 class vxPDO extends \PDO {
 	
@@ -370,7 +370,9 @@ class vxPDO extends \PDO {
 	 * leaves setting value of this field to MySQL mechanisms
 	 */
 	public function ignoreLastUpdated() {
+
 		$this->touchLastUpdated = FALSE;
+
 	}
 	
 	/**
@@ -378,7 +380,9 @@ class vxPDO extends \PDO {
 	 */
 
 	public function updateLastUpdated() {
+
 		$this->touchLastUpdated = TRUE;
+
 	}
 
 	/**
@@ -387,7 +391,9 @@ class vxPDO extends \PDO {
 	 * @return \PDOStatement
 	 */
 	public function geStatement() {
+
 		return $this->statement;
+
 	}
 
 	/**
@@ -491,10 +497,65 @@ class vxPDO extends \PDO {
 
 	}
 	
-	public function getDefaultFieldValue() {
+	/**
+	 * get default value of a column
+	 * 
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @return mixed
+	 * 
+	 * @throws \PDOException
+	 */
+	public function getColumnDefaultValue($tableName, $columnName) {
+		
+		// check whether column exists
+
+		if(!$this->columnExists($tableName, $columnName)) {
+			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
+		}
+		
+		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
 	}
 
-	public function getEnumValues() {
+	/**
+	 * return all possible options of an enum or set attribute
+	 * 
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @return array
+	 * 
+	 * @throws \PDOException
+	 */
+	public function getEnumValues($tableName, $columnName) {
+
+		// check whether column exists
+
+		if(!$this->columnExists($tableName, $columnName)) {
+			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
+		}
+		
+		// wrong data type
+		
+		$dataType = $this->tableStructureCache[$tableName][$columnName]['dataType']; 
+		
+		if(!($dataType === 'enum' || $dataType === 'set')) {
+			throw new \PDOException("Column '" . $columnName ."' in table '" . $tableName ."' is not of type ENUM or SET.");
+		}
+		
+		// extract enum values the first time
+
+		if(!isset($this->tableStructureCache[$tableName][$columnName]['enumValues'])) {
+			preg_match_all(
+				"~'(.*?)'~i",
+				$this->tableStructureCache[$tableName][$columnName]['columnType'],
+				$matches
+			);
+			
+			$this->tableStructureCache[$tableName][$columnName]['enumValues'] = $matches[1];
+		}
+		
+		return $this->tableStructureCache[$tableName][$columnName]['enumValues'];
+		
 	}
 
 	/**
@@ -510,18 +571,12 @@ class vxPDO extends \PDO {
 	 */
 	public function getPrimaryKey($tableName) {
 
-		// fill cache if necessary
+		// check whether table exists
 
-		if(is_null($this->tableStructureCache)) {
-			$this->fillTableStructureCache($tableName);
+		if(!$this->tableExists($tableName)) {
+			throw new \PDOException("Unknown table '" . $tableName ."'.");
 		}
 
-		// table not found
-
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
-			throw new \PDOException("Unknown table '" . $tableName ."'");
-		}
-		
 		// get pk information
 
 		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
@@ -566,19 +621,48 @@ class vxPDO extends \PDO {
 			return;
 		}
 
-		$statement			= $this->query('SELECT * FROM ' . $tableName . ' LIMIT 0');
+		$statement = $this->prepare('
+			SELECT
+				COLUMN_NAME,
+				COLUMN_KEY,
+				COLUMN_DEFAULT,
+				DATA_TYPE,
+				IS_NULLABLE,
+				COLUMN_TYPE
+
+			FROM
+				information_schema.`COLUMNS`
+
+			WHERE
+				TABLE_SCHEMA = ? AND
+				TABLE_NAME = ?
+		');
+
+		$statement->execute(array($this->dbname, $tableName));
 
 		$columns			= array();
 		$primaryKeyColumns	= array();
 
-		for ($i = 0; $i < $statement->columnCount(); ++$i) {
+		foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $column) {
 
-			$column			= $statement->getColumnMeta($i);
-			$name			= strtolower($column['name']);
-			$columns[$name]	= $column;
+			// get standard information for column
 
-			if(isset($column['flags']) && in_array('primary_key', $column['flags'])) {
-				$primaryKeyColumns[] = $column['name']; 
+			$name = strtolower($column['COLUMN_NAME']);
+
+			$columns[$name] = array(
+				'columnName'	=> $column['COLUMN_NAME'],
+				'columnKey'		=> $column['COLUMN_KEY'],
+				'columnDefault'	=> $column['COLUMN_DEFAULT'],
+				'dataType'		=> $column['DATA_TYPE'],
+				'isNullable'	=> $column['IS_NULLABLE'],
+					
+				// required to retrieve options for enum and set data types
+					
+				'columnType'	=> $column['COLUMN_TYPE']
+			);
+
+			if($column['COLUMN_KEY'] === 'PRI') {
+				$primaryKeyColumns[] = $column['COLUMN_NAME']; 
 			}
 		}
 
@@ -586,22 +670,4 @@ class vxPDO extends \PDO {
 		$this->tableStructureCache[$tableName]['_primaryKeyColumns'] = $primaryKeyColumns;
 	}
 
-	// move to util?
-	public function customSort() {
-	}
-	
-	// move to util?
-	public function formatDate() {
-	
-	}
-	
-	// move to util?
-	public function formatDecimal() {
-	
-	}
-	
-	// move to util?
-	public function getAlias() {
-	
-	}
 }
