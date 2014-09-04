@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.0, 2014-09-04
+ * @version 0.6.0, 2014-09-04
  */
 class vxPDO extends \PDO {
 	
@@ -446,24 +446,65 @@ class vxPDO extends \PDO {
 
 	}
 
-	// doQuery
-	
-	// execute
-	
-	// preparedExecute
-	
-	public function getEnumValues() {
-	}
-	
-	public function tableExists() {
+	/**
+	 * checks whether a table exists
+	 * 
+	 * @param string $tableName
+	 * @return boolean
+	 */
+	public function tableExists($tableName) {
+		
+		// try a cache lookup first
+
+		if(array_key_exists($tableName, $this->tableStructureCache)) {
+			return TRUE;
+		}
+		
+		$statement = $this->query('SHOW TABLES');
+		return in_array($tableName, $statement->fetchAll(\PDO::FETCH_COLUMN, 0));
+
 	} 
 
-	public function columnExists() {
+	/**
+	 * checks whether a column in table exists
+	 * returns FALSE when either table or column don't exist
+	 *
+	 * @param string $tableName
+	 * @param string $columnName
+	 * 
+	 * @todo sanitize $tableName
+	 * 
+	 * @return boolean
+	 */
+	public function columnExists($tableName, $columnName) {
+
+		// try a cache lookup first
+		
+		if(
+			array_key_exists($tableName, $this->tableStructureCache) &&
+			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName])
+		) {
+			return TRUE;
+		}
+
+		// check for existence of table
+
+		if(!$this->tableExists($tableName)) {
+			return FALSE;
+		}
+
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
+
+		return array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
+
+	}
 	
+	public function getDefaultFieldValue() {
 	}
 
-	public function getDefaultFieldValue() {
-	
+	public function getEnumValues() {
 	}
 
 	/**
@@ -500,13 +541,14 @@ class vxPDO extends \PDO {
 
 	/**
 	 * analyze columns of table $tableName
-	 * and store result 
+	 * and store result
 	 * 
 	 * @param string $tableName
 	 */
 	private function fillTableStructureCache($tableName) {
 		
 		$recordSet			= $this->query('SELECT * FROM ' . $tableName . ' LIMIT 0');
+
 		$columns			= array();
 		$primaryKeyColumns	= array();
 
