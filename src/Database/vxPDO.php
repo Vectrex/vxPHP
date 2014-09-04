@@ -2,47 +2,99 @@
 
 namespace vxPHP\Database;
 
+/**
+ * augments \PDO and adds methods to support basic CRUD tasks
+ * 
+ * This class is part of the vxPHP framework
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code
+ * 
+ * @author Gregor Kofler, info@gregorkofler.com
+ * 
+ * @version 0.5.0, 2014-09-04
+ */
 class vxPDO extends \PDO {
 	
-	const	UPDATE_FIELD	= 'lastUpdated';
-	const	CREATE_FIELD	= 'firstCreated';
-	const	SORT_FIELD		= 'customSort';
+	const		UPDATE_FIELD	= 'lastUpdated';
+	const		CREATE_FIELD	= 'firstCreated';
+	const		SORT_FIELD		= 'customSort';
 	
-	private	$host,
-			$user,
-			$pass,
-			$dbname,
-			$type				= 'mysql',
-			$handleErrors		= TRUE,
-			$logErrors			= TRUE,
-			$logtype			= NULL,
-			$touchLastUpdated	= TRUE,
-			$lastErrno,
-			$lastError,
-			$primaryKeys,
-			$queryString,
+				/**
+				 * host address of connection
+				 * @var string
+				 */
+	protected	$host,
+	
+				/**
+				 * username for connection
+				 * @var string
+				 */
+				$user,
 
-			/**
-			 * @var \PDOStatement
-			 * holds last executed statement
-			 */
-			$statement,
-			$charsetMap = array(
-				'utf-8'				=> 'utf8',
-				'iso-8859-15'		=> 'latin1'
-			),
-			
-			/**
-			 * @var array
-			 * holds column details of tables
-			 */
-			$tableStructureCache	= array();
+				/**
+				 * password for connection
+				 * @var string
+				 */
+				$pass,
 
-	public	$queryResult,
-			$numRows,
-			$affectedRows;
+				/**
+				 * name of database for connection
+				 * @var string
+				 */
+				$dbname,
+
+				/**
+				 * datasource string of connection
+				 * @var string
+				 */
+				$dsn,
+
+				/**
+				 * currently hardcoded type of database
+				 * @var string
+				 */
+				$type				= 'mysql',
+
+				/**
+				 * automatically touch a lastUpdated column whenever
+				 * a record is updated
+				 * any internal db mechanism is notoverwritten
+				 * @var boolean
+				 */
+				$touchLastUpdated	= TRUE,
+	
+				/**
+				 * holds last executed statement
+				 * @var \PDOStatement
+				 */
+				$statement,
+				
+				/**
+				 * lookup table for supported character sets
+				 * @var array
+				 */
+				$charsetMap = array(
+					'utf-8'				=> 'utf8',
+					'iso-8859-15'		=> 'latin1'
+				),
+				
+				/**
+				 * column details of tables
+				 * @var array
+				 */
+				$tableStructureCache	= array();
+	
+	public		$queryResult,
+				$numRows,
+				$affectedRows;
 
 	/**
+	 * initiate connection
+	 * 
+	 * requires PHP >= 5.3.6 otherwise a "SET NAMES ..." init command for setting the charset is required
+	 * 
+	 * @todo parse port and unix_socket settings
 	 * 
 	 * @param array $config
 	 * @throws \PDOException
@@ -68,12 +120,29 @@ class vxPDO extends \PDO {
 			}
 
 		}
+
+		$options = array(
+			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+		);
 		
-		$dsn = $this->type . ':dbname=' . $this->dbname . ';host=' . $this->host . ';charset=' . $charset;
+		$this->dsn =
+			$this->type .
+			':dbname=' 	. $this->dbname .
+			';host='	. $this->host .
+			';charset='	. $charset;
 
-		parent::__construct($dsn, $this->user, $this->pass);
+		parent::__construct($this->dsn, $this->user, $this->pass, $options);
 
-		$this->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		// set emulated prepares for MySQL servers < 5.1.17
+
+		if($this->type === 'mysql') {
+			$this->setAttribute(
+				\PDO::ATTR_EMULATE_PREPARES,
+				version_compare($this->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
+			);
+		}
+
 	}
 	
 	public function __destruct() {
@@ -295,31 +364,93 @@ class vxPDO extends \PDO {
 		}
 
 	}
-	
+
+	/**
+	 * ignore lastUpdated attribute when creating or updating record
+	 * leaves setting value of this field to MySQL mechanisms
+	 */
 	public function ignoreLastUpdated() {
-		
+		$this->touchLastUpdated = FALSE;
 	}
+	
+	/**
+	 * set lastUpdated attribute when creating or updating record
+	 */
 
 	public function updateLastUpdated() {
-		
+		$this->touchLastUpdated = TRUE;
 	}
-	
-	public function setLogErrors() {
+
+	/**
+	 * get last statement prepared/executed in vxPDO method
+	 * 
+	 * @return \PDOStatement
+	 */
+	public function geStatement() {
+		return $this->statement;
+	}
+
+	/**
+	 * wrap prepare(), execute() and fetchAll()
+	 * 
+	 * parameters can have both integer key and string keys
+	 * but have to match the statement placeholder type
+	 * parameter value types govern the PDO parameter type setting
+	 * 
+	 * @param string $statementString
+	 * @param array $parameters
+	 * 
+	 * @return array
+	 */
+	public function doPreparedQuery($statementString, array $parameters = array()) {
+
+		$this->statement = $this->prepare($statementString);
+		
+		foreach($parameters as $name => $value) {
+			
+			// question mark placeholders start with 1
+			
+			if(is_int($name)) {
+				++$name;
+			}
+			
+			// otherwise ensure colons
+
+			else {
+				$name = ':' . ltrim($name, ':');
+			}
+
+			// set parameter types, depending on parameter values
+
+			$type = \PDO::PARAM_STR;
+			
+			if(is_bool($value)) {
+				$type = \PDO::PARAM_BOOL;
+			}
+			
+			else if(is_int($value)) {
+				$type = \PDO::PARAM_INT;
+			}
+			
+			else if(is_null($value)) {
+				$type = \PDO::PARAM_NULL;
+			}
+
+			$this->statement->bindValue($name, $value, $type);
+			
+		}
+
+		$this->statement->execute();
+		
+		return $this->statement->fetchAll(\PDO::FETCH_ASSOC);
 
 	}
-	
+
 	// doQuery
-	
-	// doPreparedQuery
 	
 	// execute
 	
 	// preparedExecute
-	
-	// move to util?
-	public function getAlias() {
-		
-	}
 	
 	public function getEnumValues() {
 	}
@@ -335,32 +466,38 @@ class vxPDO extends \PDO {
 	
 	}
 
-	public function getPrimaryKey() {
-	}
-
-	public function customSort() {
-	}
-	
-	// escapeString
-	
-	// move to util?
-	public function formatDate() {
+	/**
+	 * get name(s) of primary key columns
+	 * returns
+	 * an array when pk consists of more than one attribute
+	 * a string when pk is formed by one attribute
+	 * null when no pk is set 
+	 * 
+	 * @param string $tableName
+	 * 
+	 * @return mixed
+	 */
+	public function getPrimaryKey($tableName) {
 		
-	}
-
-	// move to util?
-	public function formatDecimal() {
-	
-	}
-	
-	public function disableErrorHandling() {
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
 		
+		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
+		
+		switch ($pkLength) {
+			case 0:
+				return NULL;
+				
+			case 1:
+				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0];
+				
+			default:
+				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'];
+		}
+
 	}
 
-	public function enableErrorHandling() {
-	
-	}
-	
 	/**
 	 * analyze columns of table $tableName
 	 * and store result 
@@ -388,4 +525,22 @@ class vxPDO extends \PDO {
 		$this->tableStructureCache[$tableName]['_primaryKeyColumns'] = $primaryKeyColumns;
 	}
 
+	// move to util?
+	public function customSort() {
+	}
+	
+	// move to util?
+	public function formatDate() {
+	
+	}
+	
+	// move to util?
+	public function formatDecimal() {
+	
+	}
+	
+	// move to util?
+	public function getAlias() {
+	
+	}
 }
