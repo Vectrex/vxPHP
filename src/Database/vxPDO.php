@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.6.0, 2014-09-04
+ * @version 0.7.0, 2014-09-04
  */
 class vxPDO extends \PDO {
 	
@@ -83,7 +83,7 @@ class vxPDO extends \PDO {
 				 * column details of tables
 				 * @var array
 				 */
-				$tableStructureCache	= array();
+				$tableStructureCache;
 	
 	public		$queryResult,
 				$numRows,
@@ -453,15 +453,14 @@ class vxPDO extends \PDO {
 	 * @return boolean
 	 */
 	public function tableExists($tableName) {
-		
-		// try a cache lookup first
 
-		if(array_key_exists($tableName, $this->tableStructureCache)) {
-			return TRUE;
+		// fill cache with table names
+
+		if(is_null($this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
 		}
-		
-		$statement = $this->query('SHOW TABLES');
-		return in_array($tableName, $statement->fetchAll(\PDO::FETCH_COLUMN, 0));
+
+		return array_key_exists($tableName, $this->tableStructureCache);
 
 	} 
 
@@ -478,26 +477,17 @@ class vxPDO extends \PDO {
 	 */
 	public function columnExists($tableName, $columnName) {
 
-		// try a cache lookup first
-		
-		if(
-			array_key_exists($tableName, $this->tableStructureCache) &&
-			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName])
-		) {
-			return TRUE;
-		}
-
-		// check for existence of table
-
-		if(!$this->tableExists($tableName)) {
-			return FALSE;
-		}
-
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+		// fill cache with table information
+				
+		if(is_null($this->tableStructureCache)) {
 			$this->fillTableStructureCache($tableName);
 		}
 
-		return array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
+		// return FALSE when either table or column can not be found
+		
+		return
+			array_key_exists($tableName, $this->tableStructureCache) && 
+			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
 
 	}
 	
@@ -515,15 +505,25 @@ class vxPDO extends \PDO {
 	 * null when no pk is set 
 	 * 
 	 * @param string $tableName
-	 * 
+	 * @throws \PDOException
 	 * @return mixed
 	 */
 	public function getPrimaryKey($tableName) {
-		
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+
+		// fill cache if necessary
+
+		if(is_null($this->tableStructureCache)) {
 			$this->fillTableStructureCache($tableName);
 		}
+
+		// table not found
+
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException("Unknown table '" . $tableName ."'");
+		}
 		
+		// get pk information
+
 		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
 		
 		switch ($pkLength) {
@@ -544,22 +544,41 @@ class vxPDO extends \PDO {
 	 * and store result
 	 * 
 	 * @param string $tableName
+	 * @return void
 	 */
-	private function fillTableStructureCache($tableName) {
+	protected function fillTableStructureCache($tableName) {
 		
-		$recordSet			= $this->query('SELECT * FROM ' . $tableName . ' LIMIT 0');
+		// get all table names
+
+		if(is_null($this->tableStructureCache)) {
+
+			$this->tableStructureCache = array();
+
+			foreach ($this->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN, 0) as $tn) {
+				$this->tableStructureCache[$tn] = array();
+			} 
+
+		}
+
+		// return when table name does not exist; leave handling of this situation to calling method
+
+		if(!in_array($tableName, array_keys($this->tableStructureCache))) {
+			return;
+		}
+
+		$statement			= $this->query('SELECT * FROM ' . $tableName . ' LIMIT 0');
 
 		$columns			= array();
 		$primaryKeyColumns	= array();
 
-		for ($i = 0; $i < $recordSet->columnCount(); ++$i) {
+		for ($i = 0; $i < $statement->columnCount(); ++$i) {
 
-			$column			= $recordSet->getColumnMeta($i);
+			$column			= $statement->getColumnMeta($i);
 			$name			= strtolower($column['name']);
 			$columns[$name]	= $column;
 
 			if(isset($column['flags']) && in_array('primary_key', $column['flags'])) {
-				$primaryKeyColumns[] = $name; 
+				$primaryKeyColumns[] = $column['name']; 
 			}
 		}
 
