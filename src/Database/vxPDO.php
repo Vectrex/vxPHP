@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.8.0, 2014-09-04
+ * @version 1.0.0, 2014-09-05
  */
 class vxPDO extends \PDO {
 	
@@ -148,6 +148,16 @@ class vxPDO extends \PDO {
 	public function __destruct() {
 	}
 	
+	/**
+	 * clears the table structure cache
+	 * required after altering table structures
+	 */
+	public function clearTableStructureCache() {
+
+		$this->tableStructureCache = NULL;
+
+	}
+
 	/**
 	 * insert a record in table $tableName
 	 * returns last insert id
