@@ -7,7 +7,7 @@ use vxPHP\Application\Application;
  * mapper class for notifications
  *
  * @author Gregor Kofler
- * @version 0.1.3 2013-09-05
+ * @version 0.1.4 2014-09-19
  */
 class Notification {
 	private		$id,
@@ -65,7 +65,7 @@ class Notification {
 
 	private static function queryAllNotifications() {
 
-		$rows = Application::getInstance()->getDb()->doQuery("
+		$rows = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
 				notificationsID as id,
 				n.Alias,
@@ -78,7 +78,7 @@ class Notification {
 				ag.Alias as group_alias
 			FROM
 				notifications n
-				INNER JOIN admingroups ag ON ag.admingroupsID = n.admingroupsID" ,true);
+				INNER JOIN admingroups ag ON ag.admingroupsID = n.admingroupsID");
 
 		self::$cachedNotificationData = array();
 
@@ -96,7 +96,7 @@ class Notification {
 		}
 
 		foreach ($fieldValues as $key => $val) {
-			$txt = str_replace('{'.$key.'}', $val, $txt);
+			$txt = str_replace('{' . $key . '}', $val, $txt);
 		}
 		return $txt;
 	}

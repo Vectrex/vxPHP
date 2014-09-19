@@ -5,7 +5,6 @@ namespace vxPHP\File;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\File\Exception\MetaFolderException;
 use vxPHP\Application\Application;
-use vxPHP\User\UserAbstract;
 use vxPHP\User\User;
 
 /**
@@ -15,7 +14,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2014-04-05
+ * @version 0.6.1 2014-09-19
  *
  * @todo compatibility checks on windows systems
  * @todo allow update of createdBy user
@@ -291,7 +290,12 @@ class MetaFolder {
 		if(!isset($this->metaFiles) || $force) {
 			$this->metaFiles = array();
 
-			foreach(Application::getInstance()->getDb()->doQuery("SELECT filesID FROM files WHERE foldersID = {$this->id}", TRUE) as $f) {
+			foreach(
+				Application::getInstance()->getDb()->doPreparedQuery(
+					'SELECT filesID FROM files WHERE foldersID = ?',
+					array((int) $this->id)
+				)
+			as $f) {
 				$this->metaFiles[] = MetaFile::getInstance(NULL, $f['filesID']);
 			}
 		}
@@ -310,7 +314,12 @@ class MetaFolder {
 		if(!isset($this->metaFolders) || $force) {
 			$this->metaFolders = array();
 
-			foreach(Application::getInstance()->getDb()->doQuery("SELECT foldersID from folders WHERE l > {$this->l} AND r < {$this->r} AND level = {$this->level} + 1", TRUE) as $f) {
+			foreach(
+				Application::getInstance()->getDb()->doPreparedQuery(
+					'SELECT foldersID from folders WHERE l > ? AND r < ? AND level = ?',
+					array((int) $this->l, (int) $this->r, $this->level + 1)
+				)
+			as $f) {
 				$this->metaFolders[] = self::getInstance(NULL, $f['foldersID']);
 			}
 		}
@@ -393,9 +402,11 @@ class MetaFolder {
 	 */
 	public static function instantiateAllExistingMetaFolders($force = FALSE) {
 
-		$rows = Application::getInstance()->getDb()->doQuery("SELECT * FROM folders", TRUE);
-
-		foreach($rows as $r) {
+		foreach(
+			Application::getInstance()->getDb()->doPreparedQuery(
+				'SELECT * FROM folders'
+			)
+		as $r) {
 			if($force || !isset(self::$instancesById[$r['foldersID']])) {
 				$f = new self(NULL, NULL, $r);
 				self::$instancesByPath[$f->getFullPath()]	= $f;
@@ -470,13 +481,15 @@ class MetaFolder {
 			if(count($tree) == 1) {
 
 				//no parent
-				$rows = $db->doQuery("SELECT MAX(r) + 1 AS l FROM folders", TRUE);
+
+				$rows = $db->doPreparedQuery('SELECT MAX(r) + 1 AS l FROM folders');
 				$metaData['l'] = !isset($rows[0]['l']) ? 0 : $rows[0]['l'];
 				$metaData['r'] = $rows[0]['l'] + 1;
 				$metaData['level'] = 0;
 			}
 
 			else {
+
 				array_pop($tree);
 
 				try {
@@ -493,11 +506,12 @@ class MetaFolder {
 					$metaData['r'] = $rows[0]['r'] + 1;
 					$metaData['level'] = $rows[0]['level'] + 1;
 
-				} catch(MetaFolderException $e) {
+				}
+				catch(MetaFolderException $e) {
 
 					// no parent directory
 
-					$rows = $db->doQuery("SELECT MAX(r) + 1 AS l FROM folders", TRUE);
+					$rows = $db->doPreparedQuery('SELECT MAX(r) + 1 AS l FROM folders');
 					$metaData['l'] = !isset($rows[0]['l']) ? 0 : $rows[0]['l'];
 					$metaData['r'] = $rows[0]['l'] + 1;
 					$metaData['level'] = 0;

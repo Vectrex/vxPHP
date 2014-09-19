@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.2.1 2013-10-05
+ * @version 0.2.2 2014-09-19
  */
 
 class ArticleCategory {
@@ -69,7 +69,7 @@ class ArticleCategory {
 
 			// prepare to insert top level category
 
-			$rows = self::$db->doQuery("SELECT MAX(r) + 1 AS l FROM articlecategories", TRUE);
+			$rows			= $db->doPreparedQuery('SELECT MAX(r) + 1 AS l FROM articlecategories');
 			$this->l		= !isset($rows[0]['l']) ? 0 : $rows[0]['l'];
 			$this->r		= $rows[0]['l'] + 1;
 			$this->level	= 0;
@@ -354,7 +354,11 @@ class ArticleCategory {
 
 		$cat = array();
 
-		foreach(Application::getInstance()->getDb()->doQuery("SELECT articlecategoriesID FROM articlecategories", TRUE) as $r) {
+		foreach(
+			Application::getInstance()->getDb()->doPreparedQuery(
+				'SELECT articlecategoriesID FROM articlecategories'
+			)
+		as $r) {
 			$cat[] = self::getInstance($r['articlecategoriesID']);
 		}
 
