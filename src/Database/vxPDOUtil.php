@@ -108,7 +108,6 @@ class vxPDOUtil {
 		return (float) $decimalString;
 	}
 	
-	
 	/**
 	 * checks whether $aliasText in $column is already present
 	 * if $aliasText is found, numeric increments are added to it
@@ -143,7 +142,7 @@ class vxPDOUtil {
 			array_values($replace),
 			strtolower($aliasText)
 		);
-		
+
 		$statement = $connection->prepare(
 			'SELECT ' . $column . ' FROM ' . $tableName .
 			' WHERE LOWER(' . $column . ') LIKE ? AND ' .
