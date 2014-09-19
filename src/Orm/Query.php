@@ -2,19 +2,19 @@
 
 namespace vxPHP\Orm;
 
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Orm\QueryInterface;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.6 2014-05-09
+ * @version 0.2.0 2014-09-19
  */
 abstract class Query implements QueryInterface {
 
 	/**
-	 * @var Mysqldbi
+	 * @var DatabaseInterface
 	 */
 	protected	$dbConnection;
 
@@ -32,9 +32,9 @@ abstract class Query implements QueryInterface {
 	 * provide initial database connection
 	 * currently only allows a Mysqli backend
 	 *
-	 * @param Mysqldbi $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 */
-	public function __construct(Mysqldbi $dbConnection) {
+	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->dbConnection = $dbConnection;
 
@@ -115,10 +115,10 @@ abstract class Query implements QueryInterface {
 	 * avoids assigning ArticleQuery instance to variable before
 	 * specifying and executing query
 	 *
-	 * @param Mysqldbi $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 * @return CustomQuery
 	 */
-	public static function create(Mysqldbi $dbConnection) {
+	public static function create(DatabaseInterface $dbConnection) {
 		return new static($dbConnection);
 	}
 

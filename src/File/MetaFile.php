@@ -10,7 +10,6 @@ use vxPHP\File\FilesystemFile;
 
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Observer\SubjectInterface;
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Orm\Custom\Article;
@@ -23,7 +22,7 @@ use vxPHP\Orm\Custom\ArticleQuery;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.3 2014-09-19
+ * @version 0.8.4 2014-09-19
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()

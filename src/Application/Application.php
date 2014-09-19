@@ -2,23 +2,24 @@
 
 namespace vxPHP\Application;
 
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
 use vxPHP\Http\Request;
+use vxPHP\Database\DatabaseInterface;
+use vxPHP\Database\vxPDO;
 
 /**
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.2.7 2014-01-11
+ * @version 0.3.0 2014-09-19
  */
 class Application {
 
-	public static $version = '2.4.0';
+	public static $version = '2.5.0';
 
 			/**
 			 * @var Application
@@ -26,7 +27,7 @@ class Application {
 	private static $instance;
 
 			/**
-			 * @var Mysqldbi
+			 * @var DatabaseInterface
 			 */
 	private	$db;
 
@@ -106,7 +107,7 @@ class Application {
 			$this->eventDispatcher	= EventDispatcher::getInstance();
 
 			if($this->config->db) {
-				$this->db = new Mysqldbi(array(
+				$this->db = new vxPDO(array(
 					'host'		=> $this->config->db->host,
 					'dbname'	=> $this->config->db->name,
 					'user'		=> $this->config->db->user,
@@ -163,7 +164,7 @@ class Application {
 	/**
 	 * returns default database object reference
 	 *
-	 * @return Mysqldbi
+	 * @return DatabaseInterface
 	 */
 	public function getDb() {
 

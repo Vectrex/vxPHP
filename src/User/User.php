@@ -6,13 +6,12 @@ use vxPHP\User\Notification\Notification;
 use vxPHP\User\Exception\UserException;
 use vxPHP\User\Util;
 
-use vxPHP\Database\Exception\MysqldbiException;
 use vxPHP\Mail\Email;
 use vxPHP\Application\Application;
 
 /**
  * @author Gregor Kofler
- * @version 0.6.1 2014-09-19
+ * @version 0.6.2 2014-09-19
  */
 
 class User {
@@ -308,6 +307,7 @@ class User {
 	 *
 	 * @param array $data
 	 * @return success
+	 * 
 	 */
 	public function restrictedUpdate(Array $data) {
 		$set = array();
@@ -318,18 +318,13 @@ class User {
 			}
 		}
 
-		try {
-			$db = Application::getInstance()->getDb()->updateRecord('admin', $this->adminid, $set);
-			foreach($set as $k => $v) {
-				$k = strtolower($k);
-				$this->$k = $v;
-			}
-			$this->id = $this->email;
-			return TRUE;
+		Application::getInstance()->getDb()->updateRecord('admin', $this->adminid, $set);
+		foreach($set as $k => $v) {
+			$k = strtolower($k);
+			$this->$k = $v;
 		}
-		catch(MysqldbiException $e) {
-			return FALSE;
-		}
+		$this->id = $this->email;
+		return TRUE;
 	}
 
 	/**

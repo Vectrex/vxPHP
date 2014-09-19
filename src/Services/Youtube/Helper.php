@@ -2,7 +2,7 @@
 
 namespace vxPHP\Services\Youtube;
 
-use vxPHP\Database\Mysqldbi;
+use vxPHP\Database\DatabaseInterface;
 
 class Helper {
 	private static $playOptions = array(
@@ -34,7 +34,7 @@ class Helper {
 EOT;
 	}
 
-	public static function setRelatedContent(Mysqldbi $db, $video, Array $relations) {
+	public static function setRelatedContent(DatabaseInterface $db, $video, Array $relations) {
 		
 	}
 }

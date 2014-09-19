@@ -1,11 +1,11 @@
 <?php
 namespace vxPHP\File;
 
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Orm\Query;
 use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Exception\QueryException;
 use vxPHP\Orm\Custom\Article;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * query object which returns an array of MetaFile objects
@@ -19,11 +19,12 @@ use vxPHP\Orm\Custom\Article;
  * 				select();
  *
  * @author Gregor Kofler
- * @version 0.1.3 2014-04-12
+ * 
+ * @version 0.2.0 2014-09-19
  */
 class MetaFileQuery extends Query implements QueryInterface {
 
-	public function __construct(Mysqldbi $dbConnection) {
+	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->table = 'files f';
 		parent::__construct($dbConnection);

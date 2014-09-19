@@ -6,8 +6,8 @@ use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleCategory;
 
-use vxPHP\Database\Mysqldbi;
 use vxPHP\Orm\Custom\Exception\ArticleException;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * query object which returns an array of Article objects
@@ -22,7 +22,7 @@ use vxPHP\Orm\Custom\Exception\ArticleException;
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.2.3 2014-06-16
+ * @version 0.2.4 2014-09-19
  */
 class ArticleQuery extends Query implements QueryInterface {
 
@@ -30,9 +30,9 @@ class ArticleQuery extends Query implements QueryInterface {
 	 * provide initial database connection
 	 * currently only allows a Mysqli backend
 	 *
-	 * @param Mysqldbi $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 */
-	public function __construct(Mysqldbi $dbConnection) {
+	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->table		= 'articles';
 		$this->alias		= 'a';

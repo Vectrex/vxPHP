@@ -2,13 +2,13 @@
 
 namespace vxPHP\Orm;
 
-use vxPHP\Database\Mysqldbi;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * interface for custom ORM queries
  *
  * @author Gregor Kofler
- * @version 0.1.2 2014-03-15
+ * @version 0.2.0 2014-09-19
  */
 interface QueryInterface {
 
@@ -39,5 +39,5 @@ interface QueryInterface {
 	 */
 	public function selectFromTo($from, $to);
 
-	public static function create(Mysqldbi $dbConnection);
+	public static function create(DatabaseInterface $dbConnection);
 }
