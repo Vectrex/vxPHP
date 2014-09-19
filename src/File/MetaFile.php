@@ -23,7 +23,7 @@ use vxPHP\Orm\Custom\ArticleQuery;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.2 2014-05-09
+ * @version 0.8.3 2014-09-19
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -710,7 +710,7 @@ class MetaFile implements SubjectInterface {
 		}
 
 		try {
-			Application::getInstance()->getDb()->preparedExecute("UPDATE files SET File = ? WHERE filesID = ?", array($to, $this->id));
+			Application::getInstance()->getDb()->execute('UPDATE files SET File = ? WHERE filesID = ?', array($to, $this->id));
 		}
 
 		catch(\Exception $e) {
@@ -749,7 +749,7 @@ class MetaFile implements SubjectInterface {
 		// update reference in db
 
 		try {
-			Application::getInstance()->getDb()->preparedExecute("UPDATE files SET foldersID = ? WHERE filesID = ?", array($destination->getId(), $this->id));
+			Application::getInstance()->getDb()->execute('UPDATE files SET foldersID = ? WHERE filesID = ?', array($destination->getId(), $this->id));
 		}
 		catch(\Exception $e) {
 			throw new MetaFileException("Moving '{$this->getFilename()}' to '{$destination->getFullPath()}' failed.");

@@ -14,7 +14,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.1 2014-09-19
+ * @version 0.6.2 2014-09-19
  *
  * @todo compatibility checks on windows systems
  * @todo allow update of createdBy user
@@ -377,8 +377,8 @@ class MetaFolder {
 
 		$db->deleteRecord('folders', $this->id);
 
-		$db->preparedExecute("UPDATE folders SET r = r - 2 WHERE r > ?", array((int) $this->r));
-		$db->preparedExecute("UPDATE folders SET l = l - 2 WHERE l > ?", array((int) $this->r));
+		$db->execute('UPDATE folders SET r = r - 2 WHERE r > ?', array((int) $this->r));
+		$db->execute('UPDATE folders SET l = l - 2 WHERE l > ?', array((int) $this->r));
 
 		unset(self::$instancesById[$this->id]);
 		unset(self::$instancesByPath[$this->filesystemFolder->getPath()]);
@@ -436,7 +436,7 @@ class MetaFolder {
 		}
 
 		if(count($roots) < 1) {
-			throw new MetaFolderException("No properly defined root folders found.", MetaFolderException::NO_ROOT_FOLDER_FOUND);
+			throw new MetaFolderException('No properly defined root folders found.', MetaFolderException::NO_ROOT_FOLDER_FOUND);
 		}
 
 		return $roots;
@@ -499,8 +499,8 @@ class MetaFolder {
 
 					$rows = $db->doPreparedQuery("SELECT r, l, level FROM folders WHERE foldersID = ?", array($parent->getId()));
 
-					$db->preparedExecute("UPDATE folders SET r = r + 2 WHERE r >= ?", array((int) $rows[0]['r']));
-					$db->preparedExecute("UPDATE folders SET l = l + 2 WHERE l > ?", array((int) $rows[0]['r']));
+					$db->execute('UPDATE folders SET r = r + 2 WHERE r >= ?', array((int) $rows[0]['r']));
+					$db->execute('UPDATE folders SET l = l + 2 WHERE l > ?', array((int) $rows[0]['r']));
 
 					$metaData['l'] = $rows[0]['r'];
 					$metaData['r'] = $rows[0]['r'] + 1;
@@ -529,6 +529,6 @@ class MetaFolder {
 			return self::getInstance($f->getPath());
 		}
 
-		throw new MetaFolderException("Metafolder for {$f->getPath()} already exists.", MetaFolderException::METAFOLDER_ALREADY_EXISTS);
+		throw new MetaFolderException('Metafolder for ' . $f->getPath() . ' already exists.', MetaFolderException::METAFOLDER_ALREADY_EXISTS);
 	}
 }

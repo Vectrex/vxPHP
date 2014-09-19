@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
 
 /**
  * @author Gregor Kofler
- * @version 0.6.0 2014-04-07
+ * @version 0.6.1 2014-09-19
  */
 
 class User {
@@ -384,7 +384,7 @@ class User {
 			return;
 		}
 
-		$db->preparedExecute('DELETE FROM admin_notifications WHERE adminID = ?', array($this->adminid));
+		$db->execute('DELETE FROM admin_notifications WHERE adminID = ?', array($this->adminid));
 		$this->cachedNotifications = NULL;
 
 		$available = Notification::getAvailableNotifications($this->group_alias);
@@ -398,7 +398,7 @@ class User {
 
 		if(!empty($ids)) {
 			foreach($ids as $i) {
-				$db->preparedExecute("INSERT INTO admin_notifications (adminID, notificationsID) VALUES(?, ?)", array($this->adminid, $i));
+				$db->execute("INSERT INTO admin_notifications (adminID, notificationsID) VALUES(?, ?)", array($this->adminid, $i));
 			}
 			$this->getNotifications();
 		}

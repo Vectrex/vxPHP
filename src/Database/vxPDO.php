@@ -12,9 +12,9 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.0.0, 2014-09-05
+ * @version 1.2.0, 2014-09-19
  */
-class vxPDO extends \PDO {
+class vxPDO extends \PDO implements DatabaseInterface {
 	
 	const		UPDATE_FIELD	= 'lastUpdated';
 	const		CREATE_FIELD	= 'firstCreated';
@@ -420,48 +420,80 @@ class vxPDO extends \PDO {
 	 */
 	public function doPreparedQuery($statementString, array $parameters = array()) {
 
-		$this->statement = $this->prepare($statementString);
-		
-		foreach($parameters as $name => $value) {
-			
-			// question mark placeholders start with 1
-			
-			if(is_int($name)) {
-				++$name;
-			}
-			
-			// otherwise ensure colons
-
-			else {
-				$name = ':' . ltrim($name, ':');
-			}
-
-			// set parameter types, depending on parameter values
-
-			$type = \PDO::PARAM_STR;
-			
-			if(is_bool($value)) {
-				$type = \PDO::PARAM_BOOL;
-			}
-			
-			else if(is_int($value)) {
-				$type = \PDO::PARAM_INT;
-			}
-			
-			else if(is_null($value)) {
-				$type = \PDO::PARAM_NULL;
-			}
-
-			$this->statement->bindValue($name, $value, $type);
-			
-		}
-
+		$this->primeQuery($statementString, $parameters);
 		$this->statement->execute();
 		
 		return $this->statement->fetchAll(\PDO::FETCH_ASSOC);
 
 	}
 
+	/**
+	 * wrap prepare(), execute() and rowCount()
+	 * 
+	 * parameters can have both integer key and string keys
+	 * but have to match the statement placeholder type
+	 * parameter value types govern the PDO parameter type setting
+	 * 
+	 * @param string $statementString
+	 * @param array $parameters
+	 * 
+	 * @return integer
+	 */
+	public function execute($statementString, array $parameters = array()) {
+		
+		$this->primeQuery($statementString, $parameters);
+		$this->statement->execute();
+
+		return $this->statement->rowCount();
+	}
+	
+	/**
+	 * prepare a statement and bind parameters
+	 * 
+	 * @param string $statementString
+	 * @param array $parameters
+	 * 
+	 * @return void
+	 */
+	private function primeQuery($statementString, array $parameters) {
+
+		$this->statement = $this->prepare($statementString);
+		
+		foreach($parameters as $name => $value) {
+				
+			// question mark placeholders start with 1
+				
+			if(is_int($name)) {
+				++$name;
+			}
+				
+			// otherwise ensure colons
+		
+			else {
+				$name = ':' . ltrim($name, ':');
+			}
+		
+			// set parameter types, depending on parameter values
+		
+			$type = \PDO::PARAM_STR;
+				
+			if(is_bool($value)) {
+				$type = \PDO::PARAM_BOOL;
+			}
+				
+			else if(is_int($value)) {
+				$type = \PDO::PARAM_INT;
+			}
+				
+			else if(is_null($value)) {
+				$type = \PDO::PARAM_NULL;
+			}
+		
+			$this->statement->bindValue($name, $value, $type);
+				
+		}
+	}
+	
 	/**
 	 * checks whether a table exists
 	 * 

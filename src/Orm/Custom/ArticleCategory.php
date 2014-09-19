@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.2.2 2014-09-19
+ * @version 0.2.3 2014-09-19
  */
 
 class ArticleCategory {
@@ -62,8 +62,7 @@ class ArticleCategory {
 	 */
 	public function save() {
 
-		$db		= Application::getInstance()->getDb();
-		$data	= array();
+		$db = Application::getInstance()->getDb();
 
 		if(is_null($this->parentCategory)) {
 
@@ -96,8 +95,8 @@ class ArticleCategory {
 			$this->r		= $nsData['r'] + 1;
 			$this->level	= $nsData['level'] + 1;
 
-			$db->doPreparedExecute("UPDATE articlecategories SET r = r + 2 WHERE r >= ?", array($this->l));
-			$db->doPreparedExecute("UPDATE articlecategories SET l = l + 2 WHERE l > ?", array($this->r));
+			$db->execute('UPDATE articlecategories SET r = r + 2 WHERE r >= ?', array($this->l));
+			$db->execute('UPDATE articlecategories SET l = l + 2 WHERE l > ?', array($this->r));
 		}
 
 		// insert category data
@@ -113,8 +112,8 @@ class ArticleCategory {
 			'customSort'	=> $this->customSort
 		));
 
-		self::$instancesByAlias[$cat->alias]	= $this;
-		self::$instancesById[$cat->id]			= $this;
+		self::$instancesByAlias	[$this->alias]	= $this;
+		self::$instancesById	[$this->id]		= $this;
 	}
 
 	/**
@@ -179,7 +178,10 @@ class ArticleCategory {
 
 		if(!is_null($this->id)) {
 			if(is_null($this->r) && is_null($this->l) && is_null($this->level)) {
-				$rows = Application::getInstance()->getDb()->doPreparedQuery("SELECT r, l, level FROM articlecategories c WHERE articlecategoriesID = ?", array((int) $this->id));
+				$rows = Application::getInstance()->getDb()->doPreparedQuery('SELECT r, l, level FROM articlecategories c WHERE articlecategoriesID = ?', array((int) $this->id));
+				$this->r		= $rows['r'];
+				$this->l		= $rows['l'];
+				$this->level	= $rows['level'];
 			}
 		}
 		return array('r' => $this->r, 'l' => $this->l, 'level' => $this->level);
