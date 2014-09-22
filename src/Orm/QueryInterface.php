@@ -2,7 +2,7 @@
 
 namespace vxPHP\Orm;
 
-use vxPHP\Database\DatabaseInterface;
+use vxPHP\Database\vxPDO;
 
 /**
  * interface for custom ORM queries
@@ -39,5 +39,5 @@ interface QueryInterface {
 	 */
 	public function selectFromTo($from, $to);
 
-	public static function create(DatabaseInterface $dbConnection);
+	public static function create(vxPDO $dbConnection);
 }

@@ -5,7 +5,7 @@ use vxPHP\Orm\Query;
 use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Exception\QueryException;
 use vxPHP\Orm\Custom\Article;
-use vxPHP\Database\DatabaseInterface;
+use vxPHP\Database\vxPDO;
 
 /**
  * query object which returns an array of MetaFile objects
@@ -24,7 +24,7 @@ use vxPHP\Database\DatabaseInterface;
  */
 class MetaFileQuery extends Query implements QueryInterface {
 
-	public function __construct(DatabaseInterface $dbConnection) {
+	public function __construct(vxPDO $dbConnection) {
 
 		$this->table = 'files f';
 		parent::__construct($dbConnection);

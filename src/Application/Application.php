@@ -8,7 +8,6 @@ use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
 use vxPHP\Http\Request;
-use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\vxPDO;
 
 /**
@@ -27,7 +26,7 @@ class Application {
 	private static $instance;
 
 			/**
-			 * @var DatabaseInterface
+			 * @var vxPDO
 			 */
 	private	$db;
 
@@ -164,7 +163,7 @@ class Application {
 	/**
 	 * returns default database object reference
 	 *
-	 * @return DatabaseInterface
+	 * @return vxPDO
 	 */
 	public function getDb() {
 
