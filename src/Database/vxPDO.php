@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.0, 2014-09-19
+ * @version 1.2.1, 2014-09-23
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -83,7 +83,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				 * column details of tables
 				 * @var array
 				 */
-				$tableStructureCache;
+				$tableStructureCache = array();
 	
 	public		$queryResult,
 				$numRows,
@@ -154,7 +154,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 */
 	public function clearTableStructureCache() {
 
-		$this->tableStructureCache = NULL;
+		$this->tableStructureCache = array();
 
 	}
 
@@ -504,7 +504,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		// fill cache with table names
 
-		if(is_null($this->tableStructureCache)) {
+		if(empty($this->tableStructureCache)) {
 			$this->fillTableStructureCache($tableName);
 		}
 
@@ -527,7 +527,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		// fill cache with table information
 				
-		if(is_null($this->tableStructureCache)) {
+		if(empty($this->tableStructureCache)) {
 			$this->fillTableStructureCache($tableName);
 		}
 
@@ -647,7 +647,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		
 		// get all table names
 
-		if(is_null($this->tableStructureCache)) {
+		if(empty($this->tableStructureCache)) {
 
 			$this->tableStructureCache = array();
 
