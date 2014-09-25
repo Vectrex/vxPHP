@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.1, 2014-09-23
+ * @version 1.2.2, 2014-09-25
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -134,9 +134,14 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		parent::__construct($this->dsn, $this->user, $this->pass, $options);
 
-		// set emulated prepares for MySQL servers < 5.1.17
-
 		if($this->type === 'mysql') {
+			$this->setAttribute(
+				\PDO::ATTR_STRINGIFY_FETCHES,
+				FALSE
+			);
+
+			// set emulated prepares for MySQL servers < 5.1.17
+
 			$this->setAttribute(
 				\PDO::ATTR_EMULATE_PREPARES,
 				version_compare($this->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
