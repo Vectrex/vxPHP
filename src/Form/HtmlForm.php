@@ -19,7 +19,7 @@ use vxPHP\Template\Filter\LocalizedPhrases;
 /**
  * Template Engine for Forms
  *
- * @version 1.3.0 2014-04-25
+ * @version 1.3.1 2014-09-26
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -930,11 +930,11 @@ class HtmlForm {
 		foreach($this->vars as $k => $v) {
 			if(is_array($v)) {
 				foreach($v as $kk => $vv) {
-					$tpl = preg_replace("~\{\s*\044$k\[$kk\]\s*\}~i", $vv, $tpl);
+					$tpl = preg_replace('~\{\s*\\$' . $k .'\[' . $kk . '\]\s*\}~i', $vv, $tpl);
 				}
 			}
 			else {
-				$tpl = preg_replace("~\{\s*\044$k\s*\}~i", $v, $tpl);
+				$tpl = preg_replace('~\{\s*\\$' . $k .'\s*\}~i', $v, $tpl);
 			}
 		}
 		return $tpl;
