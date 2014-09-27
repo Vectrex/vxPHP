@@ -142,7 +142,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	/**
 	 * callback to turn href shortcuts into site conform valid URLs
 	 *
-	 * $foo/bar?baz=1 becomes /foo/bar?baz=1 or index.php/foo/bar?baz=1
+	 * $/foo/bar?baz=1 becomes /foo/bar?baz=1 or index.php/foo/bar?baz=1
 	 *
 	 * @param array $matches
 	 * @return string
