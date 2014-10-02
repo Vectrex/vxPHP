@@ -22,7 +22,7 @@ use vxPHP\Orm\Custom\ArticleQuery;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.4 2014-09-19
+ * @version 0.8.5 2014-10-02
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -820,8 +820,11 @@ class MetaFile implements SubjectInterface {
 	 * commit changes to metadata by writing data to database
 	 */
 	private function commit() {
-		if(!Application::getInstance()->getDb()->updateRecord('files', $this->id, $this->data)) {
-			throw new MetaFileException("Data commit of file '{$this->filesystemFile->getFilename()}' failed.");
+		try {
+			Application::getInstance()->getDb()->updateRecord('files', $this->id, $this->data);
+		}
+		catch (\PDOException $e) {
+			throw new MetaFileException("Data commit of file '". $this->filesystemFile->getFilename() . "' failed. PDO reports " . $e->getMessage());
 		}
 	}
 
