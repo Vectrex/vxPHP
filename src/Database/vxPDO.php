@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.2, 2014-09-25
+ * @version 1.2.3, 2014-10-06
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -176,13 +176,13 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		
 		$data = array_change_key_case($data, CASE_LOWER);
 
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
-		
+
 		$names	= array();
 		$values	= array();
-		
+
 		foreach(array_keys($this->tableStructureCache[$tableName]) as $attribute) {
 
 			if (array_key_exists($attribute, $data)) {
@@ -240,7 +240,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		$data = array_change_key_case($data, CASE_LOWER);
 		
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 		
@@ -332,7 +332,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		
 		if(!is_array($keyValue)) {
 			
-			if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 				$this->fillTableStructureCache($tableName);
 			}
 			
