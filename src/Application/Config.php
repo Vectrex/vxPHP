@@ -15,34 +15,70 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 0.9.13 2014-04-07
+ * @version 1.0.0 2014-10-16
  *
  * @todo refresh() method
  */
 class Config {
 
+			/**
+			 * @var \stdClass
+			 */
 	public	$site,
+
+			/**
+			 * @var \stdClass
+			 */
 			$db,
+
+			/**
+			 * @var \stdClass
+			 */
 			$mail,
-			$paths,
+
+			/**
+			 * @var \stdClass
+			 */
 			$binaries,
+
+			/**
+			 * @var array
+			 */
+			$paths,
+
+			/**
+			 * @var array
+			 */
 			$routes,
+
+			/**
+			 * @var array
+			 */
 			$menus,
+			
+			/**
+			 * @var array
+			 */
 			$server;
 
 			/**
-			 * array of Config instances
-			 *
-			 * @var array
+			 * @var boolean
 			 */
-	private static $instances;
-
 	private	$isLocalhost,
-			$xmlFile,
-			$xmlFileTS,
-			$sections = array(),
-			$config,
-			$plugins = array();
+			
+			/**
+			 * @var array
+			 * 
+			 * holds sections of config file which are parsed
+			 */
+			$sections	= array(),
+			
+			/**
+			 * @var array
+			 * 
+			 * holds all configured plugins
+			 */
+			$plugins	= array();
 
 	/**
 	 * create config instance
@@ -52,61 +88,27 @@ class Config {
 	 * @param array $sections
 	 * @throws ConfigException
 	 */
-	private function __construct($xmlFile, array $sections) {
+	public function __construct($xmlFile, array $sections = array()) {
 
-		$this->xmlFile	= $xmlFile;
 		$this->sections	= $sections;
 
-		if(!$this->config = simplexml_load_file($this->xmlFile)) {
-			throw new ConfigException("Missing or malformed '$xmlFile'!");
+		if(!($config = simplexml_load_file($xmlFile))) {
+			throw new ConfigException("Missing or malformed '" . $xmlFile ."'.");
 		}
 
-		$this->xmlFileTS = filemtime($this->xmlFile);
-
-		$this->parseConfig();
+		$this->parseConfig($config);
 		$this->getServerConfig();
-
-		unset($this->config);
-	}
-
-	private function __clone() {}
-
-	/**
-	 * get Config instance
-	 * singletons are created for a specific config file with same sections
-	 *
-	 * @param unknown $xmlFile
-	 * @param array $sections
-	 * @return \vxPHP\Application\Config
-	 */
-	public static function getInstance($xmlFile, array $sections = array()) {
-
-		$hashKey = $xmlFile . '_' . implode('#', $sections);
-
-		if(
-			isset($_SESSION['_config'][$hashKey]->xmlFileTS) &&
-			$_SESSION['_config'][$hashKey]->xmlFileTS == filemtime($xmlFile) &&
-			!isset(self::$instances[$hashKey])
-		) {
-			self::$instances[$hashKey] = $_SESSION['_config'][$hashKey];
-		}
-
-		if(is_null(self::$instances[$hashKey])) {
-			self::$instances[$hashKey] = new self($xmlFile, $sections);
-		}
-
-		$_SESSION['_config'][$hashKey] = self::$instances[$hashKey];
-		return self::$instances[$hashKey];
 	}
 
 	/**
 	 * iterates through the sections of the config file
 	 * and calls init function
 	 *
+	 * @param \SimpleXMLElement $config
 	 * @throws ConfigException
 	 * @return void
 	 */
-	private function parseConfig() {
+	private function parseConfig(\SimpleXMLElement $config) {
 
 		try {
 
@@ -116,7 +118,8 @@ class Config {
 
 			// allow parsing of specific sections
 
-			foreach($this->config->children() as $section) {
+			foreach($config->children() as $section) {
+
 				$sectionName = $section->getName();
 
 				if(empty($this->sections) || in_array($sectionName, $this->sections)) {

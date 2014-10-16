@@ -14,11 +14,9 @@ use vxPHP\Database\vxPDO;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 0.3.0 2014-09-19
+ * @version 1.0.0 2014-10-16
  */
 class Application {
-
-	public static $version = '2.5.0';
 
 			/**
 			 * @var Application
@@ -95,25 +93,14 @@ class Application {
 	 *
 	 * create configuration object, database object
 	 * set up dispatcher and plugins
+	 * 
+	 * @param Config $config
 	 */
-	private function __construct($configFile) {
+	private function __construct(Config $config) {
 
 		try {
-			if(is_null($configFile)) {
-				$configFile = 'ini/site.ini.xml';
-			}
-			$this->config			= Config::getInstance($configFile);
+			$this->config			= $config;
 			$this->eventDispatcher	= EventDispatcher::getInstance();
-
-			if($this->config->db) {
-				$this->db = new vxPDO(array(
-					'host'		=> $this->config->db->host,
-					'dbname'	=> $this->config->db->name,
-					'user'		=> $this->config->db->user,
-					'pass'		=> $this->config->db->pass,
-					'logtype'	=> $this->config->db->logtype
-				));
-			}
 
 			$this->config->createConst();
 			$this->config->attachPlugins();
@@ -150,14 +137,19 @@ class Application {
 	/**
 	 * get Application instance
 	 *
-	 * @param string ini file name
-	 * @return \vxPHP\Application\Application
+	 * @param Config $config
+	 * @return Application
 	 */
-	public static function getInstance($configFile = NULL) {
+	public static function getInstance(Config $config = NULL) {
+
 		if(is_null(self::$instance)) {
-			self::$instance = new Application($configFile);
+			if(is_null($config)) {
+				throw new ApplicationException('No configuration object provided. Cannot instantiate application.');
+			}
+			self::$instance = new Application($config);
 		}
 		return self::$instance;
+
 	}
 
 	/**
@@ -167,6 +159,21 @@ class Application {
 	 */
 	public function getDb() {
 
+		if(empty($this->db)) {
+
+			if(empty($this->config->db)) {
+				return NULL;
+			}
+
+			$this->db = new vxPDO(array(
+				'host'		=> $this->config->db->host,
+				'dbname'	=> $this->config->db->name,
+				'user'		=> $this->config->db->user,
+				'pass'		=> $this->config->db->pass,
+				'logtype'	=> $this->config->db->logtype
+			));
+		}
+		
 		return $this->db;
 
 	}
