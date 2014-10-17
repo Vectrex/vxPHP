@@ -5,12 +5,13 @@ namespace vxPHP\Orm\Custom;
 use vxPHP\Orm\Custom\Exception\ArticleCategoryException;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Application\Application;
+use vxPHP\Database\vxPDOUtil;
 
 /**
  * Mapper class for articlecategories, stored in table `articlecategories`
  *
  * @author Gregor Kofler
- * @version 0.2.3 2014-09-19
+ * @version 0.2.4 2014-10-17
  */
 
 class ArticleCategory {
@@ -101,7 +102,7 @@ class ArticleCategory {
 
 		// insert category data
 
-		$this->alias = $db->getAlias($this->title, 'articlecategories');
+		$this->alias = vxPDOUtil::getAlias($db, $this->title, 'articlecategories');
 
 		$this->id = $db->insertRecord('articlecategories', array(
 			'Alias'			=> $this->alias,

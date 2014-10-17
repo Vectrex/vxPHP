@@ -13,12 +13,13 @@ use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
 use vxPHP\Application\Application;
+use vxPHP\Database\vxPDOUtil;
 
 /**
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.8.2 2014-08-11
+ * @version 0.8.3 2014-10-17
  */
 
 class Article implements SubjectInterface {
@@ -157,7 +158,7 @@ class Article implements SubjectInterface {
 
 			// update
 
-			$this->alias = $db->getAlias($this->headline, 'articles', $this->id);
+			$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
 
 			$cols = array_merge(
 				(array) $this->getData(),
@@ -181,7 +182,7 @@ class Article implements SubjectInterface {
 
 			// insert
 
-			$this->alias = $db->getAlias($this->headline, 'articles');
+			$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles');
 
 			$cols = array_merge(
 				(array) $this->getData(),
