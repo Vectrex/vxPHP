@@ -22,7 +22,7 @@ use vxPHP\Controller\Controller;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.2.6 2013-12-09
+ * @version 1.3.0 2014-10-25
  *
  */
 
@@ -33,12 +33,22 @@ class SimpleTemplate {
 				$rawContent,
 				$dir,
 				$contents,
+
 				/**
 				 * @var Locale
 				 */
 				$locale,
 				$filters = array(),
-				$ignoreLocales;
+				$ignoreLocales,
+
+				/**
+				 * name of a parent template found in <!-- extend: ... -->
+				 * 
+				 * @var string
+				 */
+				$parentTemplateFilename;
+
+	private		$extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
 	/**
 	 * initialize template based on $file
@@ -48,7 +58,6 @@ class SimpleTemplate {
 	public function __construct($file) {
 
 		$application	= Application::getInstance();
-		$request		= Request::createFromGlobals();
 
 		$this->locale	= $application->getCurrentLocale();
 		$this->file		= $file;
@@ -68,7 +77,9 @@ class SimpleTemplate {
 	 * @param string $file
 	 */
 	public static function create($file) {
+
 		return new static($file);
+
 	}
 
 	/**
@@ -77,7 +88,9 @@ class SimpleTemplate {
 	 * @return boolean
 	 */
 	public function containsPHP() {
+
 		return 1 === preg_match('~<\\?(php)?.*?\\?>~', $this->rawContent);
+
 	}
 
 	/**
@@ -87,6 +100,22 @@ class SimpleTemplate {
 	 */
 	public function getRawContent() {
  		return $this->rawContent;
+	}
+
+	
+	public function getParentTemplateFilename() {
+
+		if(empty($this->parentTemplateFilename)) {
+		
+			if(preg_match($this->extendRex, $this->rawContent, $matches)) {
+
+				$this->parentTemplateFilename = $matches[1];
+
+			}
+		}
+
+		return $this->parentTemplateFilename;
+		
 	}
 
 	/**
@@ -211,9 +240,7 @@ class SimpleTemplate {
 	 */
 	private function extend() {
 
-		$extendRegExp = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
-
-		if(preg_match($extendRegExp, $this->rawContent, $matches)) {
+		if(preg_match($this->extendRex, $this->rawContent, $matches)) {
 
 			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
 
@@ -224,7 +251,7 @@ class SimpleTemplate {
 				$this->rawContent = preg_replace(
 					$blockRegExp,
 					preg_replace(
-						$extendRegExp,
+						$this->extendRex,
 						'',
 						$this->rawContent
 					),
