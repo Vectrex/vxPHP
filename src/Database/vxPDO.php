@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.3, 2014-10-06
+ * @version 1.2.4, 2014-10-29
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -626,6 +626,10 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		// get pk information
 
+		if(empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
+		
 		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
 		
 		switch ($pkLength) {
