@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.4, 2014-10-29
+ * @version 1.2.5, 2014-10-29
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -298,7 +298,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				$this->statement = $this->prepare(
 					'UPDATE ' . $tableName .
 					' SET `' . implode('` = ?, `', $names). '` = ?' .
-					' WHERE `'. implode ('` = ?, `', array_keys($keyValue)) . ' = ?'
+					' WHERE `'. implode ('` = ? AND `', array_keys($keyValue)) . '` = ?'
 				);
 				
 				// add filtering values as parameter
