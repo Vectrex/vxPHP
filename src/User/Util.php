@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 0.2.1 2013-10-15
+ * @version 1.0.0 2014-11-13
  */
 
 class Util {
@@ -62,43 +62,52 @@ class Util {
 	}
 
 	/**
-	 * check whether user id is not already assigned to other user
+	 * check whether a user email is already assigned
 	 *
-	 * @param string $id
+	 * @param string $email
 	 * @return boolean availability
 	 */
-	public static function isAvailableId($id) {
+	public static function isAvailableEmail($email) {
 
-		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE Email = ?', array((string) $id));
-		return empty($rows);
+		return !count(Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE email = ?', array((string) $email)));
 
+	}
+
+	/**
+	 * check whether a username is already assigned
+	 *
+	 * @param string $username
+	 * @return boolean availability
+	 */
+	public static function isAvailableUsername($username) {
+	
+		return !count(Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE username = ?', array((string) $username)));
+	
 	}
 
 	/**
 	 * get list of users listening to supplied notification alias
 	 *
 	 * @param string $notification_alias
-	 * @return array $users
+	 * @return array [User]
 	 */
 	public static function getUsersToNotify($notification_alias) {
 
 		$users = array();
 
-		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('
+		$rows = Application::getInstance()->getDb()->doPreparedQuery('
 			SELECT
-				Email
+				adminID
 			FROM
 				admin a
 				INNER JOIN admin_notifications an ON a.adminID = an.adminID
 				INNER JOIN notifications n ON an.notificationsID = n.notificationsID
 			WHERE
-				UPPER(n.Alias) = ?
+				UPPER(n.alias) = ?
 			', array(strtoupper($notification_alias)));
 
 		foreach($rows as $r) {
-			$u = new User();
-			$u->setUser($r['Email']);
-			$users[] = $u;
+			$users[] = User::getInstance($r['adminID']);
 		}
 
 		return $users;
@@ -111,28 +120,26 @@ class Util {
 	 * @param callback $callBackSort
 	 * @throws UserException
 	 *
-	 * @return array users
+	 * @return array [User]
 	 */
 	public static function getUsersBelongingToGroup($admingroup_alias, $callBackSort = NULL) {
 
 		$users = array();
 
-		$rows = $db = Application::getInstance()->getDb()->doPreparedQuery('
+		$rows = Application::getInstance()->getDb()->doPreparedQuery('
 			SELECT
-				Email
+				adminID
 			FROM
 				admin a
 				INNER JOIN admingroups ag ON a.admingroupsID = ag.admingroupsID
 			WHERE
-				UPPER(ag.Alias) = ?
+				UPPER(ag.alias) = ?
 			', array(strtoupper($admingroup_alias)));
 
 		foreach($rows as $r) {
-			$u = new User();
-			$u->setUser($r['Email']);
-			$users[] = $u;
+			$users[] = User::getInstance($r['adminID']);
 		}
-
+		
 		if(is_null($callBackSort)) {
 			return $users;
 		}

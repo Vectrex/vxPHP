@@ -11,7 +11,7 @@ use vxPHP\Application\Application;
 
 /**
  * @author Gregor Kofler
- * @version 0.6.2 2014-09-19
+ * @version 1.0.0 2014-11-13
  */
 
 class User {
@@ -23,8 +23,8 @@ class User {
 	const AUTH_OBSERVE_TABLE		= 256;
 	const AUTH_OBSERVE_ROW			= 4096;
 
-	protected	$id,
-				$adminid,
+	protected	$adminid,
+				$username,
 				$name,
 				$email,
 				$pwd,
@@ -35,7 +35,6 @@ class User {
 
 				$groupid,
 				$group_alias,
-
 				$privilege_level,
 				$authenticated = FALSE,
 
@@ -49,7 +48,7 @@ class User {
 						/**
 						 * @var array
 						 */
-	protected static	$instancesByEmail = array();
+	protected static	$instancesByUsername = array();
 	
 						/**
 						 * @var User
@@ -58,52 +57,79 @@ class User {
 	
 	/**
 	 * retrieve a user instance
-	 * with $allowLaziness set to FALSE, the database is not searched
+	 * with $id being an integer the adminID is considered, with $id being a 
 	 * 
 	 * @param string|int $id
-	 * @param boolean $allowLaziness
 	 * 
 	 * @throws \InvalidArgumentException
 	 */
-	public static function getInstance($id, $allowLaziness = TRUE) {
+	public static function getInstance($id) {
 
-		if(!is_scalar($id)) {
+		if(!is_scalar($id) || empty($id)) {
 			throw new \InvalidArgumentException("Invalid argument for instantiating a user.");
 		}
 
-		if(isset(self::$instancesById[$id])) {
+		// return a previously instantiated use
+
+		if(is_int($id) && isset(self::$instancesById[$id])) {
 			return self::$instancesById[$id];
 		}
 
-		if(isset(self::$instancesByEmail[$id])) {
-			return self::$instancesByEmail[$id];
+		if(isset(self::$instancesByUsername[$id])) {
+			return self::$instancesByUsername[$id];
 		}
 
-		if(!$allowLaziness) {
-			return NULL;
+		// try to retrieve user from database
+
+		$idColumn = is_int($id) ? 'adminID': 'username';
+
+		$rows = Application::getInstance()->getDb()->doPreparedQuery("
+			SELECT
+				a.*,
+				ag.privilege_Level,
+				ag.admingroupsID as groupid,
+				LOWER(ag.alias) as group_alias
+
+			FROM
+				admin a
+				LEFT JOIN admingroups ag on a.admingroupsID = ag.admingroupsID
+
+			WHERE
+				$idColumn = ?", array($id));
+
+		$user = new static();
+
+		if(!empty($rows[0])) {
+		
+			foreach($rows[0] as $k => $v) {
+				$k = strtolower($k);
+				if(property_exists($user, $k)) {
+					$user->$k = $v;
+				}
+			}
+				
+			$user->table_access	= empty($user->table_access)	? array() : array_map('strtolower', preg_split('/\s*,\s*/', $user->table_access));
+			$user->row_access	= empty($user->row_access)		? array() : array_map('strtolower', preg_split('/\s*,\s*/', $user->row_access));
+		
 		}
-
-		$user = new static($id);
-
-		self::$instancesById	[$user->getAdminId()]	= $user;
-		self::$instancesByEmail	[$user->getId()]		= $user;
+		
+		else {
+			throw new UserException("User '$id' does not exist.", UserException::USER_DOES_NOT_EXIST);
+		}
+		
+		self::$instancesById[$user->adminid] = $user;
+		if(($username = $user->getUsername())) {
+			self::$instancesByUsername[$username] = $user;
+		}
 		
 		return $user;
 		
 	}
 	
 	/**
-	 * stub
+	 * search session for user instance, register and return it
 	 * 
-	 * @todo
-	 * @param array $userData
-	 */
-	public static function createUser(array $userData) {
-		
-	}
-	
-	/**
-	 * 
+	 * @return \vxPHP\User\User
 	 */
 	public static function getSessionUser() {
 		
@@ -120,11 +146,13 @@ class User {
 				// write user if not already instantiated
 				
 				if(!isset(self::$instancesById[$id])) {
-					self::$instancesById	[$id]				= $user;
-					self::$instancesByEmail	[$user->getId()]	= $user;
+					self::$instancesById[$id] = $user;
+					if(($username = $user->getUsername())) {
+						self::$instancesByUsername[$username] = $user;
+					}
 				}
 
-				// return 
+				// return user instance 
 
 				$user = self::$instancesById[$id];
 				self::$userInSession = $user;
@@ -141,48 +169,7 @@ class User {
 	 * @param string|int $id
 	 * @throws UserException
 	 */
-	protected function __construct($id) {
-
-		if(is_numeric($id)) {
-			$id			= (int) $id;
-			$idColumn	= 'adminID';
-		}
-		
-		else {
-			$idColumn	= 'Email';
-		}
-
-		$rows = Application::getInstance()->getDb()->doPreparedQuery("
-			SELECT
-				a.*,
-				ag.Privilege_Level,
-				ag.admingroupsID as groupid,
-				LOWER(ag.Alias) as group_alias
-			FROM
-				admin a
-				INNER JOIN admingroups ag on a.admingroupsID = ag.admingroupsID
-			WHERE
-				$idColumn = ?", array($id));
-		
-		if(!empty($rows[0])) {
-			$this->id = $rows[0]['Email'];
-		
-			foreach($rows[0] as $k => $v) {
-				$k = strtolower($k);
-				if(property_exists($this, $k)) {
-					$this->$k = $v;
-				}
-			}
-			
-			$this->table_access	= empty($this->table_access)	? array() : array_map('strtolower', preg_split('/\s*,\s*/', $this->table_access));
-			$this->row_access	= empty($this->row_access)		? array() : array_map('strtolower', preg_split('/\s*,\s*/', $this->row_access));
-				
-		}
-
-		else {
-			throw new UserException("User '$id' does not exist.", UserException::USER_DOES_NOT_EXIST);
-		}
-
+	public function __construct() {
 	}
 
 	public function storeInSession() {
@@ -198,19 +185,13 @@ class User {
 		$_SESSION['user']		= NULL;
 	}
 
-	/*
-	 * various getters
-	 */
 	public function __toString() {
-		return $this->id;
-	}
-
-	public function getId() {
-		return $this->id;
+		return $this->username;
 	}
 
 	/**
 	 * return primary key of user record
+	 * only populated with already saved user
 	 *
 	 * @return integer
 	 */
@@ -219,12 +200,82 @@ class User {
 	}
 
 	/**
+	 * get password hash
+	 * 
+	 * @return string
+	 */
+	public function getPasswordHash() {
+		return $this->pwd;
+	}
+
+	/**
+	 * set password of user
+	 * 
+	 * @param string $password
+	 */
+	public function setPassword($password) {
+		$this->pwd = Util::hashPassword($password);
+		return $this;
+	}
+
+	/**
+	 * return username
+	 * 
+	 * @return string
+	 */
+	public function getUsername() {
+		return $this->username;
+	}
+
+	/**
+	 * set username
+	 * 
+	 * @param string $username
+	 * @return \vxPHP\User\User
+	 */
+	public function setUsername($username) {
+		$this->username = $username;
+		return $this;
+	}
+
+	/**
+	 * get email of user
+	 * 
+	 * @return string
+	 */
+	public function getEmail() {
+		return $this->email;
+	}
+
+	/**
+	 * set email of user
+	 * 
+	 * @param string $email
+	 * @return \vxPHP\User\User
+	 */
+	public function setEmail($email) {
+		$this->email = $email;
+		return $this;
+	}
+	
+	/**
 	 * return name of user
 	 *
 	 * @return string
 	 */
 	public function getName() {
 		return $this->name;
+	}
+
+	/**
+	 * set name
+	 * 
+	 * @param string $name
+	 * @return \vxPHP\User\User
+	 */
+	public function setName($name) {
+		$this->name = $name;
+		return $this;
 	}
 
 	/**
@@ -236,10 +287,52 @@ class User {
 		return $this->misc_data;
 	}
 
+	/**
+	 * set optional data stored with user record
+	 * 
+	 * @param string $datastring
+	 * @return \vxPHP\User\User
+	 */
+	public function setMiscData($datastring) {
+		$this->misc_data = $datastring;
+		return $this;
+	}
+
+	/**
+	 * get alias name of admin group
+	 * 
+	 * @return string
+	 */
 	public function getAdmingroup() {
 		return $this->group_alias;
 	}
+	
+	/**
+	 * set admin group by group alias
+	 * this automatically updates the privilege level
+	 * 
+	 * @return \vxPHP\User\User
+	 */
+	public function setAdmingroup($groupAlias) {
+		
+		$rows = Application::getInstance()->getDb()->doPreparedQuery('SELECT * FROM admingroups WHERE alias = ?', array(strtoupper($groupAlias)));
 
+		if(!count($rows)) {
+			throw new UserException("Unknown admin group '$groupAlias'", UserException::UNKNOWN_ADMIN_GROUP);
+		}
+		
+		$this->group_alias		= $groupAlias;
+		$this->groupid			= $rows[0]['admingroupsID'];
+		$this->privilege_level	= $rows[0]['privilege_level'];
+
+		return $this;
+	}
+
+	/**
+	 * get privilege level of admin group
+	 * 
+	 * @return int
+	 */
 	public function getPrivilegeLevel() {
 		return $this->privilege_level;
 	}
@@ -280,14 +373,26 @@ class User {
 		return $this->table_access;
 	}
 
+	/**
+	 * check for level "superadmin"
+	 * @return boolean
+	 */
 	public function hasSuperAdminPrivileges() {
 		return $this->privilege_level <= self::AUTH_SUPERADMIN;
 	}
 
+	/**
+	 * check for level "privilege"
+	 * @return boolean
+	 */
 	public function hasPrivileges() {
 		return $this->privilege_level <= self::AUTH_PRIVILEGED;
 	}
 
+	/**
+	 * check whether user is authenticated
+	 * @return boolean
+	 */
 	public function isAuthenticated() {
 		return $this->authenticated;
 	}
@@ -328,12 +433,65 @@ class User {
 	}
 
 	/**
-	 * delete user, removes user from database
+	 * save user data, either inserts or updates a record
+	 * no checks for uniqueness of email or username are performed
+	 * 
+	 * @return \vxPHP\User\User
+	 */
+	public function save() {
+
+		$data = array(
+			'name'			=> $this->name,
+			'username'		=> $this->username,
+			'password'		=> $this->pwd,
+			'email'			=> $this->email,
+			'misc_data'		=> $this->misc_data,
+			'admingroupsID'	=> $this->groupid,
+			'table_access'	=> empty($this->table_access)	? NULL : implode(',', $this->table_access),
+			'row_access'	=> empty($this->row_access)		? NULL : implode(',', $this->row_access)
+		);
+
+		$db = Application::getInstance()->getDb();
+
+		// update if admin id is set 
+
+		if(is_null($this->adminid)) {
+			$this->adminid = $db->insertRecord('admin', $data);
+		}
+		
+		// insert otherwise
+
+		else {
+			$db->updateRecord('admin', $this->adminid, $data);
+		}
+		
+		self::$instancesById[$this->adminid] = $this;
+		if(!empty($this->username)) {
+			self::$instancesByUsername[$this->username] = $this;
+		}
+
+		return $this;
+	}
+	
+	/**
+	 * delete user and remove it from database
 	 *
-	 * @return sucess
+	 * @return boolean
 	 */
 	public function delete() {
-		return $db = Application::getInstance()->getDb()->deleteRecord('admin', $this->adminid);
+
+		if(!is_null($this->adminid)) {
+
+			// delete cached instances
+			
+			unset (self::$instancesById[$this->adminid]);
+			if(!empty($this->username)) {
+				unset (self::$instancesByUsername[$this->username]);
+			}
+
+			return !!Application::getInstance()->getDb()->deleteRecord('admin', $this->adminid);
+
+		}
 	}
 
 	/**
@@ -350,16 +508,16 @@ class User {
 			$this->cachedNotifications = array();
 			$rows = $this->queryNotifications();
 			foreach($rows as $r) {
-				$this->cachedNotifications[$r['Alias']] = new Notification($r['Alias']);
+				$this->cachedNotifications[$r['alias']] = new Notification($r['alias']);
 			}
 		}
 		return array_values($this->cachedNotifications);
 	}
 
 	protected function queryNotifications() {
-		return $db = Application::getInstance()->getDb()->doPreparedQuery("
+		return Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
-				Alias
+				alias
 			FROM
 				notifications n
 				INNER JOIN admin_notifications an ON (n.notificationsID = an.notificationsID AND adminID = ?)
@@ -373,7 +531,7 @@ class User {
 	 */
 	public function setNotifications(Array $aliases) {
 
-		$db = $db = Application::getInstance()->getDb();
+		$db = Application::getInstance()->getDb();
 
 		if(!isset($this->id)) {
 			return;
@@ -443,7 +601,7 @@ class User {
 		$m = new Email();
 
 		$m->setReceiver	($this->email);
-		$m->setSubject	(defined('DEFAULT_MAIL_SUBJECT_PREFIX') ? DEFAULT_MAIL_SUBJECT_PREFIX.' ' : '' . $notification->subject);
+		$m->setSubject	(defined('DEFAULT_MAIL_SUBJECT_PREFIX') ? DEFAULT_MAIL_SUBJECT_PREFIX . ' ' : '' . $notification->subject);
 		$m->setMailText	($txt);
 		$m->setSig		($notification->signature);
 
@@ -462,4 +620,5 @@ class User {
 
 	private function logNotification(Notification $notification) {
 	}
+	
 }
