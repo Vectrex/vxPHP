@@ -11,7 +11,7 @@ use vxPHP\Application\Application;
 
 /**
  * @author Gregor Kofler
- * @version 1.0.0 2014-11-13
+ * @version 1.0.1 2014-11-14
  */
 
 class User {
@@ -443,7 +443,7 @@ class User {
 		$data = array(
 			'name'			=> $this->name,
 			'username'		=> $this->username,
-			'password'		=> $this->pwd,
+			'pwd'			=> $this->pwd,
 			'email'			=> $this->email,
 			'misc_data'		=> $this->misc_data,
 			'admingroupsID'	=> $this->groupid,
