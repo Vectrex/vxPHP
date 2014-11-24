@@ -290,7 +290,7 @@ class Route {
 	 * @param string $requestMethod
 	 * @return boolean
 	 */
-	public function allowsRequestMethods($requestMethod) {
+	public function allowsRequestMethod($requestMethod) {
 		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods);
 	}
 	
