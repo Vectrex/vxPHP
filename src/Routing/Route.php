@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.2 2014-06-25
+ * @version 0.7.0 2014-11-24
  *
  */
 class Route {
@@ -27,7 +27,12 @@ class Route {
 			$url,
 			$match,
 			$placeholders,
-			$pathParameters;
+			$pathParameters,
+
+			/**
+			 * @var array
+			 */
+			$requestMethods;
 
 	/**
 	 *
@@ -67,6 +72,10 @@ class Route {
 			$this->methodName = $parameters['method'];
 		}
 
+		if(isset($parameters['requestMethods'])) {
+			$this->requestMethods = $parameters['requestMethods'];
+		}
+
 		if(isset($parameters['match'])) {
 			$this->match = $parameters['match'];
 		}
@@ -97,9 +106,11 @@ class Route {
 
 	/**
 	 * @param string $page
+	 * @return \vxPHP\Routing\Route
 	 */
 	private function setRouteId($routeId) {
 		$this->routeId = $routeId;
+		return $this;
 	}
 
 	/**
@@ -111,9 +122,11 @@ class Route {
 
 	/**
 	 * @param string $scriptName
+	 * @return \vxPHP\Routing\Route
 	 */
 	private function setScriptName($scriptName) {
 		$this->scriptName = $scriptName;
+		return $this;
 	}
 
 	/**
@@ -125,9 +138,11 @@ class Route {
 
 	/**
 	 * @param string $auth
+	 * @return \vxPHP\Routing\Route
 	 */
 	public function setAuth($auth) {
 		$this->auth = $auth;
+		return $this;
 	}
 
 	/**
@@ -139,9 +154,11 @@ class Route {
 
 	/**
 	 * @param string $authParameters
+	 * @return \vxPHP\Routing\Route
 	 */
 	public function setAuthParameters($authParameters) {
 		$this->authParameters = $authParameters;
+		return $this;
 	}
 
 	/**
@@ -211,9 +228,11 @@ class Route {
 
 	/**
 	 * @param string $controllerString
+	 * @return \vxPHP\Routing\Route
 	 */
 	public function setControllerString($controllerString) {
 		$this->controllerString = $controllerString;
+		return $this;
 	}
 
 	/**
@@ -232,11 +251,49 @@ class Route {
 
 	/**
 	 * @param string $redirect
+	 * @return \vxPHP\Routing\Route
 	 */
 	public function setRedirect($redirect) {
 		$this->redirect = $redirect;
+		return $this;
 	}
 
+	/**
+	 * get all allowed request methods for a route
+	 * 
+	 * @return array
+	 */
+	public function getRequestMethods() {
+		return $this->requestMethods;
+	}
+	
+	/**
+	 * set all allowed request methods for a route
+	 * 
+	 * @param array $requestMethods
+	 * @return \vxPHP\Routing\Route
+	 */
+	public function setRequestMethods(array $requestMethods) {
+
+		foreach($requestMethods as $requestMethod) {
+			if(strpos('GET POST PUT DELETE', strtoupper($requestMethod) === -1)) {
+				throw new \InvalidArgumentException('Invalid request method' . strtoupper($requestMethod) . '.');
+			}
+		}
+		$this->requestMethods = array_map('strtoupper', $requestMethods);
+		return $this;
+	}
+
+	/**
+	 * check whether a request method is allowed with the route
+	 * 
+	 * @param string $requestMethod
+	 * @return boolean
+	 */
+	public function allowsRequestMethods($requestMethod) {
+		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods);
+	}
+	
 	/**
 	 * get path parameter
 	 *
