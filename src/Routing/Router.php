@@ -10,14 +10,14 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.3 2014-04-07
+ * @version 0.4.0 2014-11-25
  *
  */
 class Router {
 
 	/**
-	 * returns controller class for page
-	 * the page id is second along the path behind an optional locale string
+	 * analyse path and return route associated with it
+	 * the first path fragment can be a locale string, which is then skipped for determining the route
 	 *
 	 * @return \vxPHP\Routing\Route
 	 */
@@ -87,7 +87,7 @@ class Router {
 	/**
 	 *
 	 * @param string $scriptName (e.g. index.php, admin.php)
-	 * @array $pathSegments
+	 * @param array $pathSegments
 	 *
 	 * @return \vxPHP\Routing\Route
 	 */
@@ -101,7 +101,7 @@ class Router {
 			return array_shift($routes[$scriptName]);
 		}
 
-		$pathToCheck = implode('/', $pathSegments);
+		$pathToCheck	= implode('/', $pathSegments);
 
 		// iterate over routes and try to find the "best" match
 
@@ -119,6 +119,23 @@ class Router {
 
 				else {
 					$foundRoute = $route;
+				}
+
+				// check whether request fulfills request method requirements of route
+
+				if(!is_null($foundRoute->getRequestMethods())) {
+
+					// lazy instantiation of request
+
+					if(!isset($requestMethod)) {
+						$requestMethod	= Request::createFromGlobals()->getMethod();
+					}
+
+					// search on, when request method requirement is not met
+
+					if(!$route->allowsRequestMethod($requestMethod)) {
+						$foundRoute = NULL;
+					} 
 				}
 			}
 
