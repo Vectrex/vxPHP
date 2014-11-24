@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 1.0.0 2014-10-16
+ * @version 1.0.1 2014-11-24
  *
  * @todo refresh() method
  */
@@ -319,7 +319,13 @@ class Config {
 
 			$a = $page->attributes();
 
+			// get route id
+
 			$pageId	= (string) $a->id;
+			
+			if($pageId === '') {
+				throw new ConfigException('Invalid or missing route id.');
+			}
 
 			// read optional controller
 
@@ -327,13 +333,27 @@ class Config {
 				$parameters['controller'] = (string) $a->controller;
 			}
 
-			// read optional method
+			// read optional controller method
 
 			if(isset($a->method)) {
 				$parameters['method'] = (string) $a->method;
 			}
 
-			// when no path is defined $ndx will be used for route lookup
+			// read optional controller method
+			
+			if(isset($a->request_methods)) {
+				$allowedMethods	= 'GET POST PUT DELETE';
+				$requestMethods	= preg_split('~\s*,\s*~', strtoupper((string) $a->request_methods));
+				
+				foreach($requestMethods as $requestMethod) {
+					if(strpos($allowedMethods, $requestMethod) === -1) {
+						throw new ConfigException('Invalid request method ' . $requestMethod . '.');
+					}
+				}
+				$parameters['requestMethods'] = (string) $requestMethods;
+			}
+
+			// when no path is defined page id will be used for route lookup
 
 			if(isset($a->path)) {
 
