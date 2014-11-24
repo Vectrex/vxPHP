@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 1.0.1 2014-11-24
+ * @version 1.1.0 2014-11-25
  *
  * @todo refresh() method
  */
@@ -350,7 +350,7 @@ class Config {
 						throw new ConfigException('Invalid request method ' . $requestMethod . '.');
 					}
 				}
-				$parameters['requestMethods'] = (string) $requestMethods;
+				$parameters['requestMethods'] = $requestMethods;
 			}
 
 			// when no path is defined page id will be used for route lookup
