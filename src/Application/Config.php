@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 1.1.0 2014-11-25
+ * @version 1.1.1 2014-12-07
  *
  * @todo refresh() method
  */
@@ -357,11 +357,13 @@ class Config {
 
 			if(isset($a->path)) {
 
+				// initialize lookup expression
+
+				$rex = (string) $a->path;
+
 				// extract route parameters and default values
 
 				if(preg_match_all('~\{(.*?)(?:=(.*?))?\}~', (string) $a->path, $matches)) {
-
-					$rex = (string) $a->path;
 
 					$placeholders = array();
 
@@ -421,7 +423,6 @@ class Config {
 
 				$parameters['auth'] = $auth;
 			}
-
 
 			$this->routes[$scriptName][$rex] = new Route($pageId, $scriptName, $parameters);
 		}
