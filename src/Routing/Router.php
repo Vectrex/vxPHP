@@ -10,7 +10,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.2 2014-12-07
+ * @version 0.4.3 2014-12-07
  *
  */
 class Router {
@@ -104,10 +104,17 @@ class Router {
 		$pathToCheck	= implode('/', $pathSegments);
 		$requestMethod	= Request::createFromGlobals()->getMethod();
 		$foundRoute		= NULL;
+		$default		= NULL;
 
 		// iterate over routes and try to find the "best" match
 
 		foreach($routes[$scriptName] as $route) {
+
+			// keep default route as fallback, when no match is found
+
+			if($route->getRouteId() === 'default') {
+				$default = $route;
+			}
 
 			// pick route only when request method requirement is met
 
@@ -141,11 +148,9 @@ class Router {
 			return $foundRoute;
 		}
 
-		// default route as fallback (if available)
+		// return default route as fallback (if available)
 
-		if(isset($routes[$scriptName]['default'])) {
-			return $routes[$scriptName]['default'];
-		}
+		return $default;
 	}
 
 	/**
