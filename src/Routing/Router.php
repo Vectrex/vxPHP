@@ -10,7 +10,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.1 2014-12-07
+ * @version 0.4.2 2014-12-07
  *
  */
 class Router {
@@ -102,44 +102,37 @@ class Router {
 		}
 
 		$pathToCheck	= implode('/', $pathSegments);
+		$requestMethod	= Request::createFromGlobals()->getMethod();
 		$foundRoute		= NULL;
 
 		// iterate over routes and try to find the "best" match
 
 		foreach($routes[$scriptName] as $route) {
 
-			if(preg_match('~(?:/|^)' . $route->getMatchExpression() .'(?:/|$)~', $pathToCheck)) {
-				
-				// if a route has been found previously, choose the more "precise" one
+			// pick route only when request method requirement is met
 
-				if(isset($foundRoute)) {
-					if(strlen($route->getPath()) > strlen($foundRoute->getPath())) {
-						$foundRoute = $route;
-					}
-				}
+			if(
+				preg_match('~(?:/|^)' . $route->getMatchExpression() .'(?:/|$)~', $pathToCheck) &&
+				$route->allowsRequestMethod($requestMethod)
+			) {
 
-				else {
+				// if no route was found yet, pick this first match
+
+				if(!isset($foundRoute)) {
 					$foundRoute = $route;
 				}
 
-				// check whether request fulfills request method requirements of route
+				else {
+					
+					// if a route has been found previously, choose the more "precise" one
 
-				if(!is_null($foundRoute->getRequestMethods())) {
-
-					// lazy instantiation of request
-
-					if(!isset($requestMethod)) {
-						$requestMethod	= Request::createFromGlobals()->getMethod();
-					}
-
-					// set route only when request method requirement is met
-
-					if($route->allowsRequestMethod($requestMethod)) {
+					if(strlen($route->getPath()) > strlen($foundRoute->getPath())) {
 						$foundRoute = $route;
-					} 
+					}
+					
 				}
 			}
-				
+
 		}
 
 		// return "normal" route, if found

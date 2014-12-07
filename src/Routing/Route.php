@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.1 2014-12-07
+ * @version 0.7.2 2014-12-07
  *
  */
 class Route {
@@ -79,13 +79,12 @@ class Route {
 		if(isset($parameters['match'])) {
 			$this->match = $parameters['match'];
 		}
+		else {
+			$this->match = $routeId;
+		}
 
 		if(isset($parameters['placeholders'])) {
 			$this->placeholders = $parameters['placeholders'];
-		}
-
-		else {
-			$this->match = $routeId;
 		}
 
 	}
@@ -273,7 +272,7 @@ class Route {
 	public function getRequestMethods() {
 		return $this->requestMethods;
 	}
-	
+
 	/**
 	 * set all allowed request methods for a route
 	 * 
