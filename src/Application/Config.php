@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing XML ini-file
  *
- * @version 1.1.1 2014-12-07
+ * @version 1.1.2 2014-12-07
  *
  * @todo refresh() method
  */
@@ -424,7 +424,11 @@ class Config {
 				$parameters['auth'] = $auth;
 			}
 
-			$this->routes[$scriptName][$rex] = new Route($pageId, $scriptName, $parameters);
+			if(isset($this->routes[$scriptName][$pageId])) {
+				throw new ConfigException("Route '". $pageId ."' for script '" . $scriptName . "' found more than once.");
+			}
+
+			$this->routes[$scriptName][] = new Route($pageId, $scriptName, $parameters);
 		}
 	}
 
@@ -493,46 +497,43 @@ class Config {
 					$page = (string) $a->page;
 					$local = strpos($page, '/') !== 0 && !preg_match('~^[a-z]+://~', $page);
 
-					if(!$local || isset($this->routes[$root][$page]) || isset($this->routes[$root]['default'])) {
+					$e = new MenuEntry((string) $a->page, $a, $local);
 
-						$e = new MenuEntry((string) $a->page, $a, $local);
+					if($menuAuth || isset($a->auth)) {
 
-						if($menuAuth || isset($a->auth)) {
-
-							// fallback to menu settings, when auth attribute is not set
+						// fallback to menu settings, when auth attribute is not set
+						
+						if(!isset($a->auth)) {
 							
-							if(!isset($a->auth)) {
-								
-								$e->setAuth($m->getAuth());
-								$e->setAuthParameters($m->getAuthParameters());
+							$e->setAuth($m->getAuth());
+							$e->setAuthParameters($m->getAuthParameters());
 
+						}
+
+						else {
+
+							// set optional authentication level; if level is not defined, entry is locked for everyone
+							// if auth level is defined, additional authentication parameters can be set
+
+							$auth = strtoupper(trim((string) $a->auth));
+
+							if(defined("UserAbstract::AUTH_$auth")) {
+								$e->setAuth(constant("UserAbstract::AUTH_$auth"));
+
+								if(isset($a->auth_parameters)) {
+									$e->setAuthParameters((string) $a->auth_parameters);
+								}
 							}
-
 							else {
-
-								// set optional authentication level; if level is not defined, entry is locked for everyone
-								// if auth level is defined, additional authentication parameters can be set
-	
-								$auth = strtoupper(trim((string) $a->auth));
-	
-								if(defined("UserAbstract::AUTH_$auth")) {
-									$e->setAuth(constant("UserAbstract::AUTH_$auth"));
-	
-									if(isset($a->auth_parameters)) {
-										$e->setAuthParameters((string) $a->auth_parameters);
-									}
-								}
-								else {
-									$e->setAuth(-1);
-								}
+								$e->setAuth(-1);
 							}
 						}
+					}
 
-						$m->appendEntry($e);
+					$m->appendEntry($e);
 
-						if(isset($entry->menu)) {
-							$e->appendMenu($this->parseMenu($entry->menu));
-						}
+					if(isset($entry->menu)) {
+						$e->appendMenu($this->parseMenu($entry->menu));
 					}
 				}
 			}

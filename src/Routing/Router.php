@@ -10,7 +10,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0 2014-11-25
+ * @version 0.4.1 2014-12-07
  *
  */
 class Router {
@@ -102,13 +102,14 @@ class Router {
 		}
 
 		$pathToCheck	= implode('/', $pathSegments);
+		$foundRoute		= NULL;
 
 		// iterate over routes and try to find the "best" match
 
-		foreach($routes[$scriptName] as $match => $route) {
+		foreach($routes[$scriptName] as $route) {
 
-			if(preg_match('~(?:/|^)' . $match .'(?:/|$)~', $pathToCheck)) {
-
+			if(preg_match('~(?:/|^)' . $route->getMatchExpression() .'(?:/|$)~', $pathToCheck)) {
+				
 				// if a route has been found previously, choose the more "precise" one
 
 				if(isset($foundRoute)) {
@@ -131,14 +132,14 @@ class Router {
 						$requestMethod	= Request::createFromGlobals()->getMethod();
 					}
 
-					// search on, when request method requirement is not met
+					// set route only when request method requirement is met
 
-					if(!$route->allowsRequestMethod($requestMethod)) {
-						$foundRoute = NULL;
+					if($route->allowsRequestMethod($requestMethod)) {
+						$foundRoute = $route;
 					} 
 				}
 			}
-
+				
 		}
 
 		// return "normal" route, if found

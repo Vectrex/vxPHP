@@ -20,7 +20,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0, 2014-04-07
+ * @version 0.4.1, 2014-12-07
  *
  * @throws MenuGeneratorException
  */
@@ -129,7 +129,7 @@ class MenuGenerator {
 			!count($this->config->menus[$id]->getEntries()) &&
 			$this->config->menus[$id]->getType() == 'static'
 		) {
-			throw new MenuGeneratorException();
+			throw new MenuGeneratorException("Menu '" .$id. "' not found or empty.");
 		}
 
 		$this->menu = $this->config->menus[$id];

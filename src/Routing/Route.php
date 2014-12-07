@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2014-11-24
+ * @version 0.7.1 2014-12-07
  *
  */
 class Route {
@@ -118,6 +118,13 @@ class Route {
 	 */
 	public function getScriptName() {
 		return $this->scriptName;
+	}
+
+	/**
+	 * @return string $matchExpression
+	 */
+	public function getMatchExpression() {
+		return $this->match;
 	}
 
 	/**
