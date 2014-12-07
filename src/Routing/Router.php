@@ -131,9 +131,9 @@ class Router {
 
 				else {
 					
-					// if a route has been found previously, choose the more "precise" one
+					// if a route has been found previously, choose the more "precise" and/or later one
 
-					if(strlen($route->getPath()) > strlen($foundRoute->getPath())) {
+					if(strlen($route->getPath()) >= strlen($foundRoute->getPath())) {
 						$foundRoute = $route;
 					}
 					
