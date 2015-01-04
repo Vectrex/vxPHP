@@ -45,10 +45,13 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 	}
 
+	/**
+	 * @see \vxPHP\Webpage\Menu\Renderer\MenuRenderer::renderEntry()
+	 */
 	protected function renderEntry(MenuEntry $entry) {
 
 		$attributes = $entry->getAttributes();
-
+		
 		// check display attribute
 
 		if(!isset($attributes->display) || $attributes->display !== 'none') {
@@ -72,18 +75,28 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 			if(isset($attributes->text)) {
 
+				// render a not selected menu entry
+
 				if(!isset($sel) || $sel !== $entry) {
 					$markup = sprintf(
 						'<li class="%s">%s<a href="%s">%s</a>%s',
 						preg_replace('~[^\w]~', '_', $entry->getPage()),
 						$this->openingTags,
 						$entry->getHref(),
-						htmlspecialchars($attributes->text),
+						empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 						$this->closingTags
 					);
+					
+					// ensure rendering of submenus, when a parameter "unfoldAll" is set
+
+					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
+						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
+					}
 				}
 
 				else {
+
+					// render a selected menu entry
 
 					if((!$entry->getSubMenu() || is_null($entry->getSubMenu()->getSelectedEntry())) && !$this->menu->getForceActive()) {
 
@@ -91,7 +104,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 							'<li class="active %s">%s<span>%s</span>%s',
 							preg_replace('~[^\w]~', '_', $entry->getPage()),
 							$this->openingTags,
-							htmlspecialchars($attributes->text),
+							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
 						);
 
@@ -104,13 +117,13 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 							preg_replace('~[^\w]~', '_', $entry->getPage()),
 							$this->openingTags,
 							$entry->getHref(),
-							htmlspecialchars($attributes->text),
+							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
 						);
 
 					}
 
-					if(($subMenu = $entry->getSubMenu()) && $this->menu->getShowSubmenus()) {
+					if($this->menu->getShowSubmenus() && ($subMenu = $entry->getSubMenu())) {
 						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
 					}
 				}

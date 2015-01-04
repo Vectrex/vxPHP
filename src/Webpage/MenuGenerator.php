@@ -218,7 +218,7 @@ class MenuGenerator {
 			self::$primedMenus[] = $this->menu;
 		}
 
-		$css = "{$this->id}menu";
+		$css = $this->id . 'menu';
 
 		// drill down to required submenu (if only submenu needs to be rendered)
 
@@ -268,7 +268,7 @@ class MenuGenerator {
 		// enable or disable always active menu
 
 		$m->setForceActive(self::$forceActiveMenu);
-
+		
 		return sprintf(
 			'<div id="%s">%s</div>',
 			$css,
