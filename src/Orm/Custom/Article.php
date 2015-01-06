@@ -19,7 +19,7 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.8.3 2014-10-17
+ * @version 0.8.4 2015-01-06
  */
 
 class Article implements SubjectInterface {
@@ -614,16 +614,16 @@ class Article implements SubjectInterface {
 
 		$article->category	= ArticleCategory::getInstance($articleData['articlecategoriesID']);
 
-		// set admin information
+		// set admin information, cast type explicitly
 
 		try {
-			$article->createdBy = User::getInstance($articleData['createdBy']);
+			$article->createdBy = User::getInstance((int) $articleData['createdBy']);
 		}
 		catch(\InvalidArgumentException $e) {}
 		catch(UserException $e) {}
 
 		try {
-			$article->updatedBy = User::getInstance($articleData['updatedBy']);
+			$article->updatedBy = User::getInstance((int) $articleData['updatedBy']);
 		}
 		catch(\InvalidArgumentException $e) {}
 		catch(UserException $e) {}
