@@ -138,18 +138,18 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			$actions	= $matches[4];
 		}
 
-		$pi['extension'] = isset($pi['extension']) ? ".{$pi['extension']}" : '';
+		$pi['extension'] = isset($pi['extension']) ? ('.' . $pi['extension']) : '';
 
 		$dest =
-			ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR .
-			FilesystemFolder::CACHE_PATH . DIRECTORY_SEPARATOR .
+			$pi['dirname'] . '/' .
+			FilesystemFolder::CACHE_PATH . '/' .
 			$pi['filename'] .
 			$pi['extension'] .
 			'@' .
 			$actions .
 			$pi['extension'];
 
-		$path = Application::getInstance()->extendToAbsoluteAssetsPath($dest);
+		$path = Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($dest, '/'));
 
 		if(!file_exists($path)) {
 
@@ -165,7 +165,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			// create cachefile
 
 			$actions	= explode('|', $actions);
-			$imgEdit	= ImageModifierFactory::create(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pi['dirname'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $pi['basename']));
+			$imgEdit	= ImageModifierFactory::create(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pi['dirname'], '/') . '/' . $pi['basename']));
 
 			foreach($actions as $a) {
 				$params = preg_split('~\s+~', $a);
@@ -184,10 +184,16 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
 
+		// <img src="..." style="width: ...; height: ..."> or <img src="..." width="..." height="...">
+		
 		if(count($matches) === 10 || count($matches) === 7) {
 			return str_replace($src, $dest, $matches[0]);
 		}
+
+		// <img src="...#...">
+
 		if(count($matches) === 6) {
+
 			return
 				'<img' .
 				$matches[1] .
@@ -198,7 +204,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		}
 		else {
 
-			// won't be matched by assetsPath filter
+			// url(...#...), won't be matched by assetsPath filter
 
 			return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
 		}
