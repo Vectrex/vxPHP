@@ -59,7 +59,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			// $matches[1, 4] - src|style
 			// $matches[3, 6] - path|rules
 
-			if($matches[2] == 'src') {
+			if($matches[1] == 'src') {
 				$src	= $matches[3];
 				$style	= $matches[6];
 			}
@@ -117,7 +117,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		// url(...#...)
 
-		else if (count($matches) == 4) {
+		else if (count($matches) === 4) {
 
 			// $matches[2] - File
 			// $matches[3] - Modifiers
