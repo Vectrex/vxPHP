@@ -182,8 +182,6 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		// @TODO this _assumes_ that $matches[3] occurs only once
 
-		$relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
-
 		// <img src="..." style="width: ...; height: ..."> or <img src="..." width="..." height="...">
 		
 		if(count($matches) === 10 || count($matches) === 7) {
@@ -198,14 +196,16 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 				'<img' .
 				$matches[1] .
 				' src=' .
-				$matches[2] . '/' . $dest . $matches[2] .
+				$matches[2] . $dest . $matches[2] .
 				$matches[5] .
 				'>';
 		}
 		else {
 
 			// url(...#...), won't be matched by assetsPath filter
+			// @FIXME: getRelativeAssetsPath() doesn't observe mod rewrite
 
+			$relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
 			return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
 		}
 
