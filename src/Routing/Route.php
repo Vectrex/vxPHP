@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.2 2014-12-07
+ * @version 0.8.0 2015-01-12
  *
  */
 class Route {
@@ -197,7 +197,9 @@ class Route {
 	/**
 	 * get URL of this route
 	 * considers mod_rewrite settings (nice_uri)
-	 *
+	 * and inserts path parameters when required
+	 * 
+	 * @throws \RuntimeException
 	 * @return string
 	 */
 	public function getUrl() {
@@ -224,7 +226,37 @@ class Route {
 				$urlSegments[] = $this->scriptName;
 			}
 
-			$urlSegments[] = $this->routeId;
+
+			$path = $this->path;
+
+			//insert path parameters
+			
+			if(!empty($this->placeholders)) {
+
+				foreach ($this->placeholders as $placeholder) {
+
+					if(empty($this->pathParameters[$placeholder['name']])) {
+
+						if(!isset($placeholder['default'])) {
+							throw new \RuntimeException("Path parameter '" . $placeholder['name'] . "' not set.");
+						}
+
+						// no path parameter value, but default defined
+
+						else {
+							$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $placeholder['default'], $path);
+						}
+					}
+
+					// path parameter value was previously parsed or set
+
+					else {
+						$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $this->pathParameters[$placeholder['name']], $path);
+					}
+				}
+			}
+			
+			$urlSegments[] = $path;
 
 			$this->url = '/' . implode('/', $urlSegments);
 		}
@@ -356,6 +388,41 @@ class Route {
 
 		return $default;
 
+	}
+	
+	/**
+	 * set path parameter $name
+	 * will only accept parameter names which have been previously defined
+	 * 
+	 * @param string $name
+	 * @param string $value
+	 * @throws \InvalidArgumentException
+	 * @return \vxPHP\Routing\Route
+	 */
+	public function setPathParameter($name, $value) {
+		
+		// check whether path parameter $name exists
+
+		if(empty($this->placeholders)) {
+			throw new \InvalidArgumentException("Unknown path parameter '" . $name . "'.");
+		}
+		
+		$found = FALSE;
+
+		foreach($this->placeholders as $placeholder) {
+			if($placeholder['name'] === $name) {
+				$found = TRUE;
+				break;
+			}
+		}
+
+		if(!$found) {
+			throw new \InvalidArgumentException("Unknown path parameter '" . $name . "'.");
+		}
+		
+		$this->pathParameters[$name] = $value;
+
+		return $this;
 	}
 
 	/**
