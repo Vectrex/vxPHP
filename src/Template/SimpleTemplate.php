@@ -22,7 +22,7 @@ use vxPHP\Controller\Controller;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.3.0 2014-10-25
+ * @version 1.4.0 2015-01-17
  *
  */
 
@@ -216,13 +216,44 @@ class SimpleTemplate {
 
 	/**
 	 * include controller output
+	 * $controllerPath is [path/to/controller/]name_of_controller
 	 *
 	 * @param string $controllerPath
+	 * @param string $methodName
+	 * 
 	 * @return string
 	 */
-	private function includeControllerResponse($controllerPath) {
+	private function includeControllerResponse($controllerPath, $methodName = NULL) {
 
-		return Controller::createControllerFromPath($controllerPath)->render();
+		$classPath		= explode('/', $controllerPath);
+		$controllerName	= array_pop($classPath);
+		
+		// append 'Controller' to controller name
+
+		$className	= ucfirst($controllerName) . 'Controller';
+
+		// build physical path to controller and include controller
+
+		if(count($classPath)) {
+			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
+		}
+		else {
+			$classPath = '';
+		}
+		
+		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
+
+		// get instance and set method which will be called in render() method of controller
+
+		$instance = new $className();
+
+		if(!empty($methodName)) {
+			return $instance->setExecutedMethod($methodName)->render();
+		}
+		
+		else {
+			return $instance->setExecutedMethod('execute')->render();
+		}
 
 	}
 

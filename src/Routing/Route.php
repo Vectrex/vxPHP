@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.0 2015-01-12
+ * @version 0.9.0 2015-01-17
  *
  */
 class Route {
@@ -175,7 +175,7 @@ class Route {
 	 */
 	public function getController() {
 
-		return Controller::createControllerFromPath($this->controllerString);
+		return Controller::createControllerFromRoute($this);
 
 	}
 

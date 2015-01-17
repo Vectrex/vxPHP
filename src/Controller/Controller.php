@@ -9,13 +9,14 @@ use vxPHP\Http\Request;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
 use vxPHP\Routing\Router;
+use vxPHP\Routing\Route;
 
 /**
  * Abstract parent class for all controllers
  *
  * @author Gregor Kofler
  *
- * @version 0.1.12 2014-08-25
+ * @version 0.2.0 2015-01-17
  *
  */
 abstract class Controller {
@@ -43,10 +44,14 @@ abstract class Controller {
 	protected $pathSegments = array();
 
 	/**
+	 * @var string
+	 */
+	protected $methodName;
+
+	/**
 	 * @var Config
 	 */
 	protected $config;
-
 
 	/**
 	 * @var boolean
@@ -98,13 +103,14 @@ abstract class Controller {
 	}
 
 	/**
-	 * renders a complete response
-	 * including headers
+	 * renders a complete response including headers
+	 * either calls an explicitly set method or execute()
 	 */
 	public function renderResponse() {
 
-		if(($method = $this->route->getMethodName())) {
-			$this->$method()->send();
+		if(isset($this->methodName)) {
+			$methodName = $this->methodName;
+			$this->$methodName()->send();
 		}
 		else {
 			$this->execute()->send();
@@ -114,15 +120,32 @@ abstract class Controller {
 
 	/**
 	 * renders content of response
+	 * either calls an explicitly set method or execute()
 	 */
 	public function render() {
 
-		if(($method = $this->route->getMethodName())) {
-			$this->$method()->sendContent();
+		if(isset($this->methodName)) {
+			$methodName = $this->methodName;
+			$this->$methodName()->sendContent();
 		}
 		else {
 			$this->execute()->sendContent();
 		}
+
+	}
+
+	/**
+	 * define which method will be called by Controller::render() or Controller::renderResponse()
+	 * when more than one method is defined in controller
+	 * returns $this to allow chaining
+	 * 
+	 * @param string $methodName
+	 * @return \vxPHP\Controller\Controller
+	 */
+	public function setExecutedMethod($methodName) {
+
+		$this->methodName = $methodName;
+		return $this;
 
 	}
 
@@ -138,15 +161,15 @@ abstract class Controller {
 	}
 
 	/**
-	 * determines controller class name from $controllerPath
+	 * determines controller class name from a routes controllerString property
 	 * and returns a controller instance
 	 *
-	 * @param $controllerPath
+	 * @param Route $controllerPath
 	 * @return Controller
 	 */
-	public static function createControllerFromPath($controllerPath) {
+	public static function createControllerFromRoute(Route $route) {
 
-		$classPath	= explode('/', $controllerPath);
+		$classPath	= explode('/', $route->getControllerString());
 		$className	= ucfirst(array_pop($classPath)) . 'Controller';
 
 		if(count($classPath)) {
@@ -158,7 +181,19 @@ abstract class Controller {
 
 		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
 
-		return new $className();
+		/**
+		 * @var Controller
+		 */
+		$instance = new $className();
+		
+		if($method = $instance->route->getMethodName()) {
+			$instance->setExecutedMethod($method);
+		}
+		else {
+			$instance->setExecutedMethod('execute');
+		}
+
+		return $instance;
 
 	}
 
