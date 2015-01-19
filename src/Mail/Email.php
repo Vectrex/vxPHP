@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
  *
- * @version 0.2.13 2013-10-05
+ * @version 0.3.0 2015-01-19
  */
 
 class Email {
@@ -32,7 +32,20 @@ class Email {
 	private static $debug = FALSE;
 
 
-	public function __construct($receiver = NULL, $subject = '(Kein Betreff)', $mailText = '', $sender = NULL, array $cc = array(), array $bcc = array(), $sig = '', $htmlMail = FALSE) {
+	/**
+	 * mail constructor
+	 * all parameters are optional
+	 * 
+	 * @param string $receiver
+	 * @param string $subject
+	 * @param string $mailText
+	 * @param string $sender
+	 * @param array $cc
+	 * @param array $bcc
+	 * @param string $sig
+	 * @param string $htmlMail
+	 */
+	public function __construct($receiver = NULL, $subject = '(no subject)', $mailText = '', $sender = NULL, array $cc = array(), array $bcc = array(), $sig = '', $htmlMail = FALSE) {
 
 		$this->receiver	= $receiver;
 		$this->subject	= $subject;
@@ -44,51 +57,154 @@ class Email {
 		$this->htmlMail	= $htmlMail;
 
 		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8';
+
 	}
 
+	/**
+	 * set debug flag
+	 * when true, emails will be dumped as HTML text boxes
+	 * 
+	 * @param boolean $state
+	 */
 	public static function setDebug($state) {
+
 		self::$debug = (boolean) $state;
+
 	}
 
+	/**
+	 * set receiving email address
+	 * 
+	 * @param string $receiver
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setReceiver($receiver) {
+
 		$this->receiver = $receiver;
+		return $this;
+
 	}
 
+	/**
+	 * set sending email address
+	 * 
+	 * @param string $sender
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setSender($sender) {
+
 		$this->sender = $sender;
+		return $this;
+
 	}
 
+	/**
+	 * set mail text
+	 * 
+	 * @param string $text
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setMailText($text) {
+
 		$this->mailText = $text;
+		return $this;
+
 	}
 
+	/**
+	 * set signature for mail
+	 * will be appended to mail text with correct delimiter
+	 * 
+	 * @param string $signature
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setSig($signature) {
+
 		$this->sig = $signature;
+		return $this;
+
 	}
 
+	/**
+	 * set subject
+	 * 
+	 * @param string $subject
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setSubject($subject) {
+
 		$this->subject = $subject;
+		return $this;
+
 	}
 
+	/**
+	 * set BCC receivers
+	 * 
+	 * @param array $bcc
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setBcc(array $bcc) {
+
 		$this->bcc = $bcc;
+		return $this;
+
 	}
 
+	/**
+	 * set CC receivers
+	 * 
+	 * @param array $cc
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setCc(array $cc) {
+
 		$this->cc = $cc;
+		return $this;
+
 	}
 
+	/**
+	 * set flag to indicate a HTML mail
+	 * will be observed upon mail body generation
+	 * 
+	 * @param boolean $flag
+	 * @return \vxPHP\Mail\Email
+	 */
 	public function setHtmlMail($flag) {
+
 		$this->htmlMail = $flag;
+		return $this;
+
 	}
 
-	public function addAttachment($file, $filename = NULL) {
-		if(file_exists($file)) {
-			$this->attachments[] = array('path' => $file, 'filename' => $filename);
+	/**
+	 * attach file $filePath; use name $filename in mail 
+	 * 
+	 * @param string $filePath
+	 * @param string $filename
+	 * 
+	 * @return \vxPHP\Mail\Email
+	 */
+	public function addAttachment($filePath, $filename = NULL) {
+
+		if(file_exists($filePath)) {
+			$this->attachments[] = array('path' => $filePath, 'filename' => $filename);
 		}
+		
+		return $this;
+
 	}
 
+	/**
+	 * send mail
+	 * with Email::$debug set to TRUE,
+	 * a textbox with the mail contents is dumped
+	 * 
+	 * @return boolean
+	 */
 	public function send()	{
+
 		$this->buildHeaders();
 		$this->buildMsg();
 
@@ -106,8 +222,14 @@ class Email {
 		echo '</div>';
 
 		return TRUE;
+
 	}
 
+	/**
+	 * evaluate mailer class and send mail
+	 * 
+	 * @return boolean
+	 */
 	private function sendMail() {
 
 		// check for configured mailer
@@ -173,15 +295,20 @@ class Email {
 	 * explicitly set mailer
 	 *
 	 * @param Mailer $mailer
+	 * @return \vxPHP\Mail\Email
 	 */
 	public function setMailer(MailerInterface $mailer) {
+
 		$this->mailer = $mailer;
+		return $this;
+
 	}
 
 	/**
 	 * fill headers array
 	 */
 	private function buildHeaders() {
+
 		$this->headers = array(
 			'From'			=> $this->sender,
 			'Return-Path'	=> $this->sender,
@@ -210,6 +337,10 @@ class Email {
 		}
 
 	}
+	
+	/**
+	 * build message body
+	 */
 	private function buildMsg() {
 
 		if(isset($this->boundary)) {
@@ -233,6 +364,6 @@ class Email {
 			$this->msg .= 'Content-Transfer-Encoding: base64'.self::CRLF.self::CRLF;
 			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,self::CRLF));
 		}
+
 	}
 }
-?>
