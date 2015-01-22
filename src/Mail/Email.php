@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
  *
- * @version 0.3.0 2015-01-19
+ * @version 0.3.1 2015-01-22
  */
 
 class Email {
@@ -236,9 +236,9 @@ class Email {
 
 		if(is_null($this->mailer) && !is_null(Application::getInstance()->getConfig()->mail->mailer)) {
 
-			$mailer = Application::getInstance()->getConfig()->mail->mailer;
-			$reflection = new \ReflectionClass($mailer->class);
-			$this->mailer = $reflection->newInstanceArgs(array($mailer->host, $mailer->port));
+			$mailer			= Application::getInstance()->getConfig()->mail->mailer;
+			$reflection		= new \ReflectionClass(str_replace('/', '\\', $mailer->class));
+			$this->mailer	= $reflection->newInstanceArgs(array($mailer->host, $mailer->port));
 
 			if(isset($mailer->auth_type)) {
 				$this->mailer->setCredentials($mailer->user, $mailer->pass, $mailer->auth_type);
