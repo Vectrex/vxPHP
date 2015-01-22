@@ -14,15 +14,20 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.8 2014-05-21
+ * @version 0.5.0 2015-01-21
  */
 
 class FilesystemFile {
-	private static $instances = array();
 
-	private		$filename,
+	protected static $instances = array();
+
+	protected	$filename,
 				$folder,
 				$mimetype,
+
+				/**
+				 * @var \SplFileInfo
+				 */
 				$fileInfo;
 
 	/**
@@ -30,16 +35,20 @@ class FilesystemFile {
 	 * @return FilesystemFile;
 	 */
 	public static function getInstance($path) {
+
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
 		}
 		return self::$instances[$path];
+
 	}
 
 	public static function unsetInstance($path) {
+
 		if(isset(self::$instances[$path])) {
 			unset(self::$instances[$path]);
 		}
+
 	}
 
 	/**
@@ -51,7 +60,7 @@ class FilesystemFile {
 	 *
 	 * @throws FilesystemFileException
 	 */
-	private function __construct($path, FilesystemFolder $folder = NULL) {
+	public function __construct($path, FilesystemFolder $folder = NULL) {
 
 		if($folder) {
 			$path = $folder->getPath() . $path;
@@ -73,7 +82,9 @@ class FilesystemFile {
 	 * retrieve file information provided by SplFileInfo object
 	 */
 	public function getFileInfo() {
+
 		return $this->fileInfo;
+
 	}
 
 	/**
@@ -83,10 +94,12 @@ class FilesystemFile {
 	 * @param bool $force forces re-read of mime type
 	 */
 	public function getMimetype($force = false) {
+
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return $this->mimetype;
+
 	}
 
 	/**
@@ -141,34 +154,49 @@ class FilesystemFile {
 	 * rename file
 	 *
 	 * @param string $to new filename
+	 * @return \vxPHP\File\FilesystemFile
 	 * @throws FilesystemFileException
 	 */
 	public function rename($to) {
+
 		$from		= $this->filename;
-		$oldpath	= $this->folder->getPath() . $from;
-		$newpath	= $this->folder->getPath() . $to;
 
 		// name is unchanged, nothing to do
 
-		if($oldpath === $newpath) {
-			return;
-		}
+		if($from !== $to) {
 
-		if(file_exists($newpath)) {
-			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
-		}
+			$oldpath	= $this->folder->getPath() . $from;
+			$newpath	= $this->folder->getPath() . $to;
+	
+	
+			if(file_exists($newpath)) {
+				throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
+			}
+	
+			if(@rename($oldpath, $newpath)) {
 
-		if(@rename($oldpath, $newpath)) {
-			$this->renameCacheEntries($to);
-			$this->filename = $to;
+				$this->renameCacheEntries($to);
 
-			self::$instances[$newpath] = $this;
-			unset(self::$instances[$oldpath]);
-		}
+				// set new filename
 
-		else {
-			throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+				$this->filename = $to;
+
+				// re-read fileinfo
+				
+				$this->fileInfo	= new \SplFileInfo($newpath);
+
+				self::$instances[$newpath] = $this;
+				unset(self::$instances[$oldpath]);
+			}
+	
+			else {
+				throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+			}
+
 		}
+		
+		return $this;
+
 	}
 
 	/**
@@ -176,30 +204,46 @@ class FilesystemFile {
 	 * orphaned cache entries are deleted, new cache entries are not generated
 	 *
 	 * @param FilesystemFolder $destination
+	 * @return \vxPHP\File\FilesystemFile
 	 * @throws FilesystemFileException
 	 */
 	public function move(FilesystemFolder $destination) {
 
 		// already in destination folder, nothing to do
 
-		if($destination === $this->folder) {
-			return;
+		if($destination !== $this->folder) {
+
+			$oldpath	= $this->folder->getPath() . $this->filename;
+			$newpath	= $destination->getPath() . $this->filename;
+	
+			if(@rename($oldpath, $newpath)) {
+
+				$this->clearCacheEntries();
+				
+				// set new folder reference
+
+				$this->folder = $destination;
+	
+				// re-read fileinfo
+
+				$this->fileInfo	= new \SplFileInfo($newpath);
+
+				self::$instances[$newpath] = $this;
+				unset(self::$instances[$oldpath]);
+
+				// @todo: check necessity of chmod
+	
+				@chmod($newpath, 0666 & ~umask());
+				
+			}
+	
+			else {
+				throw new FilesystemFileException("Moving from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+			}
+
 		}
 
-		$oldpath	= $this->folder->getPath() . $this->filename;
-		$newpath	= $destination->getPath() . $this->filename;
-
-		if(@rename($oldpath, $newpath)) {
-			$this->clearCacheEntries();
-			$this->folder = $destination;
-
-			self::$instances[$newpath] = $this;
-			unset(self::$instances[$oldpath]);
-		}
-
-		else {
-			throw new FilesystemFileException("Moving from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
-		}
+		return $this;
 	}
 
 	/**
@@ -207,16 +251,15 @@ class FilesystemFile {
 	 *
  	 * @param string $to new filename
 	 */
-	private function renameCacheEntries($to) {
-		if(($cachePath = $this->folder->getCachePath(TRUE))) {
+	protected function renameCacheEntries($to) {
 
-			$toPathInfo		= pathinfo($to);
+		if(($cachePath = $this->folder->getCachePath(TRUE))) {
 
 			$di	= new \DirectoryIterator($cachePath);
 
 			foreach($di as $fileinfo) {
 
-				$filename	= $fileinfo->getFilename();
+				$filename = $fileinfo->getFilename();
 
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
@@ -236,6 +279,7 @@ class FilesystemFile {
 	 * @throws FilesystemFileException
 	 */
 	public function delete() {
+
 		if(@unlink($this->getPath())) {
 			$this->deleteCacheEntries();
 			self::unsetInstance($this->getPath());
@@ -243,13 +287,15 @@ class FilesystemFile {
 		else {
 			throw new FilesystemFileException("Delete of file '{$this->getPath()}' failed.", FilesystemFileException::FILE_DELETE_FAILED);
 		}
+
 	}
 
 	/**
 	 * cleans up cache entries associated with
 	 * "original" file
 	 */
-	private function deleteCacheEntries() {
+	protected function deleteCacheEntries() {
+
 		if(($cachePath = $this->folder->getCachePath(TRUE))) {
 
 			$di	= new \DirectoryIterator($cachePath);
@@ -271,7 +317,9 @@ class FilesystemFile {
 	 * remove all cache entries of file
 	 */
 	public function clearCacheEntries() {
+
 		$this->deleteCacheEntries();
+
 	}
 
 	/**
@@ -374,51 +422,6 @@ class FilesystemFile {
 		}
 
 		return $files;
-	}
-
-	/**
-	 * uploads file from $_FILES[$fileInputName] to $dir
-	 * if $name is omitted, the filename of the uploaded file is kept
-	 * filename is sanitized
-	 *
-	 * @todo replace using $_FILES superglobals with FileBag
-	 *
-	 * @param string $fileInputName
-	 * @param FilesystemFolder $dir
-	 * @param string $name
-	 * @return NULL|boolean|FilesystemFile
-	 */
-	public static function uploadFile($fileInputName, FilesystemFolder $dir, $name = NULL) {
-
-		// no $_FILES array (file too large)
-
-		if(!isset($_FILES[$fileInputName])) {
-			return FALSE;
-		}
-
-		// no upload
-
-		if($_FILES[$fileInputName]['error'] == 4) {
-			return NULL;
-		}
-
-		// other error
-
-		if($_FILES[$fileInputName]['error'] != 0) {
-			return FALSE;
-		}
-
-		if(is_null($name) || trim($name) === '') {
-			$name = $_FILES[$fileInputName]['name'];
-		}
-
-		$fn = self::sanitizeFilename($name, $dir);
-
-		if(!move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $dir->getPath().$fn)) {
-			return FALSE;
-		}
-
-		return self::getInstance($dir->getPath().$fn);
 	}
 
 	/**

@@ -11,7 +11,7 @@
 
 namespace vxPHP\Http;
 
-use vxPHP\File\FilesystemFile;
+use vxPHP\File\UploadedFile;
 
 /**
  * FileBag is a container for HTTP headers.
@@ -57,7 +57,7 @@ class FileBag extends ParameterBag {
 	 */
 	public function set($key, $value) {
 
-		if (!is_array($value) && !$value instanceof FilesystemFile) {
+		if (!is_array($value) && !$value instanceof UploadedFile) {
 			throw new \InvalidArgumentException('An uploaded file must be an array or an instance of FilesystemFile.');
 		}
 
@@ -84,12 +84,10 @@ class FileBag extends ParameterBag {
 	 * @param array|UploadedFile $file A (multi-dimensional) array of uploaded file information
 	 *
 	 * @return array A (multi-dimensional) array of UploadedFile instances
-	 *
-	 * @todo create uploadedFile as subclass of FilesystemFile
 	 */
 	protected function convertFileInformation($file) {
 
-		if ($file instanceof FilesystemFile) {
+		if ($file instanceof UploadedFile) {
 			return $file;
 		}
 
@@ -105,7 +103,7 @@ class FileBag extends ParameterBag {
 					$file = NULL;
 				}
 				else {
-					$file = FilesystemFile::getInstance($file['tmp_name']);
+					$file = new UploadedFile($file['tmp_name'], $file['name']);
 				}
 			}
 			else {
