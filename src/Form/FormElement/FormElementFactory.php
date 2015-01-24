@@ -15,6 +15,8 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is a scalar, the factory returns a single element,
  * if $value is an array, the factory returns a collection of elements
  *
+ * @author Gregor Kofler
+ * @version 0.4.0 2015-01-24
  */
 class FormElementFactory {
 
@@ -42,8 +44,9 @@ public static function create($type, $name, $value = NULL, array $attributes = a
 
 			foreach($value as $k => $v) {
 				$e = clone $elem;
-				$e->setName(sprintf('%s[%s]', $name, $k));
-				$e->setValue($v);
+				$e
+					->setName(sprintf('%s[%s]', $name, $k))
+					->setValue($v);
 				$elements[$k] = $e;
 			}
 

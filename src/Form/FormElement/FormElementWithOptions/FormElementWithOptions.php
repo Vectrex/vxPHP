@@ -14,10 +14,22 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	protected	$options = array(),
 				$selectedOption;
 
+	/**
+	 * initalize element instance
+	 * 
+	 * @param string $name
+	 * @param string $value
+	 */
 	public function __construct($name, $value = NULL) {
+		
 		parent::__construct($name, $value);
+
 	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Form\FormElement\FormElement::setValue()
+	 */
 	public function setValue($value = NULL) {
 
 		if(isset($value)) {
@@ -38,8 +50,15 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 				}
 			}
 		}
+
+		return $this;
+
 	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface::appendOption()
+	 */
 	public function appendOption(FormElementFragmentInterface $option) {
 
 		$this->options[] = $option;
@@ -52,7 +71,14 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 			}
 			$this->selectedOption = $option;
 		}
+
+		return $this;
+
 	}
 
+	/**
+	 * (non-PHPdoc)
+	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface::createOptions()
+	 */
 	abstract public function createOptions(Array $options);
 }
