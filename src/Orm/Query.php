@@ -9,7 +9,7 @@ use vxPHP\Database\vxPDO;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.2.0 2014-09-19
+ * @version 0.2.1 2015-01-27
  */
 abstract class Query implements QueryInterface {
 
@@ -174,7 +174,7 @@ abstract class Query implements QueryInterface {
 	 * @param string|number|array $value
 	 * @param string $operator
 	 */
-	protected function addCondition($conditionOrColumn, $value, $operator = NULL) {
+	protected function addCondition($conditionOrColumn, $value = NULL, $operator = NULL) {
 
 		$condition = new \stdClass();
 
