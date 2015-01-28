@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.5, 2014-10-29
+ * @version 1.3.0, 2015-01-28
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -156,10 +156,13 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	/**
 	 * clears the table structure cache
 	 * required after altering table structures
+	 * 
+	 * @return vxPDO
 	 */
 	public function clearTableStructureCache() {
 
 		$this->tableStructureCache = array();
+		return $this;
 
 	}
 
@@ -383,20 +386,25 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	/**
 	 * ignore lastUpdated attribute when creating or updating record
 	 * leaves setting value of this field to MySQL mechanisms
+	 * 
+	 * @return vxPDO
 	 */
 	public function ignoreLastUpdated() {
 
 		$this->touchLastUpdated = FALSE;
+		return $this;
 
 	}
 	
 	/**
 	 * set lastUpdated attribute when creating or updating record
+	 * 
+	 * @return vxPDO
 	 */
-
 	public function updateLastUpdated() {
 
 		$this->touchLastUpdated = TRUE;
+		return $this;
 
 	}
 
