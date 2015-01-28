@@ -9,7 +9,7 @@ use vxPHP\Database\vxPDO;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.2.1 2015-01-27
+ * @version 0.2.1 2015-01-28
  */
 abstract class Query implements QueryInterface {
 
@@ -45,7 +45,8 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param string $columnName
 	 * @param string|number|array $value
-	 * @return ArticleQuery
+	 * 
+	 * @return \vxPHP\Orm\Query
 	 */
 	public function filter($columnName, $value) {
 
@@ -61,9 +62,12 @@ abstract class Query implements QueryInterface {
 	}
 
 	/**
+	 * INNER JOIN table $table with $on condition
 	 *
-	 * @param unknown $table
-	 * @param unknown $on
+	 * @param string $table
+	 * @param string $on
+	 * 
+	 * @return \vxPHP\Orm\Query
 	 */
 	public function innerJoin($table, $on) {
 
@@ -81,7 +85,8 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param string $whereClause
 	 * @param array $valuesToBind
-	 * @return ArticleQuery
+	 * 
+	 * @return \vxPHP\Orm\Query
 	 */
 	public function where($whereClause, array $valuesToBind = NULL) {
 
@@ -95,7 +100,8 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param string $columnName
 	 * @param boolean $asc
-	 * @return ArticleQuery
+	 * 
+	 * @return \vxPHP\Orm\Query
 	 */
 	public function sortBy($columnName, $asc = TRUE) {
 
@@ -116,10 +122,13 @@ abstract class Query implements QueryInterface {
 	 * specifying and executing query
 	 *
 	 * @param vxPDO $dbConnection
-	 * @return CustomQuery
+	 * 
+	 * @return \vxPHP\Orm\Query
 	 */
 	public static function create(vxPDO $dbConnection) {
+
 		return new static($dbConnection);
+
 	}
 
 	/**

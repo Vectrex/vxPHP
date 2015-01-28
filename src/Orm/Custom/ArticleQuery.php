@@ -16,15 +16,16 @@ use vxPHP\Database\vxPDO;
  *
  * $articles =	vxPHP\Orm\Custom\ArticleQuery::create($db)->
  * 				filterByCategory($myCat)->
+ * 				filterPublished()->
  * 				where('article_date < ?', new DateTime()->format('Y-m-d'))->
  * 				sortBy('customSort', FALSE)->
  * 				sortBy('Headline')->
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.2.4 2014-09-19
+ * @version 0.3.0 2015-01-28
  */
-class ArticleQuery extends Query implements QueryInterface {
+class ArticleQuery extends Query {
 
 	/**
 	 * provide initial database connection
@@ -46,11 +47,36 @@ class ArticleQuery extends Query implements QueryInterface {
 	 * add WHERE clause that filters for $category
 	 *
 	 * @param ArticleCategory $category
-	 * @return ArticleQuery
+	 * 
+	 * @return \vxPHP\Orm\Custom\ArticleQuery
 	 */
 	public function filterByCategory(ArticleCategory $category) {
 
 		$this->addCondition("a.articlecategoriesID = ?", $category->getId());
+		return $this;
+
+	}
+	
+	/**
+	 * add WHERE clause that removes all unpublished articles from resultset
+	 * 
+	 * @return \vxPHP\Orm\Custom\ArticleQuery
+	 */
+	public function filterPublished() {
+
+		$this->addCondition("a.published = 1");
+		return $this;
+
+	}
+
+	/**
+	 * add WHERE clause that removes all published articles from resultset
+	 * 
+	 * @return \vxPHP\Orm\Custom\ArticleQuery
+	 */
+	public function filterUnPublished() {
+
+		$this->addCondition("(a.published = 0 OR a.published IS NULL)");
 		return $this;
 
 	}
@@ -59,6 +85,7 @@ class ArticleQuery extends Query implements QueryInterface {
 	 * add WHERE clause that filters for article category aliases
 	 * 
 	 * @param array $categoryNames
+	 * 
 	 * @return \vxPHP\Orm\Custom\ArticleQuery
 	 */
 	public function filterByCategoryNames(array $categoryNames) {
@@ -72,6 +99,7 @@ class ArticleQuery extends Query implements QueryInterface {
 	 * $date defaults to current date
 	 * 
 	 * @param \DateTime $date
+	 * 
 	 * @return \vxPHP\Orm\Custom\ArticleQuery
 	 */
 	public function filterByDisplayFromToUntil(\DateTime $date = NULL) {
@@ -109,6 +137,7 @@ class ArticleQuery extends Query implements QueryInterface {
 	 * adds LIMIT clause, executes query and returns array of Article instances
 	 *
 	 * @param number $rows
+	 * 
 	 * @return array
 	 * @throws \RangeException
 	 */

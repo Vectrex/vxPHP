@@ -19,23 +19,69 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.8.4 2015-01-06
+ * @version 0.9.2 2015-01-28
  */
 
 class Article implements SubjectInterface {
 
-	private static	$instancesById,
-					$instancesByAlias;
+					/**
+					 * cached instances identified by their id
+					 * @var array
+					 */
+	private static	$instancesById;
+	
+					/**
+					 * cached instances identified by their alias
+					 * @var array
+					 */
+	private static	$instancesByAlias;
 
+			/**
+			 * primary key
+			 * @var int
+			 */
 	private	$id,
+	
+			/**
+			 * unique alias
+			 * @var string
+			 */
 			$alias,
+			
+			/**
+			 * headline of article
+			 * @var string
+			 */
 			$headline,
+			
+			/**
+			 * "other" data of article
+			 * currently array keys in self::$dataCols are supported
+			 * @var array
+			 */
 			$data,
+			
+			/**
+			 * arbitrary flags
+			 * controllers can decide how to interpret them
+			 * @var int
+			 */
 			$customFlags,
+			
+			/**
+			 * numeric indicator that can be used by
+			 * controllers to enhance or override other sorting rules
+			 * @var int
+			 */
 			$customSort,
 
 			/**
-			 * @var array
+			 * @var boolen
+			 */
+			$published,
+	
+			/**
+			 * @var array [MetaFile]
 			 */
 			$linkedFiles,
 			
@@ -43,49 +89,78 @@ class Article implements SubjectInterface {
 			 * @var boolean
 			 */
 			$updateLinkedFiles,
+			
+			/**
+			 * @var array
+			 */
 			$previouslySavedValues,
-			$dataCols = array('Teaser', 'Content');
 
-	/**
-	 * @var ArticleCategory
-	 */
-	private	$category;
+			/**
+			 * colunms 
+			 * @var array
+			 */
+			$dataCols = array('Teaser', 'Content'),
 
-	/**
-	 * @var \DateTime
-	 */
-	private	$articleDate;
+			/**
+			 * @var ArticleCategory
+			 */
+			$category,
 
-	/**
-	 * @var \DateTime
-	 */
-	private	$displayFrom;
+			/**
+			 * @var \DateTime
+			 */
+			$articleDate,
 
-	/**
-	 * @var \DateTime
-	 */
-	private	$displayUntil;
+			/**
+			 * @var \DateTime
+			 */
+			$displayFrom,
 
-	/**
-	 * @var \DateTime
-	 */
-	private	$lastUpdated;
+			/**
+			 * @var \DateTime
+			 */
+			$displayUntil,
 
-	/**
-	 * @var \DateTime
-	 */
-	private	$firstCreated;
+			/**
+			 * @var \DateTime
+			 */
+			$lastUpdated,
 
-	/**
-	 * @var User
-	 */
-	private	$createdBy;
+			/**
+			 * @var \DateTime
+			 */
+			$firstCreated,
 
-	/**
-	 * @var User
-	 */
-	private	$updatedBy;
+			/**
+			 * @var \DateTime
+			 */
+			$publishedUpdated,
 
+			/**
+			 * @var User
+			 */
+			$createdBy,
+
+			/**
+			 * @var User
+			 */
+			$updatedBy,
+
+			/**
+			 * @var User
+			 */
+			$publishedBy,
+
+			/**
+			 * these attributes do not indicate
+			 * a change of the record despite differing
+			 * from current value
+			 * 
+			 * @var array
+			 */
+			 $notIndicatingChange = array('published');
+	
+	
 	public function __construct() {
 	}
 
@@ -96,18 +171,28 @@ class Article implements SubjectInterface {
 	/**
 	 * checks whether an article was changed when compared to the data used for instancing
 	 * evaluates to TRUE for a new article
+	 * if $evaluateAll is TRUE, attributes in notIndicatingChange are still checked
 	 *
 	 * @todo changes of linked files are currently ignored
+	 * 
+	 * @param boolean $evaluateAll
 	 *
 	 * @return boolean
 	 */
-	public function wasChanged() {
+	public function wasChanged($evaluateAll = FALSE) {
 
 		if(is_null($this->previouslySavedValues)) {
 			return TRUE;
 		}
 		
 		foreach(array_keys(get_object_vars($this->previouslySavedValues)) as $p) {
+
+			// some attributes might not indicate a change
+
+			if(in_array($p, $this->notIndicatingChange) && !$evaluateAll) {
+				continue;
+			}
+
 			if(is_array($this->previouslySavedValues->$p)) {
 				if(count(array_diff_assoc($this->previouslySavedValues->$p, $this->$p)) > 0) {
 					return TRUE;
@@ -144,38 +229,65 @@ class Article implements SubjectInterface {
 
 		$db = Application::getInstance()->getDb();
 
+		// a headline is a required attribute
+
 		if(is_null($this->headline) || trim($this->headline) == '') {
 			throw new ArticleException("Headline not set. Article can't be inserted", ArticleException::ARTICLE_HEADLINE_NOT_SET);
 		}
 
+		// a category is a required attribute
+		
 		if(is_null($this->category)) {
 			throw new ArticleException("Category not set. Article can't be inserted", ArticleException::ARTICLE_CATEGORY_NOT_SET);
 		}
 
+		// allow listeners to react to event
+
 		EventDispatcher::getInstance()->notify($this, 'beforeArticleSave');
-		
+
+		// afterwards collect all current data in array
+
+		$cols = array_merge(
+			(array) $this->getData(),
+			array(
+				'Alias'					=> $this->alias,
+				'articlecategoriesID'	=> $this->category->getId(),
+				'Headline'				=> $this->headline,
+				'Article_Date'			=> is_null($this->articleDate) ? NULL : $this->articleDate->format('Y-m-d H:i:s'),
+				'Display_from'			=> is_null($this->displayFrom) ? NULL : $this->displayFrom->format('Y-m-d H:i:s'),
+				'Display_until'			=> is_null($this->displayUntil) ? NULL : $this->displayUntil->format('Y-m-d H:i:s'),
+				'published'				=> $this->published,
+				'customFlags'			=> $this->customFlags,
+				'customSort'			=> $this->customSort,
+				'publishedBy'			=> $this->publishedBy	? $this->publishedBy->getAdminId()	: NULL,
+				'updatedBy'				=> $this->updatedBy		? $this->updatedBy->getAdminId()	: NULL
+			)
+		);
+
 		if(!is_null($this->id)) {
 
-			// update
+			// is a full update necessary?
 
-			$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
+			if($this->wasChanged()) {
 
-			$cols = array_merge(
-				(array) $this->getData(),
-				array(
-					'Alias'					=> $this->alias,
-					'articlecategoriesID'	=> $this->category->getId(),
-					'Headline'				=> $this->headline,
-					'Article_Date'			=> is_null($this->articleDate) ? NULL : $this->articleDate->format('Y-m-d H:i:s'),
-					'Display_from'			=> is_null($this->displayFrom) ? NULL : $this->displayFrom->format('Y-m-d H:i:s'),
-					'Display_until'			=> is_null($this->displayUntil) ? NULL : $this->displayUntil->format('Y-m-d H:i:s'),
-					'customFlags'			=> $this->customFlags,
-					'customSort'			=> $this->customSort,
-					'updatedBy'				=> $this->updatedBy ? $this->updatedBy->getAdminId() : NULL
-				)
-			);
+				// update
+	
+				$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
+				$db->updateRecord('articles', $this->id, $cols);
 
-			$db->updateRecord('articles', $this->id, $cols);
+			}
+
+			// were attributes changed, which don't indicate an update (e.g. 'published')?
+
+			else if($this->wasChanged(TRUE)) {
+
+				// update, but don't set lastUpdated and updatedBy
+
+				unset($cols['updatedBy']);
+				$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
+				$db->ignoreLastUpdated()->updateRecord('articles', $this->id, $cols);
+			
+			}
 		}
 
 		else {
@@ -193,10 +305,11 @@ class Article implements SubjectInterface {
 					'Article_Date'			=> is_null($this->articleDate) ? NULL : $this->articleDate->format('Y-m-d H:i:s'),
 					'Display_from'			=> is_null($this->displayFrom) ? NULL : $this->displayFrom->format('Y-m-d H:i:s'),
 					'Display_until'			=> is_null($this->displayUntil) ? NULL : $this->displayUntil->format('Y-m-d H:i:s'),
+					'published'				=> $this->published,
 					'customFlags'			=> $this->customFlags,
 					'customSort'			=> $this->customSort,
-					'updatedBy'				=> $this->createdBy ? $this->createdBy->getAdminId() : NULL,
-					'createdBy'				=> $this->createdBy ? $this->createdBy->getAdminId() : NULL
+					'publishedBy'			=> $this->publishedBy	? $this->publishedBy->getAdminId()	: NULL,
+					'createdBy'				=> $this->createdBy		? $this->createdBy->getAdminId()	: NULL
 				)
 			);
 
@@ -422,6 +535,15 @@ class Article implements SubjectInterface {
 	}
 
 	/**
+	 * get user which (un)published article
+	 *
+	 * @return User
+	 */
+	public function getPublishedBy() {
+		return $this->publishedBy;
+	}
+
+	/**
 	 * get timestamp of article creation
 	 *
 	 *  @return DateTime
@@ -437,6 +559,15 @@ class Article implements SubjectInterface {
 	 */
 	public function getLastUpdated() {
 		return $this->lastUpdated;
+	}
+
+	/**
+	 * get timestamp of last change to 'published' attribute
+	 *
+	 *  @return DateTime
+	 */
+	public function getPublishedUpdated() {
+		return $this->publishedUpdated;
 	}
 
 	/**
@@ -596,6 +727,75 @@ class Article implements SubjectInterface {
 	}
 
 	/**
+	 * set 'published' attribute and store $user as publishedBy attribute
+	 * 
+	 * @param User $user
+	 * @return \vxPHP\Orm\Custom\Article
+	 */
+	public function publish(User $user = NULL) {
+
+		$this->setPublishedBy($user);
+		$this->published = TRUE;
+				
+		return $this;
+
+	}
+
+	/**
+	 * unset 'published' attribute and store $user as publishedBy attribute
+	 * 
+	 * @param User $user
+	 * @return \vxPHP\Orm\Custom\Article
+	 */
+	public function unpublish(User $user = NULL) {
+
+		$this->setPublishedBy($user);
+		$this->published = FALSE;
+
+		return $this;
+
+	}
+
+	/**
+	 * get state of published flag
+	 * 
+	 * @return boolean
+	 */
+	public function isPublished() {
+
+		return !!$this->published;
+
+	}
+
+	/**
+	 * set publishedBy user
+	 * helper method for publish and unpublish
+	 *  
+	 * @param User $user
+	 */
+	private function setPublishedBy($user) {
+
+		// was a user specified?
+
+		if($user) {
+			$this->publishedBy = $user;
+		}
+
+		// do we have a session user
+
+		else if($user = User::getSessionUser()) {
+			$this->publishedBy = $user;
+		}
+
+		// delete any previously set user
+
+		else {
+			$this->publishedBy = NULL;
+		}
+
+	}
+	
+	/**
 	 * create Article instance from data supplied in $articleData
 	 *
 	 * @param array $articleData
@@ -614,19 +814,34 @@ class Article implements SubjectInterface {
 
 		$article->category	= ArticleCategory::getInstance($articleData['articlecategoriesID']);
 
-		// set admin information, cast type explicitly
+		/*
+		 * set admin information (cast type explicitly to ensure lookup by adminID)
+		 * exceptions with invalid user ids are caught and ignored
+		 */ 
 
-		try {
-			$article->createdBy = User::getInstance((int) $articleData['createdBy']);
+		if($articleData['createdBy']) {
+			try {
+				$article->createdBy = User::getInstance((int) $articleData['createdBy']);
+			}
+			catch(\InvalidArgumentException $e) {}
+			catch(UserException $e) {}
 		}
-		catch(\InvalidArgumentException $e) {}
-		catch(UserException $e) {}
 
-		try {
-			$article->updatedBy = User::getInstance((int) $articleData['updatedBy']);
+		if($articleData['updatedBy']) {
+			try {
+				$article->updatedBy = User::getInstance((int) $articleData['updatedBy']);
+			}
+			catch(\InvalidArgumentException $e) {}
+			catch(UserException $e) {}
 		}
-		catch(\InvalidArgumentException $e) {}
-		catch(UserException $e) {}
+
+		if($articleData['publishedBy']) {
+			try {
+				$article->publishedBy = User::getInstance((int) $articleData['publishedBy']);
+			}
+			catch(\InvalidArgumentException $e) {}
+			catch(UserException $e) {}
+		}
 
 		// set date information
 
@@ -652,6 +867,7 @@ class Article implements SubjectInterface {
 
 		// flags and sort
 
+		$article->published		= $articleData['published'];
 		$article->customFlags	= $articleData['customFlags'];
 		$article->customSort	= $articleData['customSort'];
 
@@ -670,9 +886,10 @@ class Article implements SubjectInterface {
 		$article->previouslySavedValues->displayFrom	= $article->displayFrom;
 		$article->previouslySavedValues->displayUntil	= $article->displayUntil;
 		$article->previouslySavedValues->articleDate	= $article->articleDate;
+		$article->previouslySavedValues->published		= $article->published;
 		$article->previouslySavedValues->customFlags	= $article->customFlags;
 		$article->previouslySavedValues->customSort		= $article->customSort;
-
+		
 		return $article;
 	}
 
@@ -819,7 +1036,4 @@ class Article implements SubjectInterface {
 		return $articles;
 	}
 
-	public static function ArticlesFromQuery(ArticleQuery $query) {
-		return $this;
-	}
 }
