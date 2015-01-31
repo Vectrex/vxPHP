@@ -10,7 +10,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.3 2014-12-07
+ * @version 0.4.4 2015-01-31
  *
  */
 class Router {
@@ -133,7 +133,15 @@ class Router {
 					
 					// if a route has been found previously, choose the more "precise" and/or later one
 
-					if(strlen($route->getPath()) >= strlen($foundRoute->getPath())) {
+					// choose the route with less placeholders
+
+					if(count($route->getPlaceholderNames()) < count($foundRoute->getPlaceholderNames())) {
+						$foundRoute = $route;
+					}
+					
+					// otherwise simple resort to a longer path as "more precise"
+
+					else if(strlen($route->getPath()) >= strlen($foundRoute->getPath())) {
 						$foundRoute = $route;
 					}
 					

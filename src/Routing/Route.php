@@ -11,7 +11,7 @@ use vxPHP\Http\Response;
  *
  * @author Gregor Kofler
  *
- * @version 0.9.0 2015-01-17
+ * @version 0.9.2 2015-01-31
  *
  */
 class Route {
@@ -26,7 +26,24 @@ class Route {
 			$authParameters,
 			$url,
 			$match,
+
+			/**
+			 * array with complete placeholder information
+			 * (name, default)
+			 * @var array
+			 */
 			$placeholders,
+
+			/**
+			 * shortcut with only the names of placeholders
+			 * @var array
+			 */
+			$placeholderNames,
+
+			/**
+			 * holds all values of placeholders of current path
+			 * @var array
+			 */
 			$pathParameters,
 
 			/**
@@ -329,9 +346,36 @@ class Route {
 	 * @return boolean
 	 */
 	public function allowsRequestMethod($requestMethod) {
+
 		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods);
+
 	}
+
+	/**
+	 * get an array with all possible placeholders of route
+	 * once retrieved array with placeholder names is cached
+	 * 
+	 * @return array
+	 */
+	public function getPlaceholderNames() {
+
+		if(is_null($this->placeholderNames)) {
+			
+			$this->placeholderNames = array();
 	
+			if(!empty($this->placeholders)) {
+	
+				foreach ($this->placeholders as $placeholder) {
+					$this->placeholderNames = $placeholder['name'];
+				}
+	
+			}
+		}
+
+		return $this->placeholderNames;
+		
+	}
+
 	/**
 	 * get path parameter
 	 *
