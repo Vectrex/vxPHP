@@ -19,7 +19,7 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.9.2 2015-01-28
+ * @version 0.9.3 2015-02-16
  */
 
 class Article implements SubjectInterface {
@@ -971,30 +971,31 @@ class Article implements SubjectInterface {
 				}
 			}
 
-			$where = array();
+		}
 
-			if(count($toRetrieveById)) {
-				$where[] = 'a.articlesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
-			}
-			if(count($toRetrieveByAlias)) {
-				$where[] = 'a.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
-			}
+		$where = array();
 
-			if(count($where)) {
-				$rows = $db->doPreparedQuery('
-					SELECT
-						a.*
-					FROM
-						articles a
-					WHERE
-						' . implode(' OR ', $where),
-				array_merge($toRetrieveById, $toRetrieveByAlias));
+		if(count($toRetrieveById)) {
+			$where[] = 'a.articlesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
+		}
+		if(count($toRetrieveByAlias)) {
+			$where[] = 'a.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
+		}
 
-				foreach($rows as $row) {
-					$article = self::createInstance($row);
-					self::$instancesByAlias[$article->alias]	= $article;
-					self::$instancesById[$article->id]			= $article;
-				}
+		if(count($where)) {
+			$rows = $db->doPreparedQuery('
+				SELECT
+					a.*
+				FROM
+					articles a
+				WHERE
+					' . implode(' OR ', $where),
+			array_merge($toRetrieveById, $toRetrieveByAlias));
+
+			foreach($rows as $row) {
+				$article = self::createInstance($row);
+				self::$instancesByAlias[$article->alias]	= $article;
+				self::$instancesById[$article->id]			= $article;
 			}
 		}
 
