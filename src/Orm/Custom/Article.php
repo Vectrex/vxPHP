@@ -19,7 +19,7 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.9.3 2015-02-16
+ * @version 0.9.4 2015-02-17
  */
 
 class Article implements SubjectInterface {
@@ -944,65 +944,88 @@ class Article implements SubjectInterface {
 
 	/**
 	 * returns array of Article objects identified by numeric id or alias
+	 * when $ids is not set, all available articles are instantiated
 	 *
 	 * @param array $ids contains mixed article ids or alias
 	 * @return array
 	 */
-	public static function getInstances(array $ids) {
+	public static function getInstances(array $ids = NULL) {
 
 		$db = Application::getInstance()->getDb();
 
-		$toRetrieveById		= array();
-		$toRetrieveByAlias	= array();
-
-		foreach($ids as $id) {
-
-			if(is_numeric($id)) {
-				$id = (int) $id;
-
-				if(!isset(self::$instancesById[$id])) {
-					$toRetrieveById[] = $id;
-				}
-			}
-
-			else {
-				if(!isset(self::$instancesByAlias[$id])) {
-					$toRetrieveByAlias[] = $id;
-				}
-			}
-
-		}
-
-		$where = array();
-
-		if(count($toRetrieveById)) {
-			$where[] = 'a.articlesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
-		}
-		if(count($toRetrieveByAlias)) {
-			$where[] = 'a.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
-		}
-
-		if(count($where)) {
-			$rows = $db->doPreparedQuery('
-				SELECT
-					a.*
-				FROM
-					articles a
-				WHERE
-					' . implode(' OR ', $where),
-			array_merge($toRetrieveById, $toRetrieveByAlias));
-
-			foreach($rows as $row) {
-				$article = self::createInstance($row);
-				self::$instancesByAlias[$article->alias]	= $article;
-				self::$instancesById[$article->id]			= $article;
-			}
-		}
-
 		$articles = array();
 
-		foreach($ids as $id) {
-			$articles[] = self::getInstance($id);
+		// get all articles
+
+		if(!$ids) {
+
+			foreach($db->doPreparedQuery('SELECT a.* FROM articles a') as $row) {
+
+				if(!isset(self::$instancesById[$row['articlesID']])) {
+
+					$article = self::createInstance($row);
+
+					self::$instancesByAlias[$article->alias]	= $article;
+					self::$instancesById[$article->id]			= $article;
+						
+				}
+
+				$articles[] = self::$instancesById[$row['articlesID']];
+			}
+		}
+
+		else {
+
+			$toRetrieveById		= array();
+			$toRetrieveByAlias	= array();
+	
+			foreach($ids as $id) {
+	
+				if(is_numeric($id)) {
+					$id = (int) $id;
+	
+					if(!isset(self::$instancesById[$id])) {
+						$toRetrieveById[] = $id;
+					}
+				}
+	
+				else {
+					if(!isset(self::$instancesByAlias[$id])) {
+						$toRetrieveByAlias[] = $id;
+					}
+				}
+
+			}
+	
+			$where = array();
+
+			if(count($toRetrieveById)) {
+				$where[] = 'a.articlesID IN (' . implode(',', array_fill(0, count($toRetrieveById), '?')). ')';
+			}
+			if(count($toRetrieveByAlias)) {
+				$where[] = 'a.alias IN (' . implode(',', array_fill(0, count($toRetrieveByAlias), '?')). ')';
+			}
+
+			if(count($where)) {
+				$rows = $db->doPreparedQuery('
+					SELECT
+						a.*
+					FROM
+						articles a
+					WHERE
+						' . implode(' OR ', $where),
+				array_merge($toRetrieveById, $toRetrieveByAlias));
+
+				foreach($rows as $row) {
+					$article = self::createInstance($row);
+					self::$instancesByAlias[$article->alias]	= $article;
+					self::$instancesById[$article->id]			= $article;
+				}
+			}
+
+			foreach($ids as $id) {
+				$articles[] = self::getInstance($id);
+			}
 		}
 
 		return $articles;
