@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
  *
- * @version 0.3.1 2015-01-22
+ * @version 0.3.2 2015-02-23
  */
 
 class Email {
@@ -301,6 +301,17 @@ class Email {
 
 		$this->mailer = $mailer;
 		return $this;
+
+	}
+	
+	/**
+	 * get previously set mailer
+	 * 
+	 * @return MailerInterface
+	 */
+	public function getMailer() {
+
+		return $this->mailer;
 
 	}
 
