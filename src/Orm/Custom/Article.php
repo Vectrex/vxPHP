@@ -19,7 +19,7 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.9.4 2015-02-17
+ * @version 0.9.5 2015-02-28
  */
 
 class Article implements SubjectInterface {
@@ -957,7 +957,7 @@ class Article implements SubjectInterface {
 
 		// get all articles
 
-		if(!$ids) {
+		if(is_null($ids)) {
 
 			foreach($db->doPreparedQuery('SELECT a.* FROM articles a') as $row) {
 
