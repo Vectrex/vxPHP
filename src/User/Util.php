@@ -69,7 +69,7 @@ class Util {
 	 */
 	public static function isAvailableEmail($email) {
 
-		return !count(Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE email = ?', array((string) $email)));
+		return !count(Application::getInstance()->getDb()->doPreparedQuery('SELECT adminID FROM admin WHERE LOWER(email) = ?', array(strtolower($email))));
 
 	}
 
