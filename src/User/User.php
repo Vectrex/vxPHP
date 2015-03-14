@@ -8,10 +8,11 @@ use vxPHP\User\Util;
 
 use vxPHP\Mail\Email;
 use vxPHP\Application\Application;
+use vxPHP\Session\Session;
 
 /**
  * @author Gregor Kofler
- * @version 1.0.1 2014-11-14
+ * @version 1.1.0 2015-03-12
  */
 
 class User {
@@ -133,10 +134,10 @@ class User {
 	 */
 	public static function getSessionUser() {
 		
-		if(!empty($_SESSION['user'])) {
-			
-			$user = $_SESSION['user'];
+		$session = Session::getSessionDataBag();
 
+		if(($user = $session->get('user'))) {
+			
 			if($user instanceof static) {
 
 				// re-establish same object reference
@@ -173,16 +174,17 @@ class User {
 	}
 
 	public function storeInSession() {
-		
-		self::$userInSession	= $this;
-		$_SESSION['user']		= $this;
+
+		Session::getSessionDataBag()->set('user', $this);
+		self::$userInSession = $this;
 
 	}
 	
 	public function removeFromSession() {
 
-		self::$userInSession	= NULL;
-		$_SESSION['user']		= NULL;
+		Session::getSessionDataBag()->remove('user');
+		self::$userInSession = NULL;
+
 	}
 
 	public function __toString() {

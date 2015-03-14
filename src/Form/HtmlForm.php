@@ -15,11 +15,12 @@ use vxPHP\Http\ParameterBag;
 use vxPHP\Application\Application;
 use vxPHP\Template\Filter\AnchorHref;
 use vxPHP\Template\Filter\LocalizedPhrases;
+use vxPHP\Session\Session;
 
 /**
  * Template Engine for Forms
  *
- * @version 1.3.1 2014-09-26
+ * @version 1.4.0 2015-03-12
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -684,10 +685,11 @@ class HtmlForm {
 	 * add anti spam elements
 	 */
 	public function addAntiSpam() {
-		$secret = md5(uniqid(null, true));
-		$label = md5($secret);
 
-		$_SESSION['antiSpamTimer'][$secret]	= microtime(true);
+		$secret	= md5(uniqid(null, true));
+		$label	= md5($secret);
+		
+		$session = Session::getSessionDataBag()->set('antiSpamTimer', array($secret => microtime(true)));
 
 		$e = new InputElement('verify', NULL);
 		$e->setAttribute('type', 'hidden');
@@ -711,12 +713,13 @@ class HtmlForm {
 	 */
 	public function detectSpam(array $fields = array(), $threshold = 3) {
 
-		$verify = $this->requestValues->get('verify');
+		$verify	= $this->requestValues->get('verify');
+		$timer	= Session::getSessionDataBag()->get('antiSpamTimer');
 
 		if(
 			!$verify ||
-			!isset($_SESSION['antiSpamTimer'][$verify]) ||
-			(microtime(true) - $_SESSION['antiSpamTimer'][$verify] < 1)
+			!isset($timer[$verify]) ||
+			(microtime(true) - $timer[$verify] < 1)
 		) {
 			return TRUE;
 		}

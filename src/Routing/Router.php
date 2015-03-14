@@ -5,6 +5,7 @@ namespace vxPHP\Routing;
 use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Http\Request;
+use vxPHP\Session\Session;
 
 /**
  *
@@ -58,8 +59,9 @@ class Router {
 		}
 
 		if(!self::authenticateRoute($route)) {
+			
+			Session::getSessionDataBag()->set('authViolatingRequest', Request::createFromGlobals());
 
-			$_SESSION['authViolatingRequest'] = Request::createFromGlobals();
 			$route->redirect();
 
 		}

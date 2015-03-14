@@ -5,12 +5,13 @@ namespace vxPHP\User;
 use vxPHP\User\User;
 use vxPHP\User\Exception\UserException;
 use vxPHP\Application\Application;
+use vxPHP\Application\Session;
 
 /**
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 1.0.0 2014-11-13
+ * @version 1.1.0 2015-03-12
  */
 
 class Util {
@@ -154,19 +155,6 @@ class Util {
 		else {
 			throw new UserException("'$callBackSort' is not callable.", UserException::SORT_CALLBACK_NOT_CALLABLE);
 		}
-	}
-
-	/**
-	 * searches $_SESSION for user object
-	 *
-	 * @return Admin $user
-	 */
-	public static function getCurrentUser() {
-
-		if(isset($_SESSION['user'])) {
-			return unserialize($_SESSION['user']);
-		}
-
 	}
 
 	/**
