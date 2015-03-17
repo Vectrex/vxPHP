@@ -20,7 +20,7 @@ use vxPHP\Session\Session;
 /**
  * Template Engine for Forms
  *
- * @version 1.4.0 2015-03-12
+ * @version 1.4.1 2015-03-17
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -175,14 +175,14 @@ class HtmlForm {
 	 * set encoding type of form
 	 * 'application/x-www-form-urlencoded' and 'multipart/form-data' are the only allowed values
 	 *
-	 * @param string $method
+	 * @param string $type
 	 * @return HtmlForm
 	 * @throws HtmlFormException
 	 *
 	 */
 	public function setEncType($type) {
 
-		$method = strtolower($type);
+		$type = strtolower($type);
 
 		if($type != 'application/x-www-form-urlencoded' && $type != 'multipart/form-data' && !empty($type)) {
 			throw new HtmlFormException("Invalid form enctype: '$type'.", HtmlFormException::INVALID_ENCTYPE);
@@ -337,11 +337,8 @@ class HtmlForm {
 			$this->primeTemplate();
 			$this->insertFormFields();
 
-			LocalizedPhrases::create()->apply(
-				AnchorHref::create()->apply(
-					$this->html
-				)
-			);
+			AnchorHref::create()		->apply($this->html);
+			LocalizedPhrases::create()	->apply($this->html);
 
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
@@ -689,7 +686,7 @@ class HtmlForm {
 		$secret	= md5(uniqid(null, true));
 		$label	= md5($secret);
 		
-		$session = Session::getSessionDataBag()->set('antiSpamTimer', array($secret => microtime(true)));
+		Session::getSessionDataBag()->set('antiSpamTimer', array($secret => microtime(true)));
 
 		$e = new InputElement('verify', NULL);
 		$e->setAttribute('type', 'hidden');
