@@ -7,6 +7,13 @@ use vxPHP\Http\Response;
 use vxPHP\Application\Config;
 use vxPHP\Application\Application;
 use vxPHP\Template\SimpleTemplate;
+
+/**
+ * custom error handling and debugging functionality
+ * 
+ * @author Gregor Kofler
+ * @version 0.1.0 2015-03-22
+ */
 class ExceptionHandler {
 
 	private $debug;
@@ -24,6 +31,13 @@ class ExceptionHandler {
 
 	}
 
+	/**
+	 * register custom exception handler
+	 * 
+	 * @param string $debug
+	 * @param string $charset
+	 * @throws \RuntimeException
+	 */
 	public static function register($debug = TRUE, $charset = 'UTF-8') {
 
 		if(self::$handler) {
@@ -38,6 +52,11 @@ class ExceptionHandler {
 
 	}
 
+	/**
+	 * handle exception
+	 * 
+	 * @param \Exception $e
+	 */
 	public function handle(\Exception $e) {
 
 		try {
@@ -51,7 +70,17 @@ class ExceptionHandler {
 		}
 
 	}
-	
+
+	/**
+	 * create response
+	 * with a HttpException status code and headers are considered
+	 * other exceptions default to status code 500
+	 * a error_docs/error_{status_code}.php template is parsed, when found
+	 * otherwise the exception data is decorated and dumped
+	 * 
+	 * @param \Exception $e
+	 * @return \vxPHP\Http\Response
+	 */
 	protected function createResponse(\Exception $e) {
 
 		if($e instanceof HttpException) {
@@ -88,6 +117,14 @@ class ExceptionHandler {
 		return new Response($content, $status, $headers);
 	}
 
+	/**
+	 * generate simple formatted output of exception
+	 * 
+	 * @param \Exception $e
+	 * @param integer $status
+	 * 
+	 * @return string
+	 */
 	protected function decorateException(\Exception $e, $status) {
 
 		$headerTpl = '

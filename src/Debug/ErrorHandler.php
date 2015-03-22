@@ -2,6 +2,12 @@
 
 namespace vxPHP\Debug;
 
+/**
+ * custom error handling and debugging functionality
+ * 
+ * @author Gregor Kofler
+ * @version 0.1.0 2015-03-22
+ */
 class ErrorHandler {
 
 	private $errorLevels = array(
@@ -24,7 +30,7 @@ class ErrorHandler {
 	private static $handler;
 	
 	/**
-	 * singleton, disable invocation via constructor
+	 * singleton, disable instantiation via constructor
 	 */
 	private function __construct() {}
 
