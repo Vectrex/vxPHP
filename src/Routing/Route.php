@@ -6,12 +6,13 @@ use vxPHP\Application\Application;
 use vxPHP\Controller\Controller;
 use vxPHP\Http\Request;
 use vxPHP\Http\Response;
+use vxPHP\Http\RedirectResponse;
 
 /**
  *
  * @author Gregor Kofler
  *
- * @version 0.9.2 2015-01-31
+ * @version 0.9.3 2015-03-28
  *
  */
 class Route {
@@ -216,10 +217,21 @@ class Route {
 	 * considers mod_rewrite settings (nice_uri)
 	 * and inserts path parameters when required
 	 * 
+	 * @param array $pathParameters
 	 * @throws \RuntimeException
 	 * @return string
 	 */
-	public function getUrl() {
+	public function getUrl(array $pathParameters = NULL) {
+
+		// set optional path parameters
+
+		if($pathParameters) {
+
+			foreach($pathParameters as $name => $value) {
+				$this->setPathParameter($name, $value);
+			}
+
+		}
 
 		if(!$this->url) {
 
@@ -476,7 +488,7 @@ class Route {
 	 * @param array $queryParams
 	 * @param number $statusCode
 	 */
-	public function redirect($queryParams = array(),  $statusCode = 303) {
+	public function redirect($queryParams = array(),  $statusCode = 302) {
 
 		$request		= Request::createFromGlobals();
 		$application	= Application::getInstance();
@@ -502,10 +514,7 @@ class Route {
 			$query = '';
 		}
 
-		$response = new Response();
-		$response->headers->set('Location', implode('/', $urlSegments) . '/' . $this->redirect . $query);
-		$response->setStatusCode($statusCode)->sendHeaders();
-		exit();
+		return new RedirectResponse(implode('/', $urlSegments) . '/' . $this->redirect . $query);
 
 	}
 }

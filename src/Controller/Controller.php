@@ -3,6 +3,7 @@
 namespace vxPHP\Controller;
 
 use vxPHP\Http\Response;
+use vxPHP\Http\RedirectResponse;
 use vxPHP\Http\JsonResponse;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Http\Request;
@@ -16,7 +17,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.2.0 2015-01-17
+ * @version 0.3.0 2015-03-28
  *
  */
 abstract class Controller {
@@ -206,45 +207,21 @@ abstract class Controller {
 	 * @param int $statusCode
 	 *
 	 */
-	protected function redirect($path = NULL, $document = NULL, $queryParams = array(), $statusCode = 303) {
+	protected function redirect($url = NULL, $queryParams = array(), $statusCode = 302) {
 
-		$application = Application::getInstance();
-
-		if(is_null($path)) {
-			$this->route->redirect($queryParams, $statusCode);
+		if(is_null($url)) {
+			return $this->route->redirect($queryParams, $statusCode);
 		}
-
-		if(is_null($document)) {
-			$document = $this->currentDocument;
-		}
-
-		$urlSegments = array(
-				$this->request->getSchemeAndHttpHost()
-		);
-
-		if($application->hasNiceUris()) {
-			if($document !== 'index.php') {
-				$urlSegments[] = basename($document, '.php');
-			}
-		}
-		else {
-			$urlSegments[] = ltrim($application->getRelativeAssetsPath(), '/') . $document;
-		}
-
-		$urlSegments[] = trim($path, '/');
 
 		if($queryParams) {
-			$query = '?' . http_build_query($queryParams);
+			$query = (strpos($url, '?') === -1 ? '?' : '&') . http_build_query($queryParams);
 		}
 
 		else {
 			$query = '';
 		}
 
-		$response = new Response();
-		$response->headers->set('Location', implode('/', $urlSegments) . $query);
-		$response->setStatusCode($statusCode)->sendHeaders();
-		exit();
+		return new RedirectResponse($url . $query, $statusCode);
 
 	}
 
