@@ -11,7 +11,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.4 2015-01-31
+ * @version 0.4.5 2015-03-30
  *
  */
 class Router {
@@ -59,10 +59,16 @@ class Router {
 		}
 
 		if(!self::authenticateRoute($route)) {
-			
+
 			Session::getSessionDataBag()->set('authViolatingRequest', Request::createFromGlobals());
 
-			$route->redirect();
+			if($redirect = $route->getRedirect()) {
+				return self::getRoute($redirect, $route->getScriptName());
+			}
+			
+			else {
+				throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
+			}
 
 		}
 
