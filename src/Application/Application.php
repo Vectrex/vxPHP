@@ -14,7 +14,7 @@ use vxPHP\Database\vxPDO;
  * stub; currently only provides easy access to global objects
  *
  * @author Gregor Kofler
- * @version 1.0.0 2014-10-16
+ * @version 1.0.2 2015-04-12
  */
 class Application {
 
@@ -87,6 +87,13 @@ class Application {
 			 * @var boolean
 			 */
 	private $useNiceUris;
+	
+			/**
+			 * indicates whether application runs on a localhost or was called from the command line
+			 * 
+			 * @var boolean
+			 */
+	private $isLocal;
 
 	/**
 	 * constructor
@@ -216,6 +223,29 @@ class Application {
 	 */
 	public function hasNiceUris() {
 		return $this->useNiceUris;
+	}
+
+	/**
+	 * returns true when the application
+	 * was called from the command line or in a localhost environment
+	 * 
+	 * @return boolean
+	 */
+	public function runsLocally() {
+
+		if(is_null($this->isLocal)) {
+			
+			$remote =
+				isset($_SERVER['HTTP_CLIENT_IP']) ||
+				isset($_SERVER['HTTP_X_FORWARDED_FOR']) ||
+				!(in_array(@$_SERVER['REMOTE_ADDR'], array('127.0.0.1', 'fe80::1', '::1')) || PHP_SAPI === 'cli-server');
+
+			$this->isLocal = PHP_SAPI === 'cli' || !$remote;
+
+		}		
+
+		return $this->isLocal;
+
 	}
 
 	/**
