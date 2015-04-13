@@ -5,7 +5,7 @@ namespace vxPHP\Http\Exception;
 /**
  * @author Gregor Kofler
  *
- * @version 0.1.0 2015-03-16 
+ * @version 0.1.1 2015-04-13 
  */
 class HttpException extends \RuntimeException {
 	
@@ -44,7 +44,7 @@ class HttpException extends \RuntimeException {
 	 */
 	public function getStatusCode() {
 
-		return $this->statusCode;
+		return $this->httpStatusCode;
 
 	}
 	
