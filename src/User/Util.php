@@ -11,7 +11,7 @@ use vxPHP\Application\Session;
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 1.1.0 2015-03-12
+ * @version 1.1.1 2015-04-24
  */
 
 class Util {
@@ -98,7 +98,7 @@ class Util {
 
 		$rows = Application::getInstance()->getDb()->doPreparedQuery('
 			SELECT
-				adminID
+				a.adminID
 			FROM
 				admin a
 				INNER JOIN admin_notifications an ON a.adminID = an.adminID
@@ -108,7 +108,7 @@ class Util {
 			', array(strtoupper($notification_alias)));
 
 		foreach($rows as $r) {
-			$users[] = User::getInstance($r['adminID']);
+			$users[] = User::getInstance((int) $r['adminID']);
 		}
 
 		return $users;
