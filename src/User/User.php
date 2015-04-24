@@ -12,7 +12,7 @@ use vxPHP\Session\Session;
 
 /**
  * @author Gregor Kofler
- * @version 1.1.0 2015-03-12
+ * @version 1.1.1 2015-04-24
  */
 
 class User {
@@ -502,7 +502,7 @@ class User {
 	 * @return void|array assigned notifications
 	 */
 	public function getNotifications() {
-		if(empty($this->id)) {
+		if(empty($this->adminid)) {
 			return;
 		}
 
@@ -535,7 +535,7 @@ class User {
 
 		$db = Application::getInstance()->getDb();
 
-		if(!isset($this->id)) {
+		if(is_null($this->adminid)) {
 			return;
 		}
 
