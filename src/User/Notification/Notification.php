@@ -7,7 +7,7 @@ use vxPHP\Application\Application;
  * mapper class for notifications
  *
  * @author Gregor Kofler
- * @version 0.1.4 2014-09-19
+ * @version 0.1.5 2015-04-28
  */
 class Notification {
 	private		$id,
@@ -22,10 +22,17 @@ class Notification {
 
 	private static $cachedNotificationData;
 
+	/**
+	 * create a notification instance identified by its alias
+	 * 
+	 * @param string $alias
+	 */
 	public function __construct($alias) {
+
 		if(!isset(self::$cachedNotificationData)) {
 			self::queryAllNotifications();
 		}
+
 		if(isset(self::$cachedNotificationData[$alias])) {
 			foreach(self::$cachedNotificationData[$alias] as $k => $v) {
 				$k = strtolower($k);
@@ -34,34 +41,52 @@ class Notification {
 				}
 			}
 		}
+	
 	}
 
+	/**
+	 * expose private properties
+	 * 
+	 * @param string $p
+	 */	
 	public function __get($p) {
+
 		if(property_exists($this, $p)) {
 			return $this->$p;
 		}
+
 	}
 
 	public function __toString() {
+
 		return $this->alias;
+
 	}
 
+	/**
+	 * get all notification instances assigned to an admingroup identified by $groupAlias
+	 * 
+	 * @param string $groupAlias
+	 * @return multitype:\vxPHP\User\Notification\Notification
+	 */
 	public static function getAvailableNotifications($groupAlias = NULL) {
+
 		if(!isset(self::$cachedNotificationData)) {
 			self::queryAllNotifications();
 		}
 
 		$result = array();
 
-		foreach(self::$cachedNotificationData as $k => $v) {
+		foreach(self::$cachedNotificationData as $v) {
 			if(!isset($groupAlias) || strtoupper($v['group_alias']) == strtoupper($groupAlias)) {
 				$n = new Notification($v['Alias']);
 				$result[(string) $n] = $n;
 			}
 		}
-		return $result;
-	}
 
+		return $result;
+
+	}
 
 	private static function queryAllNotifications() {
 
@@ -76,9 +101,11 @@ class Notification {
 				Attachment,
 				Not_Displayed,
 				ag.Alias as group_alias
+
 			FROM
 				notifications n
-				INNER JOIN admingroups ag ON ag.admingroupsID = n.admingroupsID");
+				INNER JOIN admingroups ag ON ag.admingroupsID = n.admingroupsID
+		");
 
 		self::$cachedNotificationData = array();
 
@@ -86,9 +113,18 @@ class Notification {
 			$r['Attachment'] = preg_split('~\s*,\s*~', $r['Attachment']);
 			self::$cachedNotificationData[$r['Alias']] = $r;
 		}
+
 	}
 
-	public function fillMessage($fieldValues) {
+	/**
+	 * fill placeholders in notification message
+	 * returns message
+	 * 
+	 * @param array $fieldValues
+	 * @return string
+	 */
+	public function fillMessage(array $fieldValues = array()) {
+
 		$txt = $this->message;
 
 		if(empty($txt)) {
@@ -99,6 +135,6 @@ class Notification {
 			$txt = str_replace('{' . $key . '}', $val, $txt);
 		}
 		return $txt;
+	
 	}
 }
-?>
