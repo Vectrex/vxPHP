@@ -17,7 +17,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.0 2015-03-28
+ * @version 0.3.1 2015-05-03
  *
  */
 abstract class Controller {
@@ -214,7 +214,7 @@ abstract class Controller {
 		}
 
 		if($queryParams) {
-			$query = (strpos($url, '?') === -1 ? '?' : '&') . http_build_query($queryParams);
+			$query = (strpos($url, '?') === FALSE ? '?' : '&') . http_build_query($queryParams);
 		}
 
 		else {
