@@ -19,7 +19,7 @@ class Locale {
 	}
 
 	public function set() {
-		setlocale(LC_ALL, $this->$localeId);
+		setlocale(LC_ALL, $this->localeId);
 	}
 
 	public function getLocaleId() {
