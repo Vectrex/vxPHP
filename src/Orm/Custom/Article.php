@@ -24,144 +24,147 @@ use vxPHP\Database\vxPDOUtil;
 
 class Article implements SubjectInterface {
 
-					/**
-					 * cached instances identified by their id
-					 * @var array
-					 */
+	/**
+	 * cached instances identified by their id
+	 * @var array
+	 */
 	private static	$instancesById;
-	
-					/**
-					 * cached instances identified by their alias
-					 * @var array
-					 */
+
+	/**
+	 * cached instances identified by their alias
+	 * @var array
+	 */
 	private static	$instancesByAlias;
 
-			/**
-			 * primary key
-			 * @var int
-			 */
-	private	$id,
+	/**
+	 * primary key
+	 * @var int
+	 */
+	private	$id;
 	
-			/**
-			 * unique alias
-			 * @var string
-			 */
-			$alias,
+	/**
+	 * unique alias
+	 * @var string
+	 */
+	private	$alias;
 			
-			/**
-			 * headline of article
-			 * @var string
-			 */
-			$headline,
+	/**
+	 * headline of article
+	 * @var string
+	 */
+	private $headline;
 			
-			/**
-			 * "other" data of article
-			 * currently array keys in self::$dataCols are supported
-			 * @var array
-			 */
-			$data,
+	/**
+	 * "other" data of article
+	 * currently array keys in self::$dataCols are supported
+	 * @var array
+	 */
+	private	$data;
 			
-			/**
-			 * arbitrary flags
-			 * controllers can decide how to interpret them
-			 * @var int
-			 */
-			$customFlags,
+	/**
+	 * arbitrary flags
+	 * controllers can decide how to interpret them
+	 * @var int
+	 */
+	private	$customFlags;
 			
-			/**
-			 * numeric indicator that can be used by
-			 * controllers to enhance or override other sorting rules
-			 * @var int
-			 */
-			$customSort,
+	/**
+	 * numeric indicator that can be used by
+	 * controllers to enhance or override other sorting rules
+	 * @var int
+	 */
+	private	$customSort;
 
-			/**
-			 * @var boolen
-			 */
-			$published,
+	/**
+	 * @var boolen
+	 */
+	private	$published;
 	
-			/**
-			 * @var array [MetaFile]
-			 */
-			$linkedFiles,
+	/**
+	 * @var array [MetaFile]
+	 */
+	private	$linkedFiles;
 			
-			/**
-			 * @var boolean
-			 */
-			$updateLinkedFiles,
+	/**
+	 * @var boolean
+	 */
+	private	$updateLinkedFiles;
 			
-			/**
-			 * @var array
-			 */
-			$previouslySavedValues,
+	/**
+	 * @var array
+	 */
+	private	$previouslySavedValues;
 
-			/**
-			 * colunms 
-			 * @var array
-			 */
-			$dataCols = array('Teaser', 'Content'),
+	/**
+	 * colunms 
+	 * @var array
+	 */
+	private	$dataCols = array('Teaser', 'Content');
 
-			/**
-			 * @var ArticleCategory
-			 */
-			$category,
+	/**
+	 * @var ArticleCategory
+	 */
+	private	$category;
 
-			/**
-			 * @var \DateTime
-			 */
-			$articleDate,
+	/**
+	 * @var \DateTime
+	 */
+	private	$articleDate;
 
-			/**
-			 * @var \DateTime
-			 */
-			$displayFrom,
+	/**
+	 * @var \DateTime
+	 */
+	private	$displayFrom;
 
-			/**
-			 * @var \DateTime
-			 */
-			$displayUntil,
+	/**
+	 * @var \DateTime
+	 */
+	private	$displayUntil;
 
-			/**
-			 * @var \DateTime
-			 */
-			$lastUpdated,
+	/**
+	 * @var \DateTime
+	 */
+	private	$lastUpdated;
 
-			/**
-			 * @var \DateTime
-			 */
-			$firstCreated,
+	/**
+	 * @var \DateTime
+	 */
+	private	$firstCreated;
 
-			/**
-			 * @var \DateTime
-			 */
-			$publishedUpdated,
+	/**
+	 * @var \DateTime
+	 */
+	private	$publishedUpdated;
 
-			/**
-			 * @var User
-			 */
-			$createdBy,
+	/**
+	 * @var User
+	 */
+	private	$createdBy;
 
-			/**
-			 * @var User
-			 */
-			$updatedBy,
+	/**
+	 * @var User
+	 */
+	private	$updatedBy;
 
-			/**
-			 * @var User
-			 */
-			$publishedBy,
+	/**
+	 * @var User
+	 */
+	private	$publishedBy;
 
-			/**
-			 * these attributes do not indicate
-			 * a change of the record despite differing
-			 * from current value
-			 * 
-			 * @var array
-			 */
-			 $notIndicatingChange = array('published');
+	/**
+	 * these attributes do not indicate
+	 * a change of the record despite differing
+	 * from current value
+	 * 
+	 * @var array
+	 */
+	private	$notIndicatingChange = array('published');
 	
 	
 	public function __construct() {
+	}
+	
+	public function __clone() {
 	}
 
 	public function __toString() {
