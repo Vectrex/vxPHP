@@ -24,7 +24,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	private	$markupToMatch = array(
 				'~<img(.*?)\s+src=("|\')(.*?)#([\w\s\.\|]+)\2(.*?)>~i',
 				'~<img.*?\s+(style|src)=("|\')(.*?)\2.*?\s+(style|src)=("|\')(.*?)\5.*?>~i',
-				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2[^>]*\s+(width|height|src)=("|\')(.*?)\5[^>]*\s+(width|height|src)=("|\')(.*?)\8.*?>~i',
+/*				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2[^>]*\s+(width|height|src)=("|\')(.*?)\5[^>]*\s+(width|height|src)=("|\')(.*?)\8.*?>~i',*/
 				'~url\s*\(("|\'|)(.*?)#([\w\s\.\|]+)\1\)~i'
 			);
 
@@ -52,7 +52,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 * @return string
 	 */
 	private function filterCallBack($matches) {
-		
+		var_dump($matches);
 		// <img src="..." style="width: ...; height: ...">
 
 		if(count($matches) === 7) {
