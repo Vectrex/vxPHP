@@ -52,7 +52,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 * @return string
 	 */
 	private function filterCallBack($matches) {
-		var_dump($matches);
+
 		// <img src="..." style="width: ...; height: ...">
 
 		if(count($matches) === 7) {
