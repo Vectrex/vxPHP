@@ -10,7 +10,8 @@ use vxPHP\Image\ImageModifierFactory;
 /**
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
- *
+ * 
+ * @version 1.0.0 2015-06-22
  * @author Gregor Kofler
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
@@ -22,8 +23,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 */
 	private	$markupToMatch = array(
 				'~<img(.*?)\s+src=("|\')(.*?)#([\w\s\.\|]+)\2(.*?)>~i',
-				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2.*?\s+(width|height|src)=("|\')(.*?)\5.*?\s+(width|height|src)=("|\')(.*?)\8.*?>~i',
 				'~<img.*?\s+(style|src)=("|\')(.*?)\2.*?\s+(style|src)=("|\')(.*?)\5.*?>~i',
+				'~<img.*?\s+(width|height|src)=("|\')(.*?)\2[^>]*\s+(width|height|src)=("|\')(.*?)\5[^>]*\s+(width|height|src)=("|\')(.*?)\8.*?>~i',
 				'~url\s*\(("|\'|)(.*?)#([\w\s\.\|]+)\1\)~i'
 			);
 
@@ -51,7 +52,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 * @return string
 	 */
 	private function filterCallBack($matches) {
-
+		
 		// <img src="..." style="width: ...; height: ...">
 
 		if(count($matches) === 7) {
