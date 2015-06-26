@@ -19,7 +19,7 @@ use vxPHP\Database\vxPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.9.5 2015-02-28
+ * @version 0.10.0 2015-06-26
  */
 
 class Article implements SubjectInterface {
@@ -132,11 +132,6 @@ class Article implements SubjectInterface {
 	private	$firstCreated;
 
 	/**
-	 * @var \DateTime
-	 */
-	private	$publishedUpdated;
-
-	/**
 	 * @var User
 	 */
 	private	$createdBy;
@@ -158,13 +153,47 @@ class Article implements SubjectInterface {
 	 * 
 	 * @var array
 	 */
-	private	$notIndicatingChange = array('published');
+	private	$notIndicatingChange = array(
+		'published'
+	);
+	
+	/**
+	 * property names which are set to NULL when cloning the object
+	 * 
+	 * @var array
+	 */
+	private $propertiesToReset = array(
+		'updatedBy',
+		'id',
+		'alias'
+	);
 	
 	
 	public function __construct() {
 	}
 	
 	public function __clone() {
+		
+		// link files, when necessary
+		
+		if(is_null($this->linkedFiles)) {
+			$this->getLinkedMetaFiles();
+		}
+
+		// reset certain properties; forces insertion when saving
+		
+		foreach($this->propertiesToReset as $property) {
+			$this->$property = NULL;
+		}
+
+		// make sure that linked files are kept and saved
+
+		$this->updateLinkedFiles = TRUE;
+		
+		// create new headline and therefore new alias
+
+		$this->headline = 'Copy: ' . $this->headline; 
+
 	}
 
 	public function __toString() {
@@ -337,7 +366,7 @@ class Article implements SubjectInterface {
 					'customSort'	=> $sortPosition
 				));
 			}
-			
+
 			$this->updateLinkedFiles = FALSE;
 		}
 
@@ -562,15 +591,6 @@ class Article implements SubjectInterface {
 	 */
 	public function getLastUpdated() {
 		return $this->lastUpdated;
-	}
-
-	/**
-	 * get timestamp of last change to 'published' attribute
-	 *
-	 *  @return DateTime
-	 */
-	public function getPublishedUpdated() {
-		return $this->publishedUpdated;
 	}
 
 	/**
