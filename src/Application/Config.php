@@ -13,9 +13,9 @@ use vxPHP\Routing\Route;
 
 /**
  * Config
- * creates configuration singleton by parsing XML ini-file
+ * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.1.2 2014-12-07
+ * @version 1.2.0 2015-07-04
  *
  * @todo refresh() method
  */
@@ -24,61 +24,68 @@ class Config {
 			/**
 			 * @var \stdClass
 			 */
-	public	$site,
+	public	$site;
 
 			/**
 			 * @var \stdClass
 			 */
-			$db,
+	public	$db;
 
 			/**
 			 * @var \stdClass
 			 */
-			$mail,
+	public	$mail;
 
 			/**
 			 * @var \stdClass
 			 */
-			$binaries,
+	public	$binaries;
 
 			/**
 			 * @var array
 			 */
-			$paths,
+	public	$paths;
 
 			/**
 			 * @var array
 			 */
-			$routes,
+	public	$routes;
 
 			/**
 			 * @var array
 			 */
-			$menus,
-			
+	public	$menus;
+
 			/**
 			 * @var array
 			 */
-			$server;
+	public	$server;
+
+			/**
+			 * @var array
+			 * 
+			 * holds configuration of services
+			 */
+	public	$services;
 
 			/**
 			 * @var boolean
 			 */
-	private	$isLocalhost,
+	private	$isLocalhost;
 			
 			/**
 			 * @var array
 			 * 
 			 * holds sections of config file which are parsed
 			 */
-			$sections	= array(),
+	private	$sections	= array();
 			
 			/**
 			 * @var array
 			 * 
 			 * holds all configured plugins
 			 */
-			$plugins	= array();
+	private	$plugins	= array();
 
 	/**
 	 * create config instance
@@ -425,7 +432,7 @@ class Config {
 			}
 
 			if(isset($this->routes[$scriptName][$pageId])) {
-				throw new ConfigException("Route '". $pageId ."' for script '" . $scriptName . "' found more than once.");
+				throw new ConfigException(sprintf("Route '%s' for script '%s' found more than once.", $pageId, $scriptName));
 			}
 
 			$this->routes[$scriptName][] = new Route($pageId, $scriptName, $parameters);
@@ -442,6 +449,52 @@ class Config {
 		foreach ($menus->menu as $menu) {
 			$menuInstance = $this->parseMenu($menu);
 			$this->menus[$menuInstance->getId()] = $menuInstance;
+		}
+
+	}
+
+	/**
+	 * parse settings for services
+	 * only service id, class and parameters are parsed
+	 * lazy initialization is handled by Application instance
+	 * 
+	 * @param \SimpleXMLElement $services
+	 * @throws ConfigException
+	 */
+	private function parseServicesSettings(\SimpleXMLElement $services) {
+
+		foreach($services->service as $service) {
+
+			if(!($id = (string) $service->attributes()->id)) {
+				throw new ConfigException('Service without id found.');
+			}
+
+			if(isset($this->services[$id])) {
+				throw new ConfigException(sprintf("Service '%s' already defined.", $id));
+			}
+
+			if(!($class = (string) $service->attributes()->class)) {
+				throw new ConfigException(sprintf("No class for service '%s' configured.", $id));
+			}
+
+			$this->services[$id] = array(
+				'class'			=> $class,
+				'parameters'	=> array()
+			);
+
+			foreach($service->parameter as $parameter) {
+
+				$name	= (string) $parameter->attributes()->name;
+				$value	= (string) $parameter->attributes()->value;
+
+				if(!$name) {
+					throw new ConfigException(sprintf("A parameter for service '%s' has no name.", $id));
+				}
+
+				$this->services[$id]['parameters'][$name] = $value;
+
+			}
+
 		}
 
 	}
@@ -550,7 +603,6 @@ class Config {
 	/**
 	 * @todo refresh config by re-parsing XML file
 	 */
-
 	public function refresh() {
 	}
 
@@ -613,7 +665,9 @@ class Config {
 	 * attaches all in config file declared event listeners
 	 */
 	public function attachPlugins() {
+
 		foreach($this->plugins as $plugin) {
+
 			foreach($plugin['eventTypes'] as $eventType) {
 				$pluginInstance = new $plugin['class'];
 
@@ -623,13 +677,16 @@ class Config {
 
 				EventDispatcher::getInstance()->attach($pluginInstance, $eventType);
 			}
+
 		}
+
 	}
 
 	/**
 	 * add particular information regarding server configuration, like PHP extensions
 	 */
 	private function getServerConfig() {
+
 		$this->server['apc_on'] = extension_loaded('apc') && function_exists('apc_add') && ini_get('apc.enabled') && ini_get('apc.rfc1867');
 
 		$fs = ini_get('upload_max_filesize');
@@ -644,6 +701,8 @@ class Config {
 			default:
 				$mult = 0;
 		}
+
 		$this->server['max_upload_filesize'] = $mult ? (float) (substr($fs, 0, -1)) * $mult : (int) $fs;
+
 	}
 }

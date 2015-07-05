@@ -9,91 +9,103 @@ use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
 use vxPHP\Http\Request;
 use vxPHP\Database\vxPDO;
+use vxPHP\Autoload\Psr4;
+use vxPHP\Service\ServiceInterface;
 
 /**
- * stub; currently only provides easy access to global objects
+ * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.0.2 2015-04-12
+ * @version 1.1.0 2015-07-05
  */
 class Application {
 
-			/**
-			 * @var Application
-			 */
+	/**
+	 * @var Application
+	 */
 	private static $instance;
 
-			/**
-			 * @var vxPDO
-			 */
+	/**
+	 * @var vxPDO
+	 */
 	private	$db;
 
-			/**
-			 * @var Config
-			 */
+	/**
+	 * @var Config
+	 */
 	private	$config;
 
-			/**
-			 * @var EventDispatcher
-			 */
+	/**
+	 * @var EventDispatcher
+	 */
 	private	$eventDispatcher;
 
-			/**
-			 * @var array
-			 */
+	/**
+	 * @var array
+	 */
 	private $locales = array();
 
-			/**
-			 * @var Locale
-			 */
+	/**
+	 * @var Locale
+	 */
 	private $currentLocale;
 
-			/**
-			 * @var Route
-			 */
+	/**
+	 * @var Route
+	 */
 	private $currentRoute;
 
-			/**
-			 * the absolute path to the top level directory of the application (e.g. "/var/www/mydomain/")
-			 *
-			 * @var string
-			 */
+	/**
+	 * the absolute path to the top level directory of the application (e.g. "/var/www/mydomain/")
+	 *
+	 * @var string
+	 */
 	private $rootPath;
 
-			/**
-			 * the absolute path to web assets (e.g. "/var/www/mydomain/web/")
-			 *
-			 * @var string
-			 */
+	/**
+	 * the absolute path to web assets (e.g. "/var/www/mydomain/web/")
+	 *
+	 * @var string
+	 */
 	private $absoluteAssetsPath;
 
-			/**
-			 * the relative path to web assets below the root path (e.g. "web/")
-			 *
-			 * @var string
-			 */
+	/**
+	 * the relative path to web assets below the root path (e.g. "web/")
+	 *
+	 * @var string
+	 */
 	private $relativeAssetsPath;
 
-			/**
-			 * path to controllers
-			 *
-			 * @var string
-			 */
+	/**
+	 * path to controllers
+	 *
+	 * @var string
+	 */
 	private $controllerPath;
 
-			/**
-			 * indicates the use of webserver rewriting for beautified URLs
-			 *
-			 * @var boolean
-			 */
+	/**
+	 * indicates the use of webserver rewriting for beautified URLs
+	 *
+	 * @var boolean
+	 */
 	private $useNiceUris;
 	
-			/**
-			 * indicates whether application runs on a localhost or was called from the command line
-			 * 
-			 * @var boolean
-			 */
+	/**
+	 * indicates whether application runs on a localhost or was called from the command line
+	 * 
+	 * @var boolean
+	 */
 	private $isLocal;
+
+	/**
+	 * @var multitype:vxPHP\service\ServiceInterface
+	 */
+	private $services = array();
+	
+	/**
+	 * @var Psr4
+	 */
+	private $loader;
 
 	/**
 	 * constructor
@@ -160,6 +172,19 @@ class Application {
 	}
 
 	/**
+	 * make Psr4 loader in application available
+	 * 
+	 * @param Psr4 $loader
+	 * @return Application
+	 */
+	public function setLoader(Psr4 $loader) {
+
+		$this->loader = $loader;
+		return $this;
+		
+	}
+	
+	/**
 	 * returns default database object reference
 	 *
 	 * @return vxPDO
@@ -197,6 +222,24 @@ class Application {
 	}
 
 	/**
+	 * return a service instance
+	 * service instances are lazily initialized upon first request
+	 * services are expected in the src/services folder of the application and can be namespaced
+	 * extra arguments are passed on to the constructor method of the service 
+	 * 
+	 * @param string $serviceId
+	 * @return \vxPHP\Application\multitype:ServiceInterface
+	 */
+	public function getService($serviceId) {
+
+		$service = $this->initializeService($serviceId, array_splice(func_get_args(), 1));
+		$this->services[] = $service;
+
+		return $service;
+
+	}
+
+	/**
 	 * returns event dispatcher instance reference
 	 *
 	 * @return EventDispatcher
@@ -213,7 +256,9 @@ class Application {
 	 * @return Route
 	 */
 	public function getCurrentRoute() {
+
 		return $this->currentRoute;
+
 	}
 
 	/**
@@ -222,7 +267,9 @@ class Application {
 	 * @return boolean
 	 */
 	public function hasNiceUris() {
+
 		return $this->useNiceUris;
+
 	}
 
 	/**
@@ -255,7 +302,9 @@ class Application {
 	 * @return string
 	 */
 	public function getRelativeAssetsPath() {
+
 		return $this->relativeAssetsPath;
+
 	}
 
 	/**
@@ -284,6 +333,7 @@ class Application {
 	 * the relative assets path is updated
 	 *
 	 * @param string $path
+	 * @return Application
 	 * @throws ApplicationException
 	 */
 	public function setAbsoluteAssetsPath($path) {
@@ -296,6 +346,9 @@ class Application {
 
 		$this->absoluteAssetsPath = $path;
 		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', $this->absoluteAssetsPath));
+		
+		return $this;
+
 	}
 
 	/**
@@ -305,7 +358,9 @@ class Application {
 	 * @return string
 	 */
 	public function getAbsoluteAssetsPath() {
+
 		return $this->absoluteAssetsPath;
+	
 	}
 
 	/**
@@ -315,7 +370,9 @@ class Application {
 	 * @return string
 	 */
 	public function getRootPath() {
+
 		return $this->rootPath;
+
 	}
 
 	/**
@@ -323,6 +380,7 @@ class Application {
 	 * if an assetspath is set, the relative assets path is updated
 	 *
 	 * @param string $path
+	 * @return Application
 	 * @throws ApplicationException
 	 */
 	public function setRootPath($path) {
@@ -335,6 +393,8 @@ class Application {
 
 		$this->rootPath = $path;
 		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', (string) $this->absoluteAssetsPath));
+
+		return $this;
 
 	}
 
@@ -392,7 +452,9 @@ class Application {
 	 * @return boolean
 	 */
 	public function hasLocale($localeId) {
+
 		return array_key_exists(strtolower($localeId), $this->locales);
+
 	}
 
 	/**
@@ -429,10 +491,12 @@ class Application {
 	 * set the current locale
 	 *
 	 * @param Locale $locale
+	 * @return Application
 	 */
 	public function setCurrentLocale(Locale $locale) {
 
 		$this->currentLocale = $locale;
+		return $this;
 
 	}
 
@@ -440,8 +504,72 @@ class Application {
 	 * set the current route, avoids re-parsing of path
 	 *
 	 * @param Route $route
+	 * @return Application
 	 */
 	public function setCurrentRoute(Route $route) {
+
 		$this->currentRoute = $route;
+		return $this;
+		
+	}
+	
+	/**
+	 * create and initialize a service instance
+	 * 
+	 * @param string $serviceId
+	 * @param array $constructorArguments
+	 * @throws ApplicationException
+	 * @return ServiceInterface
+	 */
+	private function initializeService($serviceId, array $constructorArguments) {
+		
+		if(!isset($this->config->services[$serviceId])) {
+			throw new ApplicationException(sprintf("Service '%s' not configured.", $serviceId));
+		}
+
+		$configData = $this->config->services[$serviceId];
+
+		// create instance 
+
+		// use a pre-configured loader if available, otherwise initialize a new PSR4 loader
+
+		if(is_null($this->loader)) {
+			
+			$this->loader = new Psr4();
+			$this->loader->register();
+
+		}
+
+		// add prefix to loader
+
+		$class = trim(str_replace('/', '\\', $configData['class']), '\\');
+		$pos = strrpos($class, '\\');
+
+		if($pos !== FALSE) {
+			$prefix	= substr($class, 0, $pos); 
+			$path	= $this->rootPath . 'src/service/' . $prefix;
+			$this->loader->addPrefix($prefix, $path);
+		}
+		else {
+			require $this->rootPath . 'src/service/' . $class . '.php';
+		}
+
+		// use reflection to pass on additional constructor arguments
+
+		$reflector	= new \ReflectionClass($class);
+		$service	= $reflector->newInstanceArgs($constructorArguments);
+
+		// check whether instance implements ServiceInterface  
+
+		if(!$service instanceof ServiceInterface) {
+			throw new ApplicationException(sprintf("Service '%s' (class %s) does not implement the ServiceInterface", $serviceId, $class));
+		}
+		
+		// set parameters
+		
+		$service->setParameters($configData['parameters']);
+		
+		return $service;
+
 	}
 }
