@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.2.0 2015-07-04
+ * @version 1.3.0 2015-07-09
  *
  * @todo refresh() method
  */
@@ -69,6 +69,13 @@ class Config {
 	public	$services;
 
 			/**
+			 * @var array
+			 * 
+			 * holds all configured plugins
+			 */
+	public	$plugins;
+
+			/**
 			 * @var boolean
 			 */
 	private	$isLocalhost;
@@ -80,13 +87,6 @@ class Config {
 			 */
 	private	$sections	= array();
 			
-			/**
-			 * @var array
-			 * 
-			 * holds all configured plugins
-			 */
-	private	$plugins	= array();
-
 	/**
 	 * create config instance
 	 * if section is specified, only certain sections of the config file are parsed
@@ -298,18 +298,6 @@ class Config {
 	}
 
 	/**
-	 * parses settings for configured plugins
-	 *
-	 * @param SimpleXMLElement $plugins
-	 */
-	private function parsePlugins(\SimpleXMLElement $plugins) {
-		foreach($plugins->plugin as $p) {
-			$a = $p->attributes();
-			$this->plugins[] = array ('class' => (string) $a->class, 'eventTypes' => preg_split('~\s*,\s*~', (string) $a->listens_to), 'configXML' => $p->asXML());
-		}
-	}
-
-	/**
 	 * parse page routes
 	 * called seperately for differing script attributes
 	 *
@@ -500,6 +488,56 @@ class Config {
 	}
 
 	/**
+	 * parses settings for plugins
+	 * plugin id, class, events and parameters are parsed
+	 * initialization (not lazy) is handled by Application instance
+	 *
+	 * @param SimpleXMLElement $plugins
+	 */
+	private function parsePluginsSettings(\SimpleXMLElement $plugins) {
+
+		foreach($plugins->plugin as $plugin) {
+
+			if(!($id = (string) $plugin->attributes()->id)) {
+				throw new ConfigException('Plugin without id found.');
+			}
+			
+			if(isset($this->plugins[$id])) {
+				throw new ConfigException(sprintf("Plugin '%s' already defined.", $id));
+			}
+			
+			if(!($class = (string) $plugin->attributes()->class)) {
+				throw new ConfigException(sprintf("No class for plugin '%s' configured.", $id));
+			}
+			
+			if(!($listenTo = (string) $plugin->attributes()->listen_to)) {
+				throw new ConfigException(sprintf("No events to listen to for plugin '%s' configured.", $id));
+			}
+			
+			$this->plugins[$id] = array(
+				'class'			=> $class,
+				'listenTo'		=> preg_split('~\s*,\s*~', $listenTo),
+				'parameters'	=> array()
+			);
+
+			foreach($plugin->parameter as $parameter) {
+			
+				$name	= (string) $parameter->attributes()->name;
+				$value	= (string) $parameter->attributes()->value;
+			
+				if(!$name) {
+					throw new ConfigException(sprintf("A parameter for plugin '%s' has no name.", $id));
+				}
+			
+				$this->plugins[$id]['parameters'][$name] = $value;
+			
+			}
+
+		}
+
+	}
+	
+	/**
 	 * Parse XML menu entries and creates menu instance
 	 *
 	 * @param simpleXmlElement $menu
@@ -659,27 +697,6 @@ class Config {
 			}
 		}
 		return $paths;
-	}
-
-	/**
-	 * attaches all in config file declared event listeners
-	 */
-	public function attachPlugins() {
-
-		foreach($this->plugins as $plugin) {
-
-			foreach($plugin['eventTypes'] as $eventType) {
-				$pluginInstance = new $plugin['class'];
-
-				if(method_exists($pluginInstance, 'configure')) {
-					$pluginInstance->configure(simplexml_load_string($plugin['configXML']));
-				}
-
-				EventDispatcher::getInstance()->attach($pluginInstance, $eventType);
-			}
-
-		}
-
 	}
 
 	/**

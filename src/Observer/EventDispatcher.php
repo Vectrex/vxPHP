@@ -5,7 +5,7 @@ namespace vxPHP\Observer;
 /**
  * simple dispatcher-listener implementation
  *
- * @version 0.0.3 2012-02-15
+ * @version 0.1.0 2015-07-09
  * @author Gregor Kofler
  *
  */
@@ -77,9 +77,14 @@ class EventDispatcher {
 	 * @param ListenerInterface $listener
 	 * @param string $eventType
 	 */
-	public function detach(ListenerInterface $listener, $eventType) {
+	public function detach(ListenerInterface $listener, $eventType = NULL) {
 
-		unset($this->listeners[spl_object_hash($listener)][$eventType]);
+		if(is_null($eventType)) {
+			unset($this->listeners[spl_object_hash($listener)]);
+		}
+		else {
+			unset($this->listeners[spl_object_hash($listener)][$eventType]);
+		}
 
 	}
 

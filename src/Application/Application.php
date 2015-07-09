@@ -11,12 +11,13 @@ use vxPHP\Http\Request;
 use vxPHP\Database\vxPDO;
 use vxPHP\Autoload\Psr4;
 use vxPHP\Service\ServiceInterface;
+use vxPHP\Observer\ListenerInterface;
 
 /**
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.1.0 2015-07-05
+ * @version 1.2.0 2015-07-09
  */
 class Application {
 
@@ -98,10 +99,15 @@ class Application {
 	private $isLocal;
 
 	/**
-	 * @var multitype:vxPHP\service\ServiceInterface
+	 * @var multitype:vxPHP\Service\ServiceInterface
 	 */
 	private $services = array();
 	
+	/**
+	 * @var multitype:vxPHP\Observer\ListenerInterface
+	 */
+	private $plugins = array();
+
 	/**
 	 * @var Psr4
 	 */
@@ -122,7 +128,6 @@ class Application {
 			$this->eventDispatcher	= EventDispatcher::getInstance();
 
 			$this->config->createConst();
-			$this->config->attachPlugins();
 
 			if(!ini_get('date.timezone')) {
 
@@ -167,7 +172,35 @@ class Application {
 			}
 			self::$instance = new Application($config);
 		}
+
 		return self::$instance;
+
+	}
+
+	/**
+	 * unregister all previously registered plugins
+	 * read plugin configuration from Config
+	 * and register all configured plugins
+	 * 
+	 * @return Application
+	 */
+	public function registerPlugins() {
+		
+		if($this->plugins) {
+			foreach($this->plugins as $plugin) {
+				$this->eventDispatcher->detach($plugin);
+			}
+		}
+
+		$this->plugins = array();
+		
+		// initialize plugins
+
+		foreach(array_keys($this->config->plugins) as $pluginId) {
+			$this->plugins[] = $this->initializePlugin($pluginId);
+		}
+
+		return $this; 
 
 	}
 
@@ -232,7 +265,8 @@ class Application {
 	 */
 	public function getService($serviceId) {
 
-		$service = $this->initializeService($serviceId, array_splice(func_get_args(), 1));
+		$args = func_get_args();
+		$service = $this->initializeService($serviceId, array_splice($args, 1));
 		$this->services[] = $service;
 
 		return $service;
@@ -570,6 +604,64 @@ class Application {
 		$service->setParameters($configData['parameters']);
 		
 		return $service;
+
+	}
+	
+	/**
+	 * create, initialize and register a plugin instance
+	 * 
+	 * @param string $pluginId
+	 * @throws ApplicationException
+	 * @return ListenerInterface
+	 */
+	private function initializePlugin($pluginId) {
+
+		$configData = $this->config->plugins[$pluginId];
+		
+		// create instance
+
+		// use a pre-configured loader if available, otherwise initialize a new PSR4 loader
+		
+		if(is_null($this->loader)) {
+				
+			$this->loader = new Psr4();
+			$this->loader->register();
+		
+		}
+		
+		// add prefix to loader
+		
+		$class = trim(str_replace('/', '\\', $configData['class']), '\\');
+		$pos = strrpos($class, '\\');
+		
+		if($pos !== FALSE) {
+			$prefix	= substr($class, 0, $pos);
+			$path	= $this->rootPath . 'src/plugin/' . $prefix;
+			$this->loader->addPrefix($prefix, $path);
+		}
+		else {
+			require $this->rootPath . 'src/plugin/' . $class . '.php';
+		}
+
+		$plugin = new $class;
+		
+		// check whether instance implements PluginInterface
+		
+		if(!$plugin instanceof ListenerInterface) {
+			throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not implement the ListenerInterface", $pluginId, $class));
+		}
+		
+		// set parameters
+		
+		$plugin->setParameters($configData['parameters']);
+
+		// register plugin with dispatcher and enable listening
+
+		foreach($configData['listenTo'] as $event) {
+			EventDispatcher::getInstance()->attach($plugin, $event);
+		}
+		
+		return $plugin;
 
 	}
 }
