@@ -109,11 +109,11 @@ class Mysqldbi extends \mysqli {
 	 * execute (select) query
 	 *
 	 * @param string $querystrstring
-	 * @param bool $processRessource, process ressource and return result as array
+	 * @param bool $processResource, process resource and return result as array
 	 * @param mixed $callbacks, callback functions to be executed prior to result returning
   	 * @return mixed result
 	 **/
-	public function doQuery($querystr, $processRessource = FALSE, $callbacks = NULL) {
+	public function doQuery($querystr, $processResource = FALSE, $callbacks = NULL) {
 		$this->queryString = $querystr;
 
 		if(!$this->queryResult = @$this->query($querystr)) {
@@ -122,7 +122,7 @@ class Mysqldbi extends \mysqli {
 		}
 		$this->numRows = $this->queryResult->num_rows;
 
-		if(!$processRessource) {
+		if(!$processResource) {
 			return TRUE;
 		}
 
