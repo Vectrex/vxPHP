@@ -17,7 +17,7 @@ use vxPHP\Observer\ListenerInterface;
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.2.0 2015-07-09
+ * @version 1.2.1 2015-07-23
  */
 class Application {
 
@@ -194,10 +194,14 @@ class Application {
 
 		$this->plugins = array();
 		
-		// initialize plugins
+		// initialize plugins (if configured)
+		
+		if($this->config->plugins) {
 
-		foreach(array_keys($this->config->plugins) as $pluginId) {
-			$this->plugins[] = $this->initializePlugin($pluginId);
+			foreach(array_keys($this->config->plugins) as $pluginId) {
+				$this->plugins[] = $this->initializePlugin($pluginId);
+			}
+
 		}
 
 		return $this; 
