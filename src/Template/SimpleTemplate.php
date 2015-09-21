@@ -22,7 +22,7 @@ use vxPHP\Controller\Controller;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.4.0 2015-01-17
+ * @version 1.4.1 2015-09-21
  *
  */
 
@@ -217,13 +217,15 @@ class SimpleTemplate {
 	/**
 	 * include controller output
 	 * $controllerPath is [path/to/controller/]name_of_controller
+	 * additional arguments can be passed on to the controller constructor
 	 *
 	 * @param string $controllerPath
 	 * @param string $methodName
+	 * @param array $constructorArguments 
 	 * 
 	 * @return string
 	 */
-	private function includeControllerResponse($controllerPath, $methodName = NULL) {
+	private function includeControllerResponse($controllerPath, $methodName = NULL, array $constructorArguments = NULL) {
 
 		$classPath		= explode('/', $controllerPath);
 		$controllerName	= array_pop($classPath);
@@ -245,7 +247,21 @@ class SimpleTemplate {
 
 		// get instance and set method which will be called in render() method of controller
 
-		$instance = new $className();
+		if(!$constructorArguments) {
+			
+			// no additional arguments required to pass on
+
+			$instance = new $className();
+		}
+
+		else {
+
+			// use reflection to pass on additional constructor arguments
+			
+			$reflector	= new \ReflectionClass($className);
+			$instance	= $reflector->newInstanceArgs($constructorArguments);
+
+		}
 
 		if(!empty($methodName)) {
 			return $instance->setExecutedMethod($methodName)->render();

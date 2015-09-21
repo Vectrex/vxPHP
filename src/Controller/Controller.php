@@ -17,7 +17,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.1 2015-05-03
+ * @version 0.3.2 2015-09-21
  *
  */
 abstract class Controller {
@@ -68,7 +68,7 @@ abstract class Controller {
 	 *
 	 *
 	 */
-	function __construct() {
+	public function __construct() {
 
 		// set up references required in controllers
 
