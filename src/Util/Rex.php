@@ -6,7 +6,7 @@ namespace vxPHP\Util;
  * Collection of regular expressions used througout the framework
  * class merely provides "namespace"
  * 
- * @version 0.2.5 2015-09-30
+ * @version 0.2.6 2015-09-30
  * @author Gregor Kofler
  */
 
@@ -65,9 +65,17 @@ class Rex {
 	const EMPTY_OR_DECIMAL			= '/^(|(\+|-)?([1-9]\d{0,2}(\.\d{3})*(,\d+)?|[1-9]\d{0,2}((\'|,)\d{3})*(\.\d+)?|\d+([,.]\d+)?))$/';
 
 	// date and time
+
+	// matches [d]d.[m]m.yyyy including leap years from 1600-01-01 to 2099-12-31
 	const DATE_DE					= '/^((((31\.(0?[13578]|1[02]))|((29|30)\.(0?[1,3-9]|1[0-2])))\.(1[6-9]|[2-9]\d)?\d{2})|(29\.0?2\.(((1[6-9]|[2-9]\d)?(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))))|(0?[1-9]|1\d|2[0-8])\.((0?[1-9])|(1[0-2]))\.((1[6-9]|[2-9]\d)?\d{2}))$/';
-	const DATE_ISO					= '/^\d{4}-[01]\d-[0-3]\d$/';
+
+	// matches yyyy-mm-dd including leap years from 1900-01-01 to 2099-12-31
+	const DATE_ISO					= '/^(((19|20)([2468][048]|[13579][26]|0[48])|2000)-02-29|((19|20)[0-9]{2}-(0[469]|11)-(0[1-9]|[12][0-9]|30)|(19|20)[0-9]{2}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(19|20)[0-9]{2}-02-(0[1-9]|1[0-9]|2[0-8])))$/';
+
+	// matches [h]h:[m]m between 00:00 and 23:59
 	const HOUR_MIN					= '/^(2[0-3]|[0-1]?\d):[0-5]?\d$/';
+
+	// matches [h]h:[m]m:[s]s between 00:00:00 and 23:59:59
 	const HOUR_MIN_SEC				= '/^(2[0-3]|[0-1]?\d):[0-5]?\d:[0-5]?\d$/';
 
 	// other
