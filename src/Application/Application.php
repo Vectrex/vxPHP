@@ -567,16 +567,25 @@ class Application {
 
 		$configData = $this->config->services[$serviceId];
 
-		// load class file
+		// get class name
 
 		$class	= $configData['class'];
-		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
-		
-		if(!file_exists($file)) {
-			throw new ApplicationException(sprintf("Class file '%s' for service '%s' not found", $file, $serviceId));
-		}
 
-		require $file;
+		// check whether class was loaded previously
+
+		if(!isset($configData['loaded'])) {
+
+			$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
+			
+			if(!file_exists($file)) {
+				throw new ApplicationException(sprintf("Class file '%s' for service '%s' not found.", $file, $serviceId));
+			}
+	
+			require $file;
+		
+			$this->config->services[$serviceId]['loaded'] = TRUE;
+
+		}
 
 		// use reflection to pass on additional constructor arguments
 
@@ -586,7 +595,7 @@ class Application {
 		// check whether instance implements ServiceInterface  
 
 		if(!$service instanceof ServiceInterface) {
-			throw new ApplicationException(sprintf("Service '%s' (class %s) does not implement the ServiceInterface", $serviceId, $class));
+			throw new ApplicationException(sprintf("Service '%s' (class %s) does not implement the ServiceInterface.", $serviceId, $class));
 		}
 
 		// set parameters
@@ -614,7 +623,7 @@ class Application {
 		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
 
 		if(!file_exists($file)) {
-			throw new ApplicationException(sprintf("Class file '%s' for plugin '%s' not found", $file, $pluginId));
+			throw new ApplicationException(sprintf("Class file '%s' for plugin '%s' not found.", $file, $pluginId));
 		}
 
 		require $file;
@@ -626,7 +635,7 @@ class Application {
 		// check whether instance implements PluginInterface
 		
 		if(!$plugin instanceof ListenerInterface) {
-			throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not implement the ListenerInterface", $pluginId, $class));
+			throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not implement the ListenerInterface.", $pluginId, $class));
 		}
 		
 		// set parameters

@@ -17,6 +17,7 @@ use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Controller\Controller;
+use vxPHP\Template\Filter\SimpleTemplateFilter;
 
 /**
  * A simple template system
@@ -188,12 +189,47 @@ class SimpleTemplate {
 
 		$this->fillBuffer();
 
+		// default filters
+
 		$this->addFilter(new AnchorHref());
 		$this->addFilter(new ImageCache());
 		$this->addFilter(new AssetsPath());
 
 		if(!$this->ignoreLocales) {
 			$this->addFilter(new LocalizedPhrases());
+		}
+		
+		// add configured filters
+		
+		if($templatingConfig = Application::getInstance()->getConfig()->templating) {
+			
+			$rootPath = Application::getInstance()->getRootPath();
+
+			foreach($templatingConfig->filters as $id => $filter) {
+
+				// load class file
+
+				$class	= $filter['class'];
+				$file	= $rootPath . 'src/' . $filter['classPath'] . $class . '.php';
+
+				if(!file_exists($file)) {
+					throw new SimpleTemplateException(sprintf("Class file '%s' for templating filter '%s' not found.", $file, $id));
+				}
+
+				require $file;
+
+				$instance = new $class;
+
+				// check whether instance implements FilterInterface
+
+				if(!$instance instanceof SimpleTemplateFilterInterface) {
+					throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $class));
+				}
+
+			}
+			
+			$this->addFilter($instance);
+
 		}
 
 		$this->applyFilters();

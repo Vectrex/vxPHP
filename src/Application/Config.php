@@ -74,6 +74,13 @@ class Config {
 			 * holds all configured plugins
 			 */
 	public	$plugins;
+	
+			/**
+			 * @var \stdClass
+			 * 
+			 * holds configuration for templating
+			 */
+	public	$templating;	
 
 			/**
 			 * @var boolean
@@ -178,6 +185,7 @@ class Config {
 	 * @param SimpleXMLElement $mail
 	 */
 	private function parseMailSettings(\SimpleXMLElement $mail) {
+
 		if(!empty($mail->mailer[0])) {
 
 			$mailer = $mail->mailer[0];
@@ -271,6 +279,64 @@ class Config {
 			}
 		}
 	}
+	
+	/**
+	 * parse templating configuration
+	 * currently only filters for SimpleTemplate templates and their configuration are parsed
+	 * 
+	 * @param \SimpleXMLElement $templating
+	 */
+	private function parseTemplatingSettings(\SimpleXMLElement $templating) {
+
+		$this->templating = new \stdClass;
+		$this->templating->filters = array();
+
+		if(isset($templating->filters->filter)) {
+
+			foreach($templating->filters->filter as $filter) {
+
+				$a			= $filter->attributes();
+				$id			= (string) $a->id;
+				$class		= (string) $a->class;
+				
+				if(!$id) {
+					throw new ConfigException('Templating filter without id found.');
+				}
+				
+				if(!$class)	{
+					throw new ConfigException(sprintf("No class for templating filter '%s' configured.", $id));
+				}
+				
+				if(isset($this->templating->filters[$id])) {
+					throw new ConfigException(sprintf("Templating filter '%s' has already been defined.", $id));
+				}
+
+				// clean path delimiters
+
+				$class		= ltrim(str_replace('\\', '/', $class), '/');
+				
+				// seperate class name and path to class along last slash
+				
+				$delimPos	= strrpos($class, '/');
+				$classPath	= '';
+				
+				if($delimPos !== FALSE) {
+				
+					$classPath	= substr($class, 0, $delimPos + 1);
+					$class		= substr($class, $delimPos + 1);
+				
+				}
+
+				$this->templating->filters[$id] = array(
+					'class'			=> $class,
+					'classPath'		=> $classPath,
+					'parameters'	=> (string) $a->parameters
+				);
+			}
+		}
+
+	}
+	
 
 	/**
 	 * parse various path setting
@@ -319,7 +385,7 @@ class Config {
 			$pageId	= (string) $a->id;
 			
 			if($pageId === '') {
-				throw new ConfigException('Invalid or missing route id.');
+				throw new ConfigException('Route with missing or invalid id found.');
 			}
 
 			// read optional controller
@@ -342,7 +408,7 @@ class Config {
 				
 				foreach($requestMethods as $requestMethod) {
 					if(strpos($allowedMethods, $requestMethod) === -1) {
-						throw new ConfigException('Invalid request method ' . $requestMethod . '.');
+						throw new ConfigException(sprintf("Invalid request method '%s' for route '%s'.", $requestMethod, $pageId));
 					}
 				}
 				$parameters['requestMethods'] = $requestMethods;
@@ -458,7 +524,7 @@ class Config {
 			}
 
 			if(isset($this->services[$id])) {
-				throw new ConfigException(sprintf("Service '%s' already defined.", $id));
+				throw new ConfigException(sprintf("Service '%s' has already been defined.", $id));
 			}
 
 			if(!($class = (string) $service->attributes()->class)) {
@@ -467,7 +533,7 @@ class Config {
 
 			// clean path delimiters
 
-			$class		= ltrim('\\', str_replace('\\', '/', $class));
+			$class		= ltrim(str_replace('\\', '/', $class), '/');
 
 			// seperate class name and path to class along last slash
 
@@ -520,7 +586,7 @@ class Config {
 			}
 			
 			if(isset($this->plugins[$id])) {
-				throw new ConfigException(sprintf("Plugin '%s' already defined.", $id));
+				throw new ConfigException(sprintf("Plugin '%s' has already been defined.", $id));
 			}
 			
 			if(!($class = (string) $plugin->attributes()->class)) {
@@ -533,7 +599,7 @@ class Config {
 
 			// clean path delimiters
 
-			$class		= ltrim('\\', str_replace('\\', '/', $class));
+			$class		= ltrim(str_replace('\\', '/', $class), '/');
 			
 			// seperate class name and path to class along last slash
 			
