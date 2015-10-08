@@ -17,7 +17,7 @@ use vxPHP\Observer\ListenerInterface;
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.2.1 2015-07-23
+ * @version 1.3.0 2015-10-08
  */
 class Application {
 
@@ -567,30 +567,16 @@ class Application {
 
 		$configData = $this->config->services[$serviceId];
 
-		// create instance 
+		// load class file
 
-		// use a pre-configured loader if available, otherwise initialize a new PSR4 loader
-
-		if(is_null($this->loader)) {
-			
-			$this->loader = new Psr4();
-			$this->loader->register();
-
+		$class	= $configData['class'];
+		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
+		
+		if(!file_exists($file)) {
+			throw new ApplicationException(sprintf("Class file '%s' for service '%s' not found", $file, $serviceId));
 		}
 
-		// add prefix to loader
-
-		$class = trim(str_replace('/', '\\', $configData['class']), '\\');
-		$pos = strrpos($class, '\\');
-
-		if($pos !== FALSE) {
-			$prefix	= substr($class, 0, $pos); 
-			$path	= $this->rootPath . 'src/service/' . $prefix;
-			$this->loader->addPrefix($prefix, $path);
-		}
-		else {
-			require $this->rootPath . 'src/service/' . $class . '.php';
-		}
+		require $file;
 
 		// use reflection to pass on additional constructor arguments
 
@@ -602,7 +588,7 @@ class Application {
 		if(!$service instanceof ServiceInterface) {
 			throw new ApplicationException(sprintf("Service '%s' (class %s) does not implement the ServiceInterface", $serviceId, $class));
 		}
-		
+
 		// set parameters
 		
 		$service->setParameters($configData['parameters']);
@@ -621,31 +607,19 @@ class Application {
 	private function initializePlugin($pluginId) {
 
 		$configData = $this->config->plugins[$pluginId];
+
+		// load class file
+
+		$class	= $configData['class'];
+		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
+
+		if(!file_exists($file)) {
+			throw new ApplicationException(sprintf("Class file '%s' for plugin '%s' not found", $file, $pluginId));
+		}
+
+		require $file;
 		
 		// create instance
-
-		// use a pre-configured loader if available, otherwise initialize a new PSR4 loader
-		
-		if(is_null($this->loader)) {
-				
-			$this->loader = new Psr4();
-			$this->loader->register();
-		
-		}
-		
-		// add prefix to loader
-		
-		$class = trim(str_replace('/', '\\', $configData['class']), '\\');
-		$pos = strrpos($class, '\\');
-		
-		if($pos !== FALSE) {
-			$prefix	= substr($class, 0, $pos);
-			$path	= $this->rootPath . 'src/plugin/' . $prefix;
-			$this->loader->addPrefix($prefix, $path);
-		}
-		else {
-			require $this->rootPath . 'src/plugin/' . $class . '.php';
-		}
 
 		$plugin = new $class;
 		

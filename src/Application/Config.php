@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.3.0 2015-07-09
+ * @version 1.4.0 2015-10-08
  *
  * @todo refresh() method
  */
@@ -465,8 +465,25 @@ class Config {
 				throw new ConfigException(sprintf("No class for service '%s' configured.", $id));
 			}
 
+			// clean path delimiters
+
+			$class		= ltrim('\\', str_replace('\\', '/', $class));
+
+			// seperate class name and path to class along last slash
+
+			$delimPos	= strrpos($class, '/');
+			$classPath	= '';
+
+			if($delimPos !== FALSE) {
+
+				$classPath	= substr($class, 0, $delimPos + 1);
+				$class		= substr($class, $delimPos + 1);
+
+			}
+
 			$this->services[$id] = array(
 				'class'			=> $class,
+				'classPath'		=> $classPath,
 				'parameters'	=> array()
 			);
 
@@ -513,9 +530,26 @@ class Config {
 			if(!($listenTo = (string) $plugin->attributes()->listen_to)) {
 				throw new ConfigException(sprintf("No events to listen to for plugin '%s' configured.", $id));
 			}
+
+			// clean path delimiters
+
+			$class		= ltrim('\\', str_replace('\\', '/', $class));
 			
+			// seperate class name and path to class along last slash
+			
+			$delimPos	= strrpos($class, '/');
+			$classPath	= '';
+
+			if($delimPos !== FALSE) {
+			
+				$classPath	= substr($class, 0, $delimPos + 1);
+				$class		= substr($class, $delimPos + 1);
+			
+			}
+
 			$this->plugins[$id] = array(
 				'class'			=> $class,
+				'classPath'		=> $classPath,
 				'listenTo'		=> preg_split('~\s*,\s*~', $listenTo),
 				'parameters'	=> array()
 			);
