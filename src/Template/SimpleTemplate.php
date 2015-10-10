@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\SimpleTemplateFilter;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.4.1 2015-09-21
+ * @version 1.4.2 2015-10-11
  *
  */
 
@@ -226,10 +226,10 @@ class SimpleTemplate {
 					throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $class));
 				}
 
+				$this->addFilter($instance);
+
 			}
 			
-			$this->addFilter($instance);
-
 		}
 
 		$this->applyFilters();
