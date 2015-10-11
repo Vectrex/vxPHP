@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\SimpleTemplateFilter;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.4.2 2015-10-11
+ * @version 1.5.0 2015-10-11
  *
  */
 
@@ -33,21 +33,39 @@ class SimpleTemplate {
 				$file,
 				$rawContent,
 				$dir,
-				$contents,
+				$contents;
 
 				/**
 				 * @var Locale
 				 */
-				$locale,
-				$filters = array(),
-				$ignoreLocales,
+	private		$locale;
+	
+				/**
+				 * store for added custom filters with addFilter()
+				 * 
+				 * @var array
+				 */
+	private		$filters = array();
+	
+				/**
+				 * keeps instances of pre-configured filters
+				 * will be applied before any added custom filters
+				 * 
+				 * @var array $configuredFilters
+				 */
+	private static $configuredFilters;
+
+				/**
+				 * @var boolean
+				 */
+	private		$ignoreLocales;
 
 				/**
 				 * name of a parent template found in <!-- extend: ... -->
 				 * 
 				 * @var string
 				 */
-				$parentTemplateFilename;
+	private		$parentTemplateFilename;
 
 	private		$extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
@@ -189,48 +207,55 @@ class SimpleTemplate {
 
 		$this->fillBuffer();
 
-		// default filters
-
-		$this->addFilter(new AnchorHref());
-		$this->addFilter(new ImageCache());
-		$this->addFilter(new AssetsPath());
-
-		if(!$this->ignoreLocales) {
-			$this->addFilter(new LocalizedPhrases());
-		}
+		// check whether pre-configured filters are already in place
 		
-		// add configured filters
-		
-		if($templatingConfig = Application::getInstance()->getConfig()->templating) {
-			
-			$rootPath = Application::getInstance()->getRootPath();
+		if(is_null(self::$configuredFilters)) {
 
-			foreach($templatingConfig->filters as $id => $filter) {
+			// add default filters
 
-				// load class file
+			self::$configuredFilters = array(
+				new AnchorHref(),
+				new ImageCache(),
+				new AssetsPath()
+			);
 
-				$class	= $filter['class'];
-				$file	= $rootPath . 'src/' . $filter['classPath'] . $class . '.php';
-
-				if(!file_exists($file)) {
-					throw new SimpleTemplateException(sprintf("Class file '%s' for templating filter '%s' not found.", $file, $id));
-				}
-
-				require $file;
-
-				$instance = new $class;
-
-				// check whether instance implements FilterInterface
-
-				if(!$instance instanceof SimpleTemplateFilterInterface) {
-					throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $class));
-				}
-
-				$this->addFilter($instance);
-
+			if(!$this->ignoreLocales) {
+				self::$configuredFilters[] = new LocalizedPhrases();
 			}
-			
+
+			// add configured filters
+
+			if($templatingConfig = Application::getInstance()->getConfig()->templating) {
+
+				$rootPath = Application::getInstance()->getRootPath();
+
+				foreach($templatingConfig->filters as $id => $filter) {
+
+					// load class file
+
+					$class	= $filter['class'];
+					$file	= $rootPath . 'src/' . $filter['classPath'] . $class . '.php';
+
+					if(!file_exists($file)) {
+						throw new SimpleTemplateException(sprintf("Class file '%s' for templating filter '%s' not found.", $file, $id));
+					}
+
+					require $file;
+
+					$instance = new $class;
+
+					// check whether instance implements FilterInterface
+
+					if(!$instance instanceof SimpleTemplateFilterInterface) {
+						throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $class));
+					}
+
+					self::$configuredFilters[] = $instance;
+
+				}
+			}
 		}
+
 
 		$this->applyFilters();
 
@@ -353,6 +378,14 @@ class SimpleTemplate {
 	 * applies all stacked filters to template before output
 	 */
 	private function applyFilters() {
+
+		// handle default and pre-configured filters first
+
+		foreach(self::$configuredFilters as $f) {
+			$f->apply($this->contents);
+		}
+
+		// handle added custom filters last
 
 		foreach($this->filters as $f) {
 			$f->apply($this->contents);
