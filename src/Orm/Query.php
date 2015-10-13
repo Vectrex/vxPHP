@@ -154,7 +154,7 @@ abstract class Query implements QueryInterface {
 	abstract public function selectFirst($rows = 1);
 
 	/**
-	/* adds LIMIT clause with offset and count, executes query and returns array of (custom) row instances
+	 * adds LIMIT clause with offset and count, executes query and returns array of (custom) row instances
 	 *
 	 * @see \vxPHP\Orm\QueryInterface::selectFromTo()
 	 */
