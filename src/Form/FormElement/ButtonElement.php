@@ -46,9 +46,9 @@ class ButtonElement extends InputElement {
 		$type = strtolower($type);
 
 		if(in_array($type, array('button', 'submit', 'reset'))) {
-			$this->attributes['type'] = $type;
+			parent::setType($type);
 		}
-		
+
 		return $this;
 
 	}
