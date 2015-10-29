@@ -23,17 +23,32 @@ use vxPHP\Template\Filter\SimpleTemplateFilter;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.5.0 2015-10-11
+ * @version 1.6.0 2015-10-29
  *
  */
 
 class SimpleTemplate {
 
-	private		$path,
-				$file,
-				$rawContent,
-				$dir,
-				$contents;
+				/**
+				 * @var string
+				 * 
+				 * absolute path to template file
+				 */
+	private		$path;
+
+				/**
+				 * @var string
+				 * 
+				 * the unprocessed template string
+				 */
+	private		$rawContents;
+	
+				/**
+				 * @var unknown
+				 * 
+				 * the processed template string
+				 */
+	private		$contents;
 
 				/**
 				 * @var Locale
@@ -67,27 +82,35 @@ class SimpleTemplate {
 				 */
 	private		$parentTemplateFilename;
 
+				/**
+				 * the regular expression employed to search for an "extend@..." directive
+				 * 
+				 * @var string
+				 */
 	private		$extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
 	/**
 	 * initialize template based on $file
+	 * if $file is omitted the content can be set with setRawContents() later
 	 *
 	 * @param string $file
 	 */
-	public function __construct($file) {
+	public function __construct($file = NULL) {
 
-		$application	= Application::getInstance();
+		$application = Application::getInstance();
 
-		$this->locale	= $application->getCurrentLocale();
-		$this->file		= $file;
+		if($file) {
+			$this->path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
-		$this->path		= $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
+			if (!file_exists($this->path . $file)) {
+				throw new SimpleTemplateException("Template file '" . $this->path . $file . "' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+			}
 
-		if (!file_exists($this->path . $this->file)) {
-			throw new SimpleTemplateException("Template file '{$this->path}{$this->file}' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+			$this->setRawContents(file_get_contents($this->path . $file));
+
 		}
-
-		$this->rawContent = file_get_contents($this->path . $this->file);
+		
+		$this->locale = $application->getCurrentLocale();
 	}
 
 	/**
@@ -95,12 +118,25 @@ class SimpleTemplate {
 	 *
 	 * @param string $file
 	 */
-	public static function create($file) {
+	public static function create($file = NULL) {
 
 		return new static($file);
 
 	}
 
+	/**
+	 * set or overwrite the raw contents of the template
+	 * 
+	 * @param string $contents
+	 * @return SimpleTemplate
+	 */
+	public function setRawContents($contents) {
+
+		$this->rawContents = (string) $contents;
+		return $this;
+
+	}
+	
 	/**
 	 * check whether template file contains any PHP escape characters
 	 *
@@ -108,7 +144,7 @@ class SimpleTemplate {
 	 */
 	public function containsPHP() {
 
-		return 1 === preg_match('~<\\?(php)?.*?\\?>~', $this->rawContent);
+		return 1 === preg_match('~<\\?(php)?.*?\\?>~', $this->rawContents);
 
 	}
 
@@ -117,8 +153,8 @@ class SimpleTemplate {
 	 *
 	 * @return string
 	 */
-	public function getRawContent() {
- 		return $this->rawContent;
+	public function getrawContents() {
+ 		return $this->rawContents;
 	}
 
 	
@@ -126,7 +162,7 @@ class SimpleTemplate {
 
 		if(empty($this->parentTemplateFilename)) {
 		
-			if(preg_match($this->extendRex, $this->rawContent, $matches)) {
+			if(preg_match($this->extendRex, $this->rawContents, $matches)) {
 
 				$this->parentTemplateFilename = $matches[1];
 
@@ -148,9 +184,9 @@ class SimpleTemplate {
 
 		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
-		if(preg_match($blockRegExp, $this->rawContent)) {
+		if(preg_match($blockRegExp, $this->rawContents)) {
 
-			$this->rawContent = preg_replace($blockRegExp, $childTemplate->getRawContent(), $this->rawContent);
+			$this->rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents);
 
 		}
 
@@ -337,18 +373,18 @@ class SimpleTemplate {
 	/**
 	 * allow extension of a parent template with current template
 	 *
-	 * searches in current rawContent for
+	 * searches in current rawContents for
 	 * <!-- { extend: parent_template.php @ content_block } -->
 	 * and in template to extend for
 	 * <!-- { block: content_block } -->
 	 *
-	 * current rawContent is then replaced by parent rawContent with current rawContent filled in
+	 * current rawContents is then replaced by parent rawContents with current rawContents filled in
 	 *
 	 * @throws SimpleTemplateException
 	 */
 	private function extend() {
 
-		if(preg_match($this->extendRex, $this->rawContent, $matches)) {
+		if(preg_match($this->extendRex, $this->rawContents, $matches)) {
 
 			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
 
@@ -356,12 +392,12 @@ class SimpleTemplate {
 
 			if(preg_match($blockRegExp, $extendedContent)) {
 
-				$this->rawContent = preg_replace(
+				$this->rawContents = preg_replace(
 					$blockRegExp,
 					preg_replace(
 						$this->extendRex,
 						'',
-						$this->rawContent
+						$this->rawContents
 					),
 					$extendedContent
 				);
@@ -401,7 +437,7 @@ class SimpleTemplate {
 		$tpl = $this;
 		ob_start();
 
-		eval('?>' . $this->rawContent);
+		eval('?>' . $this->rawContents);
 		$this->contents = ob_get_contents();
 		ob_end_clean();
 	}
