@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
  *
- * @version 0.3.2 2015-02-23
+ * @version 0.3.3 2015-11-01
  */
 
 class Email {
@@ -218,7 +218,7 @@ class Email {
 		}
 		echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
 		echo $this->receiver, '<hr>';
-		echo implode('<br>', $headers), '<hr>', nl2br($this->msg);
+		echo implode('<br>', $headers), '<hr>', $this->subject, '<hr>', nl2br($this->msg);
 		echo '</div>';
 
 		return TRUE;
