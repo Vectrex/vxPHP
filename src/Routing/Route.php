@@ -12,7 +12,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler
  *
- * @version 0.9.3 2015-03-28
+ * @version 0.9.5 2015-11-01
  *
  */
 class Route {
@@ -267,7 +267,7 @@ class Route {
 					if(empty($this->pathParameters[$placeholder['name']])) {
 
 						if(!isset($placeholder['default'])) {
-							throw new \RuntimeException("Path parameter '" . $placeholder['name'] . "' not set.");
+							throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
 						}
 
 						// no path parameter value, but default defined
@@ -344,7 +344,7 @@ class Route {
 
 		foreach($requestMethods as $requestMethod) {
 			if(strpos('GET POST PUT DELETE', strtoupper($requestMethod) === -1)) {
-				throw new \InvalidArgumentException('Invalid request method' . strtoupper($requestMethod) . '.');
+				throw new \InvalidArgumentException(sprintf("Invalid request method '%s'.", strtoupper($requestMethod)));
 			}
 		}
 		$this->requestMethods = array_map('strtoupper', $requestMethods);
@@ -460,7 +460,7 @@ class Route {
 		// check whether path parameter $name exists
 
 		if(empty($this->placeholders)) {
-			throw new \InvalidArgumentException("Unknown path parameter '" . $name . "'.");
+			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
 		$found = FALSE;
@@ -473,10 +473,18 @@ class Route {
 		}
 
 		if(!$found) {
-			throw new \InvalidArgumentException("Unknown path parameter '" . $name . "'.");
+			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
-		$this->pathParameters[$name] = $value;
+		if($this->pathParameters[$name] != $value) {
+
+			$this->pathParameters[$name] = $value;
+		
+			// unset Route::url to trigger re-evaluation when retrieving url with Route::getUrl()
+
+			$this->url = NULL;
+
+		}
 
 		return $this;
 	}
