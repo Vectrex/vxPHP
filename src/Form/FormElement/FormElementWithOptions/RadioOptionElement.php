@@ -9,7 +9,7 @@ use vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragment;
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24
+ * @version 0.4.1 2015-11-14
  */
 class RadioOptionElement extends FormElementFragment {
 
@@ -34,8 +34,14 @@ class RadioOptionElement extends FormElementFragment {
 	public function render($force = FALSE) {
 
 		if(empty($this->html) || $force) {
-			$checked = $this->selected ? " checked='checked'" : '';
-			$this->html = "<input name='{$this->parentElement->getName()}' type='radio' value='{$this->getValue()}'$checked>{$this->getLabel()}";
+
+			$this->html = sprintf(
+				'<input name="%s" type="radio" value="%s"%s><label>%s</label>',
+				$this->parentElement->getName(),
+				$this->getValue(),
+				$this->selected ? " checked='checked'" : '',
+				$this->getLabel()
+			);
 		}
 
 		return $this->html;
