@@ -9,21 +9,8 @@ use vxPHP\Form\FormElement\FormElementWithOptions\SelectOptionElement;
  * a select element
  *
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24
  */
 class SelectElement extends FormElementWithOptions {
-
-	/**
-	 * initialize select element with both name and value
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = NULL) {
-
-		parent::__construct($name, $value);
-
-	}
 
 	/**
 	 * (non-PHPdoc)
@@ -65,14 +52,17 @@ class SelectElement extends FormElementWithOptions {
 			foreach($this->attributes as $k => $v) {
 				$attr[] = sprintf('%s="%s"', $k, $v);
 			}
-			$html = array("<select name='{$this->getName()}' " . implode(' ', $attr).'>');
 
+			$options = array();
 			foreach($this->options as $o) {
-				$html[] = $o->render();
+				$options[] = $o->render();
 			}
-			$html[] = '</select>';
 
-			$this->html = implode("\n", $html);
+			$this->html = sprintf('<select name="%s" %s>%s</select>',
+				$this->getName(),
+				implode(' ', $attr),
+				"\n" . implode("\n", $options) . "\n"
+			);
 		}
 
 		return $this->html;

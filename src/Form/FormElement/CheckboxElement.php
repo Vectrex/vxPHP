@@ -4,6 +4,12 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\InputElement;
 
+/**
+ * button element
+ * overwrites adds setChecked() and setLabel() methods to input element
+ * 
+ * @author Gregor Kofler
+ */
 class CheckboxElement extends InputElement {
 
 	private	$checked,
@@ -78,7 +84,7 @@ class CheckboxElement extends InputElement {
 			}
 			$this->attributes['type'] = 'checkbox';
 
-			$this->html = parent::render(TRUE).$this->label;
+			$this->html = parent::render(TRUE) . ($this->label ? sprintf('<label>%s</label>', $this->label) : '');
 		}
 
 		return $this->html;

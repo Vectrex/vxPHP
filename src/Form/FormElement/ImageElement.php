@@ -4,6 +4,11 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\InputElement;
 
+/**
+ * input element of type "image"
+ * 
+ * @author Gregor Kofler
+ */
 class ImageElement extends InputElement {
 	
 	/**

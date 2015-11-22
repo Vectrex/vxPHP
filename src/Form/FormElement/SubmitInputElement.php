@@ -4,20 +4,13 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\InputElement;
 
+/**
+ * input element of type "submit"
+ *
+ * @author Gregor Kofler
+ */
 class SubmitInputElement extends InputElement {
 	
-	/**
-	 * inialize a <input type="submit"> element instance
-	 *
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = NULL) {
-
-		parent::__construct($name, $value);
-
-	}
-
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
@@ -30,5 +23,6 @@ class SubmitInputElement extends InputElement {
 		}
 
 		return $this->html;
+
 	}
 }

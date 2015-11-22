@@ -8,7 +8,7 @@ use vxPHP\Form\FormElement\InputElement;
  * button element
  * overwrites setType(), adds setInnerHTML() method to input element
  * 
- * @author gregor
+ * @author Gregor Kofler
  */
 class ButtonElement extends InputElement {
 
@@ -71,12 +71,19 @@ class ButtonElement extends InputElement {
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
 	public function render($force = FALSE) {
+
 		if(empty($this->html) || $force) {
 			$attr = array();
 			foreach($this->attributes as $k => $v) {
 				$attr[] = "$k='$v'";
 			}
-			$this->html = "<button name='{$this->getName()}' value='{$this->getValue()}' ".implode(' ', $attr).">{$this->innerHTML}</button>";
+			$this->html = sprintf(
+				'<button name="%s" value="%s" %s>%s</button>',
+				$this->getName(),
+				$this->getValue(),
+				implode(' ', $attr),
+				$this->innerHTML
+			);
 		}
 
 		return $this->html;

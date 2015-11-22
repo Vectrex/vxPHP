@@ -4,6 +4,11 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\FormElement;
 
+/**
+ * generic input element
+ * 
+ * @author Gregor Kofler
+ */
 class InputElement extends FormElement {
 
 	/**
@@ -22,10 +27,12 @@ class InputElement extends FormElement {
 	 * @return string
 	 */
 	public function getType() {
+
 		if(!isset($this->attributes['type'])) {
 			$this->attributes['type'] = 'text';
 		}
 		return $this->attributes['type'];
+
 	}
 	
 	/**
@@ -54,6 +61,7 @@ class InputElement extends FormElement {
 	public function render($force = FALSE) {
 
 		if(empty($this->html) || $force) {
+
 			if(!isset($this->attributes['type'])) {
 				$this->attributes['type'] = 'text'; 
 			}
@@ -62,7 +70,12 @@ class InputElement extends FormElement {
 				$attr[] = "$k='$v'";
 			}
 
-			$this->html = "<input name='{$this->getName()}' value='{$this->getFilteredValue()}' ".implode(' ', $attr).'>';
+			$this->html = sprintf('<input name="%s" value="%s" %s>',
+				$this->getName(),
+				$this->getFilteredValue(),
+				implode(' ', $attr)
+			);
+
 		} 
 
 		return $this->html;

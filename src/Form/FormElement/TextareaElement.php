@@ -4,19 +4,12 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\FormElement;
 
+/**
+ * textarea element
+ *
+ * @author Gregor Kofler
+ */
 class TextareaElement extends FormElement {
-
-	/**
-	 * initialize a <textarea> element instance
-	 * 
-	 * @param unknown $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = NULL) {
-
-		parent::__construct($name, $value);
-
-	}
 
 	/**
 	 * (non-PHPdoc)
@@ -25,11 +18,17 @@ class TextareaElement extends FormElement {
 	public function render($force = FALSE) {
 
 		if(empty($this->html) || $force) {
+
 			$attr = array();
 			foreach($this->attributes as $k => $v) {
 				$attr[] = "$k='$v'";
 			}
-			$this->html = "<textarea name='{$this->getName()}' ".implode(' ', $attr).">{$this->getFilteredValue()}</textarea>";
+			$this->html = sprintf('<textarea name="%s" %s>%s</textarea>',
+				$this->getName(),
+				implode(' ', $attr),
+				$this->getFilteredValue()
+			);
+
 		}
 
 		return $this->html;

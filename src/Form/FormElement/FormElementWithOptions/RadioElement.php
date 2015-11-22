@@ -6,24 +6,11 @@ use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions;
 use vxPHP\Form\FormElement\FormElementWithOptions\RadioOptionElement;
 
 /**
- * a <input type="option"> element
+ * input element type "radio"
  *
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24
  */
 class RadioElement extends FormElementWithOptions {
-
-	/**
-	 * initialize element with both name and value
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = NULL) {
-
-		parent::__construct($name, $value);
-
-	}
 
 	/**
 	 * (non-PHPdoc)

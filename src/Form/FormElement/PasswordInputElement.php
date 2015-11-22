@@ -4,19 +4,12 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\InputElement;
 
+/**
+ * input element of type "password"
+ * 
+ * @author Gregor Kofler
+ */
 class PasswordInputElement extends InputElement {
-
-	/**
-	 * inialize a <input type="password"> element instance
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = NULL) {
-
-		parent::__construct($name, $value);
-
-	}
 
 	/**
 	 * (non-PHPdoc)

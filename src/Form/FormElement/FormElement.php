@@ -8,10 +8,9 @@ use vxPHP\Form\FormElement\InputElement;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.4.0 2015-01-21
+ * @version 0.5.0 2015-11-22
  * @author Gregor Kofler
  * 
- * @todo allow callbacks as validators and filters
  */
 
 abstract class FormElement implements FormElementInterface {
@@ -181,27 +180,31 @@ abstract class FormElement implements FormElementInterface {
 	}
 
 	/**
-	 * adds a validator
-	 * validators can be either regular expressions or callback functions
+	 * add a validator
+	 * 
+	 * validators can be either regular expressions or a \Closure instance
 	 * the FormElement::$valid flag is reset
 	 * 
-	 * @param mixed $validating_rule
+	 * @param mixed $validatingRule
 	 * @return vxPHP\Form\FormElement
 	 */
-	public function addValidator($val) {
+	public function addValidator($validatingRule) {
 
-		$this->validators[] = $val;
+		$this->validators[] = $validatingRule;
 		$this->valid = NULL;
 		return $this;
 
 	}
 	
 	/**
-	 * adds a filter
-	 * filters can either be a regular expression or a predefined term
-	 * currently 'trim', 'uppercase', 'lowercase' are supported
+	 * add a filter
 	 * 
-	 * @param string $filter
+	 * filters can be a \Closure instance or a string
+	 * when filter is a string it can either be a regular expression
+	 * or a predefined term, which maps PHP functions
+	 * currently 'trim', 'uppercase', 'lowercase', 'strip_tags' are supported
+	 * 
+	 * @param mixed $filter
 	 * @return vxPHP\Form\FormElement
 	 */
 	public function addFilter($filter) {
@@ -251,47 +254,67 @@ abstract class FormElement implements FormElementInterface {
 		$v = $this->value;
 
 		foreach($this->filters as $f) {
-			switch($f) {
-				case 'trim':
-					$v = trim($v);
-					break;
-				case 'uppercase':
-					$v = strtoupper($v);
-					break;
-				case 'lowercase':
-					$v = strtolower($v);
-					break;
-				case 'strip_tags':
-					$v = strip_tags($v);
-					break;
-					// allow regular expressions
-				default:
-					$v = preg_replace($f, '', $v);
+			
+			if($f instanceof \Closure) {
+				$v = $f($v);
+			}
+
+			else {
+				switch(strtolower($f)) {
+					case 'trim':
+						$v = trim($v);
+	
+					case 'uppercase':
+						$v = strtoupper($v);
+	
+					case 'lowercase':
+						return strtolower($v);
+	
+					case 'strip_tags':
+						$v = strip_tags($v);
+	
+						// assume a regular expressions as fallback
+					default:
+						$v = preg_replace($f, '', $v);
+				}
 			}
 		}
 
 		return $v;
+
 	}
 
 	/**
-	 * applies validators to filtered FormElement::value
-	 * and sets FormElement::$valid
+	 * applies validators to filtered FormElement::$value
+	 * as soon as one validator fails
+	 * the result will yield FALSE
+	 * and FormElement::$valid will be set accordingly
 	 */
 	protected function applyValidators() {
 
 		$value = $this->applyFilters();
 
 		foreach($this->validators as $v) {
-			if(is_string($v)) {
+			
+			if($v instanceof \Closure) {
+				if(!$v($value)) {
+					$this->valid = FALSE;
+					return;
+				}
+			}
+
+			else {
 				if(!preg_match($v, $value)) {
 					$this->valid = FALSE;
 					return;
 				}
 			}
 		}
+
 		$this->valid = TRUE;
+
 	}
-	
+
 	/**
 	 * renders form element and returns markup
 	 * 
