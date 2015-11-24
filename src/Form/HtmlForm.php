@@ -20,7 +20,7 @@ use vxPHP\Session\Session;
 /**
  * Template Engine for Forms
  *
- * @version 1.4.1 2015-03-17
+ * @version 1.5.0 2015-11-25
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -566,6 +566,32 @@ class HtmlForm {
 		}
 
 		return $this;
+
+	}
+
+	/**
+	 * get all elements of form
+	 * 
+	 * @return array 
+	 */
+	public function getElements() {
+
+		return $this->elements;
+
+	}
+	
+	/**
+	 * get one or more elements by name
+	 * 
+	 * @return FormElement|array
+	 */
+	public function getElementsByName($name) {
+
+		if(isset($this->elements[$name])) {
+			return $this->elements[$name];
+		}
+		
+		throw \InvalidArgumentException(sprintf("Unknown form element '%s'", $name));
 
 	}
 
