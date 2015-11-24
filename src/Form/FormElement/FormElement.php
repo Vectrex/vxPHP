@@ -8,7 +8,7 @@ use vxPHP\Form\FormElement\InputElement;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.5.0 2015-11-22
+ * @version 0.5.1 2015-11-25
  * @author Gregor Kofler
  * 
  */
@@ -263,15 +263,19 @@ abstract class FormElement implements FormElementInterface {
 				switch(strtolower($f)) {
 					case 'trim':
 						$v = trim($v);
-	
+						break;
+
 					case 'uppercase':
 						$v = strtoupper($v);
+						break;
 	
 					case 'lowercase':
-						return strtolower($v);
+						$v = strtolower($v);
+						break;
 	
 					case 'strip_tags':
 						$v = strip_tags($v);
+						break;
 	
 						// assume a regular expressions as fallback
 					default:
