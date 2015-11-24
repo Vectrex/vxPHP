@@ -27,7 +27,7 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	}
 
 	/**
-	 * (non-PHPdoc)
+	 * {@inheritDoc}
 	 * @see \vxPHP\Form\FormElement\FormElement::setValue()
 	 */
 	public function setValue($value = NULL) {
@@ -56,7 +56,7 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	}
 
 	/**
-	 * (non-PHPdoc)
+	 * {@inheritDoc}
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface::appendOption()
 	 */
 	public function appendOption(FormElementFragmentInterface $option) {
@@ -77,7 +77,17 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	}
 
 	/**
-	 * (non-PHPdoc)
+	 * {@inheritDoc}
+	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface::getSelectedOption()
+	 */
+	public function getSelectedOption() {
+		
+		return $this->selectedOption;
+		
+	}
+	
+	/**
+	 * {@inheritDoc}
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface::createOptions()
 	 */
 	abstract public function createOptions(Array $options);

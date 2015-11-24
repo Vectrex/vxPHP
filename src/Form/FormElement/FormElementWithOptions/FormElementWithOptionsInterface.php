@@ -25,4 +25,11 @@ interface FormElementWithOptionsInterface extends FormElementInterface {
 	 * @return \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface
 	 */
 	public function createOptions(Array $options);
+	
+	/**
+	 * retrieve selected option
+	 * 
+	 * @return FormElementFragmentInterface
+	 */
+	public function getSelectedOption();
 }
