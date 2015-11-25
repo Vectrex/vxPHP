@@ -10,7 +10,7 @@ use vxPHP\Application\Application;
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
  *
- * @version 0.3.3 2015-11-01
+ * @version 0.3.4 2015-11-25
  */
 
 class Email {
@@ -355,26 +355,40 @@ class Email {
 	private function buildMsg() {
 
 		if(isset($this->boundary)) {
-			$this->msg = '--'.$this->boundary.self::CRLF;
-			$this->msg .= 'Content-type: text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}".self::CRLF;
-			$this->msg .= 'Content-Transfer-Encoding: 8bit'.self::CRLF.self::CRLF;
+			$this->msg = '--' . $this->boundary . self::CRLF;
+			$this->msg .= 'Content-type: text/' . ($this->htmlMail ? 'html' : 'plain') . '; charset=' .$this->encoding . self::CRLF;
+			$this->msg .= 'Content-Transfer-Encoding: 8bit' . self::CRLF . self::CRLF;
 		}
 		else {
 			$this->msg = '';
 		}
 
-		$this->msg .=	$this->mailText.self::CRLF;
-		$this->msg .=	empty($this->sig) || $this->htmlMail ? self::CRLF : self::CRLF.self::CRLF.'-- '.self::CRLF.$this->sig.self::CRLF;
+		$this->msg .= $this->mailText . self::CRLF;
+		
+		// add signature
 
-		foreach($this->attachments as $f) {
-			$filename = empty($f['filename']) ? basename($f['path']) : $f['filename'];
-
-			$this->msg .= '--'.$this->boundary.self::CRLF;
-			$this->msg .= 'Content-Type: application/octet-stream; name="'.$filename.'"'.self::CRLF;
-			$this->msg .= 'Content-Disposition: attachment; filename="'.$filename.'"'.self::CRLF;
-			$this->msg .= 'Content-Transfer-Encoding: base64'.self::CRLF.self::CRLF;
-			$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])),72,self::CRLF));
+		if(!empty($this->sig) && !$this->htmlMail) {
+			$this->msg .=	self::CRLF . self::CRLF . '-- ' . self::CRLF . $this->sig;
+		}
+			
+		if(!count($this->attachments)) {
+			$this->msg .= self::CRLF;
 		}
 
+		else {
+			foreach($this->attachments as $f) {
+				$filename = empty($f['filename']) ? basename($f['path']) : $f['filename'];
+	
+				$this->msg .= self::CRLF . '--' . $this->boundary . self::CRLF;
+				$this->msg .= sprintf('Content-Type: application/octet-stream; name="%s"', $filename) . self::CRLF;
+				$this->msg .= sprintf('Content-Disposition: attachment; filename="%s"', $filename) . self::CRLF;
+				$this->msg .= 'Content-Transfer-Encoding: base64' . self::CRLF . self::CRLF;
+				$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])), 72, self::CRLF));
+	
+			}
+			
+			$this->msg .= self::CRLF . '--'. $this->boundary . '--' . self::CRLF;
+
+		}
 	}
 }
