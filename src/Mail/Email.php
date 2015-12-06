@@ -9,8 +9,10 @@ use vxPHP\Application\Application;
 /**
  * simple wrapper class for sending emails via mail()
  * or SmtpMailer
+ * 
+ * no validation of email addresses is performed
  *
- * @version 0.3.4 2015-11-25
+ * @version 0.4.0 2015-12-06
  */
 
 class Email {
@@ -21,13 +23,14 @@ class Email {
 			$subject,
 			$bcc,
 			$cc,
-			$receiver,
+			$receiver = array(),
 			$mailText,
 			$sig,
 			$htmlMail,
 			$boundary,
 			$headers = array(),
-			$attachments = array();
+			$attachments = array(),
+			$encoding;
 
 	private static $debug = FALSE;
 
@@ -36,7 +39,7 @@ class Email {
 	 * mail constructor
 	 * all parameters are optional
 	 * 
-	 * @param string $receiver
+	 * @param mixed $receiver
 	 * @param string $subject
 	 * @param string $mailText
 	 * @param string $sender
@@ -47,7 +50,7 @@ class Email {
 	 */
 	public function __construct($receiver = NULL, $subject = '(no subject)', $mailText = '', $sender = NULL, array $cc = array(), array $bcc = array(), $sig = '', $htmlMail = FALSE) {
 
-		$this->receiver	= $receiver;
+		$this->receiver	= (array) $receiver;
 		$this->subject	= $subject;
 		$this->mailText	= $mailText;
 		$this->sender	= !empty($sender) ? $sender : (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
@@ -73,9 +76,9 @@ class Email {
 	}
 
 	/**
-	 * set receiving email address
+	 * set receiving email address (string) or addresses (array)
 	 * 
-	 * @param string $receiver
+	 * @param mixed $receiver
 	 * @return \vxPHP\Mail\Email
 	 */
 	public function setReceiver($receiver) {
@@ -217,7 +220,7 @@ class Email {
 			$headers[] = "$k: $v";
 		}
 		echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-		echo $this->receiver, '<hr>';
+		echo is_array($this->receiver) ? implode(', ', $this->receiver) : $this->receiver, '<hr>';
 		echo implode('<br>', $headers), '<hr>', $this->subject, '<hr>', nl2br($this->msg);
 		echo '</div>';
 
@@ -250,15 +253,24 @@ class Email {
 
 		if(is_null($this->mailer)) {
 
-			// plain mail() function
+			// use PHP's own mail() function
 
 			$headers = array();
 
 			foreach($this->headers as $k => $v) {
-				$headers[] = "$k: $v";
+				$headers[] = iconv_mime_encode($k, $v);
 			}
 
-			return mail($this->receiver, $this->subject, $this->msg, implode(self::CRLF, $headers));
+			mb_internal_encoding($this->encoding);
+
+			// @todo ensure receiver to be RFC conforming
+
+			return mail(
+				implode(',', $this->receiver),
+				mb_encode_mimeheader($this->subject, mb_internal_encoding(), 'Q'),
+				$this->msg,
+				implode(self::CRLF, $headers)
+			);
 		}
 
 		else {
@@ -272,7 +284,7 @@ class Email {
 				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
 				$this->mailer->setHeaders(array_merge(
 					array(
-						'To'		=> $this->receiver,
+						'To'		=> implode(',', $this->receiver),
 						'Subject'	=> $this->subject
 					),
 					$this->headers
@@ -327,7 +339,7 @@ class Email {
 			'Date'			=> date('r'),
 			'Message-ID'	=> '<'.sha1(microtime()).'@'.substr($this->sender, strpos($this->sender, '@') + 1).'>',
 			'User-Agent'	=> 'vxPHP SmtpMailer',
-			'X-Mailer'		=> 'PHP'.phpversion(),
+			'X-Mailer'		=> 'PHP' . phpversion(),
 			'MIME-Version'	=> '1.0'
 		);
 
@@ -341,10 +353,10 @@ class Email {
 
 		if(count($this->attachments) > 0) {
 			$this->boundary = '!!!@snip@here@!!!';
-			$this->headers['Content-type'] = 'multipart/mixed; boundary="'.$this->boundary.'"';
+			$this->headers['Content-type'] = sprintf('multipart/mixed; boundary="%s"', $this->boundary);
 		}
 		else {
-			$this->headers['Content-type'] = 'text/'.($this->htmlMail ? 'html' : 'plain')."; charset={$this->encoding}";
+			$this->headers['Content-type'] = sprintf('text/%s; charset=%s', $this->htmlMail ? 'html' : 'plain', $this->encoding);
 		}
 
 	}

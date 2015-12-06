@@ -8,13 +8,16 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.1.4 2013-02-07
+ * @version 0.2.0 2015-12-06
  *
+ * validity of email addresses is not checked
+ * only encoding where necessary is applied
  */
 class SmtpMailer implements MailerInterface {
 
 	const CRLF = "\r\n";
-
+	const RFC5322_ATOM_CHARS	= "!#$%&'*+-/=?^_`{|}~a-zA-Z0-9";
+	
 	const RFC_SERVICE_READY		= 220;
 	const RFC_SERVICE_CLOSING	= 221;
 	const RFC_AUTH_SUCCESSFUL	= 235;
@@ -22,29 +25,123 @@ class SmtpMailer implements MailerInterface {
 	const RFC_CONTINUE_REQUEST	= 334;
 	const RFC_START_MAIL_INPUT	= 354;
 	
-	private	$host,
-			$port,
-			$user,
-			$pwd,
-			$type,
-			$timeout,
-			$from = '',
-			$to,
-			$headers = array(),
-			$message,
-			$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'),
+			/**
+			 * preferences for MIME encoding
+			 * used with mb_internal_encoding()
+			 * mb_encode_mimeheader()
+			 * @var array
+			 */
+	private	$mimeEncodingPreferences = array(
+				'scheme'			=> 'Q',
+				'input-charset'		=> 'UTF-8',
+				'output-charset'	=> 'UTF-8',
+				'line-break-chars'	=> self::CRLF
+			);
 
-			$socket,
-			$response,
-			$log = array();
+			/**
+			 * host address of SMTP server
+			 * @var string
+			 */
+	private	$host;
+	
+			/**
+			 * port of SMTP server
+			 * @var integer
+			 */
+	private	$port;
+
+			/**
+			 * username for authentication
+			 * @var string
+			 */
+	private	$user;
+
+			/**
+			 * password for authentication
+			 * @var string
+			 */
+	private	$pwd;
+
+			/**
+			 * auth method used for SMTP authentication
+			 * @var string
+			 */
+	private	$type;
+	
+			/**
+			 * supported auth methods
+			 * @var array
+			 */
+	private	$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5');
+	
+			/**
+			 * connection timeout
+			 * @var integer
+			 */
+	private	$timeout;
+	
+			/**
+			 * connection socket
+			 * @var resource
+			 */
+	private	$socket;
+			/**
+			 * email address of sender
+			 * @var string
+			 */
+	private	$from = '';
+	
+			/**
+			 * extracted display name, when from address is of form "display_name" <email_from>
+			 * @var string
+			 */
+	private	$fromDisplayName = '';
+
+			/**
+			 * holds receivers with email addresses
+			 * @var array
+			 */
+	private	$to;
+	
+			/**
+			 * header rows
+			 * @var array
+			 */
+	private	$headers = array();
+	
+			/**
+			 * the mail message
+			 * @var string
+			 */
+	private	$message;
+
+			/**
+			 * server response
+			 * @var string
+			 */
+	private	$response;
+	
+			/**
+			 * server communication log
+			 * @var log
+			 */
+	private	$log = array();
 
 	/**
+	 * constructor
+	 * configures only basic server settings
+	 * and default mime encoding
+	 * 
 	 * @param string $host
 	 * @param integer $port
 	 */
 	public function __construct($host, $port = 25) {
+
 		$this->host	= $host;
 		$this->port	= $port;
+
+		mb_internal_encoding($this->mimeEncodingPreferences['output-charset']);
+
 	}
 
 	/**
@@ -55,12 +152,13 @@ class SmtpMailer implements MailerInterface {
 	 * @throws SmtpMailerException
 	 */
 	public function connect($timeout = 10) {
+
 		$this->timeout = $timeout;
 
 		$this->socket = @fsockopen($this->host, $this->port, $errno, $errstr, $this->timeout);
 
 		if (!$this->socket OR !$this->check(self::RFC_SERVICE_READY)) {
-			throw new SmtpMailerException("Connection failed. $errno: $errstr", SmtpMailerException::CONNECTION_FAILED);
+			throw new SmtpMailerException(sprintf('Connection failed. %d: %s.', $errno, $errstr), SmtpMailerException::CONNECTION_FAILED);
 		}
 
 //		stream_set_blocking($this->socket, 1);
@@ -86,12 +184,16 @@ class SmtpMailer implements MailerInterface {
 	 * @throws SmtpMailerException
 	 */
 	public function setCredentials($user, $pwd, $type = 'LOGIN') {
+
 		$this->user = $user;
 		$this->pwd = $pwd;
+
 		if(!in_array(strtoupper($type), $this->authTypes)) {
-			throw new SmtpMailerException("Invalid authentication type '$type'.", SmtpMailerException::INVALID_AUTH_TYPE);
+			throw new SmtpMailerException(sprintf("Invalid authentication type '%s'.", $type), SmtpMailerException::INVALID_AUTH_TYPE);
 		}
+
 		$this->type = strtoupper($type);
+
 	}
 
 	/**
@@ -100,10 +202,26 @@ class SmtpMailer implements MailerInterface {
 	 * @param string $from
 	 */
 	public function setFrom($from) {
+
 		$this->from = trim($from);
-		if(!preg_match('~.*?<.*?>$~', $this->from)) {
-			$this->from = '<'.$this->from.'>';
+
+		$this->fromDisplayName = '';
+
+		if(preg_match('~^(.*?)\s*<(.*?)>$~', $this->from, $matches)) {
+			
+			$this->from = trim($matches[2]);
+
+			if(trim($matches[1])) {
+				$this->fromDisplayName = $matches[1];
+			}
+
 		}
+		
+		// encode email, when non-atom chars + "@" + "." are found in email
+		if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $this->from)) {
+			$this->from = mb_encode_mimeheader($this->from, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+		}
+
 	}
 	
 	/**
@@ -112,20 +230,33 @@ class SmtpMailer implements MailerInterface {
 	 * @param mixed $to
 	 */
 	public function setTo($to) {
+
 		if(!is_array($to)) {
 			$to = (array) $to;
 		}
+
 		$this->to = array();
 		
 		foreach($to as $receiver) { 
+
 			$receiver = trim($receiver);
 
-			if(!preg_match('~.*?<.*?>$~', $receiver)) {
-				$this->to[] = "<$receiver>";
+			// extract emails
+
+			if(preg_match('~^(.*?)\s*<(.*?)>$~', $receiver, $matches)) {
+				$email = trim($matches[2]);
 			}
+			
 			else {
-				$this->to[] = $receiver;
+				$email = $receiver;
 			}
+
+			// remove duplicates
+
+			if(!in_array($email, $this->to)) {
+				$this->to[] = $email;
+			}
+
 		}
 	}
 
@@ -135,7 +266,9 @@ class SmtpMailer implements MailerInterface {
 	 * @param array $headers
 	 */
 	public function setHeaders(array $headers) {
+
 		$this->headers = $headers;
+
 	}
 
 	/**
@@ -144,7 +277,9 @@ class SmtpMailer implements MailerInterface {
 	 * @param string $message
 	 */
 	public function setMessage($message) {
+
 		$this->message = $message;
+
 	}
 	
 	/**
@@ -155,7 +290,7 @@ class SmtpMailer implements MailerInterface {
 		$this->sendEhlo();
 		$this->auth();
 
-		$this->put('MAIL FROM:'.$this->from.self::CRLF);
+		$this->put('MAIL FROM:<' . $this->from . '>' . self::CRLF);
 		
 		if(!$this->check(self::RFC_REQUEST_OK)) {
 			throw new SmtpMailerException('Failed to send addressor.', SmtpMailerException::ADDRESSOR_SEND_FAILED);
@@ -164,30 +299,24 @@ class SmtpMailer implements MailerInterface {
 		if(empty($this->to)) {
 			throw new SmtpMailerException('Failed to send recipient.', SmtpMailerException::RCPT_SEND_FAILED);
 		}
+
 		foreach ($this->to as $receiver) {
-			$this->put('RCPT TO:'.$receiver.self::CRLF);
+			$this->put('RCPT TO:<' . $receiver . '>' . self::CRLF);
 			
 			if(!$this->check(self::RFC_REQUEST_OK)) {
-				throw new SmtpMailerException("Failed to send recipient $receiver.", SmtpMailerException::RCPT_SEND_FAILED);
+				throw new SmtpMailerException(sprintf("Failed to send recipient '%s'.", $receiver), SmtpMailerException::RCPT_SEND_FAILED);
 			}
 		}
 
-		$this->put('DATA'.self::CRLF);
+		$this->put('DATA' . self::CRLF);
 
 		if (!$this->check(self::RFC_START_MAIL_INPUT)) {
 			throw new SmtpMailerException('Data-transfer failed.', SmtpMailerException::DATA_TRANSFER_FAILED);
 		}
 
-		$payload = array();
+		$payload = $this->buildHeaderRows();
 
-		foreach(array_keys($this->headers) as $k) {
-
-			// remove an optional bcc header
-
-			if(strtolower($k) !== 'bcc') {
-				$payload[] = "$k: {$this->headers[$k]}";
-			}
-		}
+		// insert empty row
 
 		if(count($payload)) {
 			$payload[] = '';
@@ -216,10 +345,127 @@ class SmtpMailer implements MailerInterface {
 	}	
 
 	/**
+	 * build the complete set of header rows
+	 * 
+	 * @return array
+	 */
+	private function buildHeaderRows() {
+		
+		$rows = array();
+		
+		foreach(array_keys($this->headers) as $k) {
+		
+			switch(strtolower($k)) {
+		
+				// remove an optional bcc header
+		
+				case 'bcc':
+					break;
+		
+				case 'subject':
+					$rows[] = iconv_mime_encode($k, $this->headers[$k], $this->mimeEncodingPreferences);
+					break;
+		
+				case 'cc':
+				case 'to':
+					$addresses = preg_split('/\s*,\s*/', $this->headers[$k]);
+					
+					$encodedAddresses = array();
+
+					foreach($addresses as $address) {
+
+						$address = trim($address);
+					
+						// extract emails
+					
+						if(preg_match('~^(.*?)\s*<(.*?)>$~', $address, $matches)) {
+							
+							// encode display name
+							
+							$email			= trim($matches[2]);
+							$displayName	= mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+						}
+						else {
+							$email			= $address;
+							$displayName	= NULL;
+						}
+
+						// encode email, when non-atom chars + "@" + "." are found in email
+
+						if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $email)) {
+							$email = mb_encode_mimeheader($email, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+						}
+						
+						if($displayName) {
+							$encodedAddresses[] = sprintf('%s <%s>', $displayName, $email);
+						}
+						else {
+							$encodedAddresses[] = $email;
+						}
+						
+					}
+					
+					$rows[] = sprintf('%s: %s', $k, implode(', ', $encodedAddresses));
+					break;
+
+				case 'return-path':
+				case 'reply-to':
+					if(preg_match('~^(.*?)\s*<(.*?)>$~', $this->headers[$k], $matches)) {
+
+						// encode display name
+
+						$email			= trim($matches[2]);
+						$displayName	= mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+					}
+					else {
+						$email			= trim($this->headers[$k]);
+						$displayName	= NULL;
+					}
+
+					// encode email, when non-atom chars + "@" + "." are found in email
+					
+					if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $email)) {
+						$email = mb_encode_mimeheader($email, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+					}
+
+					if($displayName) {
+						$rows[] = sprintf('%s: %s <%s>', $k, $displayName, $email);
+					}
+					else {
+						$rows[] = $k . ': ' . $email;
+					}
+					break;
+						
+				case 'from':
+					if($this->fromDisplayName) {
+						$rows[] = sprintf(
+							'%s: %s <%s>',
+							$k,
+							mb_encode_mimeheader($this->fromDisplayName, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']),
+							$this->from
+						);
+					}
+					else {
+						$rows[] = $k . ': ' . $this->from;
+					}
+					break;
+		
+				default:
+					$rows[] = $k . ': ' . $this->headers[$k];
+			}
+
+		}
+
+		return $rows;
+
+	}
+
+	
+	/**
 	 * sends enhanced helo
 	 */
 	private function sendEhlo() {
-		$this->put("EHLO ". $this->host . self::CRLF);
+		$this->put("EHLO " . $this->host . self::CRLF);
 
 		if (!$this->check(self::RFC_REQUEST_OK)) {
 			throw new SmtpMailerException('Failed to send EHLO.', SmtpMailerException::EHLO_FAILED);
@@ -230,7 +476,7 @@ class SmtpMailer implements MailerInterface {
 	 * sends helo
 	 */
 	private function sendHelo() {
-		$this->put("HELO ". $this->host . self::CRLF);
+		$this->put("HELO " . $this->host . self::CRLF);
 
 		if (!$this->check(self::RFC_REQUEST_OK)) {
 			throw new SmtpMailerException('Failed to send HELO.', SmtpMailerException::HELO_FAILED);
@@ -248,7 +494,7 @@ class SmtpMailer implements MailerInterface {
 			return;
 		}
 
-		$this->put("AUTH ".$this->type.self::CRLF);
+		$this->put("AUTH " . $this->type . self::CRLF);
 		$this->getResponse();
 
 		if( substr($this->response, 0, 1) != '3') {
@@ -256,28 +502,27 @@ class SmtpMailer implements MailerInterface {
 		}
 	
 		if ($this->type == 'LOGIN') {
-			$this->put(base64_encode($this->user).self::CRLF);
+			$this->put(base64_encode($this->user) . self::CRLF);
 
 			if(!$this->check(self::RFC_CONTINUE_REQUEST)) {
 				throw new SmtpMailerException('Failed to send username.', SmtpMailerException::USERNAME_SEND_FAILED);
 			}
 	
-			$this->put(base64_encode($this->pwd).self::CRLF);
+			$this->put(base64_encode($this->pwd) . self::CRLF);
 		}
 
 		elseif ($this->type == 'PLAIN') {
-			$this->put(base64_encode($this->user.chr(0).$this->user.chr(0).$this->pwd).self::CRLF);
+			$this->put(base64_encode($this->user . chr(0) . $this->user . chr(0) . $this->pwd) . self::CRLF);
 		}
 
 		elseif ($this->type == 'CRAM-MD5') {
-
-			$data	= explode(' ',$this->response);
+			$data	= explode(' ', $this->response);
 			$data	= base64_decode($data[1]);
 			$key	= str_pad($this->pwd, 64, chr(0x00));
 			$ipad	= str_repeat(chr(0x36), 64);
 			$opad	= str_repeat(chr(0x5c), 64);
 
-			$this->put(base64_encode($this->user.' '.md5(($key ^ $opad).md5(($key ^ $ipad).$data, TRUE))).self::CRLF);
+			$this->put(base64_encode($this->user . ' ' . md5(($key ^ $opad) . md5(($key ^ $ipad) . $data, TRUE))) . self::CRLF);
 		}
 
 		if(!$this->check(self::RFC_AUTH_SUCCESSFUL)) {
@@ -338,7 +583,7 @@ class SmtpMailer implements MailerInterface {
 	 */
 	private function check($code) {
 		$this->getResponse();
-		return !empty($this->response) && preg_match("~^$code~", $this->response);
+		return !empty($this->response) && preg_match('~^' . $code . '~', $this->response);
 	}
 
 	/**
