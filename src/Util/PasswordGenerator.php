@@ -8,7 +8,7 @@ namespace vxPHP\Util;
  * @author Martin Jansen,  Olivier Vanhoucke
  * @author Gregor Kofler
  * 
- * @version 1.0.3 2008-08-17
+ * @version 1.0.4 2015-12-09
  */
 
 class PasswordGenerator {
@@ -23,7 +23,7 @@ class PasswordGenerator {
 	* @return string  Returns the generated password.
 	*/
 
-	public function create($length = 10, $type = 'pronounceable', $chars = '') {
+	public static function create($length = 10, $type = 'pronounceable', $chars = '') {
 		mt_srand();
 
 		switch ($type) {
@@ -49,7 +49,7 @@ class PasswordGenerator {
 	*                 or numeric or alphanumeric.
 	* @return array   Array containing the passwords
 	*/
-	public function createMultiple($number, $length = 10, $type = 'pronounceable', $chars = '') {
+	public static function createMultiple($number, $length = 10, $type = 'pronounceable', $chars = '') {
 		$passwords = array();
 
 		while ($number > 0) {
@@ -75,7 +75,7 @@ class PasswordGenerator {
 	* @param  integer Key
 	* @return string
 	*/
-	public function createFromLogin($login, $type, $key = 0) {
+	public static function createFromLogin($login, $type, $key = 0) {
 		switch($type) {
 			case 'reverse':			return strrev($login);
 			case 'shuffle':			return self::shuffle($login);
@@ -100,7 +100,7 @@ class PasswordGenerator {
 	* @param  integer Key
 	* @return array   Array containing the passwords
 	*/
-	public function createMultipleFromLogin($login, $type, $key = 0) {
+	public static function createMultipleFromLogin($login, $type, $key = 0) {
 		$passwords = array();
 		$number    = count($login);
 		$save      = $number;
