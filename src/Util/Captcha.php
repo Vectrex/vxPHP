@@ -48,6 +48,12 @@ class Captcha {
 		$this->generateString();
 
 	}
+	
+	public function __toString() {
+
+		return $this->string;
+
+	}
 
 	public function setFonts($font) {
 		
