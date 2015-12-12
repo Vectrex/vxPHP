@@ -2,11 +2,7 @@
 
 namespace vxPHP\Orm\Custom;
 
-use vxPHP\Orm\Custom\ArticleQuery;
 use vxPHP\Orm\Custom\Exception\ArticleException;
-
-use vxPHP\Observer\SubjectInterface;
-use vxPHP\Observer\EventDispatcher;
 
 use vxPHP\User\User;
 use vxPHP\User\Exception\UserException;
@@ -14,15 +10,16 @@ use vxPHP\User\Exception\UserException;
 use vxPHP\File\MetaFile;
 use vxPHP\Application\Application;
 use vxPHP\Database\vxPDOUtil;
+use vxPHP\Observer\PublisherInterface;
 
 /**
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.10.0 2015-06-26
+ * @version 0.10.2 2015-12-12
  */
 
-class Article implements SubjectInterface {
+class Article implements PublisherInterface {
 
 	/**
 	 * cached instances identified by their id
@@ -275,7 +272,7 @@ class Article implements SubjectInterface {
 
 		// allow listeners to react to event
 
-		EventDispatcher::getInstance()->notify($this, 'beforeArticleSave');
+		ArticleEvent::create(ArticleEvent::BEFORE_ARTICLE_SAVE, $this)->trigger();
 
 		// afterwards collect all current data in array
 
@@ -370,7 +367,7 @@ class Article implements SubjectInterface {
 			$this->updateLinkedFiles = FALSE;
 		}
 
-		EventDispatcher::getInstance()->notify($this, 'afterArticleSave');
+		ArticleEvent::create(ArticleEvent::AFTER_ARTICLE_SAVE, $this)->trigger();
 
 	}
 
@@ -386,8 +383,8 @@ class Article implements SubjectInterface {
 
 		if(!is_null($this->id)) {
 
-			EventDispatcher::getInstance()->notify($this, 'beforeArticleDelete');
-
+			ArticleEvent::create(ArticleEvent::BEFORE_ARTICLE_DELETE, $this)->trigger();
+				
 			// delete record
 
 			$db = Application::getInstance()->getDb(); 
@@ -408,7 +405,7 @@ class Article implements SubjectInterface {
 			
 			$db->deleteRecord('articles_files', array('articlesID' => $this->id));
 
-			EventDispatcher::getInstance()->notify($this, 'afterArticleDelete');
+			ArticleEvent::create(ArticleEvent::AFTER_ARTICLE_DELETE, $this)->trigger();
 
 		}
 	}

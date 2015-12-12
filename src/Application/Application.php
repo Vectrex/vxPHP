@@ -12,12 +12,13 @@ use vxPHP\Database\vxPDO;
 use vxPHP\Autoload\Psr4;
 use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\ListenerInterface;
+use vxPHP\Observer\SubscriberInterface;
 
 /**
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.3.0 2015-10-08
+ * @version 1.3.2 2015-12-12
  */
 class Application {
 
@@ -104,7 +105,7 @@ class Application {
 	private $services = array();
 	
 	/**
-	 * @var multitype:vxPHP\Observer\ListenerInterface
+	 * @var multitype:vxPHP\Observer\SubscriberInterface
 	 */
 	private $plugins = array();
 
@@ -117,7 +118,7 @@ class Application {
 	 * constructor
 	 *
 	 * create configuration object, database object
-	 * set up dispatcher and plugins
+	 * set up dispatcher and plugins (subscribers)
 	 * 
 	 * @param Config $config
 	 */
@@ -188,7 +189,7 @@ class Application {
 		
 		if($this->plugins) {
 			foreach($this->plugins as $plugin) {
-				$this->eventDispatcher->detach($plugin);
+				$this->eventDispatcher->removeSubscriber($plugin);
 			}
 		}
 
@@ -632,21 +633,26 @@ class Application {
 
 		$plugin = new $class;
 		
-		// check whether instance implements PluginInterface
+		// check whether instance implements SubscriberInterface
 		
-		if(!$plugin instanceof ListenerInterface) {
-			throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not implement the ListenerInterface.", $pluginId, $class));
+		if(!$plugin instanceof SubscriberInterface) {
+			throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not implement the SubscriberInterface.", $pluginId, $class));
 		}
 		
 		// set parameters
 		
-		$plugin->setParameters($configData['parameters']);
+		if(!empty($configData['parameters'])) {
 
-		// register plugin with dispatcher and enable listening
-
-		foreach($configData['listenTo'] as $event) {
-			EventDispatcher::getInstance()->attach($plugin, $event);
+			if(!method_exists($plugin, 'setParameters')) {
+				throw new ApplicationException(sprintf("Plugin '%s' (class %s) does not provide a 'setParameters' method but has parameters configured.", $pluginId, $class));
+			}
+			
+			$plugin->setParameters($configData['parameters']);
 		}
+
+		// register plugin with dispatcher
+
+		EventDispatcher::getInstance()->addSubscriber($plugin);
 		
 		return $plugin;
 

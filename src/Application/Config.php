@@ -15,7 +15,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.4.0 2015-10-08
+ * @version 1.4.1 2015-12-12
  *
  * @todo refresh() method
  */
@@ -71,7 +71,7 @@ class Config {
 			/**
 			 * @var array
 			 * 
-			 * holds all configured plugins
+			 * holds all configured plugins (event subscribers)
 			 */
 	public	$plugins;
 	
@@ -593,10 +593,6 @@ class Config {
 				throw new ConfigException(sprintf("No class for plugin '%s' configured.", $id));
 			}
 			
-			if(!($listenTo = (string) $plugin->attributes()->listen_to)) {
-				throw new ConfigException(sprintf("No events to listen to for plugin '%s' configured.", $id));
-			}
-
 			// clean path delimiters
 
 			$class		= ltrim(str_replace('\\', '/', $class), '/');
@@ -616,7 +612,6 @@ class Config {
 			$this->plugins[$id] = array(
 				'class'			=> $class,
 				'classPath'		=> $classPath,
-				'listenTo'		=> preg_split('~\s*,\s*~', $listenTo),
 				'parameters'	=> array()
 			);
 

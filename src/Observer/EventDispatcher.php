@@ -5,28 +5,41 @@ namespace vxPHP\Observer;
 /**
  * simple dispatcher-listener implementation
  *
- * @version 0.1.0 2015-07-09
+ * @version 0.3.0 2015-12-12
  * @author Gregor Kofler
  *
  */
 class EventDispatcher {
 
 	/**
+	 * lookup for all registered subscribers
+	 * eventName -> priority -> callable
 	 * @var array
 	 */
-	private $listeners = array();
+	private $registry = array();
 
 	/**
-	 * type of last event
-	 * @var string
+	 * lookup for registered subscribers sorted by priority
+	 * eventName -> callable
+	 * @var array
+	 */
+	private $sortedRegistry = array();
+
+	/**
+	 * register object hashes
+	 * an object is served only once
+	 * 
+	 * @var array
+	 */
+	private $registeredHashes = array();
+
+	/**
+	 * last event which was served
+	 * wraps emitting element
+	 * 
+	 * @var Event
 	 */
 	private	$lastEvent;
-
-	/**
-	 * subject serving last event
-	 * @var SubjectInterface
-	 */
-	private	$lastSubject;
 
 	/**
 	 * singleton pattern
@@ -34,20 +47,27 @@ class EventDispatcher {
 	 */
 	private static $instance;
 
+	/**
+	 * ensure singleton
+	 */
 	private function __construct() {
 	}
 
+	/**
+	 * ensure singleton
+	 */
 	private function __clone() {
 	}
 
 	/**
 	 * get dispatcher instance
+	 * 
 	 * @return EventDispatcher
 	 */
 	public static function getInstance() {
 
 		if(is_null(self::$instance)) {
-			self::$instance = new EventDispatcher();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -55,75 +75,138 @@ class EventDispatcher {
 	}
 
 	/**
-	 * register a listener for a certain event type
-	 *  
-	 * @param ListenerInterface $listener
-	 * @param string $eventType
-	 */
-	public function attach(ListenerInterface $listener, $eventType) {
-
-		if(!isset($this->listeners[spl_object_hash($listener)])) {
-			$this->listeners[spl_object_hash($listener)] = array();
-			$this->listeners[spl_object_hash($listener)]['__instance__'] = $listener;
-		}
-
-		$this->listeners[spl_object_hash($listener)][$eventType] = TRUE;
-
-	}
-
-	/**
-	 * unregister a listener for a certain event type
+	 * remove a subscriber from the registry
 	 * 
-	 * @param ListenerInterface $listener
-	 * @param string $eventType
+	 * @param SubscriberInterface $instance
 	 */
-	public function detach(ListenerInterface $listener, $eventType = NULL) {
+	public function removeSubscriber(SubscriberInterface $instance) {
 
-		if(is_null($eventType)) {
-			unset($this->listeners[spl_object_hash($listener)]);
-		}
-		else {
-			unset($this->listeners[spl_object_hash($listener)][$eventType]);
-		}
+		// check for object hash
 
+		if(FALSE !== ($pos = array_search(spl_object_hash($instance), $this->registeredHashes))) {
+		
+			// remove instance from registry before re-inserting
+			
+			unset($this->registeredHashes[$pos]);
+
+			foreach($instance::getEventsToSubscribe() as $eventName => $parameters) {
+			
+				$methodName	= array_shift($parameters);
+				$callable	= array($instance, $methodName);
+			
+				foreach($this->registry[$eventName] as $priority => $subscribers) {
+						
+					if (FALSE !== ($pos = array_search($callable, $subscribers, TRUE))) {
+						unset(
+							$this->registry[$eventName][$priority][$pos],
+							$this->sortedRegistry[$eventName]
+						);
+					}
+
+				}
+			}
+		}
+	}
+	
+	/**
+	 * register a subscriber for event types provided by subscriber
+	 * 
+	 * @param SubscriberInterface $instance
+	 */
+	public function addSubscriber(SubscriberInterface $instance) {
+
+		// make sure that an already registered object is removed before re-registering
+		
+		$this->removeSubscriber($instance);
+
+		// register object hash
+
+		$this->registeredHashes[] = spl_object_hash($instance);
+
+		// parameters contain at least a method name; additionally a priority can be added
+		
+		foreach($instance::getEventsToSubscribe() as $eventName => $parameters) {
+
+			$parameters	= (array) $parameters;
+			$methodName	= array_shift($parameters); 
+
+			if(count($parameters)) {
+				$priority = (int) $parameters[0];
+			}
+			else {
+				$priority = 0;
+			}
+
+			if(!isset($this->registry[$eventName]) || !isset($this->registry[$eventName][$priority])) {
+				$this->registry[$eventName][$priority] = array();
+			}
+
+			$this->registry[$eventName][$priority][]	= array($instance, $methodName);
+
+			// force re-sort upon next dispatch
+
+			unset ($this->sortedRegistry[$eventName]);
+
+		}
+		
 	}
 
 	/**
 	 * receive an event served by $subject and call inform all subscribing listeners
 	 * 
-	 * @param SubjectInterface $subject
-	 * @param string $eventType
+	 * @param Event $event
 	 */
-	public function notify(SubjectInterface $subject, $eventType) {
+	public function dispatch(Event $event) {
 
-		$this->lastEvent = $eventType;
-		$this->lastSubject = $subject;
+		$this->lastEvent	= $event;
+		$eventName			= $event->getName();
 
-		foreach($this->listeners as $listener) {
+		if (isset($this->registry[$eventName])) {
 
-			if(isset($listener[$eventType])) {
-				$listener['__instance__']->update($subject);
+			
+			foreach ($this->getSortedRegistry($eventName) as $listener) {
+				call_user_func($listener, $event);
 			}
-
+			
 		}
 
 	}
 
 	/**
-	 * provide access to last served event type
+	 * provide access to last event which was triggered
 	 * @return string
 	 */
-	public function getEventType() {
+	public function getLastEvent() {
+
 		return $this->lastEvent;
+
 	}
-
+	
 	/**
-	 * provide access to subject which triggered last event
-	 * @return string
+	 * helper method to collect all listener callbacks for a named event
+	 * into one array observing priorities
+	 * 
+	 * @param string $eventName
 	 */
-	public function getSubject() {
+	private function getSortedRegistry($eventName) {
+		
+		if(!isset($this->sortedRegistry[$eventName])) {
+			
+			$this->sortedRegistry[$eventName] = array();
+			
+			if (isset($this->registry[$eventName])) {
+				
+				// sort reverse by priority key
 
-		return $this->lastSubject;
+				krsort($this->registry[$eventName]);
+				
+				// merge the sorted arrays into one
+
+				$this->sortedRegistry[$eventName] = call_user_func_array('array_merge', $this->registry[$eventName]);
+			}
+		}
+
+		return $this->sortedRegistry[$eventName];
 
 	}
 }

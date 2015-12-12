@@ -8,8 +8,6 @@ use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\File\MetaFolder;
 use vxPHP\File\FilesystemFile;
 
-use vxPHP\Observer\EventDispatcher;
-use vxPHP\Observer\SubjectInterface;
 use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Orm\Custom\Article;
@@ -22,13 +20,13 @@ use vxPHP\Orm\Custom\ArticleQuery;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.5 2014-10-02
+ * @version 0.8.7 2015-12-12
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
  * @todo allow update of createdBy user
  */
-class MetaFile implements SubjectInterface {
+class MetaFile {
 
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
@@ -770,7 +768,8 @@ class MetaFile implements SubjectInterface {
 	 * @throws Exception
 	 */
 	public function delete($keepFilesystemFile = FALSE) {
-		EventDispatcher::getInstance()->notify($this, 'beforeMetafileDelete');
+		
+		FileEvent::create(FileEvent::BEFORE_METAFILE_DELETE, $this)->trigger();
 
 		if(Application::getInstance()->getDb()->deleteRecord('files', $this->id)) {
 			unset(self::$instancesById[$this->id]);

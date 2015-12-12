@@ -4,20 +4,19 @@ namespace vxPHP\File;
 
 use vxPHP\File\MimeTypeGetter;
 use vxPHP\File\Exception\FilesystemFileException;
-use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Application;
-use vxPHP\Http\Request;
 use vxPHP\User\User;
+use vxPHP\Observer\PublisherInterface;
 
 /**
  * mapper for filesystem files
  *
  * @author Gregor Kofler
  *
- * @version 0.5.0 2015-01-21
+ * @version 0.5.1 2015-12-12
  */
 
-class FilesystemFile {
+class FilesystemFile implements PublisherInterface {
 
 	protected static $instances = array();
 
@@ -390,7 +389,8 @@ class FilesystemFile {
 		}
 		else {
 			$mf = MetaFile::getInstance(NULL, $filesID);
-			EventDispatcher::getInstance()->notify($mf, 'afterMetafileCreate');
+			FileEvent::create(FileEvent::AFTER_METAFILE_CREATE, $this)->trigger();
+
 			return $mf;
 		}
 	}
