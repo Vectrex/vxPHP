@@ -365,7 +365,8 @@ class HtmlForm {
 	 * deliver all valid form values
 	 *
 	 * @param boolean $getSubmits,deliver submit buttons when TRUE, defaults to FALSE
-	 * @return array
+	 * // @return array
+	 * @return ValuesBag
 	 *
 	 */
 	public function getValidFormValues($getSubmits = FALSE) {
@@ -374,7 +375,8 @@ class HtmlForm {
 			throw new HtmlFormException('Values can not be evaluated. No request bound.', HtmlFormException::NO_REQUEST_BOUND);
 		}
 
-		$tmp = array();
+		// $tmp = array();
+		$tmp = new ValuesBag();
 
 		foreach($this->elements as $name => $e) {
 
