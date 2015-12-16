@@ -6,7 +6,7 @@ use vxPHP\Util\Exception\CaptchaException;
 
 /**
  * Captcha
- * @version 0.2.0, 2015-12-09
+ * @version 0.2.1, 2015-12-16
  * @author Gregor Kofler
  */
 class Captcha {
@@ -17,6 +17,7 @@ class Captcha {
 	private $fonts;
 	private $gridColors;
 	private $gridSpacing = 8;
+	private $tiltedLetters = TRUE;
 	
 	private $type;
 	private $imgType;
@@ -43,7 +44,7 @@ class Captcha {
 		$this->imgType		= $imgType;
 		$this->type			= $type;
 
-		$this->width	= ($this->charCount + 4) * $this->fontSize;
+		$this->width	= ($this->charCount + 2) * $this->fontSize;
 		$this->height	= ($this->fontSize * 3);
 		$this->generateString();
 
@@ -55,6 +56,13 @@ class Captcha {
 
 	}
 
+	public function tiltLetters($tilt) {
+
+		$this->tiltedLetters = (boolean) $tilt;
+		return $this;
+
+	}
+	
 	public function setFonts($font) {
 		
 		$this->fonts = (array) $font;
@@ -226,12 +234,18 @@ class Captcha {
 		$y		= $this->fontSize * 2;
 
 		for($i = 0; $i < $len; ++$i) {
-			if (rand(0, 1))	{
-				imagettftext($image, $this->fontSize, rand(0, 29),		$x + $this->fontSize * $i * 1.5, $y - rand(0, 5), $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string{$i} );
+
+			if($this->tiltedLetters) {
+				$angle = rand(0, 1) ? rand(0, 29) : rand(330, 360);
 			}
 			else {
-				imagettftext($image, $this->fontSize, rand(330, 360),	$x + $this->fontSize * $i * 1.5, $y + rand(0, 5), $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string{$i} );
+				$angle = 0;
 			}
+
+			imagettftext($image, $this->fontSize, $angle, $x, $y, $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string{$i} );
+			$x += $this->fontSize + rand(-$this->fontSize, $this->fontSize) / 5;
+			$y += rand(-$this->fontSize, $this->fontSize) / 4;
+
 		}
 
 		if($this->gridColors) {
