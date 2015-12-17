@@ -8,7 +8,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.3 2014-04-03
+ * @version 0.5.3a 2015-12-17
  */
 class Gd extends ImageModifier {
 
@@ -27,12 +27,12 @@ class Gd extends ImageModifier {
 		$src = new \stdClass();
 
 		if(!file_exists($file)) {
-			throw new ImageModifierException("File $file doesn't exist.");
+			throw new ImageModifierException(sprintf("File '%s' doesn't exist.", $file));
 		}
 
 		$info = @getimagesize($file);
 		if($info === FALSE) {
-			throw new ImageModifierException("getimagesize() reports error for file $file.");
+			throw new ImageModifierException(sprintf("getimagesize() reports error for file '%s'.", $file));
 		}
 
 		$this->file		= $file;
