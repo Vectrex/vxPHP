@@ -7,18 +7,16 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
-use vxPHP\Http\Request;
 use vxPHP\Database\vxPDO;
 use vxPHP\Autoload\Psr4;
 use vxPHP\Service\ServiceInterface;
-use vxPHP\Observer\ListenerInterface;
 use vxPHP\Observer\SubscriberInterface;
 
 /**
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.3.2 2015-12-12
+ * @version 1.4.0 2015-12-18
  */
 class Application {
 
@@ -72,7 +70,8 @@ class Application {
 	private $absoluteAssetsPath;
 
 	/**
-	 * the relative path to web assets below the root path (e.g. "web/")
+	 * a path prefix which is added to URLs and routes when no URL rewriting is active
+	 * needs to be set when the document root points to parent folder of the absolute assets path
 	 *
 	 * @var string
 	 */
@@ -144,6 +143,16 @@ class Application {
 			}
 
 			$this->useNiceUris = !!$this->config->site->use_nice_uris;
+			
+			// set a relative assets path when configured
+			
+			if(isset($this->config->site->assets_path)) {
+				$this->setRelativeAssetsPath($this->config->site->assets_path);
+			}
+			
+			else {
+				$this->setRelativeAssetsPath('');
+			}
 
 		}
 
@@ -335,18 +344,6 @@ class Application {
 	}
 
 	/**
-	 * get relative path to web assets
-	 * directory separator is always '/'
-	 *
-	 * @return string
-	 */
-	public function getRelativeAssetsPath() {
-
-		return $this->relativeAssetsPath;
-
-	}
-
-	/**
 	 * get absolute path to controller classes
 	 *
 	 * @return string
@@ -384,8 +381,7 @@ class Application {
 		}
 
 		$this->absoluteAssetsPath = $path;
-		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', $this->absoluteAssetsPath));
-		
+
 		return $this;
 
 	}
@@ -403,15 +399,28 @@ class Application {
 	}
 
 	/**
-	 * get absolute path to application root
-	 * directory separator is platform dependent
+	 * set relative path to web assets
+	 * 
+	 * @param string $path
+	 * @return Application
+	 */
+	public function setRelativeAssetsPath($path) {
+
+		$this->relativeAssetsPath = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
+		return $this;
+	
+	}
+	
+	/**
+	 * get relative path to web assets
+	 * directory separator is always '/'
 	 *
 	 * @return string
 	 */
-	public function getRootPath() {
-
-		return $this->rootPath;
-
+	public function getRelativeAssetsPath() {
+	
+		return $this->relativeAssetsPath;
+	
 	}
 
 	/**
@@ -434,6 +443,18 @@ class Application {
 		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', (string) $this->absoluteAssetsPath));
 
 		return $this;
+
+	}
+
+	/**
+	 * get absolute path to application root
+	 * directory separator is platform dependent
+	 *
+	 * @return string
+	 */
+	public function getRootPath() {
+
+		return $this->rootPath;
 
 	}
 
