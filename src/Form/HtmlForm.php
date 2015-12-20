@@ -9,18 +9,15 @@ use vxPHP\Form\FormElement\InputElement;
 use vxPHP\Form\FormElement\ImageElement;
 use vxPHP\Form\FormElement\CheckboxElement;
 
-use vxPHP\Template\SimpleTemplate;
 use vxPHP\Http\Request;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Application\Application;
-use vxPHP\Template\Filter\AnchorHref;
-use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Session\Session;
 
 /**
- * Template Engine for Forms
+ * Parent class for HTML forms
  *
- * @version 1.5.0 2015-11-25
+ * @version 1.5.1 2015-12-20
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -66,11 +63,10 @@ class HtmlForm {
 	 * @param string $css class
 	 * @param string $misc string
 	 */
-	public function __construct($template = NULL, $action = FALSE, $method = 'POST', $type = FALSE, $css = FALSE) {
+	public function __construct($template = NULL, $action = FALSE, $method = 'POST', $type = FALSE) {
 
 		$this->method	= strtoupper($method);
 		$this->type		= $type;
-		$this->css		= $css;
 		$this->tplFile	= $template;
 
 		$this->request	= Request::createFromGlobals();
@@ -332,13 +328,11 @@ class HtmlForm {
 	 * renders complete form markup
 	 */
 	public function render() {
+
 		if($this->loadTemplate())	{
 
 			$this->primeTemplate();
 			$this->insertFormFields();
-
-			AnchorHref::create()		->apply($this->html);
-			LocalizedPhrases::create()	->apply($this->html);
 
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
@@ -348,16 +342,16 @@ class HtmlForm {
 				$attr[] = "$k='$v'";
 			}
 
-			return implode('', array(
-				"<form action='{$this->action}' method='{$this->method}'",
-				($this->type ? " enctype='{$this->type}'" : ''),
-				($this->css	? " class='{$this->css}'" : ' '),
+			return sprintf(
+				'<form action="%s" method="%s"%s%s>%s%s</form>',
+				$this->action,
+				$this->method,
+				$this->type ? ( 'enctype="' . $this->type . '"') : '',
 				implode(' ', $attr),
-				'>',
-				(isset($this->antiSpam) ? $this->antiSpam : ''),
-				$this->html,
-				'</form>'
-			));
+				isset($this->antiSpam) ? $this->antiSpam : '',
+				$this->html
+			);
+
 		}
 	}
 
@@ -365,7 +359,6 @@ class HtmlForm {
 	 * deliver all valid form values
 	 *
 	 * @param boolean $getSubmits,deliver submit buttons when TRUE, defaults to FALSE
-	 * // @return array
 	 * @return ValuesBag
 	 *
 	 */
@@ -375,7 +368,6 @@ class HtmlForm {
 			throw new HtmlFormException('Values can not be evaluated. No request bound.', HtmlFormException::NO_REQUEST_BOUND);
 		}
 
-		// $tmp = array();
 		$tmp = new ValuesBag();
 
 		foreach($this->elements as $name => $e) {
