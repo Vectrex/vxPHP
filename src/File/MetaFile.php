@@ -12,6 +12,7 @@ use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleQuery;
+use vxPHP\Observer\PublisherInterface;
 
 /**
  * mapper for metafiles
@@ -20,13 +21,13 @@ use vxPHP\Orm\Custom\ArticleQuery;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.7 2015-12-12
+ * @version 0.9.0 2015-12-21
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
  * @todo allow update of createdBy user
  */
-class MetaFile {
+class MetaFile implements PublisherInterface {
 
 	private static	$instancesById		= array();
 	private static	$instancesByPath	= array();
