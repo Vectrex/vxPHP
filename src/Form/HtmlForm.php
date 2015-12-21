@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
 /**
  * Parent class for HTML forms
  *
- * @version 1.5.2 2015-12-21
+ * @version 1.5.3 2015-12-21
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -26,32 +26,118 @@ use vxPHP\Session\Session;
 
 class HtmlForm {
 
-	private		$html,
-				$tplFile,
-				$template,
-				$clickedSubmit,
-				$elements		= array(),
-				$initFormValues	= array(),
-				$formErrors		= array(),
-				$miscHtml		= array(),
-				$vars 			= array(),
-				$allowApcUpload	= FALSE,
+	/**
+	 * generated markup
+	 * 
+	 * @var string
+	 */
+	private $html;
+				
+	/**
+	 * name of template file
+	 * 
+	 * @var string
+	 */
+	private $tplFile;
+	
+	/**
+	 * contents of template file
+	 * 
+	 * @var string
+	 */
+	private $template;
+	
+	/**
+	 * element which initiated the form submit
+	 * 
+	 * @var FormElement
+	 */
+	private $clickedSubmit;
 
-				/**
-				 * @var Request
-				 */
-				$request,
+	/**
+	 * array holding all element instances assigned to form
+	 * 
+	 * @var FormElement[]
+	 */
+	private $elements = array();
+				
+	/**
+	 * values with which form elements are initialized
+	 * 
+	 * @var array
+	 */
+	private $initFormValues;
+	
+	/**
+	 * array holding all errors evaluated by a validated form
+	 * 
+	 * @var array
+	 */
+	private $formErrors = array();
 
-				/**
-				 * @var ParameterBag
-				 */
-				$requestValues,
-				$action,
-				$type,
-				$method,
-				$attributes = array(),
-				$error,
-				$submitIndex;
+	/**
+	 * array holding all HTML snippets assigned to form
+	 * 
+	 * @var array $formErrors
+	 */
+	private $miscHtml = array();
+	
+	/**
+	 * array holding all variables assigned to form
+	 * 
+	 * @var array
+	 */
+	private $vars = array();
+	
+	/**
+	 * flag to indicate enabled APC upload
+	 * 
+	 * @var boolean
+	 */
+	private $allowApcUpload	= FALSE;
+
+	/**
+	 * the active request
+	 * used to set form method and default form action
+	 * 
+	 * @var Request
+	 */
+	private $request;
+
+	/**
+	 * the request data bound to the form 
+	 * 
+	 * @var ParameterBag
+	 */
+	private $requestValues;
+	
+	/**
+	 * the form action
+	 * 
+	 * @var string
+	 */
+	private $action;
+	
+	/**
+	 * the form enctype
+	 *
+	 * @var string
+	 */
+	private $type;
+
+	/**
+	 * the form method
+	 *
+	 * @var string
+	 */
+	private $method;
+	
+	/**
+	 * arbitrary form attributes
+	 *
+	 * @var string
+	 */
+	private $attributes = array();
 
 	/**
 	 * Constructor
@@ -237,8 +323,9 @@ class HtmlForm {
 	}
 
 	/**
-	 * Returns FormElement which submitted form and stores it in self::clickedSubmit
-	 * if submitted value is array, self::submitIndex is populated
+	 * Returns FormElement which submitted form, result is cached
+	 * 
+	 * @return FormElement
 	 */
 	public function getSubmittingElement() {
 
@@ -254,19 +341,22 @@ class HtmlForm {
 
 		$this->submitIndex = NULL;
 
+		// iterate over all form elements and check whether 
 		foreach($this->elements as $name => $e) {
 
 			if(is_array($e)) {
 
-				// needed for submits via XHR, since arrays are returned as plain text
+				// parse one-dimensional arrays
 
 				foreach($this->requestValues->keys() as $k) {
 
-					if(preg_match("/^$name\[(.*?)\]$/", $k, $m)) {
+					if(preg_match('/^' . $name . '\\[(.*?)\\]$/', $k, $m)) {
+
 						if(isset($this->elements[$name][$m[1]]) && $this->elements[$name][$m[1]]->canSubmit()) {
-							$this->submitIndex = $m[1];
-							$this->clickedSubmit = $e;
-							return $e;
+
+							$this->clickedSubmit = $this->elements[$name][$m[1]];
+							return $this->clickedSubmit;
+
 						}
 					}
 
@@ -280,7 +370,6 @@ class HtmlForm {
 						isset($arr[$k])
 					) {
 						$this->clickedSubmit = $ee;
-						$this->submitIndex = $k;
 						return $ee;
 					}
 
@@ -290,7 +379,6 @@ class HtmlForm {
 						isset($arr[$k])
 					) {
 						$this->clickedSubmit = $ee;
-						$this->submitIndex = $k;
 						return $ee;
 					}
 				}
@@ -810,7 +898,7 @@ class HtmlForm {
 			throw new HtmlFormException("Template file '$path{$this->tplFile}' does not exist.", HtmlFormException::TEMPLATE_FILE_NOT_FOUND);
 		}
 
-		$this->template = @file_get_contents($path.$this->tplFile);
+		$this->template = @file_get_contents($path . $this->tplFile);
 
 		return TRUE;
 	}
