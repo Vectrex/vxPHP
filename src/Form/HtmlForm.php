@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
 /**
  * Parent class for HTML forms
  *
- * @version 1.5.1 2015-12-20
+ * @version 1.5.2 2015-12-21
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -80,17 +80,16 @@ class HtmlForm {
 	 *
 	 * @param string $template filename
 	 * @param string $action attribute
-	 * @param string $submit method
+	 * @param string $method
 	 * @param string $encoding type
-	 * @param string $css class
-	 * @param string $misc string
 	 *
 	 * @return HtmlForm
-	 *
 	 */
 
-	public static function create($template = NULL, $action = FALSE, $method = 'POST', $type = FALSE, $css = FALSE) {
-		return new static($template, $action, $method, $type, $css);
+	public static function create($template = NULL, $action = FALSE, $method = 'POST', $type = FALSE) {
+
+		return new static($template, $action, $method, $type);
+
 	}
 
 	/**
