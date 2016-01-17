@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
 /**
  * Parent class for HTML forms
  *
- * @version 1.5.3 2015-12-21
+ * @version 1.5.4 2016-01-17
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -460,7 +460,9 @@ class HtmlForm {
 		foreach($this->elements as $name => $e) {
 
 			if(is_array($e)) {
-				$tmp[$name] = array();
+
+				$vals = array();
+
 				foreach($e as $ndx => $elem) {
 					if(
 							$elem->canSubmit() && !$getSubmits ||
@@ -469,8 +471,11 @@ class HtmlForm {
 					) {
 						continue;
 					}
-					$tmp[$name][$ndx] = $elem->getFilteredValue();
+
+					$vals[$ndx] = $elem->getFilteredValue();
 				}
+				$tmp->set($name, $vals);
+
 			}
 
 			else {
@@ -481,7 +486,8 @@ class HtmlForm {
 				) {
 					continue;
 				}
-				$tmp[$name] = $e->getFilteredValue();
+				$tmp->set($name, $e->getFilteredValue());
+
 			}
 		}
 
