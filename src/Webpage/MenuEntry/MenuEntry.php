@@ -4,6 +4,7 @@ namespace vxPHP\Webpage\MenuEntry;
 
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Application\Application;
+use vxPHP\Routing\Route;
 
 /**
  * MenuEntry class
@@ -13,8 +14,13 @@ use vxPHP\Application\Application;
  */
 class MenuEntry {
 	protected static	$count = 1;
-	protected			$menu,
-						$auth,
+
+						/**
+						 * @var Menu
+						 */
+	protected			$menu;
+
+	protected			$auth,
 						$authParameters,
 						$attributes,
 						$id,
@@ -24,6 +30,7 @@ class MenuEntry {
 	private 			$href;
 
 	public function __construct($page, $attributes, $localPage = TRUE) {
+
 		$this->id			= self::$count++;
 		$this->page			= $page;
 		$this->localPage	= (boolean) $localPage;

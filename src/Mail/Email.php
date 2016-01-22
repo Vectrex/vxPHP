@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.4.0 2015-12-06
+ * @version 0.4.1 2016-01-22
  */
 
 class Email {
@@ -284,7 +284,7 @@ class Email {
 				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
 				$this->mailer->setHeaders(array_merge(
 					array(
-						'To'		=> implode(',', $this->receiver),
+						'To'		=> implode(',', (array) $this->receiver),
 						'Subject'	=> $this->subject
 					),
 					$this->headers
