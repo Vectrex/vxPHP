@@ -8,7 +8,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.3.0 2016-02-03
+ * @version 0.3.1 2016-02-03
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -26,13 +26,19 @@ class SmtpMailer implements MailerInterface {
 	const RFC_START_MAIL_INPUT	= 354;
 
 	const DEFAULT_PORT			= 25;
-	
-			/**
-			 * preferences for MIME encoding
-			 * used with mb_internal_encoding()
-			 * mb_encode_mimeheader()
-			 * @var array
-			 */
+
+	/**
+	 * when set to true TLS is enforced in case server reports support
+	 * @var boolean
+	 */
+	const DEFAULT_TLS			= TRUE;
+
+	/**
+	 * preferences for MIME encoding
+	 * used with mb_internal_encoding()
+	 * mb_encode_mimeheader()
+	 * @var array
+	 */
 	private	$mimeEncodingPreferences = array(
 				'scheme'			=> 'Q',
 				'input-charset'		=> 'UTF-8',
@@ -40,107 +46,115 @@ class SmtpMailer implements MailerInterface {
 				'line-break-chars'	=> self::CRLF
 			);
 
-			/**
-			 * host address of SMTP server
-			 * @var string
-			 */
+	/**
+	 * host address of SMTP server
+	 * @var string
+	 */
 	private	$host;
 	
-			/**
-			 * port of SMTP server
-			 * @var integer
-			 */
+	/**
+	 * port of SMTP server
+	 * @var integer
+	 */
 	private	$port;
 
-			/**
-			 * username for authentication
-			 * @var string
-			 */
+	/**
+	 * username for authentication
+	 * @var string
+	 */
 	private	$user;
 
-			/**
-			 * password for authentication
-			 * @var string
-			 */
+	/**
+	 * password for authentication
+	 * @var string
+	 */
 	private	$pwd;
 
-			/**
-			 * auth method used for SMTP authentication
-			 * @var string
-			 */
+	/**
+	 * auth method used for SMTP authentication
+	 * @var string
+	 */
 	private	$authType;
-	
-			/**
-			 * supported auth methods
-			 * @var array
-			 */
+
+	/**
+	 * supported auth methods
+	 * @var array
+	 */
 	private	$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5');
 
-	
-			/**
-			 * encryption method used for connection
-			 * @var string
-			 */
+
+	/**
+	 * encryption method used for connection
+	 * @var string
+	 */
 	private $smtpEncryption;
 
-			/**
-			 * supported encryption methods
-			 * @var array
-			 */
+	/**
+	 * supported encryption methods
+	 * @var array
+	 */
 	private	$smtpEncryptions = array('SSL', 'TLS');
 
-			/**
-			 * connection timeout
-			 * @var integer
-			 */
+
+	/**
+	 * extensions reported by EHLO/HELO
+	 * 
+	 * @var array
+	 */
+	private $extensions = array();
+
+	/**
+	 * connection timeout
+	 * @var integer
+	 */
 	private	$timeout;
-	
-			/**
-			 * connection socket
-			 * @var resource
-			 */
+
+	/**
+	 * connection socket
+	 * @var resource
+	 */
 	private	$socket;
 
-			/**
-			 * email address of sender
-			 * @var string
-			 */
+	/**
+	 * email address of sender
+	 * @var string
+	 */
 	private	$from = '';
-	
-			/**
-			 * extracted display name, when from address is of form "display_name" <email_from>
-			 * @var string
-			 */
+
+	/**
+	 * extracted display name, when from address is of form "display_name" <email_from>
+	 * @var string
+	 */
 	private	$fromDisplayName = '';
 
-			/**
-			 * holds receivers with email addresses
-			 * @var array
-			 */
+	/**
+	 * holds receivers with email addresses
+	 * @var array
+	 */
 	private	$to;
-	
-			/**
-			 * header rows
-			 * @var array
-			 */
+
+	/**
+	 * header rows
+	 * @var array
+	 */
 	private	$headers = array();
-	
-			/**
-			 * the mail message
-			 * @var string
-			 */
+
+	/**
+	 * the mail message
+	 * @var string
+	 */
 	private	$message;
 
-			/**
-			 * server response
-			 * @var string
-			 */
+	/**
+	 * server response
+	 * @var string
+	 */
 	private	$response;
-	
-			/**
-			 * server communication log
-			 * @var log
-			 */
+
+	/**
+	 * server communication log
+	 * @var log
+	 */
 	private	$log = array();
 
 	/**
@@ -344,7 +358,7 @@ class SmtpMailer implements MailerInterface {
 			$this->sendHelo();
 		}
 		
-		// optional TLS
+		// TLS was configured
 
 		if($this->smtpEncryption === 'tls') {
 			$this->startTLS();
@@ -356,6 +370,29 @@ class SmtpMailer implements MailerInterface {
 			}
 			else {
 				$this->sendHelo();
+			}
+		}
+		
+		else {
+			
+			// autostart TLS when STARTTLS is supported by server and no explicit encryption was set and all requirements are met
+			
+			if(
+				self::DEFAULT_TLS &&
+				!$this->smtpEncryption &&
+				function_exists('stream_socket_enable_crypto') &&
+				isset($this->extensions['STARTTLS'])
+			) {
+				$this->startTLS();
+					
+				// re-send ehlo/helo
+					
+				if($ehlo) {
+					$this->sendEhlo();
+				}
+				else {
+					$this->sendHelo();
+				}
 			}
 		}
 
@@ -547,6 +584,8 @@ class SmtpMailer implements MailerInterface {
 		if (!$this->check(self::RFC_REQUEST_OK)) {
 			throw new SmtpMailerException('Failed to send EHLO.', SmtpMailerException::EHLO_FAILED);
 		}
+
+		$this->parseExtensions($this->response);
 	}
 
 	/**
@@ -560,8 +599,52 @@ class SmtpMailer implements MailerInterface {
 		if (!$this->check(self::RFC_REQUEST_OK)) {
 			throw new SmtpMailerException('Failed to send HELO.', SmtpMailerException::HELO_FAILED);
 		}
+
+		$this->parseExtensions($this->response);
 	}
 
+	
+	/**
+	 * parse HELO/EHLO response
+	 * 
+	 * @param string $response
+	 */
+	private function parseExtensions($response) {
+
+		$this->extensions = array();
+
+		$rows = preg_split('/\r\n?/', trim($response));
+
+		// skip first line
+		
+		array_shift($rows);
+		
+		foreach($rows as $row) {
+		
+			$data = trim(substr($row, 4));
+		
+			if(!$data) {
+				continue;
+			}
+				
+			$fields	= preg_split('/[ =]/', $data);
+			$name	= array_shift($fields);
+				
+			switch($name) {
+				case 'SIZE':
+					$fields = $fields ? $fields[0] : 0;
+					break;
+				case 'AUTH':
+					break;
+				default:
+					$fields = TRUE;
+			}
+		
+			$this->extensions[$name] = $fields;
+		
+		}
+	}
+	
 	/**
 	 * initiate TLS (encrypted) session
 	 * 
