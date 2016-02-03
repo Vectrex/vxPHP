@@ -8,7 +8,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.2.0 2015-12-06
+ * @version 0.3.0 2016-02-03
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -24,6 +24,8 @@ class SmtpMailer implements MailerInterface {
 	const RFC_REQUEST_OK		= 250;
 	const RFC_CONTINUE_REQUEST	= 334;
 	const RFC_START_MAIL_INPUT	= 354;
+
+	const DEFAULT_PORT			= 25;
 	
 			/**
 			 * preferences for MIME encoding
@@ -66,14 +68,27 @@ class SmtpMailer implements MailerInterface {
 			 * auth method used for SMTP authentication
 			 * @var string
 			 */
-	private	$type;
+	private	$authType;
 	
 			/**
 			 * supported auth methods
 			 * @var array
 			 */
 	private	$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5');
+
 	
+			/**
+			 * encryption method used for connection
+			 * @var string
+			 */
+	private $smtpEncryption;
+
+			/**
+			 * supported encryption methods
+			 * @var array
+			 */
+	private	$smtpEncryptions = array('SSL', 'TLS');
+
 			/**
 			 * connection timeout
 			 * @var integer
@@ -85,6 +100,7 @@ class SmtpMailer implements MailerInterface {
 			 * @var resource
 			 */
 	private	$socket;
+
 			/**
 			 * email address of sender
 			 * @var string
@@ -134,12 +150,23 @@ class SmtpMailer implements MailerInterface {
 	 * 
 	 * @param string $host
 	 * @param integer $port
+	 * @param string $smtpEncryption
 	 */
-	public function __construct($host, $port = 25) {
+	public function __construct($host, $port = NULL, $smtpEncryption = NULL) {
 
+		if($smtpEncryption) {
+
+			if(!in_array(strtoupper($smtpEncryption), $this->smtpEncryptions)) {
+				throw new SmtpMailerException(sprintf("Invalid encryption type '%s'.", $smtpEncryption), SmtpMailerException::INVALID_ENCRYPTION_TYPE);
+			}
+
+			$this->smtpEncryption = strtolower($smtpEncryption);
+
+		}
+
+		$this->port = is_null($port) ? self::DEFAULT_PORT : $port;
 		$this->host	= $host;
-		$this->port	= $port;
-
+		
 		mb_internal_encoding($this->mimeEncodingPreferences['output-charset']);
 
 	}
@@ -154,8 +181,19 @@ class SmtpMailer implements MailerInterface {
 	public function connect($timeout = 10) {
 
 		$this->timeout = $timeout;
+		
+		if($this->smtpEncryption === 'ssl') {
+			$protocol = $this->smtpEncryption . '://';
+		}
+		else {
+			$protocol = '';
+		}
 
-		$this->socket = @fsockopen($this->host, $this->port, $errno, $errstr, $this->timeout);
+		if($this->smtpEncryption === 'tls' && !function_exists('stream_socket_enable_crypto')) {
+			throw new SmtpMailerException('TLS encryption not possible: stream_socket_enable_crypto() not found.', SmtpMailerException::TLS_FAILED);
+		}
+
+		$this->socket = @fsockopen($protocol . $this->host, $this->port, $errno, $errstr, $this->timeout);
 
 		if (!$this->socket OR !$this->check(self::RFC_SERVICE_READY)) {
 			throw new SmtpMailerException(sprintf('Connection failed. %d: %s.', $errno, $errstr), SmtpMailerException::CONNECTION_FAILED);
@@ -169,9 +207,11 @@ class SmtpMailer implements MailerInterface {
 	 * close connection
 	 */
 	public function close() {
+
 		if($this->socket) {
 			fclose($this->socket);
 		}
+
 	}
 
 	/**
@@ -179,20 +219,20 @@ class SmtpMailer implements MailerInterface {
 	 * 
 	 * @param string $user
 	 * @param string $pwd
-	 * @param string $type
+	 * @param string $authType
 	 * 
 	 * @throws SmtpMailerException
 	 */
-	public function setCredentials($user, $pwd, $type = 'LOGIN') {
+	public function setCredentials($user, $pwd, $authType = 'LOGIN') {
 
 		$this->user = $user;
 		$this->pwd = $pwd;
 
-		if(!in_array(strtoupper($type), $this->authTypes)) {
-			throw new SmtpMailerException(sprintf("Invalid authentication type '%s'.", $type), SmtpMailerException::INVALID_AUTH_TYPE);
+		if(!in_array(strtoupper($authType), $this->authTypes)) {
+			throw new SmtpMailerException(sprintf("Invalid authentication type '%s'.", $authType), SmtpMailerException::INVALID_AUTH_TYPE);
 		}
 
-		$this->type = strtoupper($type);
+		$this->authType = strtoupper($authType);
 
 	}
 
@@ -287,8 +327,43 @@ class SmtpMailer implements MailerInterface {
 	 */
 	public function send() {
 
-		$this->sendEhlo();
+		// EHLO/HELO
+
+		$ehlo = TRUE;
+
+		try {
+			$this->sendEhlo();
+		}
+
+		catch(SmtpMailerException $e) {
+			if($e->getCode() !== SmtpMailerException::EHLO_FAILED) {
+				throw $e;
+			}
+
+			$ehlo = FALSE;
+			$this->sendHelo();
+		}
+		
+		// optional TLS
+
+		if($this->smtpEncryption === 'tls') {
+			$this->startTLS();
+			
+			// re-send ehlo/helo
+			
+			if($ehlo) {
+				$this->sendEhlo();
+			}
+			else {
+				$this->sendHelo();
+			}
+		}
+
+		// authentication
+
 		$this->auth();
+
+		// header fields
 
 		$this->put('MAIL FROM:<' . $this->from . '>' . self::CRLF);
 		
@@ -463,6 +538,8 @@ class SmtpMailer implements MailerInterface {
 	
 	/**
 	 * sends enhanced helo
+	 * 
+	 * @throws SmtpMailerException
 	 */
 	private function sendEhlo() {
 		$this->put("EHLO " . $this->host . self::CRLF);
@@ -474,6 +551,8 @@ class SmtpMailer implements MailerInterface {
 
 	/**
 	 * sends helo
+	 * 
+	 * @throws SmtpMailerException
 	 */
 	private function sendHelo() {
 		$this->put("HELO " . $this->host . self::CRLF);
@@ -484,24 +563,49 @@ class SmtpMailer implements MailerInterface {
 	}
 
 	/**
+	 * initiate TLS (encrypted) session
+	 * 
+	 * @throws SmtpMailerException
+	 */
+	private function startTLS() {
+
+	$this->put('STARTTLS' . self::CRLF);
+
+		if (!$this->check(self::RFC_SERVICE_READY)) {
+			throw new SmtpMailerException('Failed to establish TLS.', SmtpMailerException::TLS_FAILED);
+		}
+		
+		if(
+			!stream_socket_enable_crypto(
+				$this->socket,
+				TRUE,
+				STREAM_CRYPTO_METHOD_TLS_CLIENT
+			)
+		) {
+			throw new SmtpMailerException('TLS encryption of stream failed.', SmtpMailerException::TLS_FAILED);
+		}
+
+	}
+	
+	/**
 	 * send credentials to server
 	 * 
 	 * @throws SmtpMailerException
 	 */
 	private function auth() {
 
-		if($this->type == 'NONE') {
+		if($this->authType == 'NONE') {
 			return;
 		}
 
-		$this->put("AUTH " . $this->type . self::CRLF);
+		$this->put("AUTH " . $this->authType . self::CRLF);
 		$this->getResponse();
 
 		if( substr($this->response, 0, 1) != '3') {
 			throw new SmtpMailerException('Failed to send AUTH.', SmtpMailerException::AUTH_SEND_FAILED);
 		}
 	
-		if ($this->type == 'LOGIN') {
+		if ($this->authType == 'LOGIN') {
 			$this->put(base64_encode($this->user) . self::CRLF);
 
 			if(!$this->check(self::RFC_CONTINUE_REQUEST)) {
@@ -511,11 +615,11 @@ class SmtpMailer implements MailerInterface {
 			$this->put(base64_encode($this->pwd) . self::CRLF);
 		}
 
-		elseif ($this->type == 'PLAIN') {
+		elseif ($this->authType == 'PLAIN') {
 			$this->put(base64_encode($this->user . chr(0) . $this->user . chr(0) . $this->pwd) . self::CRLF);
 		}
 
-		elseif ($this->type == 'CRAM-MD5') {
+		elseif ($this->authType == 'CRAM-MD5') {
 			$data	= explode(' ', $this->response);
 			$data	= base64_decode($data[1]);
 			$key	= str_pad($this->pwd, 64, chr(0x00));

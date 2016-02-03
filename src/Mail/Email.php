@@ -12,7 +12,7 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.4.1 2016-01-22
+ * @version 0.4.2 2016-02-03
  */
 
 class Email {
@@ -241,7 +241,11 @@ class Email {
 
 			$mailer			= Application::getInstance()->getConfig()->mail->mailer;
 			$reflection		= new \ReflectionClass(str_replace('/', '\\', $mailer->class));
-			$this->mailer	= $reflection->newInstanceArgs(array($mailer->host, $mailer->port));
+			
+			$port			= isset($mailer->port)			? $mailer->port : NULL;
+			$encryption		= isset($mailer->encryption)	? $mailer->encryption : NULL;
+
+			$this->mailer	= $reflection->newInstanceArgs(array($mailer->host, $port, $encryption));
 
 			if(isset($mailer->auth_type)) {
 				$this->mailer->setCredentials($mailer->user, $mailer->pass, $mailer->auth_type);
