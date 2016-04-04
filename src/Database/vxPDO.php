@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.3.0, 2015-01-28
+ * @version 1.4.0, 2016-04-04
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -24,37 +24,43 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				 * host address of connection
 				 * @var string
 				 */
-	protected	$host,
+	protected	$host;
 	
+				/**
+				 * port of database connection
+				 * @var int
+				 */
+	protected	$port;
+
 				/**
 				 * username for connection
 				 * @var string
 				 */
-				$user,
+	protected	$user;
 
 				/**
 				 * password for connection
 				 * @var string
 				 */
-				$pass,
+	protected	$pass;
 
 				/**
 				 * name of database for connection
 				 * @var string
 				 */
-				$dbname,
+	protected	$dbname;
 
 				/**
 				 * datasource string of connection
 				 * @var string
 				 */
-				$dsn,
+	protected	$dsn;
 
 				/**
 				 * currently hardcoded type of database
 				 * @var string
 				 */
-				$type				= 'mysql',
+	protected	$type = 'mysql';
 
 				/**
 				 * automatically touch a lastUpdated column whenever
@@ -62,52 +68,59 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				 * any internal db mechanism is notoverwritten
 				 * @var boolean
 				 */
-				$touchLastUpdated	= TRUE,
+	protected	$touchLastUpdated	= TRUE;
 	
 				/**
 				 * holds last executed statement
 				 * @var \PDOStatement
 				 */
-				$statement,
+	protected	$statement;
 				
 				/**
 				 * lookup table for supported character sets
 				 * @var array
 				 */
-				$charsetMap = array(
-					'utf-8'				=> 'utf8',
-					'iso-8859-15'		=> 'latin1'
-				),
+	protected	$charsetMap = [
+					'utf-8'			=> 'utf8',
+					'iso-8859-15'	=> 'latin1'
+				];
 				
 				/**
 				 * column details of tables
 				 * @var array
 				 */
-				$tableStructureCache = array();
-	
-	public		$queryResult,
-				$numRows,
-				$affectedRows;
+	protected	$tableStructureCache = [];
 
 	/**
 	 * initiate connection
 	 * 
-	 * requires PHP >= 5.3.6 otherwise a "SET NAMES ..." init command for setting the charset is required
-	 * 
-	 * @todo parse port and unix_socket settings
+	 * @todo parse unix_socket settings
 	 * 
 	 * @param array $config
 	 * @throws \PDOException
 	 */
 	public function __construct(array $config) {
 	
-		$this->logtype	= isset($config['logtype']) && strtolower($config['logtype']) == 'xml' ? 'xml' : 'plain';
+		$config = array_change_key_case($config, CASE_LOWER);
+
+		foreach(['host', 'dbname', 'user'] as $configParam) {
+
+			if(!isset($config[$configParam])) {
+				throw new \PDOException(sprintf("Missing '%s' in db connection configuration.", $configParam));
+			}
+		}
 		
 		$this->host		= $config['host'];
 		$this->dbname	= $config['dbname'];
 		$this->user		= $config['user'];
 		$this->pass		= $config['pass'];
+		
+		if(isset($config['port'])) {
+			$this->port = (int) $config['port'];
+		}
 
+		$this->logtype	= isset($config['logtype']) && strtolower($config['logtype']) === 'xml' ? 'xml' : 'plain';
+		
 		$charset = 'utf8';
 
 		if(defined('DEFAULT_ENCODING')) {
@@ -116,21 +129,27 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				$charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
 			}
 			else {
-				throw new \PDOException("Character set '" . DEFAULT_ENCODING . "' not mapped or supported.");
+				throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
 			}
 
 		}
 
-		$options = array(
+		$options = [
 			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+		];
+		
+		$this->dsn = sprintf(
+			"%s:dbname=%s;host=%s;charset=%s",
+			$this->type,
+			$this->dbname,
+			$this->host,
+			$charset
 		);
 		
-		$this->dsn =
-			$this->type .
-			':dbname=' 	. $this->dbname .
-			';host='	. $this->host .
-			';charset='	. $charset;
+		if($this->port) {
+			$this->dsn .= ';port=' . $this->port;
+		}
 
 		parent::__construct($this->dsn, $this->user, $this->pass, $options);
 
@@ -150,41 +169,26 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 	}
 	
-	public function __destruct() {
-	}
-	
 	/**
-	 * clears the table structure cache
-	 * required after altering table structures
-	 * 
-	 * @return vxPDO
-	 */
-	public function clearTableStructureCache() {
-
-		$this->tableStructureCache = array();
-		return $this;
-
-	}
-
-	/**
-	 * insert a record in table $tableName
-	 * returns last insert id
-	 * 
-	 * @param string $tableName
-	 * @param array $data
-	 * 
-	 * @return NULL|int
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::insertRecord()
+	 *
+	 * @throws \PDOException
 	 */
 	public function insertRecord($tableName, array $data) {
-		
+
 		$data = array_change_key_case($data, CASE_LOWER);
 
 		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 
-		$names	= array();
-		$values	= array();
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
+
+		$names	= [];
+		$values	= [];
 
 		foreach(array_keys($this->tableStructureCache[$tableName]) as $attribute) {
 
@@ -209,13 +213,21 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		if(!count($names)) {
 			return NULL;
 		}
-		
+
 		// execute statement
-		
+
 		$this->statement = $this->prepare(
-			'INSERT INTO ' . $tableName .
-			' (`' . implode('`, `', $names) . '`)
-			VALUES (' . implode(', ', array_fill(0, count($names), '?')) . ')'
+			sprintf("
+					INSERT INTO
+						%s
+					(%s%s%s)
+					VALUES
+					(%s)
+				",
+				$tableName,
+				'`', implode('`, `', $names), '`',
+				implode(', ', array_fill(0, count($names), '?'))
+			)
 		);
 
 		$this->statement->execute($values);
@@ -225,17 +237,8 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	}
 
 	/**
-	 * update a record in table $tableName, identified by $keyValue
-	 * $keyValue can either be a scalar (matching a single-field primary key)
-	 * or an associative array
-	 * 
-	 * returns affected row count
-	 * 
-	 * @param string $tableName
-	 * @param mixed $keyValue
-	 * @param array $data
-	 * 
-	 * @return NULL|int
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::updateRecord()
 	 * 
 	 * @throws \PDOException
 	 */
@@ -246,9 +249,13 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
+
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
 		
-		$names	= array();
-		$values	= array();
+		$names	= [];
+		$values	= [];
 		
 		foreach(array_keys($this->tableStructureCache[$tableName]) as $attribute) {
 		
@@ -263,7 +270,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 			}
 		
 		}
-		
+
 		// are there any fields to update?
 	
 		if(count($names)) {
@@ -277,9 +284,18 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
 			
 					$this->statement = $this->prepare(
-						'UPDATE ' . $tableName .
-						' SET `' . implode('` = ?, `', $names). '` = ?' .
-						' WHERE `' . $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0] . '` = ?'
+						sprintf("
+								UPDATE
+									%s
+								SET
+									%s%s%s = ?
+								WHERE
+									%s%s%s = ?
+							",
+							$tableName,
+							'`', implode('` = ?, `', $names), '`',
+							'`', $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], '`'
+						)
 					);
 					
 					// add pk as parameter
@@ -289,7 +305,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				}
 				
 				else {
-					throw new \PDOException("Table '" . $tableName . "' has more than one or no primary key column.");
+					throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
 				}
 			
 			}
@@ -299,9 +315,18 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				// record identified with one or more specific attributes
 			
 				$this->statement = $this->prepare(
-					'UPDATE ' . $tableName .
-					' SET `' . implode('` = ?, `', $names). '` = ?' .
-					' WHERE `'. implode ('` = ? AND `', array_keys($keyValue)) . '` = ?'
+					sprintf("
+							UPDATE
+								%s
+							SET
+								%s%s%s = ?
+							WHERE
+								%s%s%s = ?
+						",
+						$tableName,
+						'`', implode('` = ?, `', $names), '`',
+						'`', implode ('` = ? AND `', array_keys($keyValue)), '`'
+					)
 				);
 				
 				// add filtering values as parameter
@@ -318,16 +343,8 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	}
 	
 	/**
-	 * delete a record in table $tableName, identified by $keyValue
-	 * $keyValue can either be a scalar (matching a single-field primary key)
-	 * or an associative array
-	 * 
-	 * returns affected row count
-	 * 
-	 * @param string $tableName
-	 * @param mixed $keyValue
-	 * 
-	 * @return NULL|int
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::deleteRecord()
 	 * 
 	 * @throws \PDOException
 	 */
@@ -338,41 +355,55 @@ class vxPDO extends \PDO implements DatabaseInterface {
 			if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 				$this->fillTableStructureCache($tableName);
 			}
-			
+
+			if(!array_key_exists($tableName, $this->tableStructureCache)) {
+				throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+			}
+
 			if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
-					
+
 				$this->statement = $this->prepare(
-					'DELETE FROM ' .
-					$tableName . 
-					' WHERE `' . 
-					$this->tableStructureCache[$tableName]['_primaryKeyColumns'][0] . '` = ?'
+					sprintf("
+							DELETE FROM
+								%s
+							WHERE
+								%s%s%s = ?
+						",
+						$tableName,
+						'`', $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], '`'
+					)
 				);
 
 				$this->statement->execute((array) $keyValue);
-				
+
 				return $this->statement->rowCount();
 					
 			}
 			
 			else {
-				throw new \PDOException("Table '" . $tableName . "' has more than one or no primary key column.");
+				throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
 			}
 				
 		}
 
 		else {
 			
-			$fieldNames = array();
+			$fieldNames = [];
 			
 			foreach(array_keys($keyValue) as $fieldName) {
 				$fieldNames[]	= '`' . $fieldName . '` = ?';
 			}
 
 			$this->statement = $this->prepare(
-				'DELETE FROM ' .
-				$tableName . 
-				' WHERE ' .
-				implode(' AND ', $fieldNames)
+				sprintf("
+						DELETE FROM
+							%s
+						WHERE
+							%s
+					",
+					$tableName,
+					implode(' AND ', $fieldNames)
+				)
 			);
 			
 			$this->statement->execute(array_values($keyValue));
@@ -384,10 +415,8 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	}
 
 	/**
-	 * ignore lastUpdated attribute when creating or updating record
-	 * leaves setting value of this field to MySQL mechanisms
-	 * 
-	 * @return vxPDO
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
 	 */
 	public function ignoreLastUpdated() {
 
@@ -395,11 +424,10 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		return $this;
 
 	}
-	
+
 	/**
-	 * set lastUpdated attribute when creating or updating record
-	 * 
-	 * @return vxPDO
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
 	 */
 	public function updateLastUpdated() {
 
@@ -409,29 +437,10 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	}
 
 	/**
-	 * get last statement prepared/executed in vxPDO method
-	 * 
-	 * @return \PDOStatement
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
 	 */
-	public function geStatement() {
-
-		return $this->statement;
-
-	}
-
-	/**
-	 * wrap prepare(), execute() and fetchAll()
-	 * 
-	 * parameters can have both integer key and string keys
-	 * but have to match the statement placeholder type
-	 * parameter value types govern the PDO parameter type setting
-	 * 
-	 * @param string $statementString
-	 * @param array $parameters
-	 * 
-	 * @return array
-	 */
-	public function doPreparedQuery($statementString, array $parameters = array()) {
+	public function doPreparedQuery($statementString, array $parameters = []) {
 
 		$this->primeQuery($statementString, $parameters);
 		$this->statement->execute();
@@ -441,25 +450,170 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	}
 
 	/**
-	 * wrap prepare(), execute() and rowCount()
-	 * 
-	 * parameters can have both integer key and string keys
-	 * but have to match the statement placeholder type
-	 * parameter value types govern the PDO parameter type setting
-	 * 
-	 * @param string $statementString
-	 * @param array $parameters
-	 * 
-	 * @return integer
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::execute()
 	 */
-	public function execute($statementString, array $parameters = array()) {
+	public function execute($statementString, array $parameters = []) {
 		
 		$this->primeQuery($statementString, $parameters);
 		$this->statement->execute();
 
 		return $this->statement->rowCount();
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
+	 */
+	public function tableExists($tableName) {
+
+		// fill cache with table names
+
+		if(empty($this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
+
+		return array_key_exists($tableName, $this->tableStructureCache);
+
+	} 
+
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
+	 */
+	public function columnExists($tableName, $columnName) {
+
+		// fill cache with table information
+				
+		if(empty($this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
+
+		// return FALSE when either table or column can not be found
+		
+		return
+			array_key_exists($tableName, $this->tableStructureCache) && 
+			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
+
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
+	 *
+	 * @throws \PDOException
+	 */
+	public function getColumnDefaultValue($tableName, $columnName) {
+		
+		// check whether column exists
+
+		if(!$this->columnExists($tableName, $columnName)) {
+			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
+		}
+		
+		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::getPrimaryKey()
+	 * 
+	 * @throws \PDOException
+	 */
+	public function getPrimaryKey($tableName) {
+
+		// check whether table exists
+
+		if(!$this->tableExists($tableName)) {
+			throw new \PDOException(sprintf("Unknown table '%s'.", $tableName));
+		}
+
+		// get pk information
+
+		if(empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
+		
+		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
+		
+		switch ($pkLength) {
+			case 0:
+				return NULL;
+				
+			case 1:
+				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0];
+				
+			default:
+				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'];
+		}
+
+	}
+
+	/**
+	 * return all possible options of an enum or set attribute
+	 * 
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @return array
+	 * 
+	 * @throws \PDOException
+	 */
+	public function getEnumValues($tableName, $columnName) {
+
+		// check whether column exists
+
+		if(!$this->columnExists($tableName, $columnName)) {
+			throw new \PDOException(sprintf("Unknown column '%s' in table '%s'.", $columnName, $tableName));
+		}
+		
+		// wrong data type
+		
+		$dataType = $this->tableStructureCache[$tableName][$columnName]['dataType']; 
+		
+		if(!($dataType === 'enum' || $dataType === 'set')) {
+			throw new \PDOException(sprintf("Column '%s' in table '%s' is not of type ENUM or SET.", $columnName, $tableName));
+		}
+		
+		// extract enum values the first time
+
+		if(!isset($this->tableStructureCache[$tableName][$columnName]['enumValues'])) {
+			preg_match_all(
+				"~'(.*?)'~i",
+				$this->tableStructureCache[$tableName][$columnName]['columnType'],
+				$matches
+			);
+			
+			$this->tableStructureCache[$tableName][$columnName]['enumValues'] = $matches[1];
+		}
+		
+		return $this->tableStructureCache[$tableName][$columnName]['enumValues'];
+		
+	}
+
+	/**
+	 * clears the table structure cache
+	 * required after altering table structures
+	 * 
+	 * @return vxPDO
+	 */
+	public function clearTableStructureCache() {
+
+		$this->tableStructureCache = [];
+		return $this;
+
+	}
+
+	/**
+	 * get last PDO statement prepared/executed
+	 * 
+	 * @return \PDOStatement
+	 */
+	public function getStatement() {
+
+		return $this->statement;
+
+	}
+
 	/**
 	 * prepare a statement and bind parameters
 	 * 
@@ -506,152 +660,6 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				
 		}
 	}
-	
-	/**
-	 * checks whether a table exists
-	 * 
-	 * @param string $tableName
-	 * @return boolean
-	 */
-	public function tableExists($tableName) {
-
-		// fill cache with table names
-
-		if(empty($this->tableStructureCache)) {
-			$this->fillTableStructureCache($tableName);
-		}
-
-		return array_key_exists($tableName, $this->tableStructureCache);
-
-	} 
-
-	/**
-	 * checks whether a column in table exists
-	 * returns FALSE when either table or column don't exist
-	 *
-	 * @param string $tableName
-	 * @param string $columnName
-	 * 
-	 * @todo sanitize $tableName
-	 * 
-	 * @return boolean
-	 */
-	public function columnExists($tableName, $columnName) {
-
-		// fill cache with table information
-				
-		if(empty($this->tableStructureCache)) {
-			$this->fillTableStructureCache($tableName);
-		}
-
-		// return FALSE when either table or column can not be found
-		
-		return
-			array_key_exists($tableName, $this->tableStructureCache) && 
-			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
-
-	}
-	
-	/**
-	 * get default value of a column
-	 * 
-	 * @param string $tableName
-	 * @param string $columnName
-	 * @return mixed
-	 * 
-	 * @throws \PDOException
-	 */
-	public function getColumnDefaultValue($tableName, $columnName) {
-		
-		// check whether column exists
-
-		if(!$this->columnExists($tableName, $columnName)) {
-			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
-		}
-		
-		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
-	}
-
-	/**
-	 * return all possible options of an enum or set attribute
-	 * 
-	 * @param string $tableName
-	 * @param string $columnName
-	 * @return array
-	 * 
-	 * @throws \PDOException
-	 */
-	public function getEnumValues($tableName, $columnName) {
-
-		// check whether column exists
-
-		if(!$this->columnExists($tableName, $columnName)) {
-			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
-		}
-		
-		// wrong data type
-		
-		$dataType = $this->tableStructureCache[$tableName][$columnName]['dataType']; 
-		
-		if(!($dataType === 'enum' || $dataType === 'set')) {
-			throw new \PDOException("Column '" . $columnName ."' in table '" . $tableName ."' is not of type ENUM or SET.");
-		}
-		
-		// extract enum values the first time
-
-		if(!isset($this->tableStructureCache[$tableName][$columnName]['enumValues'])) {
-			preg_match_all(
-				"~'(.*?)'~i",
-				$this->tableStructureCache[$tableName][$columnName]['columnType'],
-				$matches
-			);
-			
-			$this->tableStructureCache[$tableName][$columnName]['enumValues'] = $matches[1];
-		}
-		
-		return $this->tableStructureCache[$tableName][$columnName]['enumValues'];
-		
-	}
-
-	/**
-	 * get name(s) of primary key columns
-	 * returns
-	 * an array when pk consists of more than one attribute
-	 * a string when pk is formed by one attribute
-	 * null when no pk is set 
-	 * 
-	 * @param string $tableName
-	 * @throws \PDOException
-	 * @return mixed
-	 */
-	public function getPrimaryKey($tableName) {
-
-		// check whether table exists
-
-		if(!$this->tableExists($tableName)) {
-			throw new \PDOException("Unknown table '" . $tableName ."'.");
-		}
-
-		// get pk information
-
-		if(empty($this->tableStructureCache[$tableName])) {
-			$this->fillTableStructureCache($tableName);
-		}
-		
-		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
-		
-		switch ($pkLength) {
-			case 0:
-				return NULL;
-				
-			case 1:
-				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0];
-				
-			default:
-				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'];
-		}
-
-	}
 
 	/**
 	 * analyze columns of table $tableName
@@ -666,10 +674,10 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		if(empty($this->tableStructureCache)) {
 
-			$this->tableStructureCache = array();
+			$this->tableStructureCache = [];
 
 			foreach ($this->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN, 0) as $tn) {
-				$this->tableStructureCache[$tn] = array();
+				$this->tableStructureCache[$tn] = [];
 			} 
 
 		}
@@ -690,25 +698,28 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				COLUMN_TYPE
 
 			FROM
-				information_schema.`COLUMNS`
+				information_schema.COLUMNS
 
 			WHERE
 				TABLE_SCHEMA = ? AND
 				TABLE_NAME = ?
 		');
 
-		$statement->execute(array($this->dbname, $tableName));
+		$statement->execute([
+			$this->dbname,
+			$tableName
+		]);
 
-		$columns			= array();
-		$primaryKeyColumns	= array();
+		$columns			= [];
+		$primaryKeyColumns	= [];
 
 		foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $column) {
 
 			// get standard information for column
-
+			
 			$name = strtolower($column['COLUMN_NAME']);
 
-			$columns[$name] = array(
+			$columns[$name] = [
 				'columnName'	=> $column['COLUMN_NAME'],
 				'columnKey'		=> $column['COLUMN_KEY'],
 				'columnDefault'	=> $column['COLUMN_DEFAULT'],
@@ -718,7 +729,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				// required to retrieve options for enum and set data types
 					
 				'columnType'	=> $column['COLUMN_TYPE']
-			);
+			];
 
 			if($column['COLUMN_KEY'] === 'PRI') {
 				$primaryKeyColumns[] = $column['COLUMN_NAME']; 
