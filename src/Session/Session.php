@@ -6,7 +6,7 @@ namespace vxPHP\Session;
  * 
  *  @author Gregor Kofler
  *  
- *  @version 0.2.0 2016-04-06
+ *  @version 0.1.0 2015-03-14
  */
 class Session {
 
@@ -15,8 +15,6 @@ class Session {
 	/**
 	 * initialize session storage mechanism
 	 * currently only wraps PHP native session storage
-	 * 
-	 * @return Session
 	 */
 	public static function init() {
 
@@ -25,8 +23,7 @@ class Session {
 		}
 
 		self::$storage->start();
-
-		return self;
+		
 	}
 	
 	/**
