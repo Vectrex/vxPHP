@@ -7,5 +7,5 @@ class HtmlFormException extends \Exception {
 	const NO_REQUEST_BOUND			= 2;
 	const INVALID_METHOD			= 3;
 	const INVALID_ENCTYPE			= 4;
-
+	const CSRF_TOKEN_MISMATCH		= 5;
 }

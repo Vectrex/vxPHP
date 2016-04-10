@@ -13,11 +13,13 @@ use vxPHP\Http\Request;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Application\Application;
 use vxPHP\Session\Session;
+use vxPHP\Security\Csrf\CsrfTokenManager;
+use vxPHP\Security\Csrf\CsrfToken;
 
 /**
  * Parent class for HTML forms
  *
- * @version 1.5.4 2016-01-17
+ * @version 1.6.0 2016-04-10
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -26,13 +28,15 @@ use vxPHP\Session\Session;
 
 class HtmlForm {
 
+	const CSRF_TOKEN_NAME = '_csrf_token';
+	
 	/**
 	 * generated markup
 	 * 
 	 * @var string
 	 */
 	private $html;
-				
+
 	/**
 	 * name of template file
 	 * 
@@ -59,7 +63,7 @@ class HtmlForm {
 	 * 
 	 * @var FormElement[]
 	 */
-	private $elements = array();
+	private $elements = [];
 				
 	/**
 	 * values with which form elements are initialized
@@ -73,21 +77,21 @@ class HtmlForm {
 	 * 
 	 * @var array
 	 */
-	private $formErrors = array();
+	private $formErrors = [];
 
 	/**
 	 * array holding all HTML snippets assigned to form
 	 * 
 	 * @var array $formErrors
 	 */
-	private $miscHtml = array();
+	private $miscHtml = [];
 	
 	/**
 	 * array holding all variables assigned to form
 	 * 
 	 * @var array
 	 */
-	private $vars = array();
+	private $vars = [];
 	
 	/**
 	 * flag to indicate enabled APC upload
@@ -95,6 +99,23 @@ class HtmlForm {
 	 * @var boolean
 	 */
 	private $allowApcUpload	= FALSE;
+
+	/**
+	 * when set to TRUE a CSRF token
+	 * will be added to the form upon rendering
+	 * 
+	 * @var boolean
+	 */
+	private $enableCsrfToken = TRUE;
+
+	
+	/**
+	 * when set to TRUE some mild countermeasures
+	 * for spam blocking will be added to the form upon rendering
+	 * 
+	 * @var boolean
+	 */
+	private $enableAntiSpam = FALSE;
 
 	/**
 	 * the active request
@@ -137,7 +158,7 @@ class HtmlForm {
 	 *
 	 * @var string
 	 */
-	private $attributes = array();
+	private $attributes = [];
 
 	/**
 	 * Constructor
@@ -424,22 +445,25 @@ class HtmlForm {
 			$this->insertErrorMessages();
 			$this->cleanupHtml();
 
-			$attr = array();
+			$attr = [];
+
 			foreach($this->attributes as $k => $v) {
 				$attr[] = "$k='$v'";
 			}
 
 			return sprintf(
-				'<form action="%s" method="%s"%s%s>%s%s</form>',
+				'<form action="%s" method="%s"%s%s>%s%s%s</form>',
 				$this->action,
 				$this->method,
 				$this->type ? ( 'enctype="' . $this->type . '"') : '',
 				implode(' ', $attr),
-				isset($this->antiSpam) ? $this->antiSpam : '',
+				$this->enableAntiSpam	? $this->renderAntiSpam() : '',
+				$this->enableCsrfToken	? $this->renderCsrfToken() : '',
 				$this->html
 			);
 
 		}
+		
 	}
 
 	/**
@@ -461,7 +485,7 @@ class HtmlForm {
 
 			if(is_array($e)) {
 
-				$vals = array();
+				$vals = [];
 
 				foreach($e as $ndx => $elem) {
 					if(
@@ -541,7 +565,7 @@ class HtmlForm {
 			return FALSE;
 		}
 
-		$errors = array();
+		$errors = [];
 
 		foreach($this->formErrors as $key => $err) {
 			if(!is_array($err)) {
@@ -553,7 +577,7 @@ class HtmlForm {
 
 					if($this->formErrors[$key][$k]) {
 						if(!isset($errors[$key])) {
-							$errors[$key] = array();
+							$errors[$key] = [];
 						}
 						$errors[$key][$k] = TRUE;
 					}
@@ -578,7 +602,7 @@ class HtmlForm {
 	 * @param array $keys
 	 * @return array $error_texts
 	 */
-	public function getErrorTexts(array $keys = array()) {
+	public function getErrorTexts(array $keys = []) {
 
 		if($this->loadTemplate()) {
 			$pattern = empty($keys) ? '.*?' : implode('|', $keys);
@@ -592,19 +616,29 @@ class HtmlForm {
 	/**
 	 * validate form by checking validity of each form element
 	 * error flags are stored in HtmlForm::formErrors
+	 * will throw a HtmlFormException when CSRF tokens are enabled and the check fails
 	 *
 	 * @return HtmlForm
+	 * @throws HtmlFormException
 	 */
 	public function validate() {
 
-		$this->formErrors = array();
+		// check whether a CSRF token was tainted
+		
+		if($this->enableCsrfToken && !$this->checkCsrfToken()) {
+
+			throw new HtmlFormException('CSRF token mismatch.', HtmlFormException::CSRF_TOKEN_MISMATCH);
+
+		}
+
+		$this->formErrors = [];
 
 		foreach($this->elements as $name => $e) {
 			
 			if(is_array($e)) {
 				foreach($e as $ndx => $elem) {
 					if(!isset($this->formErrors[$name])) {
-						$this->formErrors[$name] = array();
+						$this->formErrors[$name] = [];
 					}
 					$this->formErrors[$name][$ndx] = !$elem->isValid();
 				}
@@ -781,25 +815,121 @@ class HtmlForm {
 	 * enable APC upload if supported by server
 	 */
 	public function enableApcUpload() {
+
 		$this->allowApcUpload = !is_null(Application::getInstance()->getConfig()->server['apc_on']);
+
 	}
 
 	/**
 	 * disable APC upload if supported by server
 	 */
 	public function disableApcUpload() {
+
 		$this->allowApcUpload = FALSE;
+
 	}
 
 	/**
-	 * add anti spam elements
+	 * disable CSRF token
+	 * 
+	 * no hidden form element with
+	 * a CSRF token will be added when form is rendered
+	 * 
+	 * @return HtmlForm
 	 */
-	public function addAntiSpam() {
+	public function disableCsrfToken() {
+		
+		$this->enableCsrfToken = FALSE;
 
-		$secret	= md5(uniqid(null, true));
+		return $this;
+	}
+
+	/**
+	 * enable CSRF token
+	 * 
+	 * a hidden form element with
+	 * a CSRF token will be added when form is rendered
+	 * 
+	 * @return HtmlForm
+	 */
+	public function enableCsrfToken() {
+	
+		$this->enableCsrfToken = TRUE;
+
+		return $this;
+	
+	}
+	
+	/**
+	 * disable spam countermeasures
+	 * 
+	 * @return HtmlForm
+	 */
+	public function disableAntiSpam() {
+		
+		$this->enableAntiSpam = FALSE;
+
+		return $this;
+	}
+
+	/**
+	 * enable spam countermeasures
+	 * 
+	 * @return HtmlForm
+	 */
+	public function enableAntiSpam() {
+	
+		$this->enableAntiSpam = TRUE;
+
+		return $this;
+	
+	}
+
+	/**
+	 * render CSRF token element
+	 * the token will use the form action as id
+	 * 
+	 * @return string
+	 */
+	private function renderCsrfToken() {
+		
+		$tokenManager = new CsrfTokenManager();
+		$token = $tokenManager->refreshToken('_' . $this->action . '_');
+
+		$e = new InputElement(self::CSRF_TOKEN_NAME, $token->getValue());
+		$e->setAttribute('type', 'hidden');
+		
+		return $e->render();
+	}
+	
+	/**
+	 * check whether a CSRF token remained untainted
+	 * compares the stored token with the request value
+	 * 
+	 * @return boolean
+	 */
+	private function checkCsrfToken() {
+
+		$tokenManager = new CsrfTokenManager();
+
+		$token = new CsrfToken(
+			'_' . $this->action . '_',
+			$this->requestValues->get(self::CSRF_TOKEN_NAME)
+		);
+
+		return $tokenManager->isTokenValid($token);
+
+	}
+
+	/**
+	 * render spam countermeasures
+	 */
+	private function renderAntiSpam() {
+
+		$secret	= md5(uniqid(NULL, TRUE));
 		$label	= md5($secret);
 		
-		Session::getSessionDataBag()->set('antiSpamTimer', array($secret => microtime(true)));
+		Session::getSessionDataBag()->set('antiSpamTimer', [$secret => microtime(TRUE)]);
 
 		$e = new InputElement('verify', NULL);
 		$e->setAttribute('type', 'hidden');
@@ -807,13 +937,14 @@ class HtmlForm {
 		$this->addElement($e);
 		$e->setValue($secret);
 
-		$this->antiSpam =	"
-			<div>{$e->render()}
+		return sprintf("
+			<div>%s
 				<span style='display:none;'>
-					<label for='confirm_entry_$label'>Leave this field empty!</label>
-					<input id='confirm_entry_$label' name='confirm_entry_$label' value=''>
+					<label for='confirm_entry_%s'>Leave this field empty!</label>
+					<input id='confirm_entry_%s' name='confirm_entry_%s' value=''>
 				</span>
-			</div>";
+			</div>", $e->render(), $label, $label, $label);
+
 	}
 
 	/**
@@ -821,7 +952,7 @@ class HtmlForm {
 	 *
 	 * @return boolean $spam_detected
 	 */
-	public function detectSpam(array $fields = array(), $threshold = 3) {
+	public function detectSpam(array $fields = [], $threshold = 3) {
 
 		$verify	= $this->requestValues->get('verify');
 		$timer	= Session::getSessionDataBag()->get('antiSpamTimer');
@@ -861,12 +992,14 @@ class HtmlForm {
 	 * @param $index_of_element_in_array
 	 */
 	public function removeElementByName($name, $ndx = NULL) {
+
 		if($ndx !== NULL) {
 			unset($this->elements[$name][$ndx]);
 		}
 		else {
 			unset($this->elements[$name]);
 		}
+
 	}
 
 	/**
@@ -957,7 +1090,7 @@ class HtmlForm {
 		return $tpl;
 	}
 
-	private function unrollLoops($stack, $counters = array()) {
+	private function unrollLoops($stack, $counters = []) {
 
 		$markup = '';
 
@@ -1000,7 +1133,7 @@ class HtmlForm {
 	}
 
 	private function loopRecursion($tpl, $level) {
-		$stack = array();
+		$stack = [];
 
 		while(true) {
 			preg_match('~(.*?)\{(loop\s+\044([a-z0-9_]+)(?:\[(\d+)\]|((?:\[\044[a-z0-9_]+\])*))|end_loop)}(.*)~si', $tpl, $matches);
@@ -1015,22 +1148,22 @@ class HtmlForm {
 
 			if($matches[2] === 'end_loop') {
 				if(empty($stack)) {
-					return array($right, $left);
+					return [$right, $left];
 				}
 				$stack[count($stack) - 1]['right'] = $left;
-				return array($right, $stack);
+				return [$right, $stack];
 			}
 
 			else {
 				list($right, $inner) = $this->loopRecursion($right, $level + 1);
 
-				$stack[] = array(
+				$stack[] = [
 					'lvl' => $level,
 					'left' => $left,
 					'loopVar' => $matches[3],
 					'ndx' => $matches[5],
 					'inner' => $inner
-				);
+				];
 			}
 			$tpl = $right;
 		}
@@ -1058,7 +1191,7 @@ class HtmlForm {
 	 */
 	private function doIfElseEndif($tpl) {
 
-		$stack = array();
+		$stack = [];
 		$nesting = 0;
 
 		while(true) {
@@ -1121,11 +1254,12 @@ class HtmlForm {
 						$left = $stack[$nesting]['left'].$left;
 					}
 
-					$stack[$nesting] = array(
+					$stack[$nesting] = [
 						'left' => $left,
 						'condition' => $cond,
 						'parentCond' => isset($parentCond) ? $parentCond : NULL,
-						'else' => FALSE);
+						'else' => FALSE
+					];
 					++$nesting;
 					break;
 			}
@@ -1157,15 +1291,12 @@ class HtmlForm {
 	 * insert form fields into template
 	 */
 	private function insertFormFields() {
-/*		$this->html = preg_replace_callback(
-			'~<\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(\s+.*?)*\s*\/>~i',
-			array($this, 'insertFieldsCallbackNew'),
-			$this->template);
-*/
+
 		$this->html = preg_replace_callback(
 			'/\{(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(\s+.*?)*\}/i',
-			array($this, 'insertFieldsCallback'),
-			$this->template);
+			[$this, 'insertFieldsCallback'],
+			$this->template
+		);
 	}
 
 	private function insertFieldsCallback($matches) {
@@ -1196,7 +1327,8 @@ class HtmlForm {
 				$this->html = preg_replace(
 					sprintf($rex, $name),
 					'$1',
-					$this->html);
+					$this->html
+				);
 			}
 			else {
 				foreach(array_keys($this->formErrors[$name]) as $ndx) {
@@ -1204,7 +1336,8 @@ class HtmlForm {
 						sprintf($rex, $name),
 						empty($this->formErrors[$name][$ndx]) ? '' : '$1',
 						$this->html,
-						1);
+						1
+					);
 				}
 			}
 		}
