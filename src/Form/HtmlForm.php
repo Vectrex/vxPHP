@@ -452,7 +452,7 @@ class HtmlForm {
 			}
 
 			return sprintf(
-				'<form action="%s" method="%s"%s%s>%s%s%s</form>',
+				'<form action="%s" method="%s" %s %s>%s%s%s</form>',
 				$this->action,
 				$this->method,
 				$this->type ? ( 'enctype="' . $this->type . '"') : '',
