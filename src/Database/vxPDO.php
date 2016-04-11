@@ -12,7 +12,7 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.4.0, 2016-04-04
+ * @version 1.4.1, 2016-04-11
  */
 class vxPDO extends \PDO implements DatabaseInterface {
 	
@@ -199,7 +199,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 			else if($attribute === strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
 				$names[]	= self::UPDATE_FIELD;
-				$values[]	= NULL;
+				$values[]	= date('Y-m-d H:i:s');
 			}
 		
 			else if($attribute === strtolower(self::CREATE_FIELD)) {
@@ -266,7 +266,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		
 			else if($attribute === strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
 				$names[]	= self::UPDATE_FIELD;
-				$values[]	= NULL;
+				$values[]	= date('Y-m-d H:i:s');
 			}
 		
 		}
