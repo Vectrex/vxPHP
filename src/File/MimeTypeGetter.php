@@ -8,7 +8,7 @@ namespace vxPHP\File;
  * Name: MimeTypeGetter
  * 
  * @version 1.0 by Bartlomiej Pohl, 2008-09-24
- * @version 1.2.1 by Gregor Kofler, 2010-05-16
+ * @version 1.3.0 by Gregor Kofler, 2016-04-13
  * 
  * @author Bartlomiej Pohl <badek@gmx.de>
  * @author Gregor Kofler <info@gregorkofler.com>
@@ -37,7 +37,7 @@ class MimeTypeGetter {
 	 *
 	 * @var array
 	 */
-	protected static $extensionToMime = array(
+	protected static $extensionToMime = [
 		'3dm'    => 'x-world/x-3dmf',
 		'3dmf'   => 'x-world/x-3dmf',
 		'a'      => 'application/octet-stream',
@@ -732,7 +732,7 @@ class MimeTypeGetter {
 		'swf'    => 'application/x-shockwave-flash2-preview',
 		'swf'    => 'application/futuresplash',
 		'swf'    => 'image/vnd.rn-realflash'
-	);
+	];
 	
 	protected static $mimeToExtension;
 
@@ -745,17 +745,18 @@ class MimeTypeGetter {
 	 * @return string the Mime Type
 	 */
 	protected static function getTypeFinfoExt($file) {
-		$finfo = @finfo_open(FILEINFO_MIME);
-		$type  = @finfo_file($finfo, $file);
-		
-		if($type != '') {
-			// trim (optional) charset info
-			$type = explode(';', $type);
-			return trim($type[0]);
+
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		$type = $finfo->file($file);
+
+		if($type) {
+			return $type;
 		}
+
 		else {
 			return self::getTypeFileExtList($file);
 		}
+
 	}
 	
 	/**
@@ -797,9 +798,9 @@ class MimeTypeGetter {
 	}
 	
 	/**
-	 * Gets the Mime type for a given File. It first checks which
+	 * Gets the MIME type for a given file. It first checks which
 	 * extension is installed and uses it. If no extension is loaded
-	 * it gets the Type with the extension list.
+	 * it gets the type with the extension list.
 	 * 
 	 * You can force the function to use a specific extension by using
 	 * the optional $force_extension param.
@@ -812,34 +813,67 @@ class MimeTypeGetter {
 	 * @param string $force_extension (optional) Forces specific extension.
 	 * @return string the Mime Type
 	 */
-	public static function get($file, $force_extension = false) {
-		if($force_extension === false) {
+	public static function get($file, $force_extension = FALSE) {
+
+		if(!$force_extension) {
+
 			if (extension_loaded('fileinfo')) {
 				return self::getTypeFinfoExt($file);
 			}
+
 			else if (extension_loaded('mime_magic')) {
 				return self::getTypeMimeExt($file);
 			}
+
 			else {
 				return self::getTypeFileExtList($file);
 			}
 		}
+
 		else {
 			switch($force_extension) {
-				case 'fileinfo'  : return self::getTypeFinfoExt($file);
-				case 'mime_magic': return self::getTypeMimeExt($file);
-				default          : return self::getTypeFileExtList($file);
+				case 'fileinfo':
+					return self::getTypeFinfoExt($file);
+
+				case 'mime_magic':
+					return self::getTypeMimeExt($file);
+
+				default:
+					return self::getTypeFileExtList($file);
+
 			}
 		}
+	}
+
+	/**
+	 * get MIME type for a given buffer
+	 * will only work when the fileinfo extension is present
+	 * otherwise an exception will be triggered, since no fallback is implemented
+	 * 
+	 * @param string $buffer
+	 * @return $buffer
+	 * @throws \RuntimeException
+	 */
+	public static function getForBuffer($buffer) {
+		
+		if (!extension_loaded('fileinfo')) {
+			throw new \RuntimeException("'Fileinfo' extension not found. Analyzing of buffers not supported.");
+		}
+
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		return $finfo->buffer($buffer);
+
 	}
 	
 	/**
 	 * returns a default extension by a given MIME type
 	 */
 	public static function getDefaultFileExtension($mime) {
+
 		if(empty(self::$mimeToExtension)) {
 	 		self::$mimeToExtension = array_flip(self::$extensionToMime);
 		}
 		return isset(self::$mimeToExtension[$mime]) ? self::$mimeToExtension[$mime] : '';
+
 	}
 }
