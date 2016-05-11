@@ -19,7 +19,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.6.0 2016-04-10
+ * @version 1.7.0 2016-05-11
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -159,6 +159,15 @@ class HtmlForm {
 	 * @var string
 	 */
 	private $attributes = [];
+
+	/**
+	 * when set to TRUE placeholders
+	 * for elements which were not assigned
+	 * to the form will throw a HTMLFormException
+	 * 
+	 * @var boolean
+	 */
+	private $onlyAssignedElements = FALSE;
 
 	/**
 	 * Constructor
@@ -439,31 +448,19 @@ class HtmlForm {
 
 		if($this->loadTemplate())	{
 
-			$this->primeTemplate();
-			$this->insertFormFields();
+			$this
+				->primeTemplate()
+				->insertFormFields()
+				->insertErrorMessages()
+				->insertFormStart()
+				->insertFormEnd()
+				->cleanupHtml()
+			;
 
-			$this->insertErrorMessages();
-			$this->cleanupHtml();
-
-			$attr = [];
-
-			foreach($this->attributes as $k => $v) {
-				$attr[] = "$k='$v'";
-			}
-
-			return sprintf(
-				'<form action="%s" method="%s" %s %s>%s%s%s</form>',
-				$this->action,
-				$this->method,
-				$this->type ? ( 'enctype="' . $this->type . '"') : '',
-				implode(' ', $attr),
-				$this->enableAntiSpam	? $this->renderAntiSpam() : '',
-				$this->enableCsrfToken	? $this->renderCsrfToken() : '',
-				$this->html
-			);
+			return $this->html;
 
 		}
-		
+
 	}
 
 	/**
@@ -751,6 +748,30 @@ class HtmlForm {
 
 	}
 
+	/**
+	 * disallows placeholders for unassigned elements
+	 * 
+	 * @return HtmlForm
+	 */
+	public function allowOnlyAssignedElements() {
+
+		$this->onlyAssignedElements = TRUE;
+		return $this;
+		
+	}
+
+	/**
+	 * allows placeholders for unassigned elements
+	 * 
+	 * @return HtmlForm
+	 */
+	public function allowUnassignedElements() {
+	
+		$this->onlyAssignedElements = FALSE;
+		return $this;
+
+	}
+	
 	private function setElementRequestValue(FormElement $e) {
 
 		if(is_null($this->requestValues)) {
@@ -1049,16 +1070,21 @@ class HtmlForm {
 	 * {loop $i} .. {end_loop}
 	 * {if(cond)} .. {else} .. {end_if}
 	 * {html:$string}
+	 * 
+	 * @return HtmlForm
 	 */
 	private function primeTemplate() {
 
 		// unroll Loops {loop $counter} .. {end_loop}
+
 		$this->template = $this->doLoop($this->template);
 
 		// insert vars and loop counters
+
 		$this->template = $this->doInsertVars($this->template);
 
 		// {if (cond)} .. {else} .. {end_if}
+
 		$this->template = $this->doIfElseEndif($this->template);
 
 		// insert misc html
@@ -1072,6 +1098,8 @@ class HtmlForm {
 				}
 			}
 		}
+		
+		return $this;
 	}
 
 	/*
@@ -1271,52 +1299,271 @@ class HtmlForm {
 	}
 
 	private function evalCondition($cond) {
-		if(!preg_match('/(.*?)\s*(==|!=|<|>|<=|>=)\s*(.*)/i', $cond, $terms) || count($terms) != 4) { return null; }
 
-		if(preg_match('/\044(.*)/', $terms[1], $tmp)) { $terms[1] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : null; }
-		if(preg_match('/\044(.*)/', $terms[3], $tmp)) { $terms[3] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : null; }
+		if(!preg_match('/(.*?)\s*(==|!=|<|>|<=|>=)\s*(.*)/i', $cond, $terms) || count($terms) != 4) { return NULL; }
+
+		if(preg_match('/\044(.*)/', $terms[1], $tmp)) { $terms[1] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : NULL; }
+		if(preg_match('/\044(.*)/', $terms[3], $tmp)) { $terms[3] = isset($this->vars[$tmp[1]]) ? $this->vars[$tmp[1]] : NULL; }
 
 		switch ($terms[2]) {
-			case '==':	return $terms[1] == $terms[3];
-			case '!=':	return $terms[1] != $terms[3];
-			case '<':	return $terms[1] < $terms[3];
-			case '>':	return $terms[1] > $terms[3];
-			case '<=':	return $terms[1] <= $terms[3];
-			case '>=':	return $terms[1] >= $terms[3];
+
+			case '==':
+				return $terms[1] == $terms[3];
+
+			case '!=':
+				return $terms[1] != $terms[3];
+
+			case '<':
+				return $terms[1] < $terms[3];
+
+			case '>':
+				return $terms[1] > $terms[3];
+
+			case '<=':
+				return $terms[1] <= $terms[3];
+
+			case '>=':
+				return $terms[1] >= $terms[3];
 		}
-		return null;
+
+		return NULL;
+
 	}
 
 	/**
 	 * insert form fields into template
+	 * 
+	 * form fields are expected in the following form
+	 * {<type}:{name}[ {attributes}]}
+	 * 
+	 * the optional attributes are provided as JSON encoded key-value pairs
+	 * 
+	 * @return HtmlForm
+	 * @throws HtmlFormException
 	 */
 	private function insertFormFields() {
 
 		$this->html = preg_replace_callback(
-			'/\{(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(\s+.*?)*\}/i',
-			[$this, 'insertFieldsCallback'],
+
+			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
+
+			function($matches) {
+
+				// check whether element was assigned
+
+				if(empty($this->elements[$matches[2]])) {
+
+					if($this->onlyAssignedElements) {
+						throw new HtmlFormException(sprintf("Element '%s' not assigned to form.", $matches[2]), HtmlFormException::INVALID_MARKUP);
+					}
+
+				}
+
+				else {
+
+					// validate JSON attribute string
+
+					if(!empty($matches[3])) {
+		
+						$attributes = json_decode($matches[3], TRUE, 2);
+	
+						if(is_null($attributes)) {
+							throw new HtmlFormException(sprintf("Could not parse JSON attributes for element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
+						}
+	
+						$attributes = array_change_key_case($attributes, CASE_LOWER);
+	
+						if(array_key_exists('name', $attributes)) {
+							throw new HtmlFormException(sprintf("Attribute 'name' is not allowed with element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
+						}
+	
+					}
+	
+					// insert rendered element
+	
+					if(is_array($this->elements[$matches[2]])) {
+	
+						$e = array_shift($this->elements[$matches[2]]);
+	
+						if(isset($attributes)) {
+							$e->setAttributes($attributes);
+						}
+	
+						return $e->render();
+	
+					}
+	
+					else {
+	
+						if(isset($attributes)) {
+							$this->elements[$matches[2]]->setAttributes($attributes);
+						}
+	
+						return $this->elements[$matches[2]]->render();
+	
+					}
+				}
+				
+			},
+
 			$this->template
 		);
+		
+		return $this;
+
+	}
+	
+	/**
+	 * allows an opening form tag at a custom position
+	 * searches for {form[ {attributes}]}
+	 * a maximum of one opening tag is allowed
+	 * the optional attributes are provided as JSON encoded key-value pairs,
+	 * these attributes override attributes set with setAttribute()
+	 * if no tag is found a <form> tag is prepended to the parsed HTML template
+	 * 
+	 * @return HtmlForm
+	 * @throws HtmlFormException
+	 */
+	private function insertFormStart() {
+
+		$this->html = preg_replace_callback(
+
+			'/\{\s*form(?:\s+(\{.*?\}))?\s*\}/i',
+
+			function($matches) {
+
+				// validate JSON attribute string
+
+				if(!empty($matches[1])) {
+
+					$attributes = json_decode($matches[1], TRUE, 2);
+
+					if(is_null($attributes)) {
+						throw new HtmlFormException("Could not parse JSON attributes for '{form}'.", HtmlFormException::INVALID_MARKUP);
+					}
+
+					$attributes = array_change_key_case($attributes, CASE_LOWER);
+
+					// check for not allowed attributes
+
+					foreach(['method', 'action', 'type'] as $method) {
+						if(in_array($method, $attributes)) {
+							throw new HtmlFormException(sprintf("Attribute '%s' not allowed for '{form}'.", $method), HtmlFormException::INVALID_MARKUP);
+						}
+					}
+
+					// override attributes which were set with HtmlForm::setAttribute()
+
+					$attributes = array_merge($this->attributes, $attributes);
+
+				}
+				
+				else {
+
+					$attributes = $this->attributes;
+
+				}
+
+				$attr = [];
+				
+				foreach($attributes as $k => $v) {
+					$attr[] = "$k='$v'";
+				}
+
+				// return <form ...> tag and CSRF token and antispam elements when applicable
+
+				return sprintf(
+					'<form action="%s" method="%s" %s %s>%s%s',
+					$this->action,
+					$this->method,
+					$this->type ? ( 'enctype="' . $this->type . '"') : '',
+					implode(' ', $attr),
+					$this->enableAntiSpam	? $this->renderAntiSpam() : '',
+					$this->enableCsrfToken	? $this->renderCsrfToken() : ''
+				);
+
+			},
+			$this->html,
+			-1,
+			$count
+		);
+
+		// more than one opening tag
+
+		if($count > 1) {
+
+			throw new HtmlFormException("Found more than one opening {form} tag.", HtmlFormException::INVALID_MARKUP);
+
+		}
+
+		// no opening tag found
+
+		if(!$count) {
+
+			$attr = [];
+	
+			foreach($this->attributes as $k => $v) {
+				$attr[] = "$k='$v'";
+			}
+			
+			$this->html = sprintf(
+				'<form action="%s" method="%s" %s %s>%s%s%s',
+				$this->action,
+				$this->method,
+				$this->type ? ( 'enctype="' . $this->type . '"') : '',
+				implode(' ', $attr),
+				$this->enableAntiSpam	? $this->renderAntiSpam() : '',
+				$this->enableCsrfToken	? $this->renderCsrfToken() : '',
+				$this->html
+			);
+		}
+		
+		return $this;
+
 	}
 
-	private function insertFieldsCallback($matches) {
+	/**
+	 * allows a closing form tag at a custom position
+	 * searches for {end_form}
+	 * a maximum of one closing tag is allowed
+	 * if no tag is found a </form> tag is appended to the parsed HTML template
+	 * 
+	 * @return HtmlForm
+	 * @throws HtmlFormException
+	 */
+	private function insertFormEnd() {
 
-		if(empty($this->elements[$matches[2]])) {
-			return '';
+		$this->html = preg_replace(
+			'/\{\s*end_form\s*\}/i',
+			'</form>',
+			$this->html,
+			-1,
+			$count
+		);
+
+		// more than one closing tag found
+
+		if($count > 1) {
+
+			throw new HtmlFormException("Found more than one closing {end_form} tags.", HtmlFormException::INVALID_MARKUP);
+
 		}
 
-		if(is_array($this->elements[$matches[2]])) {
-			$e = array_shift($this->elements[$matches[2]]);
-			return $e->render();
+		// no closing tag
+
+		if(!$count) {
+			$this->html .= '</form>';
 		}
-		else {
-			return $this->elements[$matches[2]]->render();
-		}
+
+		return $this;
+
 	}
 
 	/**
 	 * insert error messages into template
 	 * placeholder for error messages are replaced
+	 * 
+	 * @return HtmlForm
 	 */
 	private function insertErrorMessages() {
 
@@ -1341,13 +1588,22 @@ class HtmlForm {
 				}
 			}
 		}
+		
+		return $this;
+
 	}
 
 	/**
 	 * cleanup HTML output
-	 * removes any {} pairs
+	 * removes orphaned {} pairs
+	 * with error messages, misc HTML blocks or variables
+	 * 
+	 * @return HtmlForm
 	 */
 	private function cleanupHtml() {
-		$this->html = preg_replace('/\{\s*(input:.*?|button:.*?|textarea:.*?|dropdown:.*?|checkbox:.*?|options:.*?|error_.*?|html:.*?|loop.*?|end_loop|\044.*?)\s*\}/i', '', $this->html);
+
+		$this->html = preg_replace('/\{\s*(error_.*?|html:.*?|\044.*?)\s*\}/i', '', $this->html);
+		return $this;
+
 	}
 }
