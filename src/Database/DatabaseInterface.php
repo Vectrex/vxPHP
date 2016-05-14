@@ -136,4 +136,19 @@ interface DatabaseInterface {
 	 */
 	public function getColumnDefaultValue($tableName, $columnName);
 	
+	/**
+	 * set connection of database class
+	 * overwrites any previously set connection
+	 * 
+	 * @param \PDO $connection
+	 */
+	public function setConnection(\PDO $connection);
+	
+	/**
+	 * get current connection
+	 * 
+	 * @return \PDO
+	 */
+	public function getConnection();
+
 }

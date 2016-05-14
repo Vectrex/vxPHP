@@ -168,6 +168,24 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		}
 
 	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
+	 */
+	function setConnection(\PDO $connection) {
+		// TODO: Auto-generated method stub
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 *
+	 * @see \vxPHP\Database\DatabaseInterface::getConnection()
+	 */
+	public function getConnection() {
+		// TODO: Auto-generated method stub
+	}
 	
 	/**
 	 * {@inheritDoc}
