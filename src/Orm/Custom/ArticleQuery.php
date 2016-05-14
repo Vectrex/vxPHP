@@ -2,12 +2,10 @@
 namespace vxPHP\Orm\Custom;
 
 use vxPHP\Orm\Query;
-use vxPHP\Orm\QueryInterface;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleCategory;
 
-use vxPHP\Orm\Custom\Exception\ArticleException;
-use vxPHP\Database\vxPDO;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * query object which returns an array of Article objects
@@ -23,7 +21,7 @@ use vxPHP\Database\vxPDO;
  * 				selectFirst(2);
  *
  * @author Gregor Kofler
- * @version 0.3.0 2015-01-28
+ * @version 0.4.0 2016-05-14
  */
 class ArticleQuery extends Query {
 
@@ -31,9 +29,9 @@ class ArticleQuery extends Query {
 	 * provide initial database connection
 	 * currently only allows a Mysqli backend
 	 *
-	 * @param vxPDO $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 */
-	public function __construct(vxPDO $dbConnection) {
+	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->table		= 'articles';
 		$this->alias		= 'a';

@@ -3,7 +3,7 @@ namespace vxPHP\Logging;
 
 use vxPHP\Logging\LoggerInterface;
 
-class vxPDOXmlLogger implements LoggerInterface{
+class DatabaseXmlLogger implements LoggerInterface{
 
 
 public function writeLogEntry(){ 

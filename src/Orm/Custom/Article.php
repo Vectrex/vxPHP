@@ -9,14 +9,14 @@ use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
 use vxPHP\Application\Application;
-use vxPHP\Database\vxPDOUtil;
 use vxPHP\Observer\PublisherInterface;
+use vxPHP\Database\MysqlPDOUtil;
 
 /**
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.10.2 2015-12-12
+ * @version 0.11.0 2016-05-14
  */
 
 class Article implements PublisherInterface {
@@ -301,7 +301,7 @@ class Article implements PublisherInterface {
 
 				// update
 	
-				$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
+				$this->alias = MysqlPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
 				$db->updateRecord('articles', $this->id, $cols);
 
 			}
@@ -313,7 +313,7 @@ class Article implements PublisherInterface {
 				// update, but don't set lastUpdated and updatedBy
 
 				unset($cols['updatedBy']);
-				$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
+				$this->alias = MysqlPDOUtil::getAlias($db, $this->headline, 'articles', $this->id);
 				$db->ignoreLastUpdated()->updateRecord('articles', $this->id, $cols);
 			
 			}
@@ -323,7 +323,7 @@ class Article implements PublisherInterface {
 
 			// insert
 
-			$this->alias = vxPDOUtil::getAlias($db, $this->headline, 'articles');
+			$this->alias = MysqlPDOUtil::getAlias($db, $this->headline, 'articles');
 
 			$cols = array_merge(
 				(array) $this->getData(),

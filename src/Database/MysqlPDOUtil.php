@@ -3,7 +3,7 @@
 namespace vxPHP\Database;
 
 /**
- * utility functions supporting vxPDO with tasks common in vxPHP/vxWeb
+ * utility functions supporting MysqlPDO with tasks common in vxPHP based web applications
  *
  * This class is part of the vxPHP framework
  *
@@ -12,9 +12,9 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.1.0, 2014-09-05
+ * @version 0.1.0, 2016-05-14
  */
-class vxPDOUtil {
+class MysqlPDOUtil {
 	
 	/**
 	 * Re-formats a date strings depending on a supplied input locale to yyyy-mm-dd
@@ -116,7 +116,7 @@ class vxPDOUtil {
 	 * 
 	 * currently works only with single-field primary keys
 	 *
-	 * @param vxPDO $connection
+	 * @param DatabaseInterface $connection
 	 * @param string $aliasText
 	 * @param string $tableName
 	 * @param int $id
@@ -124,7 +124,7 @@ class vxPDOUtil {
 	 *
 	 * @return string
 	 */
-	public static function getAlias(vxPDO $connection, $aliasText, $tableName, $id = 0, $column = 'alias') {
+	public static function getAlias(DatabaseInterface $connection, $aliasText, $tableName, $id = 0, $column = 'alias') {
 
 		$replace = array(
 			'~(ä|&auml;)~'	=> 'ae',
@@ -143,7 +143,7 @@ class vxPDOUtil {
 			strtolower($aliasText)
 		);
 
-		$statement = $connection->prepare(
+		$statement = $connection->getConnection()->prepare(
 			'SELECT ' . $column . ' FROM ' . $tableName .
 			' WHERE LOWER(' . $column . ') LIKE ? AND ' .
 			$primaryKeyName . ' != ?'

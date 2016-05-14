@@ -20,14 +20,14 @@ class Psr4 {
 	 * 
 	 * @var array
 	 */
-	protected  $classPaths = array();
+	protected  $classPaths = [];
 	
 	/**
 	 * debug information populated by loadClass()
 	 * 
 	 * @var array
 	 */
-	protected $debug = array();
+	protected $debug = [];
 	
 	/**
 	 *
@@ -36,14 +36,14 @@ class Psr4 {
 	 *
 	 * @var array
 	 */
-	protected $loadedClasses = array();
+	protected $loadedClasses = [];
 	
 	/**
 	 * map of namespace prefixes to base directories
 	 *
 	 * @var array
 	 */
-	protected $prefixes = array();
+	protected $prefixes = [];
 	
 	/**
 	 * register autoloader with SPL
@@ -100,7 +100,7 @@ class Psr4 {
 		// initialize the namespace prefix array if needed
 
 		if (! isset($this->prefixes[$prefix])) {
-			$this->prefixes[$prefix] = array();
+			$this->prefixes[$prefix] = [];
 		}
 
 		// normalize each base dir with a trailing separator
@@ -124,7 +124,7 @@ class Psr4 {
 	 * @return void
 	 */
 	public function setPrefixes(array $prefixes) {
-		$this->prefixes = array();
+		$this->prefixes = [];
 		foreach ($prefixes as $prefix => $baseDir) {
 			$this->addPrefix($prefix, $baseDir);
 		}

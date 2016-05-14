@@ -7,16 +7,17 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
-use vxPHP\Database\vxPDO;
 use vxPHP\Autoload\Psr4;
 use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
+use vxPHP\Database\DatabaseInterface;
+use vxPHP\Database\DatabaseInterfaceFactory;
 
 /**
  * Application singleton
  *
  * @author Gregor Kofler
- * @version 1.4.0 2015-12-18
+ * @version 1.4.1 2016-05-14
  */
 class Application {
 
@@ -26,7 +27,7 @@ class Application {
 	private static $instance;
 
 	/**
-	 * @var vxPDO
+	 * @var DatabaseInterface
 	 */
 	private	$db;
 
@@ -234,7 +235,7 @@ class Application {
 	/**
 	 * returns default database object reference
 	 *
-	 * @return vxPDO
+	 * @return DatabaseInterface
 	 */
 	public function getDb() {
 
@@ -244,15 +245,20 @@ class Application {
 				return NULL;
 			}
 
-			$this->db = new vxPDO(array(
-				'host'		=> $this->config->db->host,
-				'dbname'	=> $this->config->db->name,
-				'user'		=> $this->config->db->user,
-				'pass'		=> $this->config->db->pass,
-				'logtype'	=> $this->config->db->logtype
-			));
+			$config = $this->config->db;
+
+			$this->db = DatabaseInterfaceFactory::create(
+				isset($config->type) ? $config->type : 'mysql',
+				[
+					'host'		=> $config->host,
+					'dbname'	=> $config->name,
+					'user'		=> $config->user,
+					'pass'		=> $config->pass,
+					'logtype'	=> $config->logtype
+				]
+			);
 		}
-		
+
 		return $this->db;
 
 	}

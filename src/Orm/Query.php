@@ -3,28 +3,28 @@
 namespace vxPHP\Orm;
 
 use vxPHP\Orm\QueryInterface;
-use vxPHP\Database\vxPDO;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.2.1 2015-01-28
+ * @version 0.3.0 2016-05-14
  */
 abstract class Query implements QueryInterface {
 
 	/**
-	 * @var vxPDO
+	 * @var DatabaseInterface
 	 */
 	protected	$dbConnection;
 
-	protected	$columns		= array(),
+	protected	$columns		= [],
 				$table,
 				$alias,
-				$innerJoins		= array(),
-				$whereClauses	= array (),
-				$columnSorts	= array (),
-				$valuesToBind	= array (),
+				$innerJoins		= [],
+				$whereClauses	= [],
+				$columnSorts	= [],
+				$valuesToBind	= [],
 				$sql,
 				$lastQuerySql;
 
@@ -32,9 +32,9 @@ abstract class Query implements QueryInterface {
 	 * provide initial database connection
 	 * currently only allows a Mysqli backend
 	 *
-	 * @param vxPDO $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 */
-	public function __construct(vxPDO $dbConnection) {
+	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->dbConnection = $dbConnection;
 
@@ -121,11 +121,11 @@ abstract class Query implements QueryInterface {
 	 * avoids assigning ArticleQuery instance to variable before
 	 * specifying and executing query
 	 *
-	 * @param vxPDO $dbConnection
+	 * @param DatabaseInterface $dbConnection
 	 * 
 	 * @return \vxPHP\Orm\Query
 	 */
-	public static function create(vxPDO $dbConnection) {
+	public static function create(DatabaseInterface $dbConnection) {
 
 		return new static($dbConnection);
 
@@ -202,8 +202,8 @@ abstract class Query implements QueryInterface {
 	 */
 	protected function buildQueryString() {
 
-		$w = array();
-		$s = array();
+		$w = [];
+		$s = [];
 
 		// start SQL statement
 

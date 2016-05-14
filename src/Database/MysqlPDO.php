@@ -3,7 +3,7 @@
 namespace vxPHP\Database;
 
 /**
- * augments \PDO and adds methods to support basic CRUD tasks
+ * wraps \PDO and adds methods to support basic CRUD tasks
  * 
  * This class is part of the vxPHP framework
  *
@@ -12,9 +12,9 @@ namespace vxPHP\Database;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.4.1, 2016-04-11
+ * @version 1.0.0, 2016-05-14
  */
-class vxPDO extends \PDO implements DatabaseInterface {
+class MysqlPDO implements DatabaseInterface {
 	
 	const		UPDATE_FIELD	= 'lastUpdated';
 	const		CREATE_FIELD	= 'firstCreated';
@@ -57,10 +57,10 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	protected	$dsn;
 
 				/**
-				 * currently hardcoded type of database
-				 * @var string
+				 * holds the wrapped PDO connection
+				 * @var \PDO
 				 */
-	protected	$type = 'mysql';
+	protected	$connection;
 
 				/**
 				 * automatically touch a lastUpdated column whenever
@@ -99,7 +99,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 * @param array $config
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config) {
+	public function __construct(array $config = []) {
 	
 		$config = array_change_key_case($config, CASE_LOWER);
 
@@ -141,7 +141,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 		
 		$this->dsn = sprintf(
 			"%s:dbname=%s;host=%s;charset=%s",
-			$this->type,
+			'mysql',
 			$this->dbname,
 			$this->host,
 			$charset
@@ -151,21 +151,21 @@ class vxPDO extends \PDO implements DatabaseInterface {
 			$this->dsn .= ';port=' . $this->port;
 		}
 
-		parent::__construct($this->dsn, $this->user, $this->pass, $options);
+		$connection = new \PDO($this->dsn, $this->user, $this->pass, $options);
 
-		if($this->type === 'mysql') {
-			$this->setAttribute(
-				\PDO::ATTR_STRINGIFY_FETCHES,
-				FALSE
-			);
+		$connection->setAttribute(
+			\PDO::ATTR_STRINGIFY_FETCHES,
+			FALSE
+		);
 
-			// set emulated prepares for MySQL servers < 5.1.17
+		// set emulated prepares for MySQL servers < 5.1.17
 
-			$this->setAttribute(
-				\PDO::ATTR_EMULATE_PREPARES,
-				version_compare($this->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
-			);
-		}
+		$connection->setAttribute(
+			\PDO::ATTR_EMULATE_PREPARES,
+			version_compare($connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
+		);
+
+		$this->connection = $connection;
 
 	}
 
@@ -174,7 +174,13 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
 	function setConnection(\PDO $connection) {
-		// TODO: Auto-generated method stub
+		
+		// ensure that a cached statement is deleted
+
+		$this->statement = NULL;
+
+		$this->connection = $connection;
+
 	}
 	
 	/**
@@ -184,7 +190,9 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::getConnection()
 	 */
 	public function getConnection() {
-		// TODO: Auto-generated method stub
+		
+		return $this->connection;
+
 	}
 	
 	/**
@@ -234,7 +242,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 		// execute statement
 
-		$this->statement = $this->prepare(
+		$this->statement = $this->connection->prepare(
 			sprintf("
 					INSERT INTO
 						%s
@@ -248,9 +256,13 @@ class vxPDO extends \PDO implements DatabaseInterface {
 			)
 		);
 
-		$this->statement->execute($values);
-
-		return $this->lastInsertId();
+		if(
+			$this->statement->execute($values)
+		) {
+			return $this->connection->lastInsertId();
+		}
+		
+		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 
 	}
 
@@ -301,7 +313,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	
 				if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
 			
-					$this->statement = $this->prepare(
+					$this->statement = $this->connection->prepare(
 						sprintf("
 								UPDATE
 									%s
@@ -332,7 +344,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				
 				// record identified with one or more specific attributes
 			
-				$this->statement = $this->prepare(
+				$this->statement = $this->connection->prepare(
 					sprintf("
 							UPDATE
 								%s
@@ -352,10 +364,14 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				$values = array_merge($values, array_values($keyValue));
 			
 			}
+
+			if(
+				$this->statement->execute($values)
+			) {
+				return $this->statement->rowCount();
+			}
 			
-			$this->statement->execute($values);
-			
-			return $this->statement->rowCount();
+			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 
 		}
 	}
@@ -380,7 +396,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 			if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
 
-				$this->statement = $this->prepare(
+				$this->statement = $this->connection->prepare(
 					sprintf("
 							DELETE FROM
 								%s
@@ -412,7 +428,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				$fieldNames[]	= '`' . $fieldName . '` = ?';
 			}
 
-			$this->statement = $this->prepare(
+			$this->statement = $this->connection->prepare(
 				sprintf("
 						DELETE FROM
 							%s
@@ -424,10 +440,14 @@ class vxPDO extends \PDO implements DatabaseInterface {
 				)
 			);
 			
-			$this->statement->execute(array_values($keyValue));
+			if(
+				$this->statement->execute(array_values($keyValue))
+			) {
+				return $this->statement->rowCount();
+			}
 			
-			return $this->statement->rowCount();
-				
+			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
+			
 		}
 
 	}
@@ -612,7 +632,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 * clears the table structure cache
 	 * required after altering table structures
 	 * 
-	 * @return vxPDO
+	 * @return MysqlPDO
 	 */
 	public function clearTableStructureCache() {
 
@@ -642,7 +662,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 	 */
 	private function primeQuery($statementString, array $parameters) {
 
-		$this->statement = $this->prepare($statementString);
+		$this->statement = $this->connection->prepare($statementString);
 		
 		foreach($parameters as $name => $value) {
 				
@@ -694,7 +714,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 
 			$this->tableStructureCache = [];
 
-			foreach ($this->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN, 0) as $tn) {
+			foreach ($this->connection->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN, 0) as $tn) {
 				$this->tableStructureCache[$tn] = [];
 			} 
 
@@ -706,7 +726,7 @@ class vxPDO extends \PDO implements DatabaseInterface {
 			return;
 		}
 
-		$statement = $this->prepare('
+		$statement = $this->connection->prepare('
 			SELECT
 				COLUMN_NAME,
 				COLUMN_KEY,
