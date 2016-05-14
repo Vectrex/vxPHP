@@ -150,5 +150,19 @@ interface DatabaseInterface {
 	 * @return \PDO
 	 */
 	public function getConnection();
+	
+	/**
+	 * initiate a transaction
+	 * 
+	 * @return bool success
+	 */
+	public function beginTransaction();
+	
+	/**
+	 * commit a pending transaction
+	 * 
+	 * @return bool success
+	 */
+	public function commit();
 
 }

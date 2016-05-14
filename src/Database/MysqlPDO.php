@@ -451,7 +451,29 @@ class MysqlPDO implements DatabaseInterface {
 		}
 
 	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 *
+	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
+	 */
+	public function beginTransaction() {
+		
+		return $this->connection->beginTransaction();
+		
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::commit()
+	 */
+	public function commit() {
+		
+		return $this->connection->commit();
 
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
