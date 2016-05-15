@@ -809,11 +809,20 @@ class MetaFile implements PublisherInterface {
 	 * @param array $data new data
 	 */
 	public function setMetaData($data) {
+
+		/*
+		 * @todo improve this hack
+		 */
+		if(isset($data['customSort']) && trim($data['customSort']) === '') {
+			$data['customSort'] = NULL;
+		}
+
 		unset($data['File']);
 		unset($data['filesID']);
-
+		
 		$this->data = $data + $this->data;
 		$this->commit();
+
 	}
 
 	/**
