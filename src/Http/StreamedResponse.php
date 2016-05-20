@@ -37,10 +37,8 @@ class StreamedResponse extends Response {
 	 * @param mixed   $callback A valid PHP callback
 	 * @param integer $status   The response status code
 	 * @param array   $headers  An array of response headers
-	 *
-	 * @api
 	 */
-	public function __construct(callable $callback = NULL, $status = 200, $headers = array()) {
+	public function __construct(callable $callback = NULL, $status = 200, $headers = []) {
 
 		parent::__construct(NULL, $status, $headers);
 
@@ -55,7 +53,7 @@ class StreamedResponse extends Response {
 	/**
 	 * {@inheritDoc}
 	 */
-	public static function create($callback = NULL, $status = 200, $headers = array()) {
+	public static function create($callback = NULL, $status = 200, $headers = []) {
 
 		return new static($callback, $status, $headers);
 
@@ -64,24 +62,11 @@ class StreamedResponse extends Response {
 	/**
 	 * Sets the PHP callback associated with this Response.
 	 *
-	 * @param mixed $callback A valid PHP callback
-	 *
-	 * @throws \LogicException
+	 * @param callable $callback
 	 */
-	public function setCallback($callback) {
-		if (!is_callable($callback)) {
-				throw new \LogicException('The Response callback must be a valid PHP callable.');
-		}
+	public function setCallback(callable $callback) {
+
 		$this->callback = $callback;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function prepare(Request $request) {
-
-		$this->headers->set('Cache-Control', 'no-cache');
-		return parent::prepare($request);
 
 	}
 
@@ -91,6 +76,7 @@ class StreamedResponse extends Response {
 	 * This method only sends the content once.
 	 */
 	public function sendContent() {
+
 		if ($this->streamed) {
 			return;
 		}
@@ -102,6 +88,7 @@ class StreamedResponse extends Response {
 		}
 
 		call_user_func($this->callback);
+
 	}
 
 	/**
@@ -110,9 +97,11 @@ class StreamedResponse extends Response {
 	 * @throws \LogicException when the content is not null
 	 */
 	public function setContent($content) {
+
 		if (NULL !== $content) {
 			throw new \LogicException('The content cannot be set on a StreamedResponse instance.');
 		}
+
 	}
 
 	/**
@@ -121,6 +110,8 @@ class StreamedResponse extends Response {
 	 * @return false
 	 */
 	public function getContent() {
+
 		return FALSE;
+
 	}
 }

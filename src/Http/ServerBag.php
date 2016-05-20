@@ -27,18 +27,20 @@ class ServerBag extends ParameterBag {
 	 */
 	public function getHeaders() {
 
-		$headers = array();
+		$headers = [];
+
+		$contentHeaders = ['CONTENT_LENGTH' => TRUE, 'CONTENT_MD5' => TRUE, 'CONTENT_TYPE' => TRUE];
 
 		foreach ($this->parameters as $key => $value) {
+
 			if (0 === strpos($key, 'HTTP_')) {
 				$headers[substr($key, 5)] = $value;
 			}
 
-			// CONTENT_* are not prefixed with HTTP_
-
-			elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) {
+			elseif (isset($contentHeaders[$key])) {
 				$headers[$key] = $value;
 			}
+
 		}
 
 		if (isset($this->parameters['PHP_AUTH_USER'])) {
@@ -71,21 +73,53 @@ class ServerBag extends ParameterBag {
 				$authorizationHeader = $this->parameters['REDIRECT_HTTP_AUTHORIZATION'];
 			}
 
-			// Decode AUTHORIZATION header into PHP_AUTH_USER and PHP_AUTH_PW when authorization header is basic
+			if (NULL !== $authorizationHeader) {
 
-			if ((NULL !== $authorizationHeader) && (0 === stripos($authorizationHeader, 'basic'))) {
-				$exploded = explode(':', base64_decode(substr($authorizationHeader, 6)));
-				if (count($exploded) == 2) {
-					list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;
+				if (0 === stripos($authorizationHeader, 'basic ')) {
+
+					// Decode AUTHORIZATION header into PHP_AUTH_USER and PHP_AUTH_PW when authorization header is basic
+
+					$exploded = explode(':', base64_decode(substr($authorizationHeader, 6)), 2);
+					
+					if (count($exploded) == 2) {
+						list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;
+					}
+				}
+
+				elseif (empty($this->parameters['PHP_AUTH_DIGEST']) && (0 === stripos($authorizationHeader, 'digest '))) {
+
+					// In some circumstances PHP_AUTH_DIGEST needs to be set
+
+					$this->parameters['PHP_AUTH_DIGEST'] = $headers['PHP_AUTH_DIGEST'] = $authorizationHeader;
+
+				}
+
+				elseif (0 === stripos($authorizationHeader, 'bearer ')) {
+					/*
+					 * XXX: Since there is no PHP_AUTH_BEARER in PHP predefined variables,
+					 *      I'll just set $headers['AUTHORIZATION'] here.
+					 *      http://php.net/manual/en/reserved.variables.server.php
+					 */
+					$headers['AUTHORIZATION'] = $authorizationHeader;
 				}
 			}
 		}
 
+		if (isset($headers['AUTHORIZATION'])) {
+			return $headers;
+		}
+
 		// PHP_AUTH_USER/PHP_AUTH_PW
+
 		if (isset($headers['PHP_AUTH_USER'])) {
 			$headers['AUTHORIZATION'] = 'Basic ' . base64_encode($headers['PHP_AUTH_USER'].':' . $headers['PHP_AUTH_PW']);
 		}
 
+		elseif (isset($headers['PHP_AUTH_DIGEST'])) {
+			$headers['AUTHORIZATION'] = $headers['PHP_AUTH_DIGEST'];
+		}
+
 		return $headers;
 	}
+
 }

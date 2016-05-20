@@ -15,17 +15,16 @@ class RedirectResponse extends Response {
 	
 	/**
 	 * creates a redirect response conforming to the rules defined for a redirect status code
+	 * The URL to redirect to should be a full URL, with schema etc.
 	 *
 	 * @param string  $url
 	 * @param integer $status
 	 * @param array   $headers
+	 * 
+	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($url, $status = 302, $headers = array()) {
+	public function __construct($url, $status = Response::HTTP_FOUND, $headers = []) {
 
-		if (empty($url)) {
-			throw new \InvalidArgumentException('Cannot redirect to an empty URL.');
-		}
-	
 		parent::__construct('', $status, $headers);
 	
 		$this->setTargetUrl($url);
@@ -33,12 +32,13 @@ class RedirectResponse extends Response {
 		if (!$this->isRedirect()) {
 			throw new \InvalidArgumentException(sprintf('The HTTP status code is not a redirect ("%s" given).', $status));
 		}
+
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public static function create($url = '', $status = 302, $headers = array()) {
+	public static function create($url = '', $status = Response::HTTP_FOUND, $headers = []) {
 
 		return new static($url, $status, $headers);
 
@@ -89,4 +89,5 @@ EOD;
 
 		return $this;
 	}
+
 }

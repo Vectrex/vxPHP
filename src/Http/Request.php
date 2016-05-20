@@ -23,80 +23,96 @@ namespace vxPHP\Http;
  *   * getUriForPath
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
 class Request {
-    const HEADER_CLIENT_IP		= 'client_ip';
+
+	const HEADER_FORWARDED		= 'forwarded';
+	const HEADER_CLIENT_IP		= 'client_ip';
     const HEADER_CLIENT_HOST	= 'client_host';
     const HEADER_CLIENT_PROTO	= 'client_proto';
     const HEADER_CLIENT_PORT	= 'client_port';
 
-    protected static $trustProxy		= FALSE;
-    protected static $trustedProxies	= array();
+	const METHOD_HEAD		= 'HEAD';
+	const METHOD_GET		= 'GET';
+	const METHOD_POST		= 'POST';
+	const METHOD_PUT		= 'PUT';
+	const METHOD_PATCH		= 'PATCH';
+	const METHOD_DELETE		= 'DELETE';
+	const METHOD_PURGE		= 'PURGE';
+	const METHOD_OPTIONS	= 'OPTIONS';
+	const METHOD_TRACE		= 'TRACE';
+	const METHOD_CONNECT	= 'CONNECT';
+
+	/**
+	 * @var string[]
+	 */
+    protected static $trustedProxies		= [];
+
+	/**
+	 * @var string[]
+	 */
+    protected static $trustedHostPatterns	= [];
+
+	/**
+	 * @var string[]
+	 */
+    protected static $trustedHosts			= [];
 
     /**
      * Names for headers that can be trusted when
      * using trusted proxies.
-     *
-     * The default names are non-standard, but widely used
+     * The FORWARDED header is the standard as of rfc7239.
+     * The other headers are non-standard, but widely used
      * by popular reverse proxies (like Apache mod_proxy or Amazon EC2).
      */
-    protected static $trustedHeaders = array(
-        self::HEADER_CLIENT_IP    => 'X_FORWARDED_FOR',
-        self::HEADER_CLIENT_HOST  => 'X_FORWARDED_HOST',
-        self::HEADER_CLIENT_PROTO => 'X_FORWARDED_PROTO',
-        self::HEADER_CLIENT_PORT  => 'X_FORWARDED_PORT',
-    );
+    protected static $trustedHeaders = [
+		self::HEADER_FORWARDED		=> 'FORWARDED',
+		self::HEADER_CLIENT_IP		=> 'X_FORWARDED_FOR',
+		self::HEADER_CLIENT_HOST	=> 'X_FORWARDED_HOST',
+		self::HEADER_CLIENT_PROTO	=> 'X_FORWARDED_PROTO',
+		self::HEADER_CLIENT_PORT	=> 'X_FORWARDED_PORT',
+    ];
 
-    protected static $httpMethodParameterOverride = false;
+    protected static $httpMethodParameterOverride = FALSE;
 
     /**
-     * @var \vxPHP\Http\ParameterBag
-     *
-     * @api
+     * @var ParameterBag
      */
     public $attributes;
 
     /**
-     * @var \vxPHP\Http\ParameterBag
-     *
-     * @api
+     * $_POST
+     * @var ParameterBag
      */
     public $request;
 
     /**
-     * @var \vxPHP\Http\ParameterBag
-     *
-     * @api
+     * $_GET
+     * @var ParameterBag
      */
     public $query;
 
     /**
-     * @var \vxPHP\Http\ServerBag
-     *
-     * @api
+     * $_SERVER
+     * @var ServerBag
      */
     public $server;
 
     /**
-     * @var \vxPHP\Http\FileBag
-     *
-     * @api
+     * $_FILES
+     * @var FileBag
      */
     public $files;
 
     /**
-     * @var \vxPHP\Http\ParameterBag
-     *
-     * @api
+     * $_COOKIES
+     * @var ParameterBag
      */
     public $cookies;
 
     /**
-     * @var \vxPHP\Http\HeaderBag
-     *
-     * @api
+     * $_SERVER
+     * @var HeaderBag
      */
     public $headers;
 
@@ -114,6 +130,11 @@ class Request {
      * @var array
      */
     protected $charsets;
+
+    /**
+     * @var array
+     */
+    protected $encodings;
 
     /**
      * @var array
@@ -158,88 +179,103 @@ class Request {
     /**
      * @var string
      */
-    protected $defaultLocale = 'en';
+	protected $defaultLocale = 'en';
+
+	/**
+	 * @var array
+	 */
+	protected static $formats;
+    
+	//@todo remove
+	protected static $trustProxy;
+	/**
+	 * Constructor.
+	 *
+	 * @param array  $query      The GET parameters
+	 * @param array  $request    The POST parameters
+	 * @param array  $attributes The request attributes (parameters parsed from the PATH_INFO, ...)
+	 * @param array  $cookies    The COOKIE parameters
+	 * @param array  $files      The FILES parameters
+	 * @param array  $server     The SERVER parameters
+	 * @param string $content    The raw body data
+	 */
+	public function __construct(array $query = [], array $request = [], array $attributes = [], array $cookies = [], array $files = [], array $server = [], $content = NULL) {
+
+		$this->initialize($query, $request, $attributes, $cookies, $files, $server, $content);
+
+	}
 
     /**
-     * @var array
-     */
-    protected static $formats;
+	 * Sets the parameters for this request.
+	 * This method also re-initializes all properties.
+	 *
+	 * @param array  $query      The GET parameters
+	 * @param array  $request    The POST parameters
+	 * @param array  $attributes The request attributes (parameters parsed from the PATH_INFO, ...)
+	 * @param array  $cookies    The COOKIE parameters
+	 * @param array  $files      The FILES parameters
+	 * @param array  $server     The SERVER parameters
+	 * @param string|resource $content    The raw body data
+	 */
+	public function initialize(array $query = [], array $request = [], array $attributes = [], array $cookies = [], array $files = [], array $server = [], $content = NULL) {
 
-    /**
-     * Constructor.
-     *
-     * @param array  $query      The GET parameters
-     * @param array  $request    The POST parameters
-     * @param array  $attributes The request attributes (parameters parsed from the PATH_INFO, ...)
-     * @param array  $cookies    The COOKIE parameters
-     * @param array  $files      The FILES parameters
-     * @param array  $server     The SERVER parameters
-     * @param string $content    The raw body data
-     *
-     * @api
-     */
-    public function __construct(array $query = array(), array $request = array(), array $attributes = array(), array $cookies = array(), array $files = array(), array $server = array(), $content = null)
-    {
-        $this->initialize($query, $request, $attributes, $cookies, $files, $server, $content);
-    }
+        $this->request		= new ParameterBag($request);
+        $this->query		= new ParameterBag($query);
+        $this->attributes	= new ParameterBag($attributes);
+        $this->cookies		= new ParameterBag($cookies);
+        $this->files		= new FileBag($files);
+        $this->server		= new ServerBag($server);
+        $this->headers		= new HeaderBag($this->server->getHeaders());
 
-    /**
-     * Sets the parameters for this request.
-     *
-     * This method also re-initializes all properties.
-     *
-     * @param array  $query      The GET parameters
-     * @param array  $request    The POST parameters
-     * @param array  $attributes The request attributes (parameters parsed from the PATH_INFO, ...)
-     * @param array  $cookies    The COOKIE parameters
-     * @param array  $files      The FILES parameters
-     * @param array  $server     The SERVER parameters
-     * @param string $content    The raw body data
-     *
-     * @api
-     */
-    public function initialize(array $query = array(), array $request = array(), array $attributes = array(), array $cookies = array(), array $files = array(), array $server = array(), $content = null)
-    {
-        $this->request = new ParameterBag($request);
-        $this->query = new ParameterBag($query);
-        $this->attributes = new ParameterBag($attributes);
-        $this->cookies = new ParameterBag($cookies);
-        $this->files = new FileBag($files);
-        $this->server = new ServerBag($server);
-        $this->headers = new HeaderBag($this->server->getHeaders());
+        $this->content					= $content;
+        $this->languages				= NULL;
+        $this->charsets					= NULL;
+        $this->encodings				= NULL;
+        $this->acceptableContentTypes	= NULL;
+        $this->pathInfo					= NULL;
+        $this->requestUri				= NULL;
+        $this->baseUrl					= NULL;
+        $this->basePath					= NULL;
+        $this->method					= NULL;
+        $this->format					= NULL;
 
-        $this->content = $content;
-        $this->languages = null;
-        $this->charsets = null;
-        $this->acceptableContentTypes = null;
-        $this->pathInfo = null;
-        $this->requestUri = null;
-        $this->baseUrl = null;
-        $this->basePath = null;
-        $this->method = null;
-        $this->format = null;
     }
 
     /**
      * Creates a new request with values from PHP's super globals.
      *
      * @return Request A new request
-     *
-     * @api
      */
-    public static function createFromGlobals()
-    {
-        $request = new static($_GET, $_POST, array(), $_COOKIE, $_FILES, $_SERVER);
+	public static function createFromGlobals() {
 
-        if (0 === strpos($request->headers->get('CONTENT_TYPE'), 'application/x-www-form-urlencoded')
-            && in_array(strtoupper($request->server->get('REQUEST_METHOD', 'GET')), array('PUT', 'DELETE', 'PATCH'))
+    	// With the php's bug #66606, the php's built-in web server
+    	// stores the Content-Type and Content-Length header values in
+    	// HTTP_CONTENT_TYPE and HTTP_CONTENT_LENGTH fields.
+
+		$server = $_SERVER;
+
+    	if ('cli-server' === PHP_SAPI) {
+    		if (array_key_exists('HTTP_CONTENT_LENGTH', $_SERVER)) {
+    			$server['CONTENT_LENGTH'] = $_SERVER['HTTP_CONTENT_LENGTH'];
+    		}
+    		if (array_key_exists('HTTP_CONTENT_TYPE', $_SERVER)) {
+    			$server['CONTENT_TYPE'] = $_SERVER['HTTP_CONTENT_TYPE'];
+    		}
+    	}
+    	 
+        $request = new static($_GET, $_POST, [], $_COOKIE, $_FILES, $server);
+
+        if (
+        	0 === strpos($request->headers->get('CONTENT_TYPE'), 'application/x-www-form-urlencoded') &&
+            in_array(strtoupper($request->server->get('REQUEST_METHOD', 'GET')), ['PUT', 'DELETE', 'PATCH'])
         ) {
             parse_str($request->getContent(), $data);
             $request->request = new ParameterBag($data);
         }
 
         return $request;
-    }
+
+	}
 
     /**
      * Creates a Request based on a given URI and configuration.
