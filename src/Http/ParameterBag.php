@@ -1,12 +1,18 @@
 <?php
-
 /*
- * This file is part of the Symfony package.
+ * This file is part of the vxPHP/vxWeb framework
  *
- * (c) Fabien Potencier <fabien@symfony.com>
+ * (c) Gregor Kofler <info@gregorkofler.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ */
+
+
+/*
+ * with minor adaptations lifted from Symfony's HttpFoundation classes
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
  */
 
 namespace vxPHP\Http;
