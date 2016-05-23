@@ -40,7 +40,7 @@ class DatabaseInterfaceFactory {
 	 * 
 	 * @throws \Exception
 	 */
-	public function create($type = 'mysql', array $config = []) {
+	public static function create($type = 'mysql', array $config = []) {
 		
 		$type = strtolower($type);
 		
