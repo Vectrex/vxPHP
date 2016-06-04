@@ -8,58 +8,110 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
 use vxPHP\Controller\Controller;
 use vxPHP\Http\Request;
-use vxPHP\Http\Response;
 use vxPHP\Http\RedirectResponse;
 
 /**
  *
  * @author Gregor Kofler
  *
- * @version 0.9.5 2015-11-01
+ * @version 0.10.0 2016-06-03
  *
  */
 class Route {
 
-	private $routeId,
-			$path,
-			$scriptName,
-			$controllerString,
-			$methodName,
-			$redirect,
-			$auth,
-			$authParameters,
-			$url,
-			$match,
+	/**
+	 * unique id of route
+	 * @var string
+	 */
+	private $routeId;
+	
+	/**
+	 * path which will trigger route
+	 * if no path is configured, the path
+	 * defaults to routeId
+	 * @var string
+	 */
+	private $path;
+	
+	/**
+	 * the script with which a route becomes active
+	 * @var string
+	 */
+	private $scriptName;
+	
+	/**
+	 * the name of the controller class, which will handle the route 
+	 * @var string
+	 */
+	private $controllerClassName;
+	
+	/**
+	 * the method name which is called, when handling the route
+	 * defaults to Controller::execute(), when no method is specified
+	 * @var string
+	 */
+	private $methodName;
 
-			/**
-			 * array with complete placeholder information
-			 * (name, default)
-			 * @var array
-			 */
-			$placeholders,
+	/**
+	 * redirect destination which is used when Route::redirect() is invoked
+	 * @var string
+	 */
+	private $redirect;
+	
+	/**
+	 * authentication level of route
+	 * @var string $auth
+	 */
+	private $auth;
+	
+	/**
+	 * optional authentication parameters, which might be required
+	 * by certain authentication levels
+	 * @var string
+	 */
+	private $authParameters;
+	
+	/**
+	 * @var string $url
+	 */
+	private $url;
+	
+	/**
+	 * match expression which matches route
+	 * used by router 
+	 * @var string $match
+	 */
+	private $match;
 
-			/**
-			 * shortcut with only the names of placeholders
-			 * @var array
-			 */
-			$placeholderNames,
+	/**
+	 * array with complete placeholder information
+	 * (name, default)
+	 * @var array
+	 */
+	private $placeholders;
 
-			/**
-			 * holds all values of placeholders of current path
-			 * @var array
-			 */
-			$pathParameters,
+	/**
+	 * shortcut with only the names of placeholders
+	 * @var array
+	 */
+	private $placeholderNames;
 
-			/**
-			 * @var array
-			 */
-			$requestMethods;
+	/**
+	 * holds all values of placeholders of current path
+	 * @var array
+	 */
+	private $pathParameters;
+
+	/**
+	 * allowed request methods with route
+	 * @var array
+	 */
+	private $requestMethods;
 
 	/**
 	 *
@@ -67,7 +119,7 @@ class Route {
 	 * @param string $scriptName, name of assigned script
 	 * @param array $parameters, collection of route parameters
 	 */
-	public function __construct($routeId, $scriptName, array $parameters = array()) {
+	public function __construct($routeId, $scriptName, array $parameters = []) {
 
 		$this->routeId		= $routeId;
 		$this->scriptName	= $scriptName;
@@ -92,7 +144,7 @@ class Route {
 		}
 
 		if(isset($parameters['controller'])) {
-			$this->controllerString = $parameters['controller'];
+			$this->controllerClassName = $parameters['controller'];
 		}
 
 		if(isset($parameters['method'])) {
@@ -246,7 +298,7 @@ class Route {
 
 			$application = Application::getInstance();
 
-			$urlSegments = array();
+			$urlSegments = [];
 
 			if($application->hasNiceUris()) {
 
@@ -296,26 +348,35 @@ class Route {
 			
 			$urlSegments[] = $path;
 
-			$this->url = '/' . implode('/', $urlSegments);
+			// remove trailing slashes
+
+			$this->url = rtrim('/' . implode('/', $urlSegments), '/');
 		}
 
 		return $this->url;
 	}
 
 	/**
-	 * @param string $controllerString
+	 * set controller class name of route
+	 * 
+	 * @param string $className
 	 * @return \vxPHP\Routing\Route
 	 */
-	public function setControllerString($controllerString) {
-		$this->controllerString = $controllerString;
+	public function setControllerClassName($className) {
+
+		$this->controllerClassName = $className;
 		return $this;
+
 	}
 
 	/**
+	 * get controller class name of route
 	 * @return string
 	 */
-	public function getControllerString() {
-		return $this->controllerString;
+	public function getControllerClassName() {
+
+		return $this->controllerClassName;
+
 	}
 
 	/**
@@ -382,7 +443,7 @@ class Route {
 
 		if(is_null($this->placeholderNames)) {
 			
-			$this->placeholderNames = array();
+			$this->placeholderNames = [];
 	
 			if(!empty($this->placeholders)) {
 	
@@ -413,7 +474,7 @@ class Route {
 
 			// collect all placeholder names
 
-			$names = array();
+			$names = [];
 
 			foreach($this->placeholders as $p) {
 				$names[] = $p['name'];
@@ -505,14 +566,14 @@ class Route {
 	 * @param array $queryParams
 	 * @param number $statusCode
 	 */
-	public function redirect($queryParams = array(),  $statusCode = 302) {
+	public function redirect($queryParams = [],  $statusCode = 302) {
 
 		$request		= Request::createFromGlobals();
 		$application	= Application::getInstance();
 
-		$urlSegments = array(
+		$urlSegments = [
 			$request->getSchemeAndHttpHost()
-		);
+		];
 
 		if($application->hasNiceUris()) {
 			if(($scriptName = basename($request->getScriptName(), '.php')) !== 'index') {

@@ -16,14 +16,13 @@ use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 
-use vxPHP\Observer\EventDispatcher;
 use vxPHP\Routing\Route;
 
 /**
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.4.1 2015-12-12
+ * @version 1.5.0 2016-06-04
  *
  * @todo refresh() method
  */
@@ -100,7 +99,7 @@ class Config {
 			 * 
 			 * holds sections of config file which are parsed
 			 */
-	private	$sections	= array();
+	private	$sections	= [];
 			
 	/**
 	 * create config instance
@@ -110,7 +109,7 @@ class Config {
 	 * @param array $sections
 	 * @throws ConfigException
 	 */
-	public function __construct($xmlFile, array $sections = array()) {
+	public function __construct($xmlFile, array $sections = []) {
 
 		$this->sections	= $sections;
 
@@ -152,7 +151,7 @@ class Config {
 									).'Settings';
 
 					if(method_exists($this, $methodName)) {
-						call_user_func(array($this, $methodName), $section);
+						call_user_func([$this, $methodName], $section);
 					}
 				}
 			}
@@ -277,7 +276,7 @@ class Config {
 		}
 
 		if(isset($site->locales)) {
-			$this->site->locales = array();
+			$this->site->locales = [];
 			$l = $site->locales;
 			foreach($l[0] as $locale) {
 				array_push($this->site->locales, (string) $locale->attributes()->value);
@@ -297,7 +296,7 @@ class Config {
 	private function parseTemplatingSettings(\SimpleXMLElement $templating) {
 
 		$this->templating = new \stdClass;
-		$this->templating->filters = array();
+		$this->templating->filters = [];
 
 		if(isset($templating->filters->filter)) {
 
@@ -335,11 +334,11 @@ class Config {
 				
 				}
 
-				$this->templating->filters[$id] = array(
+				$this->templating->filters[$id] = [
 					'class'			=> $class,
 					'classPath'		=> $classPath,
 					'parameters'	=> (string) $a->parameters
-				);
+				];
 			}
 		}
 
@@ -384,7 +383,9 @@ class Config {
 
 		foreach($pages->page as $page) {
 
-			$parameters = array('redirect' => $redirect);
+			$parameters = [
+				'redirect' => $redirect
+			];
 
 			$a = $page->attributes();
 
@@ -432,9 +433,9 @@ class Config {
 
 				// extract route parameters and default values
 
-				if(preg_match_all('~\{(.*?)(?:=(.*?))?\}~', (string) $a->path, $matches)) {
+				if(preg_match_all('~\{(.*?)(=.*?)?\}~', (string) $a->path, $matches)) {
 
-					$placeholders = array();
+					$placeholders = [];
 
 					if(!empty($matches[1])) {
 
@@ -442,7 +443,10 @@ class Config {
 
 							if(!empty($matches[2][$ndx])) {
 
-								$placeholders[] = array('name' => strtolower($name), 'default' => $matches[2][$ndx]);
+								$placeholders[] = [
+									'name' => strtolower($name),
+									'default' => substr($matches[2][$ndx], 1)
+								];
 
 								// turn this path parameter into regexp and make it optional
 
@@ -452,7 +456,9 @@ class Config {
 
 							else {
 
-								$placeholders[] = array('name' => strtolower($name));
+								$placeholders[] = [
+									'name' => strtolower($name)
+								];
 
 								// turn this path parameter into regexp
 
@@ -555,11 +561,11 @@ class Config {
 
 			}
 
-			$this->services[$id] = array(
+			$this->services[$id] = [
 				'class'			=> $class,
 				'classPath'		=> $classPath,
-				'parameters'	=> array()
-			);
+				'parameters'	=> []
+			];
 
 			foreach($service->parameter as $parameter) {
 
@@ -617,11 +623,11 @@ class Config {
 			
 			}
 
-			$this->plugins[$id] = array(
+			$this->plugins[$id] = [
 				'class'			=> $class,
 				'classPath'		=> $classPath,
-				'parameters'	=> array()
-			);
+				'parameters'	=> []
+			];
 
 			foreach($plugin->parameter as $parameter) {
 			
@@ -793,7 +799,7 @@ class Config {
 	 * @return paths
 	 */
 	public function getPaths($access = 'rw') {
-		$paths = array();
+		$paths = [];
 		foreach($this->paths as $p) {
 			if($p['access'] === $access) {
 				array_push($paths, $p);

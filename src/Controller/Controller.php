@@ -25,7 +25,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.2 2015-09-21
+ * @version 0.3.3 2016-06-04
  *
  */
 abstract class Controller {
@@ -50,7 +50,7 @@ abstract class Controller {
 	 * @var array
 	* path segments stripped from (beautified) document (e.g. admin/...) and locale
 	 */
-	protected $pathSegments = array();
+	protected $pathSegments = [];
 
 	/**
 	 * @var string
@@ -178,7 +178,7 @@ abstract class Controller {
 	 */
 	public static function createControllerFromRoute(Route $route) {
 
-		$classPath	= explode('/', $route->getControllerString());
+		$classPath	= explode('/', $route->getControllerClassName());
 		$className	= ucfirst(array_pop($classPath)) . 'Controller';
 
 		if(count($classPath)) {
@@ -215,7 +215,7 @@ abstract class Controller {
 	 * @param int $statusCode
 	 *
 	 */
-	protected function redirect($url = NULL, $queryParams = array(), $statusCode = 302) {
+	protected function redirect($url = NULL, $queryParams = [], $statusCode = 302) {
 
 		if(is_null($url)) {
 			return $this->route->redirect($queryParams, $statusCode);
@@ -289,10 +289,10 @@ abstract class Controller {
 		}
 
 		if(isset($echo)) {
-			$r->setPayload(array(
+			$r->setPayload([
 				'echo'		=> $echo,
 				'response'	=> json_decode($r->getContent())
-			));
+			]);
 		}
 		
 		return $r;
