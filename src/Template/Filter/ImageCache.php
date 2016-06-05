@@ -20,7 +20,7 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  * 
- * @version 1.2.0 2015-06-22
+ * @version 1.2.1 2016-06-05
  * @author Gregor Kofler
  * 
  * @todo parse inline url() style rule
@@ -108,8 +108,9 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		else if(preg_match('~\s+(width|height)=~', $matches[0])) {
 
-			$dom	= \DOMDocument::loadHTML($matches[0]);
-			$img	= $dom->getElementsByTagName('img')->item(0);
+			$dom = new \DOMDocument();
+			$dom->loadHTML($matches[0]);
+			$img = $dom->getElementsByTagName('img')->item(0);
 
 			// if width attribute is not set, this will evaluate to 0 and force a proportional scaling
 
