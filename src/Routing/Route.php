@@ -266,11 +266,55 @@ class Route {
 
 	/**
 	 * get path of this route
-	 *
+	 * expects path parameters when required by route
+	 * 
+	 * @param array $pathParameters
+	 * @throws \RuntimeException
 	 * @return string
 	 */
-	public function getPath() {
-		return $this->path;
+	public function getPath(array $pathParameters = NULL) {
+		
+		// set optional path parameters
+		
+		if($pathParameters) {
+		
+			foreach($pathParameters as $name => $value) {
+				$this->setPathParameter($name, $value);
+			}
+		
+		}
+		
+		$path = $this->path;
+		
+		//insert path parameters
+			
+		if(!empty($this->placeholders)) {
+
+			foreach ($this->placeholders as $placeholder) {
+		
+				if(empty($this->pathParameters[$placeholder['name']])) {
+		
+					if(!isset($placeholder['default'])) {
+						throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
+					}
+		
+					// no path parameter value, but default defined
+		
+					else {
+						$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $placeholder['default'], $path);
+					}
+				}
+		
+				// path parameter value was previously parsed or set
+		
+				else {
+					$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $this->pathParameters[$placeholder['name']], $path);
+				}
+			}
+		}
+		
+		return $path;
+
 	}
 
 	/**
@@ -283,16 +327,6 @@ class Route {
 	 * @return string
 	 */
 	public function getUrl(array $pathParameters = NULL) {
-
-		// set optional path parameters
-
-		if($pathParameters) {
-
-			foreach($pathParameters as $name => $value) {
-				$this->setPathParameter($name, $value);
-			}
-
-		}
 
 		if(!$this->url) {
 
@@ -315,38 +349,8 @@ class Route {
 
 				$urlSegments[] = $this->scriptName;
 			}
-
-
-			$path = $this->path;
-
-			//insert path parameters
 			
-			if(!empty($this->placeholders)) {
-
-				foreach ($this->placeholders as $placeholder) {
-
-					if(empty($this->pathParameters[$placeholder['name']])) {
-
-						if(!isset($placeholder['default'])) {
-							throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
-						}
-
-						// no path parameter value, but default defined
-
-						else {
-							$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $placeholder['default'], $path);
-						}
-					}
-
-					// path parameter value was previously parsed or set
-
-					else {
-						$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $this->pathParameters[$placeholder['name']], $path);
-					}
-				}
-			}
-			
-			$urlSegments[] = $path;
+			$urlSegments[] = $this->getPath($pathParameters);
 
 			// remove trailing slashes
 

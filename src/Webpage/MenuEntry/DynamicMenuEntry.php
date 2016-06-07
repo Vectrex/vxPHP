@@ -14,12 +14,12 @@ namespace vxPHP\Webpage\MenuEntry;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 
 class DynamicMenuEntry extends MenuEntry {
-	public function __construct($page, $attributes) {
-		parent::__construct($page, $attributes);
+	public function __construct($path, $attributes) {
+		parent::__construct($path, $attributes);
 	}
 
-	public function setPage($page) {
-		$this->page = $page;
+	public function setPath($path) {
+		$this->path = $path;
 	}
 
 	public function setAttributes(Array $attributes) {

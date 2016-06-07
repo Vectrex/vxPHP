@@ -89,7 +89,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 				if(!isset($sel) || $sel !== $entry) {
 					$markup = sprintf(
 						'<li class="%s">%s<a href="%s">%s</a>%s',
-						preg_replace('~[^\w]~', '_', $entry->getPage()),
+						preg_replace('~[^\w]~', '_', $entry->getPath()),
 						$this->openingTags,
 						$entry->getHref(),
 						empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
@@ -111,7 +111,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 						$markup = sprintf(
 							'<li class="active %s">%s<span>%s</span>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPage()),
+							preg_replace('~[^\w]~', '_', $entry->getPath()),
 							$this->openingTags,
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
@@ -123,7 +123,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 						$markup = sprintf(
 							'<li class="active %s">%s<a href="%s">%s</a>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPage()),
+							preg_replace('~[^\w]~', '_', $entry->getPath()),
 							$this->openingTags,
 							$entry->getHref(),
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,

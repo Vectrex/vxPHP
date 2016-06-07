@@ -14,6 +14,7 @@ namespace vxPHP\Webpage\MenuEntry;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Application\Application;
 use vxPHP\Routing\Route;
+use vxPHP\Routing\Router;
 
 /**
  * MenuEntry class
@@ -22,26 +23,72 @@ use vxPHP\Routing\Route;
  * @version 0.3.7 2014-04-06
  */
 class MenuEntry {
-	protected static	$count = 1;
+	
+	/**
+	 * the index counter of menu entries
+	 * @var integer
+	 */
+	protected static $count = 1;
 
-						/**
-						 * @var Menu
-						 */
-	protected			$menu;
+	/**
+	 * the menu the menu entry belongs to
+	 * @var Menu
+	 */
+	protected $menu;
 
-	protected			$auth,
-						$authParameters,
-						$attributes,
-						$id,
-						$page,
-						$subMenu,
-						$localPage;
-	private 			$href;
+	/**
+	 * the authentication level of the entry
+	 * @var string
+	 */
+	protected $auth;
+	
+	/**
+	 * additional authentication parameter which
+	 * might be required by the authentication level
+	 * @var string
+	 */
+	protected $authParameters;
+	
+	/**
+	 * misc attributes
+	 * @var \stdClass
+	 */
+	protected $attributes;
+	
+	/**
+	 * unique index of menu entry
+	 * @var integer
+	 */
+	protected $ndx;
+	
+	/**
+	 * the path of the menu entry 
+	 * @var string
+	 */
+	protected $path;
+	
+	/**
+	 * an optional submenu of the menu entry
+	 * @var Menu
+	 */
+	protected $subMenu;
+	
+	/**
+	 * flag indicating whether menu entry destination is an absoulte or relative URL
+	 * @var boolean
+	 */
+	protected $localPage;
+	
+	/**
+	 * the URL of the menu entry
+	 * @var string
+	 */
+	protected $href;
 
-	public function __construct($page, $attributes, $localPage = TRUE) {
+	public function __construct($path, $attributes, $localPage = TRUE) {
 
-		$this->id			= self::$count++;
-		$this->page			= $page;
+		$this->ndx			= self::$count++;
+		$this->path			= trim($path, '/');
 		$this->localPage	= (boolean) $localPage;
 		$this->attributes	= new \stdClass();
 
@@ -60,7 +107,7 @@ class MenuEntry {
 	}
 
 	public function __toString() {
-		return $this->page;
+		return $this->path;
 	}
 
 	public function appendMenu(Menu $menu) {
@@ -108,8 +155,8 @@ class MenuEntry {
 		return $this->subMenu;
 	}
 
-	public function getPage() {
-		return $this->page;
+	public function getPath() {
+		return $this->path;
 	}
 
 	/**
@@ -121,11 +168,11 @@ class MenuEntry {
 
 			if($this->localPage) {
 
-				$pathSegments = array();
+				$pathSegments = [];
 				$e = $this;
 
 				do {
-					$pathSegments[] = $e->page;
+					$pathSegments[] = $e->path;
 				} while ($e = $e->menu->getParentEntry());
 
 				if(Application::getInstance()->hasNiceUris()) {
@@ -149,7 +196,7 @@ class MenuEntry {
 
 			else {
 
-				$this->href = $this->page;
+				$this->href = $this->path;
 
 			}
 		}
@@ -157,12 +204,26 @@ class MenuEntry {
 		return $this->href;
 	}
 
+	/**
+	 * get all attributes
+	 * @return stdClass
+	 */
 	public function getAttributes() {
+
 		return $this->attributes;
+
 	}
 
+	/**
+	 * set a single attribute
+	 * 
+	 * @param string $attr
+	 * @param mixed $value
+	 */
 	public function setAttribute($attr, $value) {
+
 		$this->attributes->$attr = $value;
+
 	}
 
 }

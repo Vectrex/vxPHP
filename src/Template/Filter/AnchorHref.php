@@ -58,7 +58,6 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		static $script;
 		static $niceUri;
-		static $menuEntryLookup = array();
 		static $config;
 		static $assetsPath;
 
@@ -74,13 +73,13 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		}
 
 		$matchSegments = explode('/', $matches[3]);
-		$idToFind = array_shift($matchSegments);
+		$pathToFind = array_shift($matchSegments);
 
-		$recursiveFind = function(Menu $m) use (&$recursiveFind, $idToFind) {
+		$recursiveFind = function(Menu $m) use (&$recursiveFind, $pathToFind) {
 
 			foreach($m->getEntries() as $e) {
 
-				if($e->getPage() === $idToFind) {
+				if($e->getPath() === $pathToFind) {
 					return $e;
 				}
 
@@ -93,34 +92,22 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		};
 
-		if(isset($menuEntryLookup[$idToFind])) {
-			$e = $menuEntryLookup[$idToFind];
-		}
-
-		else {
-			foreach($config->menus as $menu) {
-
-				if($menu->getScript() !== $script) {
-					continue;
-				}
-
-				if($e = $recursiveFind($menu)) {
-					$menuEntryLookup[$idToFind] = $e;
-					break;
-				}
-
+		foreach($config->menus as $menu) {
+			if($menu->getScript() === $script) {
+				$e = $recursiveFind($menu);
+				break;
 			}
 		}
 
 		if(isset($e)) {
 
-			$pathSegments = array($e->getPage());
+			$pathSegments = array($e->getPath());
 
 			while($e = $e->getMenu()->getParentEntry()) {
-				$pathSegments[] = $e->getPage();
+				$pathSegments[] = $e->getPath();
 			}
 
-			$uriParts = array();
+			$uriParts = [];
 
 			if($niceUri) {
 				if($script !== 'index.php') {

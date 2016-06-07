@@ -220,7 +220,7 @@ class MenuGenerator {
 				array_shift($this->pathSegments);
 			}
 
-			$this->walkMenuTree($this->menu, $this->pathSegments[0] === '' ? array($this->route->getRouteId()) : $this->pathSegments);
+			$this->walkMenuTree($this->menu, $this->pathSegments[0] === '' ? explode('/', $this->route->getPath()) : $this->pathSegments);
 
 			// cache menu for multiple renderings
 
@@ -301,10 +301,6 @@ class MenuGenerator {
 			return;
 		}
 
-		// get current page id to evaluate active menu entry
-
-		$idToFind = array_shift($pathSegments);
-
 		// return when matching entry in current menu
 
 		if(($e = $m->getSelectedEntry())) {
@@ -325,12 +321,18 @@ class MenuGenerator {
 			}
 		}
 
+		// get current page id to evaluate active menu entry
+		
+		$pathToMatch = implode('/', $pathSegments);
+		
 		foreach($m->getEntries() as $e) {
 
 			// path segment doesn't match menu entry - finish walk
 
-			if($e->getPage() === $idToFind) {
+			if(0 === strpos($pathToMatch, $e->getPath())) {
 
+				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($e->getPath())), '/'));
+				
 				$e->getMenu()->setSelectedEntry($e);
 				$sm = $e->getSubMenu();
 

@@ -18,36 +18,77 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * Menu class
  *
  * manages a complete menu
- * @version 0.7.3 2014-04-06
+ * @version 0.8.0 2016-06-05
  */
 class Menu {
 
-	protected	$id,
-				$script,
-				$type,
-				$method,
-				$auth,
-				$authParameters,
-				$entries		= array(),
-				$dynamicEntries	= array(),
+	/**
+	 * @var string
+	 */
+	protected $id;
 
-				/**
-				 * @var MenuEntry
-				 */
-				$selectedEntry,
+	/**
+	 * @var string
+	 */
+	protected $script;
 
-				/**
-				 * @var MenuEntry
-				 */
-				$parentEntry,
-				$forceActive,
-				$showSubmenus;
+	/**
+	 * @var string
+	 */
+	protected $type;
+
+	/**
+	 * @var string
+	 */
+	protected $method;
+
+	/**
+	 * @var string
+	 */
+	protected $auth;
+	
+	/**
+	 * @var string
+	 */
+	protected $authParameters;
+	
+	/**
+	 * @var MenuEntry[]
+	 */
+	protected $entries = [];
+	
+	/**
+	 * @var DynamicMenuEntry[]
+	 */
+	protected $dynamicEntries = [];
+
+	/**
+	 * @var MenuEntry
+	 */
+	protected $selectedEntry;
+
+	/**
+	 * @var MenuEntry
+	 */
+	protected $parentEntry;
+	
+	/**
+	 * @var boolean
+	 */
+	protected $forceActive;
+
+	/**
+	 * @var boolean
+	 */
+	protected $showSubmenus;
 
 	public function __construct($script, $id = NULL, $type, $method = NULL) {
+
 		$this->script	= $script;
 		$this->id		= $id;
 		$this->type		= $type;
 		$this->method	= $method;
+
 	}
 
 	public function __destruct() {
@@ -66,7 +107,7 @@ class Menu {
 				}
 			}
 
-			$this->dynamicEntries = array();
+			$this->dynamicEntries = [];
 
 		}
 	}
@@ -87,7 +128,7 @@ class Menu {
 			$this->entries[] = $entry;
 		}
 		else {
-			array_splice($this->entries, $ndx, 0, array($entry));
+			array_splice($this->entries, $ndx, 0, [$entry]);
 		}
 
 		$entry->setMenu($this);
@@ -192,8 +233,8 @@ class Menu {
 	 * remove all static and dynamic entries
 	 */
 	public function purgeEntries() {
-		$this->entries = array();
-		$this->dynamicEntries = array();
+		$this->entries = [];
+		$this->dynamicEntries = [];
 	}
 
 	/**
@@ -201,6 +242,13 @@ class Menu {
 	 */
 	public function getId() {
 		return $this->id;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getScript() {
+		return $this->script;
 	}
 
 	/**
@@ -238,13 +286,6 @@ class Menu {
 	 */
 	public function setParentEntry(MenuEntry $e) {
 		$this->parentEntry = $e;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getScript() {
-		return $this->script;
 	}
 
 	/**
@@ -337,4 +378,5 @@ class Menu {
 	public function getDynamicEntries() {
 		return $this->dynamicEntries;
 	}
+
 }

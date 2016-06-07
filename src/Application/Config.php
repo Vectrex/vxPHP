@@ -22,85 +22,85 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.5.0 2016-06-04
+ * @version 1.6.0 2016-06-05
  *
  * @todo refresh() method
  */
 class Config {
 
-			/**
-			 * @var \stdClass
-			 */
+	/**
+	 * @var \stdClass
+	 */
 	public	$site;
 
-			/**
-			 * @var \stdClass
-			 */
+	/**
+	 * @var \stdClass
+	 */
 	public	$db;
 
-			/**
-			 * @var \stdClass
-			 */
+	/**
+	 * @var \stdClass
+	 */
 	public	$mail;
 
-			/**
-			 * @var \stdClass
-			 */
+	/**
+	 * @var \stdClass
+	 */
 	public	$binaries;
 
-			/**
-			 * @var array
-			 */
+	/**
+	 * @var array
+	 */
 	public	$paths;
 
-			/**
-			 * @var array
-			 */
+	/**
+	 * @var Route[]
+	 */
 	public	$routes;
 
-			/**
-			 * @var array
-			 */
+	/**
+	 * @var Menu[]
+	 */
 	public	$menus;
 
-			/**
-			 * @var array
-			 */
+	/**
+	 * @var array
+	 */
 	public	$server;
 
-			/**
-			 * @var array
-			 * 
-			 * holds configuration of services
-			 */
+	/**
+	 * @var array
+	 * 
+	 * holds configuration of services
+	 */
 	public	$services;
 
-			/**
-			 * @var array
-			 * 
-			 * holds all configured plugins (event subscribers)
-			 */
+	/**
+	 * @var array
+	 * 
+	 * holds all configured plugins (event subscribers)
+	 */
 	public	$plugins;
 	
-			/**
-			 * @var \stdClass
-			 * 
-			 * holds configuration for templating
-			 */
+	/**
+	 * @var \stdClass
+	 * 
+	 * holds configuration for templating
+	 */
 	public	$templating;	
 
-			/**
-			 * @var boolean
-			 */
+	/**
+	 * @var boolean
+	 */
 	private	$isLocalhost;
 			
-			/**
-			 * @var array
-			 * 
-			 * holds sections of config file which are parsed
-			 */
+	/**
+	 * @var array
+	 * 
+	 * holds sections of config file which are parsed
+	 */
 	private	$sections	= [];
-			
+
 	/**
 	 * create config instance
 	 * if section is specified, only certain sections of the config file are parsed
@@ -503,7 +503,9 @@ class Config {
 				throw new ConfigException(sprintf("Route '%s' for script '%s' found more than once.", $pageId, $scriptName));
 			}
 
-			$this->routes[$scriptName][] = new Route($pageId, $scriptName, $parameters);
+			$route = new Route($pageId, $scriptName, $parameters);
+			$this->routes[$scriptName][$route->getRouteId()] = $route;
+
 		}
 	}
 
@@ -515,8 +517,10 @@ class Config {
 	private function parseMenusSettings(\SimpleXMLElement $menus) {
 
 		foreach ($menus->menu as $menu) {
+
 			$menuInstance = $this->parseMenu($menu);
 			$this->menus[$menuInstance->getId()] = $menuInstance;
+
 		}
 
 	}
@@ -670,6 +674,7 @@ class Config {
 			// if auth level is defined, additional authentication parameters can be set
 
 			$menuAuth = strtoupper(trim((string) $a->auth));
+
 			if(defined("vxPHP\\User\\User::AUTH_$menuAuth")) {
 				$m->setAuth(constant("vxPHP\\User\\User::AUTH_$menuAuth"));
 
@@ -689,62 +694,99 @@ class Config {
 		foreach($menu->children() as $entry) {
 
 			if($entry->getName() == 'menuentry') {
-				
+
 				$a = $entry->attributes();
 
-				if(isset($a->page)) {
+				if(isset($a->page) && isset($a->path)) {
+				
+					throw new ConfigException(sprintf("Menu entry with both page ('%s') and path ('%s') attribute found.", (string) $a->page, (string) $a->path));
+				
+				}
+
+				// menu entry comes with a path attribute (which can also link an external resource)
+				
+				if(isset($a->path)) {
+					
+					$path = (string) $a->path;
+					$local = strpos($path, '/') !== 0 && !preg_match('~^[a-z]+://~', $path);
+					
+					$e = new MenuEntry($path, $a, $local);
+						
+				}
+
+				// menu entry comes with a page attribute, in this case the route path is used
+
+				else if(isset($a->page)) {
 
 					$page = (string) $a->page;
-					$local = strpos($page, '/') !== 0 && !preg_match('~^[a-z]+://~', $page);
 
-					$e = new MenuEntry((string) $a->page, $a, $local);
+					if(!isset($this->routes[$m->getScript()][$page])) {
 
-					if($menuAuth || isset($a->auth)) {
+						throw new ConfigException(sprintf(
+							"No route for menu entry ('%s') found. Available routes for script '%s' are '%s'.",
+							$page,
+							$m->getScript(),
+							empty($this->routes[$m->getScript()]) ? 'none' : implode("', '", array_keys($this->routes[$m->getScript()]))
+						));
 
-						// fallback to menu settings, when auth attribute is not set
-						
-						if(!isset($a->auth)) {
-							
-							$e->setAuth($m->getAuth());
-							$e->setAuthParameters($m->getAuthParameters());
-
-						}
-
-						else {
-
-							// set optional authentication level; if level is not defined, entry is locked for everyone
-							// if auth level is defined, additional authentication parameters can be set
-
-							$auth = strtoupper(trim((string) $a->auth));
-
-							if(defined("UserAbstract::AUTH_$auth")) {
-								$e->setAuth(constant("UserAbstract::AUTH_$auth"));
-
-								if(isset($a->auth_parameters)) {
-									$e->setAuthParameters((string) $a->auth_parameters);
-								}
-							}
-							else {
-								$e->setAuth(-1);
-							}
-						}
 					}
 
-					$m->appendEntry($e);
+					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(), $a, TRUE);
 
-					if(isset($entry->menu)) {
-						$e->appendMenu($this->parseMenu($entry->menu));
+				}
+				
+				// handle authentication settings of menu entry
+				
+				if($menuAuth || isset($a->auth)) {
+				
+					// fallback to menu settings, when auth attribute is not set
+				
+					if(!isset($a->auth)) {
+							
+						$e->setAuth($m->getAuth());
+						$e->setAuthParameters($m->getAuthParameters());
+				
+					}
+				
+					else {
+				
+						// set optional authentication level; if level is not defined, entry is locked for everyone
+						// if auth level is defined, additional authentication parameters can be set
+				
+						$auth = strtoupper(trim((string) $a->auth));
+				
+						if(defined("UserAbstract::AUTH_$auth")) {
+							$e->setAuth(constant("UserAbstract::AUTH_$auth"));
+				
+							if(isset($a->auth_parameters)) {
+								$e->setAuthParameters((string) $a->auth_parameters);
+							}
+						}
+						else {
+							$e->setAuth(-1);
+						}
 					}
 				}
+				
+				$m->appendEntry($e);
+				
+				if(isset($entry->menu)) {
+					$e->appendMenu($this->parseMenu($entry->menu));
+				}
+
 			}
 
 			else if($entry->getName() == 'menuentry_placeholder') {
+
 				$a = $entry->attributes();
 				$e = new DynamicMenuEntry(NULL, $a);
 				$m->appendEntry($e);
+
 			}
 		}
+
 		return $m;
+
 	}
 
 	/**
