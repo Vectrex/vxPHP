@@ -19,7 +19,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler
  *
- * @version 0.10.0 2016-06-03
+ * @version 0.11.0 2016-06-08
  *
  */
 class Route {
@@ -89,17 +89,12 @@ class Route {
 	private $match;
 
 	/**
-	 * array with complete placeholder information
+	 * associative array with complete placeholder information
 	 * (name, default)
+	 * array keys are the placeholder names
 	 * @var array
 	 */
 	private $placeholders;
-
-	/**
-	 * shortcut with only the names of placeholders
-	 * @var array
-	 */
-	private $placeholderNames;
 
 	/**
 	 * holds all values of placeholders of current path
@@ -272,8 +267,8 @@ class Route {
 	 * @throws \RuntimeException
 	 * @return string
 	 */
-	public function getPath(array $pathParameters = NULL) {
-		
+	public function getPath(array $pathParameters = NULL, $allowEmptyParameters = FALSE) {
+
 		// set optional path parameters
 		
 		if($pathParameters) {
@@ -293,9 +288,17 @@ class Route {
 			foreach ($this->placeholders as $placeholder) {
 		
 				if(empty($this->pathParameters[$placeholder['name']])) {
-		
+
 					if(!isset($placeholder['default'])) {
-						throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
+
+						if(!$allowEmptyParameters) {
+							throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
+						}
+
+						// no default but override allowed
+
+						$path = preg_replace('~\/?\{' . $placeholder['name'] . '\}~', '', $path);
+
 					}
 		
 					// no path parameter value, but default defined
@@ -445,23 +448,14 @@ class Route {
 	 */
 	public function getPlaceholderNames() {
 
-		if(is_null($this->placeholderNames)) {
-			
-			$this->placeholderNames = [];
-	
-			if(!empty($this->placeholders)) {
-	
-				foreach ($this->placeholders as $placeholder) {
-					$this->placeholderNames = $placeholder['name'];
-				}
-	
-			}
+		if(!empty($this->placeholders)) {
+			return array_keys($this->placeholders);
 		}
 
-		return $this->placeholderNames;
+		return [];
 		
 	}
-
+	
 	/**
 	 * get path parameter
 	 *

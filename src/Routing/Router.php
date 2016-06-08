@@ -20,7 +20,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.5 2015-03-30
+ * @version 0.5.0 2016-06-08
  *
  */
 class Router {
@@ -150,18 +150,13 @@ class Router {
 					
 					// if a route has been found previously, choose the more "precise" and/or later one
 
-					// choose the route with less placeholders
+					// choose the route with more satisfied placeholders
+					// @todo could be optimized
 
-					if(count($route->getPlaceholderNames()) < count($foundRoute->getPlaceholderNames())) {
+					if(count(self::getSatisfiedPlaceholders($route, $pathToCheck)) >= count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck))) {
 						$foundRoute = $route;
 					}
-					
-					// otherwise simple resort to a longer path as "more precise"
 
-					else if(strlen($route->getPath()) >= strlen($foundRoute->getPath())) {
-						$foundRoute = $route;
-					}
-					
 				}
 			}
 
@@ -207,4 +202,31 @@ class Router {
 		return TRUE;
 
 	}
+
+	/**
+	 * check path against placeholders of route
+	 * and return associative array with placeholders which would have a value assigned
+	 * 
+	 * @param Route $route
+	 * @param string $path
+	 * @return array
+	 */
+	private static function getSatisfiedPlaceholders($route, $path) {
+
+		$placeholderNames = $route->getPlaceholderNames();
+		
+		if(!empty($placeholderNames)) {
+
+			if(preg_match('~(?:/|^)' . $route->getMatchExpression() .'(?:/|$)~', $path, $matches)) {
+				array_shift($matches);
+				return array_combine(array_slice($placeholderNames, 0, count($matches)), $matches);
+			}
+		}
+
+		return [];
+	
+	}
+	
+	
+	
 }

@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.6.0 2016-06-05
+ * @version 1.7.0 2016-06-08
  *
  * @todo refresh() method
  */
@@ -441,10 +441,12 @@ class Config {
 
 						foreach($matches[1] as $ndx => $name) {
 
+							$name = strtolower($name);
+							
 							if(!empty($matches[2][$ndx])) {
 
-								$placeholders[] = [
-									'name' => strtolower($name),
+								$placeholders[$name] = [
+									'name' => $name,
 									'default' => substr($matches[2][$ndx], 1)
 								];
 
@@ -456,8 +458,8 @@ class Config {
 
 							else {
 
-								$placeholders[] = [
-									'name' => strtolower($name)
+								$placeholders[$name] = [
+									'name' => $name
 								];
 
 								// turn this path parameter into regexp
@@ -731,7 +733,7 @@ class Config {
 
 					}
 
-					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(), $a, TRUE);
+					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(NULL, TRUE), $a, TRUE);
 
 				}
 				
