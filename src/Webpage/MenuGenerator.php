@@ -29,7 +29,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.1, 2014-12-07
+ * @version 0.5.0, 2016-07-26
  *
  * @throws MenuGeneratorException
  */
@@ -203,8 +203,11 @@ class MenuGenerator {
 
 			$this->clearSelectedMenuEntries($this->menu);
 
-			// walk tree, add dynamic menus along the way until an active entry is reached
-			// use route id to identify current page in case path segment is empty (e.g. splash page)
+			// walk entire menu and add dynamic entries where necessary
+			
+			$this->completeMenu($this->menu);
+			
+			// prepare path segments to identify active menu entries
 
 			$this->pathSegments = explode('/', trim($this->request->getPathInfo(), '/'));
 
@@ -219,6 +222,8 @@ class MenuGenerator {
 			if(count($this->pathSegments) && Application::getInstance()->hasLocale($this->pathSegments[0])) {
 				array_shift($this->pathSegments);
 			}
+
+			// walk tree until an active entry is reached
 
 			$this->walkMenuTree($this->menu, $this->pathSegments[0] === '' ? explode('/', $this->route->getPath()) : $this->pathSegments);
 
@@ -285,6 +290,32 @@ class MenuGenerator {
 		);
 	}
 
+	
+	/**
+	 * walk the menu tree
+	 * and invoke service to append dynamic menu entries
+	 * 
+	 * @param Menu $m
+	 */
+	protected function completeMenu(Menu $m) {
+		
+		if($m->getType() === 'dynamic') {
+
+			// invoke service to build menu entries
+			
+			Application::getInstance()->getService($m->getServiceId())->appendMenuEntries($m);
+
+			
+		}
+
+		foreach($m->getEntries() as $entry) {
+			if(($m = $entry->getSubMenu())) {
+				$this->completeMenu($m);
+			}
+		}
+
+	}
+	
 	/**
 	 * walk menu $m recursively until path segments are no longer matching, or menu tree ends
 	 * if necessary dynamic menus will be added
@@ -295,7 +326,7 @@ class MenuGenerator {
 	 * @return MenuEntry or void
 	 *
 	 */
-	private function walkMenuTree(Menu $m, array $pathSegments) {
+	protected function walkMenuTree(Menu $m, array $pathSegments) {
 
 		if(!count($pathSegments)) {
 			return;
@@ -305,20 +336,6 @@ class MenuGenerator {
 
 		if(($e = $m->getSelectedEntry())) {
 			return $e;
-		}
-
-		// if current (sub-)menu is dynamic - generate it and return selected entry
-
-		if($m->getType() == 'dynamic') {
-
-			$method = $m->getMethod();
-			if(!$method) {
-				$method = 'buildDynamicMenu';
-			}
-
-			if(method_exists($this, $method) && ($addedMenu = $this->$method($m, $pathSegments))) {
-				return $addedMenu->getSelectedEntry();
-			}
 		}
 
 		// get current page id to evaluate active menu entry
@@ -336,29 +353,6 @@ class MenuGenerator {
 				$e->getMenu()->setSelectedEntry($e);
 				$sm = $e->getSubMenu();
 
-				// if submenu is flagged dynamic: try to generate it
-
-				if($sm && $sm->getType() == 'dynamic') {
-
-					// use either a specified method for building the menu or page::buildDynamicMenu()
-
-					$method = $sm->getMethod();
-
-					if(!$method) {
-						$method = 'buildDynamicMenu';
-					}
-
-					if(method_exists($this, $method)) {
-						$this->$method($sm, $pathSegments);
-					}
-				}
-
-				// otherwise postprocess menu: insert dynamic menu entries, modify entries, etc.
-
-				else if ($sm && method_exists($this, 'reworkMenu')) {
-					$this->reworkMenu($sm);
-				}
-
 				// walk  into submenu
 
 				if($sm) {
@@ -373,7 +367,7 @@ class MenuGenerator {
 	 *
 	 * @param Menu $menu
 	 */
-	private function clearSelectedMenuEntries(Menu $menu) {
+	protected function clearSelectedMenuEntries(Menu $menu) {
 
 		while(($e = $menu->getSelectedEntry())) {
 

@@ -18,7 +18,9 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * Menu class
  *
  * manages a complete menu
- * @version 0.8.0 2016-06-05
+ * 
+ * @author Gregor Kofler
+ * @version 0.9.0 2016-07-26
  */
 class Menu {
 
@@ -40,7 +42,7 @@ class Menu {
 	/**
 	 * @var string
 	 */
-	protected $method;
+	protected $serviceId;
 
 	/**
 	 * @var string
@@ -82,18 +84,18 @@ class Menu {
 	 */
 	protected $showSubmenus;
 
-	public function __construct($script, $id = NULL, $type, $method = NULL) {
+	public function __construct($script, $id = NULL, $type, $serviceId = NULL) {
 
-		$this->script	= $script;
-		$this->id		= $id;
-		$this->type		= $type;
-		$this->method	= $method;
+		$this->script		= $script;
+		$this->id			= $id;
+		$this->type			= $type;
+		$this->serviceId	= $serviceId;
 
 	}
 
 	public function __destruct() {
 
-		if($this->type == 'dynamic') {
+		if($this->type === 'dynamic') {
 			$this->clearSelectedEntry();
 			$this->purgeEntries();
 		}
@@ -117,6 +119,7 @@ class Menu {
 	 *
 	 * @param MenuEntry $entry
 	 * @param int $ndx
+	 * @return Menu
 	 */
 	protected function insertEntry(MenuEntry $entry, $ndx = NULL) {
 
@@ -132,6 +135,9 @@ class Menu {
 		}
 
 		$entry->setMenu($this);
+		
+		return $this;
+
 	}
 
 	/**
@@ -139,20 +145,46 @@ class Menu {
 	 *
 	 * @param array $entries
 	 * @param insert $ndx
+	 * @return Menu
 	 */
-	public function insertEntries(Array $entries, $ndx) {
-		foreach($this->entries as $e) {
+	public function insertEntries(array $entries, $ndx) {
+
+		foreach($entries as $e) {
 			$this->insertEntry($e, $ndx++);
 		}
+
+		return $this;
+
 	}
 
 	/**
 	 * append a single menu entry
 	 *
 	 * @param MenuEntry $entry
+ 	 * @return Menu
 	 */
 	public function appendEntry(MenuEntry $entry) {
+
 		$this->insertEntry($entry);
+
+		return $this;
+		
+	}
+
+	/**
+	 * append a several menu entry
+	 *
+	 * @param array $entries
+ 	 * @return Menu
+	 */
+	public function appendEntries(array $entries) {
+		
+		foreach($entries as $entry) {
+			$this->insertEntry($entry);
+		}
+
+		return $this;
+		
 	}
 
 	/**
@@ -160,6 +192,7 @@ class Menu {
 	 *
 	 * @param MenuEntry $new
 	 * @param MenuEntry $pos
+ 	 * @return Menu
 	 */
 	public function insertBeforeEntry(MenuEntry $new, MenuEntry $pos) {
 
@@ -169,6 +202,8 @@ class Menu {
 				break;
 			}
 		}
+		
+		return $this;
 
 	}
 
@@ -179,7 +214,9 @@ class Menu {
 	 * @return MenuEntry
 	 */
 	public function getEntryAtPos($ndx) {
+
 		return $this->entries[$ndx];
+
 	}
 
 	/**
@@ -187,6 +224,7 @@ class Menu {
 	 *
 	 * @param MenuEntry $new
 	 * @param MenuEntry $toReplace
+ 	 * @return Menu
 	 */
 	public function replaceEntry(MenuEntry $new, MenuEntry $toReplace) {
 
@@ -197,6 +235,8 @@ class Menu {
 				break;
 			}
 		}
+		
+		return $this;
 
 	}
 
@@ -204,6 +244,7 @@ class Menu {
 	 * remove a MenuEntry
 	 *
 	 * @param MenuEntry $toRemove
+ 	 * @return Menu
 	 */
 	public function removeEntry(MenuEntry $toRemove) {
 
@@ -227,156 +268,258 @@ class Menu {
 				break;
 			}
 		}
+		
+		return $this;
+
 	}
 
 	/**
 	 * remove all static and dynamic entries
+	 * 
+ 	 * @return Menu
 	 */
 	public function purgeEntries() {
+
 		$this->entries = [];
 		$this->dynamicEntries = [];
+
+		return $this;
 	}
 
 	/**
+	 * get id of menu
+	 * 
 	 * @return string int
 	 */
 	public function getId() {
+
 		return $this->id;
+
 	}
 
 	/**
+	 * get script associated with menu
+	 * 
 	 * @return string
 	 */
 	public function getScript() {
+
 		return $this->script;
+
 	}
 
 	/**
+	 * get type of menu [dynamic|static]
+	 * 
 	 * @return string type
 	 */
 	public function getType() {
+
 		return $this->type;
+
 	}
 
 	/**
-	 * @return string method
+	 * get service id if menu is of type dynamic
+	 * 
+	 * @return string service id
 	 */
-	public function getMethod() {
-		return $this->method;
+	public function getServiceId() {
+	
+		return $this->serviceId;
+
 	}
 
 	/**
-	 * @return array
+	 * get all entries of of menu 
+	 * 
+	 * @return MenuEntry[]
 	 */
 	public function getEntries() {
+
 		return $this->entries;
+
 	}
 
 	/**
+	 * get parent menu entry this menu is attached to
+	 * 
 	 * @return MenuEntry
 	 */
 	public function getParentEntry() {
+
 		return $this->parentEntry;
+
 	}
 
 	/**
-	 * make menu to submenu of MenuEntry
+	 * make menu to submenu of menu entry
 	 *
 	 * @param MenuEntry $e
+	 * @return Menu
 	 */
 	public function setParentEntry(MenuEntry $e) {
+
 		$this->parentEntry = $e;
+		return $this;
+
 	}
 
 	/**
+	 * get currently selected menu entry
+	 * 
 	 * @return MenuEntry
 	 */
 	public function getSelectedEntry() {
+
 		return $this->selectedEntry;
+
 	}
 
 	/**
 	 * explicitly set MenuEntry as selected
 	 *
 	 * @param MenuEntry $e
+	 * @return Menu
 	 */
 	public function setSelectedEntry(MenuEntry $e) {
+
 		$this->selectedEntry = $e;
+		return $this;
+
 	}
 
 	/**
 	 * clear a selected entry
+	 * 
+	 * @return Menu
 	 */
 	public function clearSelectedEntry() {
+
 		$this->selectedEntry = NULL;
+		return $this;
+
 	}
 
 	/**
+	 * get authentication level of menu
+	 * 
 	 * @return string
 	 */
 	public function getAuth() {
-		return $this->auth;
-	}
 
-	public function setAuth($auth) {
-		$this->auth = $auth;
+		return $this->auth;
+
 	}
 
 	/**
+	 * set authentication level of menu
+	 * 
+	 * @param string $auth
+	 * @return Menu
+	 */
+	public function setAuth($auth) {
+
+		$this->auth = $auth;
+		return $this;
+		
+	}
+
+	/**
+	 * get additional authentication parameters of menu
+	 * 
 	 * @return string
 	 */
 	public function getAuthParameters() {
+
 		return $this->authParameters;
+
 	}
 
 	/**
+	 * set additional authentication parameters of menu
+	 * 
 	 * @param string $authParameters
+	 * 
+	 * @return Menu
 	 */
 	public function setAuthParameters($authParameters) {
+
 		$this->authParameters = $authParameters;
+		return $this;
+
 	}
 
 	/**
+	 * check whether menu passes authentication level of passed privilege
+	 * 
 	 * @param string $privilege
 	 * @return boolean
 	 */
 	public function isAuthenticatedBy($privilege) {
+
 		return isset($this->auth) && $privilege <= $this->auth;
+
 	}
 
 	/**
+	 * check whether the active menu entry is interactive
+	 * 
 	 * @return boolean
 	 */
 	public function getForceActive() {
+
 		return !!$this->forceActive;
+
 	}
 
 	/**
+	 * force interactive active menu entry
+	 * 
 	 * @param boolean $state
+	 * @return Menu
 	 */
 	public function setForceActive($state) {
+
 		$this->forceActive = !!$state;
+		return $this;
+
 	}
 
 	/**
+	 * check whether submenus are shown
+	 * 
 	 * @return boolean
 	 */
 	public function getShowSubmenus() {
+
 		return !!$this->showSubmenus;
+
 	}
 
 	/**
+	 * enable or disable showing of submenus
+	 * 
 	 * @param boolean $state
+	 * @return Menu
+	 * 
 	 */
 	public function setShowSubmenus($state) {
+
 		$this->showSubmenus = !!$state;
+		return $this;
+
 	}
 
 	/**
-	 * @return array
+	 * get all dynamic menu entries of menu
+	 * 
+	 * @return DynamicMenuEntry[]
 	 */
 	public function getDynamicEntries() {
+
 		return $this->dynamicEntries;
+
 	}
 
 }

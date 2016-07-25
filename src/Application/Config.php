@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.7.0 2016-06-08
+ * @version 1.8.0 2016-07-25
  *
  * @todo refresh() method
  */
@@ -663,11 +663,19 @@ class Config {
 		$a			= $menu->attributes();
 		$root		= isset($a->script)	? (string) $a->script : $this->site->root_document;
 
+		$type		= isset($a->type) && (string) $a->type === 'dynamic' ? 'dynamic' : 'static';
+		$service	= !empty($a->service) ? (string) $a->service : NULL;
+		$id			= !empty($a->id) ? (string) $a->id : NULL;
+		
+		if($type === 'dynamic' && !$service) {
+			throw new ConfigException("A dynamic menu requires a configured service.");
+		}
+
 		$m = new Menu(
 			$root,
-			!empty($a->id)										? (string) $a->id		: NULL,
-			isset($a->type) && (string)	$a->type == 'dynamic'	? 'dynamic'				: 'static',
-			isset($a->method)									? (string) $a->method	: NULL
+			$id,
+			$type,
+			$service
 		);
 
 		if(isset($a->auth)) {
