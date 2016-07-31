@@ -19,7 +19,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler
  *
- * @version 0.11.1 2016-07-31
+ * @version 0.11.2 2016-07-31
  *
  */
 class Route {
@@ -503,8 +503,17 @@ class Route {
 
 		}
 
-		if(isset($this->pathParameters[strtolower($name)])) {
-			return $this->pathParameters[strtolower($name)];
+		$name = strtolower($name);
+
+		if(isset($this->pathParameters[$name])) {
+
+			// both bool false and null are returned as null
+
+			if($this->pathParameters[$name] === FALSE || is_null($this->pathParameters[$name])) {
+				return NULL;
+			}
+
+			return $this->pathParameters[$name];
 		}
 
 		return $default;
