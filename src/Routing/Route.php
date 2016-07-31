@@ -19,7 +19,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler
  *
- * @version 0.11.0 2016-06-08
+ * @version 0.11.1 2016-07-31
  *
  */
 class Route {
@@ -472,11 +472,7 @@ class Route {
 
 			// collect all placeholder names
 
-			$names = [];
-
-			foreach($this->placeholders as $p) {
-				$names[] = $p['name'];
-			}
+			$names = array_keys($this->placeholders);
 
 			// extract values
 
@@ -489,9 +485,10 @@ class Route {
 				$offset = count($values);
 
 				if($offset < count($names)) {
+					
 					while($offset < count($names)) {
-						if(isset($this->placeholders[$offset]['default'])) {
-							$values[] = $this->placeholders[$offset]['default'];
+						if(isset($this->placeholders[$names[$offset]]['default'])) {
+							$values[] = $this->placeholders[$names[$offset]]['default'];
 						}
 						++$offset;
 					}
