@@ -124,7 +124,8 @@ class ArticleQuery extends Query {
 	/**
 	 * executes query and returns array of Article instances
 	 *
-	 * @return array
+	 * @see \vxPHP\Orm\Query::select()
+	 * @return Article[]
 	 */
 	public function select() {
 
@@ -143,9 +144,9 @@ class ArticleQuery extends Query {
 	/**
 	 * adds LIMIT clause, executes query and returns array of Article instances
 	 *
+	 * @see \vxPHP\Orm\Query::selectFirst()
 	 * @param number $rows
-	 * 
-	 * @return array
+	 * @return Article[]
 	 * @throws \RangeException
 	 */
 	public function selectFirst($rows = 1) {
@@ -160,6 +161,7 @@ class ArticleQuery extends Query {
 	/**
 	/* (non-PHPdoc)
 	 * @see \vxPHP\Orm\Query::selectFromTo()
+	 * @return Article[]
 	 * @throws \RangeException
 	 */
 	public function selectFromTo($from, $to) {
