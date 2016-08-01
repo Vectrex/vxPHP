@@ -29,7 +29,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.0, 2016-07-26
+ * @version 0.5.1, 2016-08-01
  *
  * @throws MenuGeneratorException
  */
@@ -44,7 +44,7 @@ class MenuGenerator {
 	 * @var array
 	 * caches already parsed menus
 	 */
-	protected static $primedMenus = array();
+	protected static $primedMenus = [];
 
 	/**
 	 * @var Route
@@ -94,7 +94,7 @@ class MenuGenerator {
 	/**
 	 * @var array
 	 */
-	protected $renderArgs = array();
+	protected $renderArgs;
 
 	/**
 	 * sets active menu entries, allows addition of dynamic entries and
@@ -143,13 +143,10 @@ class MenuGenerator {
 
 		$this->menu = $this->config->menus[$id];
 
-		$this->id				= $id;
-		$this->level			= $level;
-		$this->decorator		= $decorator;
-
-		if(!is_null($renderArgs)) {
-			$this->renderArgs = $renderArgs;
-		}
+		$this->id			= $id;
+		$this->level		= $level;
+		$this->decorator	= $decorator;
+		$this->renderArgs	= is_null($renderArgs) ? [] : $renderArgs;
 
 		// if $forceActiveMenu was initialized before, it will not be overwritten
 
@@ -232,7 +229,7 @@ class MenuGenerator {
 			self::$primedMenus[] = $this->menu;
 		}
 
-		$css = $this->id . 'menu';
+		$htmlId = $this->id . 'menu';
 
 		// drill down to required submenu (if only submenu needs to be rendered)
 
@@ -240,7 +237,7 @@ class MenuGenerator {
 
 		if($this->level !== FALSE) {
 
-			$css .= '_level_' . $this->level;
+			$htmlId .= '_level_' . $this->level;
 
 			if($this->level > 0) {
 
@@ -282,12 +279,26 @@ class MenuGenerator {
 		// enable or disable always active menu
 
 		$m->setForceActive(self::$forceActiveMenu);
-		
-		return sprintf(
-			'<div id="%s">%s</div>',
-			$css,
-			$renderer->render()
-		);
+
+		// if no container tag was specified, use a DIV element
+
+		if(!isset($this->renderArgs['containerTag'])) {
+			$this->renderArgs['containerTag'] = 'div';
+		}
+
+		// omit wrapper, if a falsy container tag was specified
+
+		if($this->renderArgs['containerTag']) {
+			return sprintf(
+				'<%1$s%2$s>%3$s</%1$s>',
+				$this->renderArgs['containerTag'],
+				(isset($this->renderArgs['omitId']) && $this->renderArgs['omitId']) ? '' : (' id="' . $htmlId . '"'),
+				$renderer->render()
+			);
+		}
+
+		return $renderer->render();
+
 	}
 
 	
