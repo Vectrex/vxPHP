@@ -25,7 +25,7 @@ use vxPHP\Database\MysqlPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.11.0 2016-05-14
+ * @version 0.12.0 2016-09-17
  */
 
 class Article implements PublisherInterface {
@@ -105,7 +105,7 @@ class Article implements PublisherInterface {
 	 * colunms 
 	 * @var array
 	 */
-	private	$dataCols = array('Teaser', 'Content');
+	private	$dataCols = ['teaser', 'content'];
 
 	/**
 	 * @var ArticleCategory
@@ -159,20 +159,20 @@ class Article implements PublisherInterface {
 	 * 
 	 * @var array
 	 */
-	private	$notIndicatingChange = array(
+	private	$notIndicatingChange = [
 		'published'
-	);
+	];
 	
 	/**
 	 * property names which are set to NULL when cloning the object
 	 * 
 	 * @var array
 	 */
-	private $propertiesToReset = array(
+	private $propertiesToReset = [
 		'updatedBy',
 		'id',
 		'alias'
-	);
+	];
 	
 	
 	public function __construct() {
@@ -720,9 +720,13 @@ class Article implements PublisherInterface {
 	 * @return mixed
 	 */
 	public function getData($ndx = NULL) {
+
 		if(is_null($ndx)) {
 			return $this->data;
 		}
+
+		$ndx = strtolower($ndx);
+
 		if(isset($this->data[$ndx])) {
 			return $this->data[$ndx];
 		}
@@ -734,6 +738,9 @@ class Article implements PublisherInterface {
 	 * @param array $data
 	 */
 	public function setData(array $data) {
+
+		$data = array_change_key_case($data, CASE_LOWER);
+
 		foreach($this->dataCols as $c) {
 			if(isset($data[$c])) {
 				$this->data[$c] = $data[$c];
