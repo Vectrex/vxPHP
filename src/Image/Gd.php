@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.3a 2015-12-17
+ * @version 0.5.4 2016-10-19
  */
 class Gd extends ImageModifier {
 
@@ -70,8 +70,8 @@ class Gd extends ImageModifier {
 		$src->height		= $info[1];
 
 		$this->src					= $src;
-		$this->queue				= array();
-		$this->destinationBuffer	= array(new \stdClass(), new \stdClass());
+		$this->queue				= [];
+		$this->destinationBuffer	= [new \stdClass(), new \stdClass()];
 	}
 
 	/**
@@ -221,7 +221,7 @@ class Gd extends ImageModifier {
 			throw new ImageModifierException("$mimetype not supported by export.");
 		}
 
-		$this->path = $path ? $path : $this->$file;
+		$this->path = $path ? $path : $this->file;
 
 		// if image was not altered, create only copy
 
@@ -230,9 +230,8 @@ class Gd extends ImageModifier {
 		}
 
 		else {
-			
+
 			$src = $this->src;
-			$dst = $this->destinationBuffer[0];
 			
 			foreach($this->queue as $step) {
 				$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($src), $step->parameters));

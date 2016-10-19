@@ -18,7 +18,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for Imagick
  *
  * @author Gregor Kofler
- * @version 0.3.0 2014-04-03
+ * @version 0.3.1 2016-10-19
  * 
  * @todo improve grayscale conversion
  * 
@@ -87,7 +87,7 @@ class ImageMagick extends ImageModifier {
 			throw new ImageModifierException("$mimetype not supported by export.");
 		}
 		
-		$this->path = $path ? $path : $this->$file;
+		$this->path = $path ? $path : $this->file;
 
 		// if image was not altered, create only copy
 		
@@ -147,7 +147,7 @@ class ImageMagick extends ImageModifier {
 	protected function do_resize(\stdClass $src, $width, $height) {
 
 		$src->resource->resizeImage($width, $height, \Imagick::FILTER_CATROM, 1, FALSE);
-		$src->resource->convolveImage(array(-1, -0.8, -1, -0.8, 16, -0.8, -1, -0.8, -1));
+		$src->resource->convolveImage([-1, -0.8, -1, -0.8, 16, -0.8, -1, -0.8, -1]);
 		
 		$src->width		= $width;
 		$src->height	= $height;
@@ -181,7 +181,7 @@ class ImageMagick extends ImageModifier {
 	 */
 	protected function do_greyscale(\stdClass $src) {
 		
-		$src->resource->modulateImage(100,0,100);
+		$src->resource->modulateImage(100, 0, 100);
 
 		return $src;
 	}
