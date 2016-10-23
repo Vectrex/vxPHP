@@ -23,47 +23,62 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.2 2014-09-19
+ * @version 0.7.0 2016-10-23
  *
  * @todo compatibility checks on windows systems
  * @todo allow update of createdBy user
  */
 class MetaFolder {
 
-	private static	$instancesById		= array();
-	private static	$instancesByPath	= array();
+	/**
+	 * @var MetaFile[]
+	 */
+	private static	$instancesById		= [];
 
-			/**
-			 * @var FilesystemFolder
-			 */
-	private $filesystemFolder,
-			$fullPath,
-			$name;
+	/**
+	 * @var MetaFile[]
+	 */
+	private static	$instancesByPath	= [];
 
-	private	$id,
-			$data,
-			$level, $l, $r,
-			$obscure_files,
+	/**
+	 * @var FilesystemFolder
+	 */
+	private $filesystemFolder;
+	
+	/**
+	 * @var string
+	 */
+	private	$fullPath;
 
-			/**
-			 * @var UserAbstract
-			 */
-			$createdBy,
+	/**
+	 * @var string
+	 */
+	private $name;
+
+	private	$id;
+	private $data;
+	private	$level, $l, $r;
+	private $obscure_files;
+
+	/**
+	 * @var UserAbstract
+	 */
+	private	$createdBy;
 			
-			/**
-			 * @var UserAbstract
-			 */
-			$updatedBy,
+	/**
+	 * @var UserAbstract
+	 */
+	private $updatedBy;
 
-			/**
-			 * @var array
-			 */
-			$metaFiles,
+	/**
+	 * @var MetaFile[]
+	 */
+	private $metaFiles;
 
-			/**
-			 * @var array
-			 */
-			$metaFolders;
+	/**
+	 * @var MetaFolder[]
+	 */
+	private	$metaFolders;
 	
 	/**
 	 * retrieve metafolder instance by either primary key of db entry
@@ -146,7 +161,7 @@ class MetaFolder {
 
 		$rows = Application::getInstance()->getDb()->doPreparedQuery(
 			"SELECT * FROM folders WHERE Path = ? OR Path = ? LIMIT 1",
-			array((string) $path, (string) $altPath)
+			[(string) $path, (string) $altPath]
 		);
 
 		if(isset($rows[0])) {
@@ -161,7 +176,7 @@ class MetaFolder {
 
 		$rows = Application::getInstance()->getDb()->doPreparedQuery(
 			"SELECT * FROM folders WHERE foldersID = ? LIMIT 1",
-			array((int) $id)
+			[(int) $id]
 		);
 
 		if(isset($rows[0])) {
@@ -179,7 +194,7 @@ class MetaFolder {
 
 		$rows = Application::getInstance()->getDb()->doPreparedQuery(
 			"SELECT l, r, level FROM folders WHERE foldersID = ?",
-			array((int) $this->id)
+			[(int) $this->id]
 		);
 		$this->level	= $this->data['level']	= (int) $rows[0]['level'];
 		$this->l		= $this->data['l']		= (int) $rows[0]['l'];
@@ -253,13 +268,16 @@ class MetaFolder {
 		}
 	
 		return $this->updatedBy;
+
 	}
 	
 	/**
 	 * @return array
 	 */
 	public function getNestingInformation() {
-		return array('l' => $this->l, 'r' => $this->r, 'level' => $this->level);
+
+		return ['l' => $this->l, 'r' => $this->r, 'level' => $this->level];
+
 	}
 
 	public function getMetaData() {
@@ -270,11 +288,18 @@ class MetaFolder {
 	 * @return FilesystemFolder
 	 */
 	public function getFilesystemFolder() {
+
 		return $this->filesystemFolder;
+
 	}
 
+	/**
+	 * @return boolean
+	 */
 	public function obscuresFiles() {
+
 		return $this->obscure_files;
+
 	}
 
 	/**
@@ -284,7 +309,9 @@ class MetaFolder {
 	 * @return string
 	 */
 	public function getRelativePath($force = FALSE) {
+
 		return $this->filesystemFolder->getRelativePath($force);
+
 	}
 
 	/**
@@ -292,23 +319,25 @@ class MetaFolder {
 	 *
 	 * @param boolean $force forces re-reading of metafolder
 	 *
-	 * @return array
+	 * @return MetaFile[]
 	 */
 	public function getMetaFiles($force = FALSE) {
 
 		if(!isset($this->metaFiles) || $force) {
-			$this->metaFiles = array();
+			$this->metaFiles = [];
 
 			foreach(
 				Application::getInstance()->getDb()->doPreparedQuery(
 					'SELECT filesID FROM files WHERE foldersID = ?',
-					array((int) $this->id)
+					[(int) $this->id]
 				)
 			as $f) {
 				$this->metaFiles[] = MetaFile::getInstance(NULL, $f['filesID']);
 			}
 		}
+
 		return $this->metaFiles;
+
 	}
 
 	/**
@@ -316,35 +345,40 @@ class MetaFolder {
 	 *
 	 * @param boolean $force forces re-reading of metafolder
 	 *
-	 * @return array
+	 * @return MetaFolder[]
 	 */
 	public function getMetaFolders($force = FALSE) {
 
 		if(!isset($this->metaFolders) || $force) {
-			$this->metaFolders = array();
+			$this->metaFolders = [];
 
 			foreach(
 				Application::getInstance()->getDb()->doPreparedQuery(
 					'SELECT foldersID from folders WHERE l > ? AND r < ? AND level = ?',
-					array((int) $this->l, (int) $this->r, $this->level + 1)
+					[(int) $this->l, (int) $this->r, $this->level + 1]
 				)
 			as $f) {
 				$this->metaFolders[] = self::getInstance(NULL, $f['foldersID']);
 			}
 		}
+
 		return $this->metaFolders;
+
 	}
 
 	/**
 	 * return parent metafolder or NULL if already top folder
 	 */
 	public function getParentMetafolder() {
+
 		if(!$this->level) {
 			return NULL;
 		}
 		$pathSegs = explode(DIRECTORY_SEPARATOR, rtrim($this->getFullPath(), DIRECTORY_SEPARATOR));
 		array_pop($pathSegs);
+
 		return self::getInstance(implode(DIRECTORY_SEPARATOR, $pathSegs));
+
 	}
 
 	/**
@@ -386,8 +420,8 @@ class MetaFolder {
 
 		$db->deleteRecord('folders', $this->id);
 
-		$db->execute('UPDATE folders SET r = r - 2 WHERE r > ?', array((int) $this->r));
-		$db->execute('UPDATE folders SET l = l - 2 WHERE l > ?', array((int) $this->r));
+		$db->execute('UPDATE folders SET r = r - 2 WHERE r > ?', [(int) $this->r]);
+		$db->execute('UPDATE folders SET l = l - 2 WHERE l > ?', [(int) $this->r]);
 
 		unset(self::$instancesById[$this->id]);
 		unset(self::$instancesByPath[$this->filesystemFolder->getPath()]);
@@ -401,6 +435,7 @@ class MetaFolder {
 		foreach(self::$instancesById as $f) {
 			$f->refreshNesting();
 		}
+
 	}
 
 	/**
@@ -430,12 +465,11 @@ class MetaFolder {
 	 * @throws MetaFolderException
 	 * @return array rootFolders
 	 */
-
 	public static function getRootFolders() {
 
 		self::instantiateAllExistingMetaFolders();
 
-		$roots = array();
+		$roots = [];
 
 		foreach(self::$instancesById as $f) {
 			$nestingInfo = $f->getNestingInformation();
@@ -459,7 +493,11 @@ class MetaFolder {
 	 * @param array $metaData optional data for folder
 	 * @throws MetaFolderException
 	 */
-	public static function create(FilesystemFolder $f, Array $metaData = array()) {
+	public static function create(FilesystemFolder $f, Array $metaData = []) {
+
+		if(($parentFolder = $f->getParentFolder())) {
+			$parentFolder->createMetaFolder();
+		}
 
 		try {
 			self::getInstance($f->getPath());
@@ -506,10 +544,10 @@ class MetaFolder {
 
 					// has parent directory
 
-					$rows = $db->doPreparedQuery("SELECT r, l, level FROM folders WHERE foldersID = ?", array($parent->getId()));
+					$rows = $db->doPreparedQuery("SELECT r, l, level FROM folders WHERE foldersID = ?", [$parent->getId()]);
 
-					$db->execute('UPDATE folders SET r = r + 2 WHERE r >= ?', array((int) $rows[0]['r']));
-					$db->execute('UPDATE folders SET l = l + 2 WHERE l > ?', array((int) $rows[0]['r']));
+					$db->execute('UPDATE folders SET r = r + 2 WHERE r >= ?', [(int) $rows[0]['r']]);
+					$db->execute('UPDATE folders SET l = l + 2 WHERE l > ?', [(int) $rows[0]['r']]);
 
 					$metaData['l'] = $rows[0]['r'];
 					$metaData['r'] = $rows[0]['r'] + 1;
