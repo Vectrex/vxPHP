@@ -21,7 +21,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.6 2013-11-22
+ * @version 0.4.0 2016-10-23
  *
  * @todo test delete()
  */
@@ -30,41 +30,73 @@ class FilesystemFolder {
 
 	const CACHE_PATH = '.cache';
 
-	private static $instances = array();
+	/**
+	 * caches instances of folders
+	 * @var FilesystemFolder[]
+	 */
+	private static $instances = [];
 
+	/**
+	 * absolute path
+	 * @var string
+	 */
 	private	$path;
+	
+	/**
+	 * flags presence of a cache folder
+	 * @var boolean
+	 */
 	private $cacheFound;
+	
+	/**
+	 * relative path with application assets path as root
+	 * @var string
+	 */
 	private $relPath;
+	
+	/**
+	 * @var FilesystemFolder
+	 */
+	private $parentFolder;
 
 	public static function getInstance($path) {
+
 		$path = rtrim(realpath($path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
 		}
+
 		return self::$instances[$path];
+
 	}
 
 	public static function unsetInstance($path) {
+
 		if(isset(self::$instances[$path])) {
 			unset(self::$instances[$path]);
 		}
+
 	}
 
 	private function __construct($path) {
+
 		if(is_dir($path)) {
 			$this->path = $path;
 		}
 		else {
-			throw new FilesystemFolderException("Directory $path does not exist or is no directory.");
+			throw new FilesystemFolderException(sprintf('Directory %s does not exist or is no directory.', $path));
 		}
+
 	}
 
 	/**
 	 * returns path of filesystem folder
 	 */
 	public function getPath() {
+
 		return $this->path;
+
 	}
 
 	/**
@@ -93,12 +125,13 @@ class FilesystemFolder {
 	 */
 	public function getFiles($extension = NULL) {
 
-		$result = array();
+		$result = [];
 		$glob = $this->path . '*';
 
 		if(!is_null($extension)) {
 			$glob .= ".$extension";
 		}
+
 		foreach(array_filter(glob($glob), 'is_file') as $f) {
 			$result[] = FilesystemFile::getInstance($f, $this);
 		}
@@ -113,7 +146,7 @@ class FilesystemFolder {
 	 */
 	public function getFolders() {
 
-		$result = array();
+		$result = [];
 		$files = glob($this->path . '*', GLOB_ONLYDIR);
 
 		if($files) {
@@ -123,8 +156,40 @@ class FilesystemFolder {
 		}
 
 		return $result;
+
 	}
 
+	/**
+	 * return parent FilesystemFolder of current folder
+	 * returns NULL, when current folder is already the root folder
+	 * 
+	 * @param boolean $force
+	 * @return FilesystemFolder
+	 */
+	public function getParentFolder($force = FALSE) {
+		
+		if(!isset($this->parentFolder) || $force) {
+			
+			$parentPath = realpath($this->path . '..');
+			
+			// flag parentFolder property, when $this is already the root folder
+			
+			if($parentPath === $this->path) {
+				$this->parentFolder = FALSE;
+			}
+
+			else {
+				$this->parentFolder = self::getInstance($parentPath);
+			}
+
+		}
+
+		// return NULL (instead of FALSE) when there is no parent folder
+
+		return $this->parentFolder ?: NULL;
+		
+	}
+	
 	/**
 	 * checks whether a FilesystemFolder::CACHE_PATH subfolder exists
 	 *
@@ -132,10 +197,13 @@ class FilesystemFolder {
 	 * @return boolean result
 	 */
 	public function hasCache($force = FALSE) {
+
 		if(!isset($this->cacheFound) || $force) {
-			$this->cacheFound = is_dir($this->path.self::CACHE_PATH);
+			$this->cacheFound = is_dir($this->path . self::CACHE_PATH);
 		}
+
 		return $this->cacheFound;
+
 	}
 
 	/**
@@ -146,9 +214,11 @@ class FilesystemFolder {
 	 * @return path
 	 */
 	public function getCachePath($force = FALSE) {
+
 		if($this->hasCache($force)) {
-			return $this->path.self::CACHE_PATH.DIRECTORY_SEPARATOR;
+			return $this->path . self::CACHE_PATH.DIRECTORY_SEPARATOR;
 		}
+
 	}
 
 	/**
@@ -160,13 +230,39 @@ class FilesystemFolder {
 	 * @throws FilesystemFolderException
 	 */
 	public function createFolder($folderName) {
-		if(!@mkdir($this->path.$folderName)) {
-			throw new FilesystemFolderException("Folder ".$this->path.DIRECTORY_SEPARATOR.$folderName." could not be created!");
+		
+		// prefix folder path, when realpath fails (e.g. does not exist)
+
+		if(!($path = realpath($folderName))) {
+
+			$path = $this->path . $folderName;
+
 		}
-		else {
-			chmod($this->path.$folderName, 0777);
+		
+		// throw exception when $folderName cannot be established as subdirectory of current folder
+		
+		else if (strpos($path, $this->path) !== 0) {
+			
+			throw new FilesystemFolderException(sprintf("Folder %s cannot be created within folder %s.", $folderName, $this->path));
+			
 		}
-		return self::getInstance($this->path.$folderName);
+		
+		// recursively create folder(s) when when path not already exists
+		
+		if(!is_dir($path)) {
+
+			if(!@mkdir($path, 0777, TRUE)) {
+				throw new FilesystemFolderException(sprintf("Folder %s could not be created!", $path));
+			}
+			else {
+				chmod($path, 0777);
+			}
+
+			$path = realpath($path);
+		}
+
+		return self::getInstance($path);
+
 	}
 
 	/**
@@ -176,17 +272,19 @@ class FilesystemFolder {
 	 * @throws FilesystemFolderException
 	 */
 	public function createCache() {
+
 		if($this->hasCache(TRUE)) {
-			return $this->path.self::CACHE_PATH.DIRECTORY_SEPARATOR;
+			return $this->path.self::CACHE_PATH . DIRECTORY_SEPARATOR;
 		}
 
 		if(!@mkdir($this->path.self::CACHE_PATH)) {
-			throw new FilesystemFolderException("Cache folder ".$this->path.self::CACHE_PATH." could not be created!");
+			throw new FilesystemFolderException(sprintf('Cache folder %s could not be created!', $this->path . self::CACHE_PATH));
 		}
 		else {
 			chmod($this->path.self::CACHE_PATH, 0777);
-			return $this->path.self::CACHE_PATH.DIRECTORY_SEPARATOR;
+			return $this->path.self::CACHE_PATH . DIRECTORY_SEPARATOR;
 		}
+
 	}
 
 	/**
@@ -196,13 +294,15 @@ class FilesystemFolder {
 	 * @throws FilesystemFolderException
 	 */
 	public function purgeCache($force = FALSE) {
+
 		if(($path = $this->getCachePath($force))) {
 			foreach(glob($path. '*') as $f) {
 				if(!unlink($f)) {
-					throw new FilesystemFolderException("Cache folder ".$this->path.self::CACHE_PATH." could not be purged!");
+					throw new FilesystemFolderException(sprintf('Cache folder %s could not be purged!', $this->path . self::CACHE_PATH));
 				}
 			}
 		}
+
 	}
 
 	/**
@@ -223,17 +323,20 @@ class FilesystemFolder {
 
 			if ($f->isDir()) {
 				if(!@rmdir($f->getRealPath())) {
-					throw new FilesystemFolderException("Filesystem folder {$f->getRealPath()} could not be deleted!");
+					throw new FilesystemFolderException(sprintf('Filesystem folder %s could not be deleted!', $f->getRealPath()));
 				}
+
 				self::unsetInstance($f->getRealPath());
 			}
 		    else {
 		    	if(!@unlink($f->getRealPath())) {
-		    		throw new FilesystemFolderException("Filesystem file {$f->getRealPath()} could not be deleted!");
+		    		throw new FilesystemFolderException(sprintf('Filesystem file %s could not be deleted!', $f->getRealPath()));
 		    	}
+
 		    	FilesystemFile::unsetInstance($f->getRealPath());
 			}
 		}
+
 	}
 
 	/**
@@ -242,23 +345,29 @@ class FilesystemFolder {
 	 * @throws FilesystemFolderException
 	 */
 	public function delete() {
+
 		$this->purge();
+
 		if(!@rmdir($this->path)) {
-			throw new FilesystemFolderException("Filesystem folder {$this->path} could not be deleted!");
+			throw new FilesystemFolderException(sprintf('Filesystem folder %s could not be deleted!', $this->path));
 		}
+
 		self::unsetInstance($this->path);
+
 	}
 
 	/**
 	 * creates metafolder from current filesystemfolder
 	 */
 	public function createMetaFolder() {
+
 		try {
 			return MetaFolder::getInstance($this->getPath());
 		}
 		catch(MetaFolderException $e) {
 			return MetaFolder::create($this);
 		}
+
 	}
 }
-?>
+
