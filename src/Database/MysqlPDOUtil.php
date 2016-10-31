@@ -13,11 +13,6 @@ namespace vxPHP\Database;
 /**
  * utility functions supporting MysqlPDO with tasks common in vxPHP based web applications
  *
- * This class is part of the vxPHP framework
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code
- *
  * @author Gregor Kofler, info@gregorkofler.com
  *
  * @version 0.1.0, 2016-05-14

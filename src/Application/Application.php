@@ -22,7 +22,9 @@ use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\DatabaseInterfaceFactory;
 
 /**
- * Application singleton
+ * Application singleton.
+ * 
+ * The application singleton wraps configuration, database and service access.
  *
  * @author Gregor Kofler
  * @version 1.4.1 2016-05-14
@@ -30,31 +32,43 @@ use vxPHP\Database\DatabaseInterfaceFactory;
 class Application {
 
 	/**
+	 * this application instance
+	 * 
 	 * @var Application
 	 */
 	private static $instance;
 
 	/**
+	 * the configured default database instance
+	 * 
 	 * @var DatabaseInterface
 	 */
 	private	$db;
 
 	/**
+	 * configuration instance of application
+	 * 
 	 * @var Config
 	 */
 	private	$config;
 
 	/**
+	 * event dispatcher instance
+	 * 
 	 * @var EventDispatcher
 	 */
 	private	$eventDispatcher;
 
 	/**
+	 * all configured locale identifiers
+	 * 
 	 * @var array
 	 */
-	private $locales = array();
+	private $locales = [];
 
 	/**
+	 * the currently active locale
+	 * 
 	 * @var Locale
 	 */
 	private $currentLocale;
@@ -108,25 +122,31 @@ class Application {
 	private $isLocal;
 
 	/**
-	 * @var multitype:vxPHP\Service\ServiceInterface
+	 * all configured services
+	 * 
+	 * @var ServiceInterface[]
 	 */
-	private $services = array();
+	private $services = [];
 	
 	/**
-	 * @var multitype:vxPHP\Observer\SubscriberInterface
+	 * all configured plugins
+	 * 
+	 * @var SubscriberInterface[]
 	 */
-	private $plugins = array();
+	private $plugins = [];
 
 	/**
+	 * loader instance
+	 * 
 	 * @var Psr4
 	 */
 	private $loader;
 
 	/**
-	 * constructor
+	 * Constructor.
 	 *
 	 * create configuration object, database object
-	 * set up dispatcher and plugins (subscribers)
+	 * set up dispatcher and plugins (subscribers).
 	 * 
 	 * @param Config $config
 	 */
@@ -175,10 +195,13 @@ class Application {
 
 	}
 
+	/**
+	 * Disable any cloning of instance.
+	 */
 	private function __clone() {}
 
 	/**
-	 * get Application instance
+	 * Get Application instance.
 	 *
 	 * @param Config $config
 	 * @return Application
@@ -197,7 +220,8 @@ class Application {
 	}
 
 	/**
-	 * unregister all previously registered plugins
+	 * Unregister all previously registered plugins.
+	 * 
 	 * read plugin configuration from Config
 	 * and register all configured plugins
 	 * 

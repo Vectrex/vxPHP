@@ -15,14 +15,9 @@ use vxPHP\Application\Exception\ConfigException;
 /**
  * Simple factory for DatabaseInterface classes
  * 
- * This class is part of the vxPHP framework
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code
- * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.1.0, 2016-05-14
+ * @version 0.2.0, 2016-10-30
  */
 class DatabaseInterfaceFactory {
 	
@@ -44,20 +39,19 @@ class DatabaseInterfaceFactory {
 		
 		$type = strtolower($type);
 		
-		// check for drivers provided by framework
-		
-		if(!in_array($type, ['mysql'])) {
+		$className =
+			__NAMESPACE__ .
+			'\\Wrapper\\' .
+			ucfirst($type);
+
+		// check whether driver is available
 			
+		if(!class_exists($className)) {
+
 			throw new ConfigException(sprintf("No database wrapper class for '%s' supported.", $type));
 			
 		}
-		
-		$className =
-			__NAMESPACE__ .
-			'\\' .
-			ucfirst($type) .
-			'PDO';
-
+			
 		return new $className($config);
 
 	}

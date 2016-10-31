@@ -8,95 +8,57 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Database;
+namespace vxPHP\Database\Wrapper;
+
+use vxPHP\Database\AbstractPdoWrapper;
+use vxPHP\Database\DatabaseInterface;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
  * 
- * This class is part of the vxPHP framework
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code
- * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.0.0, 2016-05-14
+ * @version 1.1.0, 2016-10-30
  */
-class MysqlPDO implements DatabaseInterface {
-	
+class Mysql extends AbstractPdoWrapper implements DatabaseInterface {
+
 	const		UPDATE_FIELD	= 'lastUpdated';
 	const		CREATE_FIELD	= 'firstCreated';
 	const		SORT_FIELD		= 'customSort';
-	
-				/**
-				 * host address of connection
-				 * @var string
-				 */
-	protected	$host;
-	
-				/**
-				 * port of database connection
-				 * @var int
-				 */
-	protected	$port;
 
-				/**
-				 * username for connection
-				 * @var string
-				 */
-	protected	$user;
+	const		QUOTE_CHAR		= '`';
 
-				/**
-				 * password for connection
-				 * @var string
-				 */
-	protected	$pass;
-
-				/**
-				 * name of database for connection
-				 * @var string
-				 */
-	protected	$dbname;
-
-				/**
-				 * datasource string of connection
-				 * @var string
-				 */
-	protected	$dsn;
-
-				/**
-				 * holds the wrapped PDO connection
-				 * @var \PDO
-				 */
-	protected	$connection;
-
-				/**
-				 * automatically touch a lastUpdated column whenever
-				 * a record is updated
-				 * any internal db mechanism is notoverwritten
-				 * @var boolean
-				 */
+	/**
+	 * automatically touch a lastUpdated column whenever
+	 * a record is updated
+	 * any internal db mechanism is notoverwritten
+	 * 
+	 * @var boolean
+	 */
 	protected	$touchLastUpdated	= TRUE;
 	
-				/**
-				 * holds last executed statement
-				 * @var \PDOStatement
-				 */
+	/**
+	 * holds last executed statement
+	 * 
+	 * @var \PDOStatement
+	 */
 	protected	$statement;
-				
-				/**
-				 * lookup table for supported character sets
-				 * @var array
-				 */
+
+	/**
+	 * map translating encoding names
+	 * 
+	 * @var array
+	 */
 	protected	$charsetMap = [
-					'utf-8'			=> 'utf8',
-					'iso-8859-15'	=> 'latin1'
-				];
+		'utf-8'			=> 'utf8',
+		'iso-8859-15'	=> 'latin1'
+	];
 				
-				/**
-				 * column details of tables
-				 * @var array
-				 */
+	/**
+	 * column details of tables
+	 * 
+	 * @var array
+	 */
 	protected	$tableStructureCache = [];
 
 	/**
@@ -108,44 +70,25 @@ class MysqlPDO implements DatabaseInterface {
 	 * @throws \PDOException
 	 */
 	public function __construct(array $config = []) {
-	
-		$config = array_change_key_case($config, CASE_LOWER);
 
-		foreach(['host', 'dbname', 'user'] as $configParam) {
-
-			if(!isset($config[$configParam])) {
-				throw new \PDOException(sprintf("Missing '%s' in db connection configuration.", $configParam));
-			}
-		}
-		
-		$this->host		= $config['host'];
-		$this->dbname	= $config['dbname'];
-		$this->user		= $config['user'];
-		$this->pass		= $config['pass'];
-		
-		if(isset($config['port'])) {
-			$this->port = (int) $config['port'];
-		}
-
-		$this->logtype	= isset($config['logtype']) && strtolower($config['logtype']) === 'xml' ? 'xml' : 'plain';
-		
-		$charset = 'utf8';
+		parent::__construct($config);
 
 		if(defined('DEFAULT_ENCODING')) {
-
+		
 			if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
 				$charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
 			}
 			else {
 				throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
 			}
-
+		
 		}
 
-		$options = [
-			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
-		];
+		else {
+		
+			$charset = 'utf8';
+		
+		}
 		
 		$this->dsn = sprintf(
 			"%s:dbname=%s;host=%s;charset=%s",
@@ -154,11 +97,16 @@ class MysqlPDO implements DatabaseInterface {
 			$this->host,
 			$charset
 		);
-		
+
 		if($this->port) {
 			$this->dsn .= ';port=' . $this->port;
 		}
-
+		
+		$options = [
+			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+		];
+		
 		$connection = new \PDO($this->dsn, $this->user, $this->pass, $options);
 
 		$connection->setAttribute(
@@ -181,25 +129,13 @@ class MysqlPDO implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	function setConnection(\PDO $connection) {
+	public function setConnection(\PDO $connection) {
 		
 		// ensure that a cached statement is deleted
 
 		$this->statement = NULL;
 
 		$this->connection = $connection;
-
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::getConnection()
-	 */
-	public function getConnection() {
-		
-		return $this->connection;
 
 	}
 	
@@ -259,7 +195,7 @@ class MysqlPDO implements DatabaseInterface {
 					(%s)
 				",
 				$tableName,
-				'`', implode('`, `', $names), '`',
+				self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
 				implode(', ', array_fill(0, count($names), '?'))
 			)
 		);
@@ -331,8 +267,8 @@ class MysqlPDO implements DatabaseInterface {
 									%s%s%s = ?
 							",
 							$tableName,
-							'`', implode('` = ?, `', $names), '`',
-							'`', $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], '`'
+							self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ' = ?, ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
+							self::QUOTE_CHAR, $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], self::QUOTE_CHAR
 						)
 					);
 					
@@ -362,8 +298,8 @@ class MysqlPDO implements DatabaseInterface {
 								%s%s%s = ?
 						",
 						$tableName,
-						'`', implode('` = ?, `', $names), '`',
-						'`', implode ('` = ? AND `', array_keys($keyValue)), '`'
+						self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ' = ?, ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
+						self::QUOTE_CHAR, implode (self::QUOTE_CHAR . ' = ? AND ' . self::QUOTE_CHAR, array_keys($keyValue)), self::QUOTE_CHAR
 					)
 				);
 				
@@ -382,6 +318,9 @@ class MysqlPDO implements DatabaseInterface {
 			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 
 		}
+		
+		return 0;
+
 	}
 	
 	/**
@@ -412,7 +351,7 @@ class MysqlPDO implements DatabaseInterface {
 								%s%s%s = ?
 						",
 						$tableName,
-						'`', $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], '`'
+						self::QUOTE_CHAR, $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], self::QUOTE_CHAR
 					)
 				);
 
@@ -433,7 +372,7 @@ class MysqlPDO implements DatabaseInterface {
 			$fieldNames = [];
 			
 			foreach(array_keys($keyValue) as $fieldName) {
-				$fieldNames[]	= '`' . $fieldName . '` = ?';
+				$fieldNames[]	= self::QUOTE_CHAR . $fieldName . self::QUOTE_CHAR . ' = ?';
 			}
 
 			$this->statement = $this->connection->prepare(
@@ -737,7 +676,7 @@ class MysqlPDO implements DatabaseInterface {
 	 * @return void
 	 */
 	protected function fillTableStructureCache($tableName) {
-		
+
 		// get all table names
 
 		if(empty($this->tableStructureCache)) {
@@ -756,6 +695,8 @@ class MysqlPDO implements DatabaseInterface {
 			return;
 		}
 
+		var_dump($tableName);
+		
 		$statement = $this->connection->prepare('
 			SELECT
 				COLUMN_NAME,

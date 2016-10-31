@@ -36,14 +36,14 @@ interface DatabaseInterface {
 	 * $keyValue can either be a scalar (matching a single-field primary key)
 	 * or an associative array
 	 *
-	 * returns affected row count or NULL
+	 * returns affected row count; when no update was necessary, 0 is returned
 	 * when no update was possible due to complete mismatch of data keys and column names
 	 *
 	 * @param string $tableName
 	 * @param mixed $keyValue
 	 * @param array $data
 	 *
-	 * @return mixed
+	 * @return integer
 	 */
 	public function updateRecord($tableName, $keyValue, array $data);
 
