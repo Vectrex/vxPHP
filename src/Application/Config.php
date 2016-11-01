@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.8.0 2016-07-25
+ * @version 1.9.0 2016-11-01
  *
  * @todo refresh() method
  */
@@ -318,25 +318,14 @@ class Config {
 					throw new ConfigException(sprintf("Templating filter '%s' has already been defined.", $id));
 				}
 
-				// clean path delimiters
-
-				$class		= ltrim(str_replace('\\', '/', $class), '/');
+				// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
 				
-				// seperate class name and path to class along last slash
+				$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
 				
-				$delimPos	= strrpos($class, '/');
-				$classPath	= '';
-				
-				if($delimPos !== FALSE) {
-				
-					$classPath	= substr($class, 0, $delimPos + 1);
-					$class		= substr($class, $delimPos + 1);
-				
-				}
-
+				// store parsed information
+						
 				$this->templating->filters[$id] = [
 					'class'			=> $class,
-					'classPath'		=> $classPath,
 					'parameters'	=> (string) $a->parameters
 				];
 			}
@@ -375,6 +364,7 @@ class Config {
 	 * called seperately for differing script attributes
 	 *
 	 * @param SimpleXMLElement $pages
+	 * @throws ConfigException
 	 */
 	private function parsePagesSettings(\SimpleXMLElement $pages) {
 
@@ -400,7 +390,18 @@ class Config {
 			// read optional controller
 
 			if(isset($a->controller)) {
-				$parameters['controller'] = (string) $a->controller;
+
+				// clean path delimiters, prepend leading backslash, replace slashes with backslashes, apply ucfirst to all namespaces
+					
+				$namespaces = explode('\\', ltrim(str_replace('/', '\\', (string) $a->controller), '/\\'));
+				
+				if(count($namespaces) && $namespaces[0]) {
+					$parameters['controller'] = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
+				}
+
+				else {
+					throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", (string) $a->controller));
+				}
 			}
 
 			// read optional controller method
@@ -551,25 +552,14 @@ class Config {
 				throw new ConfigException(sprintf("No class for service '%s' configured.", $id));
 			}
 
-			// clean path delimiters
+			// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
 
-			$class		= ltrim(str_replace('\\', '/', $class), '/');
+			$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
 
-			// seperate class name and path to class along last slash
-
-			$delimPos	= strrpos($class, '/');
-			$classPath	= '';
-
-			if($delimPos !== FALSE) {
-
-				$classPath	= substr($class, 0, $delimPos + 1);
-				$class		= substr($class, $delimPos + 1);
-
-			}
-
+			// store parsed information
+			
 			$this->services[$id] = [
 				'class'			=> $class,
-				'classPath'		=> $classPath,
 				'parameters'	=> []
 			];
 
@@ -613,25 +603,14 @@ class Config {
 				throw new ConfigException(sprintf("No class for plugin '%s' configured.", $id));
 			}
 			
-			// clean path delimiters
+			// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
+			
+			$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
 
-			$class		= ltrim(str_replace('\\', '/', $class), '/');
-			
-			// seperate class name and path to class along last slash
-			
-			$delimPos	= strrpos($class, '/');
-			$classPath	= '';
-
-			if($delimPos !== FALSE) {
-			
-				$classPath	= substr($class, 0, $delimPos + 1);
-				$class		= substr($class, $delimPos + 1);
-			
-			}
+			// store parsed information
 
 			$this->plugins[$id] = [
 				'class'			=> $class,
-				'classPath'		=> $classPath,
 				'parameters'	=> []
 			];
 

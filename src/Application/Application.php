@@ -27,7 +27,7 @@ use vxPHP\Database\DatabaseInterfaceFactory;
  * The application singleton wraps configuration, database and service access.
  *
  * @author Gregor Kofler
- * @version 1.4.1 2016-05-14
+ * @version 1.5.0 2016-11-01
  */
 class Application {
 
@@ -101,11 +101,11 @@ class Application {
 	private $relativeAssetsPath;
 
 	/**
-	 * path to controllers
+	 * path to application source
 	 *
 	 * @var string
 	 */
-	private $controllerPath;
+	private $sourcePath;
 
 	/**
 	 * indicates the use of webserver rewriting for beautified URLs
@@ -218,6 +218,18 @@ class Application {
 		return self::$instance;
 
 	}
+	
+	/**
+	 * returns the namespace of the application
+	 * currently hardcoded
+	 * 
+	 * @return string
+	 */
+	public function getApplicationNamespace() {
+		
+		return 'App';
+		
+	}
 
 	/**
 	 * Unregister all previously registered plugins.
@@ -309,8 +321,8 @@ class Application {
 	/**
 	 * return a service instance
 	 * service instances are lazily initialized upon first request
-	 * services are expected in the src/services folder of the application and can be namespaced
-	 * extra arguments are passed on to the constructor method of the service 
+	 * 
+	 * any extra argument is passed on to the constructor method of the service 
 	 * 
 	 * @param string $serviceId
 	 * @return \vxPHP\Application\multitype:ServiceInterface
@@ -371,7 +383,19 @@ class Application {
 			$remote =
 				isset($_SERVER['HTTP_CLIENT_IP']) ||
 				isset($_SERVER['HTTP_X_FORWARDED_FOR']) ||
-				!(in_array(@$_SERVER['REMOTE_ADDR'], array('127.0.0.1', 'fe80::1', '::1')) || PHP_SAPI === 'cli-server');
+				!(
+					in_array(
+						@$_SERVER['REMOTE_ADDR'],
+						[
+							'127.0.0.1',
+							'fe80::1',
+							'::1'
+								
+						]
+					) ||
+					PHP_SAPI === 'cli-server'
+				)
+			;
 
 			$this->isLocal = PHP_SAPI === 'cli' || !$remote;
 
@@ -382,24 +406,24 @@ class Application {
 	}
 
 	/**
-	 * get absolute path to controller classes
+	 * get absolute path to application source
 	 *
 	 * @return string
 	 */
-	public function getControllerPath() {
+	public function getSourcePath() {
 
 		// lazy init
 
-		if(is_null($this->controllerPath)) {
+		if(is_null($this->sourcePath)) {
 
-			$this->controllerPath =
+			$this->sourcePath =
 				$this->rootPath .
-				'src' . DIRECTORY_SEPARATOR .
-				'controller' . DIRECTORY_SEPARATOR;
+				'src' . DIRECTORY_SEPARATOR;
 
 		}
 
-		return $this->controllerPath;
+		return $this->sourcePath;
+
 	}
 
 	/**
@@ -631,26 +655,17 @@ class Application {
 
 		$class	= $configData['class'];
 
-		// check whether class was loaded previously
+		// create instance and pass additional parameters to constructor
 
-		if(!isset($configData['loaded'])) {
-
-			$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
+		try {
 			
-			if(!file_exists($file)) {
-				throw new ApplicationException(sprintf("Class file '%s' for service '%s' not found.", $file, $serviceId));
-			}
-	
-			require $file;
-		
-			$this->config->services[$serviceId]['loaded'] = TRUE;
-
+			//@FIXME: or maybe not; unpacking operator is currently the only reason for PHP >= 5.6 
+			
+			$service = new $class(...$constructorArguments);
 		}
-
-		// use reflection to pass on additional constructor arguments
-
-		$reflector	= new \ReflectionClass($class);
-		$service	= $reflector->newInstanceArgs($constructorArguments);
+		catch(\Exception $e) {
+			throw new ApplicationException(sprintf("Instancing of service '%s' failed. Error: %s", $serviceId, $e->getMessage()));
+		}
 
 		// check whether instance implements ServiceInterface  
 
@@ -679,7 +694,8 @@ class Application {
 
 		// load class file
 
-		$class	= $configData['class'];
+		$class	= str_replace('/', '\\', $configData['class']);
+		
 		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
 
 		if(!file_exists($file)) {

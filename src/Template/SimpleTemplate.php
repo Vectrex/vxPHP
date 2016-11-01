@@ -13,10 +13,6 @@ namespace vxPHP\Template;
 
 use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Util\Rex;
-
-use vxPHP\Routing\Router;
-use vxPHP\Http\Request;
-
 use vxPHP\Application\Application;
 use vxPHP\Webpage\NiceURI;
 use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
@@ -26,13 +22,13 @@ use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Controller\Controller;
-use vxPHP\Template\Filter\SimpleTemplateFilter;
+use vxPHP\Application\Exception\ConfigException;
 
 /**
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.6.0 2015-10-29
+ * @version 1.6.1 2016-11-01
  *
  */
 
@@ -272,27 +268,16 @@ class SimpleTemplate {
 
 			if($templatingConfig = Application::getInstance()->getConfig()->templating) {
 
-				$rootPath = Application::getInstance()->getRootPath();
-
 				foreach($templatingConfig->filters as $id => $filter) {
 
 					// load class file
 
-					$class	= $filter['class'];
-					$file	= $rootPath . 'src/' . $filter['classPath'] . $class . '.php';
-
-					if(!file_exists($file)) {
-						throw new SimpleTemplateException(sprintf("Class file '%s' for templating filter '%s' not found.", $file, $id));
-					}
-
-					require $file;
-
-					$instance = new $class;
+					$instance = new $filter['class']();
 
 					// check whether instance implements FilterInterface
 
 					if(!$instance instanceof SimpleTemplateFilterInterface) {
-						throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $class));
+						throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $filter['class']));
 					}
 
 					self::$configuredFilters[] = $instance;
@@ -333,48 +318,45 @@ class SimpleTemplate {
 	 */
 	private function includeControllerResponse($controllerPath, $methodName = NULL, array $constructorArguments = NULL) {
 
-		$classPath		= explode('/', $controllerPath);
-		$controllerName	= array_pop($classPath);
+		$namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 		
-		// append 'Controller' to controller name
-
-		$className	= ucfirst($controllerName) . 'Controller';
-
-		// build physical path to controller and include controller
-
-		if(count($classPath)) {
-			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
+		if(count($namespaces) && $namespaces[0]) {
+			$controller = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
 		}
+		
 		else {
-			$classPath = '';
+			throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", $controllerPath));
 		}
 		
-		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
 
 		// get instance and set method which will be called in render() method of controller
 
+		$controllerClass = Application::getInstance()->getApplicationNamespace() . $controller;
+		
 		if(!$constructorArguments) {
 			
-			// no additional arguments required to pass on
-
-			$instance = new $className();
-		}
-
-		else {
-
-			// use reflection to pass on additional constructor arguments
+			/**
+			 * @var Controller
+			 */
+			$instance = new $controllerClass();
 			
-			$reflector	= new \ReflectionClass($className);
-			$instance	= $reflector->newInstanceArgs($constructorArguments);
-
 		}
 
-		if(!empty($methodName)) {
-			return $instance->setExecutedMethod($methodName)->render();
-		}
-		
 		else {
+
+			$instance = new $controllerClass(...$constructorArguments);
+				
+		}
+
+		if($methodName) {
+
+			return $instance->setExecutedMethod($methodName)->render();
+
+		}
+		else {
+
 			return $instance->setExecutedMethod('execute')->render();
+
 		}
 
 	}

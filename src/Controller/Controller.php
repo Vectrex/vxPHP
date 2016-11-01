@@ -25,7 +25,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.3.3 2016-06-04
+ * @version 0.4.0 2016-11-01
  *
  */
 abstract class Controller {
@@ -178,22 +178,12 @@ abstract class Controller {
 	 */
 	public static function createControllerFromRoute(Route $route) {
 
-		$classPath	= explode('/', $route->getControllerClassName());
-		$className	= ucfirst(array_pop($classPath)) . 'Controller';
-
-		if(count($classPath)) {
-			$classPath = implode(DIRECTORY_SEPARATOR, $classPath) . DIRECTORY_SEPARATOR;
-		}
-		else {
-			$classPath = '';
-		}
-
-		require_once Application::getInstance()->getControllerPath() . $classPath . $className . '.php';
+		$controllerClass = Application::getInstance()->getApplicationNamespace() . $route->getControllerClassName();
 
 		/**
 		 * @var Controller
 		 */
-		$instance = new $className();
+		$instance = new $controllerClass(); 
 		
 		if($method = $instance->route->getMethodName()) {
 			$instance->setExecutedMethod($method);
