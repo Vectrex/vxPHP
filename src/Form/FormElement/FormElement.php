@@ -13,24 +13,69 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\FormElement\FormElementInterface;
 use vxPHP\Form\FormElement\InputElement;
+use vxPHP\Constraint\ConstraintInterface;
 
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.5.1 2015-11-25
+ * @version 0.6.0 2016-11-02
  * @author Gregor Kofler
  * 
  */
 
 abstract class FormElement implements FormElementInterface {
 
-	protected	$validators	= array(),
-				$filters	= array(),
-				$attributes	= array(),
-				$name,
-				$value,
-				$valid,
-				$html;
+	/**
+	 * all validators (callbacks, regular expression, ConstraintInterfaces)
+	 * that are applied when validating form element
+	 * 
+	 * @var array
+	 */
+	protected $validators = [];
+	
+	/**
+	 * all filters (callbacks, predefined function names, regular expressions)
+	 * that are applied before a form element is validated
+	 * 
+	 * @var array
+	 */
+	protected $filters = [];
+	
+	/**
+	 * all attributes which will be rendered with the form element
+	 * 
+	 * @var array
+	 */
+	protected $attributes = [];
+	
+	/**
+	 * name of the element
+	 * 
+	 * @var string
+	 */
+	protected $name;
+	
+	/**
+	 * the value of the element
+	 * 
+	 * @var mixed
+	 */
+	protected $value;
+	
+	/**
+	 * flag indicating that validators were passed
+	 * set by the applyValidators() method
+	 * 
+	 * @var bool
+	 */
+	protected $valid;
+	
+	/**
+	 * the cached markup of the element
+	 * 
+	 * @var string
+	 */
+	protected $html;
 
 	/**
 	 * initialize form element
@@ -191,7 +236,8 @@ abstract class FormElement implements FormElementInterface {
 	/**
 	 * add a validator
 	 * 
-	 * validators can be either regular expressions or a \Closure instance
+	 * validators can be either regular expressions,
+	 * an anonymous function instance or a ConstraintInterface
 	 * the FormElement::$valid flag is reset
 	 * 
 	 * @param mixed $validatingRule
@@ -208,7 +254,7 @@ abstract class FormElement implements FormElementInterface {
 	/**
 	 * add a filter
 	 * 
-	 * filters can be a \Closure instance or a string
+	 * filters can be an anonymous function or a string
 	 * when filter is a string it can either be a regular expression
 	 * or a predefined term, which maps PHP functions
 	 * currently 'trim', 'uppercase', 'lowercase', 'strip_tags' are supported
@@ -307,24 +353,29 @@ abstract class FormElement implements FormElementInterface {
 
 		$value = $this->applyFilters();
 
-		foreach($this->validators as $v) {
-			
-			if($v instanceof \Closure) {
-				if(!$v($value)) {
-					$this->valid = FALSE;
-					return;
-				}
-			}
-
-			else {
-				if(!preg_match($v, $value)) {
-					$this->valid = FALSE;
-					return;
-				}
-			}
-		}
+		// assume validity when no validators are present
 
 		$this->valid = TRUE;
+		
+		// fail at the very first validator that does not validate
+
+		foreach($this->validators as $v) {
+			
+			if($v instanceof \Closure && !$v($value)) {
+				$this->valid = FALSE;
+				return;
+			}
+
+			else if($v instanceof ConstraintInterface && !$v->validate($value)) {
+				$this->valid = FALSE;
+				return;
+			}
+
+			else if(!preg_match($v, $value)) {
+				$this->valid = FALSE;
+				return;
+			}
+		}
 
 	}
 
