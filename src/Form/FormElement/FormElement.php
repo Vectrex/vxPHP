@@ -361,14 +361,20 @@ abstract class FormElement implements FormElementInterface {
 
 		foreach($this->validators as $v) {
 			
-			if($v instanceof \Closure && !$v($value)) {
-				$this->valid = FALSE;
-				return;
+			if($v instanceof \Closure) {
+				
+				if(!$v($value)) {
+					$this->valid = FALSE;
+					return;
+				}
 			}
 
-			else if($v instanceof ConstraintInterface && !$v->validate($value)) {
-				$this->valid = FALSE;
-				return;
+			else if($v instanceof ConstraintInterface) {
+				
+				if(!$v->validate($value)) {
+					$this->valid = FALSE;
+					return;
+				}
 			}
 
 			else if(!preg_match($v, $value)) {
