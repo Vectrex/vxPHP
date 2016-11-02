@@ -695,8 +695,6 @@ class Mysql extends AbstractPdoWrapper implements DatabaseInterface {
 			return;
 		}
 
-		var_dump($tableName);
-		
 		$statement = $this->connection->prepare('
 			SELECT
 				COLUMN_NAME,
