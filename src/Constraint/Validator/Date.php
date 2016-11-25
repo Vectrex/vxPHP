@@ -11,6 +11,7 @@
 namespace vxPHP\Constraint\Validator;
 
 use vxPHP\Constraint\ConstraintInterface;
+use vxPHP\Constraint\AbstractConstraint;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Application;
 
@@ -19,10 +20,10 @@ use vxPHP\Application\Application;
  * in addition allowing only future dates can be configured
  * handles currently dates in german, us and iso style
  * 
- * @version 0.1.0 2016-11-02
+ * @version 0.2.0 2016-11-25
  * @author Gregor Kofler
  */
-class Date implements ConstraintInterface {
+class Date extends AbstractConstraint implements ConstraintInterface {
 	
 	/**
 	 * when true empty values are always considered valid

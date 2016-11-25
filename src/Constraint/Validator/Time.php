@@ -11,14 +11,15 @@
 namespace vxPHP\Constraint\Validator;
 
 use vxPHP\Constraint\ConstraintInterface;
+use vxPHP\Constraint\AbstractConstraint;
 
 /**
  * check a time input whether it matches [h]h:[m]m[:[s]s]
  * 
- * @version 0.1.0 2016-11-02
+ * @version 0.2.0 2016-11-25
  * @author Gregor Kofler
  */
-class Time implements ConstraintInterface {
+class Time extends AbstractConstraint implements ConstraintInterface {
 	
 	/**
 	 * when true empty values are always considered valid
