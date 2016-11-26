@@ -9,7 +9,7 @@
  */
 
 
-namespace vxPHP\Util\Exception;
+namespace vxPHP\Security\Exception;
 
 class CaptchaException extends \Exception {
 }

@@ -9,13 +9,13 @@
  */
 
 
-namespace vxPHP\Util;
+namespace vxPHP\Security;
 
-use vxPHP\Util\Exception\CaptchaException;
+use vxPHP\Security\Exception\CaptchaException;
 
 /**
  * Captcha
- * @version 0.2.1, 2015-12-16
+ * @version 0.2.2, 2016-11-25
  * @author Gregor Kofler
  */
 class Captcha {
@@ -82,14 +82,16 @@ class Captcha {
 	public function setBgColor($bgColor) {
 		
 		if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($bgColor), $matches)) {
+
 			throw new CaptchaException(sprintf("Invalid background color '%s'.", trim($bgColor)));
+
 		}
 		
-		$this->bgColor = array(
+		$this->bgColor = [
 			hexdec(substr($matches[1], 0, 2)),
 			hexdec(substr($matches[1], 2, 2)),
 			hexdec(substr($matches[1], 4, 2))
-		);
+		];
 
 		return $this;
 	}
@@ -99,15 +101,18 @@ class Captcha {
 		$colors = (array) $color;
 
 		foreach($colors as $color) {
+
 			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($color), $matches)) {
+
 				throw new CaptchaException(sprintf("Invalid font color '%s'.", trim($color)));
+
 			}
-			
-			$this->fontColors[] = array(
+
+			$this->fontColors[] = [
 				hexdec(substr($matches[1], 0, 2)),
 				hexdec(substr($matches[1], 2, 2)),
 				hexdec(substr($matches[1], 4, 2))
-			);
+			];
 		}
 
 		return $this;
@@ -118,15 +123,18 @@ class Captcha {
 		$colors = (array) $color;
 
 		foreach($colors as $color) {
+
 			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($color), $matches)) {
+
 				throw new CaptchaException(sprintf("Invalid grid color '%s'.", trim($color)));
+
 			}
 			
-			$this->gridColors[] = array(
+			$this->gridColors[] = [
 				hexdec(substr($matches[1], 0, 2)),
 				hexdec(substr($matches[1], 2, 2)),
 				hexdec(substr($matches[1], 4, 2))
-			);
+			];
 		}
 
 		return $this;
@@ -217,7 +225,7 @@ class Captcha {
 			throw new CaptchaException('No font colors defined.');
 		}
 
-		$char = array();
+		$char = [];
 		
 		foreach($this->fontColors as $color) {
 			$char[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
@@ -225,7 +233,7 @@ class Captcha {
 
 		
 		if($this->gridColors) {
-			$grid = array();
+			$grid = [];
 	
 			foreach($this->gridColors as $color) {
 				$grid[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
@@ -273,18 +281,31 @@ class Captcha {
 	private function generateString() {
 		$rv = '';
 		while(strlen($rv) < $this->charCount) {
+
 			if ($this->type == 'digits') {
 				$char = rand(0,9);
 			}
 			else {
 				$char = chr(rand(0,255));
 			}
+
 			switch($this->type) {
-				case 'chars':	$regex = '/^[a-z@!?]$/i'; break;
-				case 'digits':	$regex = '/^[0-9]$/'; break;
-				default:		$regex = '/^[a-np-z0-9@!?]$/i';
+				case 'chars':
+					$regex = '/^[a-z@!?]$/i';
+					break;
+
+				case 'digits':
+					$regex = '/^[0-9]$/';
+					break;
+
+				default:
+					$regex = '/^[a-np-z0-9@!?]$/i';
 			}
-			if(preg_match($regex, $char)) { $rv .= $char; }
+			
+			if(preg_match($regex, $char)) {
+				$rv .= $char;
+			}
+
 		}
 		$this->string = $rv;
 	}
