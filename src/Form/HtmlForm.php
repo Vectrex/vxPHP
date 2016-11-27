@@ -28,7 +28,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.7.0 2016-05-11
+ * @version 1.7.1 2016-11-27
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -502,7 +502,7 @@ class HtmlForm {
 						continue;
 					}
 
-					$vals[$ndx] = $elem->getFilteredValue();
+					$vals[$ndx] = $elem->getModifiedValue();
 				}
 				$tmp->set($name, $vals);
 
@@ -516,7 +516,7 @@ class HtmlForm {
 				) {
 					continue;
 				}
-				$tmp->set($name, $e->getFilteredValue());
+				$tmp->set($name, $e->getModifiedValue());
 
 			}
 		}

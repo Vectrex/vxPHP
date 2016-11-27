@@ -18,7 +18,7 @@ use vxPHP\Constraint\ConstraintInterface;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.6.0 2016-11-02
+ * @version 0.7.0 2016-11-27
  * @author Gregor Kofler
  * 
  */
@@ -34,19 +34,28 @@ abstract class FormElement implements FormElementInterface {
 	protected $validators = [];
 	
 	/**
-	 * all filters (callbacks, predefined function names, regular expressions)
+	 * all modifiers (callbacks, predefined function names, regular expressions)
 	 * that are applied before a form element is validated
 	 * 
 	 * @var array
 	 */
-	protected $filters = [];
-	
+	protected $modifiers = [];
+
 	/**
 	 * all attributes which will be rendered with the form element
 	 * 
 	 * @var array
 	 */
 	protected $attributes = [];
+	
+	/**
+	 * marks element as required when true
+	 * and empty values will automatically
+	 * invalidate the form element value
+	 * 
+	 * @var boolean
+	 */
+	protected $required;
 	
 	/**
 	 * name of the element
@@ -121,13 +130,13 @@ abstract class FormElement implements FormElementInterface {
 	}
 
 	/**
-	 * returns filtered form element value
+	 * returns modified form element value
 	 * 
-	 * @return $filtered_value
+	 * @return $modified_value
 	 */
-	public function getFilteredValue() {
+	public function getModifiedValue() {
 
-		return $this->applyFilters();
+		return $this->applyModifiers();
 
 	}
 
@@ -157,7 +166,7 @@ abstract class FormElement implements FormElementInterface {
 	
 	/**
 	 * sets miscellaneous attribute of form element
-	 * attributes 'value', 'name', 'disabled' are treated by calling the according setters
+	 * attributes 'value', 'name' are treated by calling the according setters
 	 *  
 	 * @param string $attr
 	 * @param mixed $value
@@ -173,15 +182,6 @@ abstract class FormElement implements FormElementInterface {
 
 		if($attr === 'name') {
 			return $this->setName($value);
-		}
-
-		if($attr === 'disabled') {
-			if($value) {
-				return $this->disable();
-			}
-			else {
-				return $this->enable();
-			}
 		}
 
 		if(is_null($value)) {
@@ -210,29 +210,30 @@ abstract class FormElement implements FormElementInterface {
 	}
 
 	/**
-	 * marks form element as disabled
+	 * mark element as required
+	 * disallow empty values when $required is TRUE
 	 * 
-	 * @return vxPHP\Form\FormElement
+	 * @param @boolen $required
+	 * @return FormElement
 	 */
-	public function disable() {
+	public function setRequired($required) {
 
-		$this->attributes['disabled'] = 'disabled';
+		$this->required = (bool) $required;
 		return $this;
 
 	}
 
 	/**
-	 * marks form element as enabled
+	 * get required requirement of form element
 	 * 
-	 * @return vxPHP\Form\FormElement
+	 * @return boolean
 	 */
-	public function enable() {
+	public function getRequired() {
 
-		unset($this->attributes['disabled']);
-		return $this;
+		return $this->required;
 
 	}
-
+	
 	/**
 	 * add a validator
 	 * 
@@ -252,25 +253,25 @@ abstract class FormElement implements FormElementInterface {
 	}
 	
 	/**
-	 * add a filter
+	 * add a modifier
 	 * 
-	 * filters can be an anonymous function or a string
-	 * when filter is a string it can either be a regular expression
-	 * or a predefined term, which maps PHP functions
+	 * modifiers can be an anonymous function or a string
+	 * when the argument is a string it can either be a regular expression
+	 * or a predefined term, which maps a PHP function
 	 * currently 'trim', 'uppercase', 'lowercase', 'strip_tags' are supported
 	 * 
-	 * @param mixed $filter
+	 * @param mixed $modifier
 	 * @return vxPHP\Form\FormElement
 	 */
-	public function addFilter($filter) {
+	public function addModifier($modifier) {
 
-		$this->filters[] = $filter;
+		$this->modifiers[] = $modifier;
 		return $this;
 
 	}
 
 	/**
-	 * checks whether filtered form element passes validation rules
+	 * checks whether modified form element passes validation rules
 	 * 
 	 * @return boolean $success
 	 */
@@ -299,23 +300,23 @@ abstract class FormElement implements FormElementInterface {
 	}
 	
 	/**
-	 * applies filters to FormElement::$value
+	 * applies modifiers to FormElement::$value
 	 * FormElement::$value remains unchanged
 	 * 
-	 * @return string filtered value
+	 * @return string modified value
 	 */
-	protected function applyFilters() {
+	protected function applyModifiers() {
 
 		$v = $this->value;
 
-		foreach($this->filters as $f) {
+		foreach($this->modifiers as $modifier) {
 			
-			if($f instanceof \Closure) {
-				$v = $f($v);
+			if($modifier instanceof \Closure) {
+				$v = $modifier($v);
 			}
 
 			else {
-				switch(strtolower($f)) {
+				switch(strtolower($modifier)) {
 					case 'trim':
 						$v = trim($v);
 						break;
@@ -334,7 +335,7 @@ abstract class FormElement implements FormElementInterface {
 	
 						// assume a regular expressions as fallback
 					default:
-						$v = preg_replace($f, '', $v);
+						$v = preg_replace($modifier, '', $v);
 				}
 			}
 		}
@@ -344,40 +345,58 @@ abstract class FormElement implements FormElementInterface {
 	}
 
 	/**
-	 * applies validators to filtered FormElement::$value
-	 * as soon as one validator fails
+	 * applies validators to modified FormElement::$value
+	 * 
+	 * first checks whether a value is required,
+	 * then applies validators
+	 * 
+	 * as soon as one validator fails 
 	 * the result will yield FALSE
+	 * 
 	 * and FormElement::$valid will be set accordingly
 	 */
 	protected function applyValidators() {
 
-		$value = $this->applyFilters();
+		$value = $this->applyModifiers();
 
-		// assume validity when no validators are present
+		// first check whether form data is required
+
+		if(
+			$this->required &&
+			(
+				$this->value === '' ||
+				is_null($this->value)
+			)
+		) {
+			$this->valid = FALSE;
+			return;
+		}
+
+		// assume validity, in case no validators are set
 
 		$this->valid = TRUE;
 		
 		// fail at the very first validator that does not validate
 
-		foreach($this->validators as $v) {
+		foreach($this->validators as $validator) {
 			
-			if($v instanceof \Closure) {
+			if($validator instanceof \Closure) {
 				
-				if(!$v($value)) {
+				if(!$validator($value)) {
 					$this->valid = FALSE;
 					return;
 				}
 			}
 
-			else if($v instanceof ConstraintInterface) {
+			else if($validator instanceof ConstraintInterface) {
 				
-				if(!$v->validate($value)) {
+				if(!$validator->validate($value)) {
 					$this->valid = FALSE;
 					return;
 				}
 			}
 
-			else if(!preg_match($v, $value)) {
+			else if(!preg_match($validator, $value)) {
 				$this->valid = FALSE;
 				return;
 			}

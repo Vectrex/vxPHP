@@ -25,7 +25,7 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is an array, the factory returns a collection of elements
  *
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24
+ * @version 0.4.1 2016-11-27
  */
 class FormElementFactory {
 
@@ -37,19 +37,19 @@ class FormElementFactory {
  * @param mixed $value
  * @param array $attributes
  * @param array $options, array for initializing SelectOptionElements or RadioOptionElements
- * @param boolean $disabled
- * @param array $filters
+ * @param boolean $required
+ * @param array $modifiers
  * @param array $validators
- *
+ * 
  */
-public static function create($type, $name, $value = NULL, array $attributes = array(), array $options = array(), $disabled = FALSE, array $filters = array(), array $validators = array()) {
+public static function create($type, $name, $value = NULL, array $attributes = [], array $options = [], $required = FALSE, array $modifiers = [], array $validators = []) {
 
 		$type = strtolower($type);
 
 		if(is_array($value) && $type != 'multipleselect') {
-			$elem = self::createSingleElement($type, $name, NULL, $attributes, $options, $disabled, $filters, $validators);
+			$elem = self::createSingleElement($type, $name, NULL, $attributes, $options, $required, $modifiers, $validators);
 
-			$elements = array();
+			$elements = [];
 
 			foreach($value as $k => $v) {
 				$e = clone $elem;
@@ -64,11 +64,11 @@ public static function create($type, $name, $value = NULL, array $attributes = a
 		}
 
 		else {
-			return self::createSingleElement($type, $name, $value, $attributes, $options, $disabled, $filters, $validators);
+			return self::createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators);
 		}
 	}
 
-	private static function createSingleElement($type, $name, $value, $attributes, $options, $disabled, $filters, $validators) {
+	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators) {
 
 		switch($type) {
 			case 'input':
@@ -121,15 +121,16 @@ public static function create($type, $name, $value = NULL, array $attributes = a
 				throw new FormElementFactoryException("Unknown form element $type");
 		}
 
-		$elem->setAttributes($attributes);
-		!$disabled ? $elem->enable() : $elem->disable();
+		$elem
+			->setAttributes($attributes)
+			->setRequired($required);
 
-		foreach($filters as $f) {
-			$elem->addFilter($f);
+		foreach($modifiers as $modifier) {
+			$elem->addModifier($modifier);
 		}
 
-		foreach($validators as $v) {
-			$elem->addValidator($v);
+		foreach($validators as $validator) {
+			$elem->addValidator($validator);
 		}
 
 		$elem->setValue($value);

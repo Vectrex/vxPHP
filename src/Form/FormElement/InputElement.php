@@ -81,7 +81,7 @@ class InputElement extends FormElement {
 
 			$this->html = sprintf('<input name="%s" value="%s" %s>',
 				$this->getName(),
-				$this->getFilteredValue(),
+				$this->getModifiedValue(),
 				implode(' ', $attr)
 			);
 

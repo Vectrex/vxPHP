@@ -35,7 +35,7 @@ class TextareaElement extends FormElement {
 			$this->html = sprintf('<textarea name="%s" %s>%s</textarea>',
 				$this->getName(),
 				implode(' ', $attr),
-				$this->getFilteredValue()
+				$this->getModifiedValue()
 			);
 
 		}
