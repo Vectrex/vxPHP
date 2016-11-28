@@ -16,27 +16,16 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check a time input whether it matches [h]h:[m]m[:[s]s]
  * 
- * @version 0.2.0 2016-11-25
+ * @version 0.3.0 2016-11-28
  * @author Gregor Kofler
  */
 class Time extends AbstractConstraint implements ConstraintInterface {
 	
 	/**
-	 * when true empty values are always considered valid
-	 *
-	 * @var bool
-	 */
-	private $emptyIsValid;
-	
-	/**
 	 * constructor, parses options
-	 *
-	 * @param bool $emptyIsValid
 	 */
-	public function __construct($emptyIsValid) {
+	public function __construct() {
 	
-		$this->emptyIsValid = $emptyIsValid;
-
 	}
 
 	/**
@@ -47,25 +36,27 @@ class Time extends AbstractConstraint implements ConstraintInterface {
 	 */
 	public function validate($value) {
 		
-		$value = trim($value);
-
-		// value is empty and empty is valid
-		
-		if(!$value && $this->emptyIsValid) {
-			return TRUE;
-		}
-
 		// check for matching format
 		
 		if(!preg_match('~^\d{1,2}:\d{1,2}(:\d{1,2})?$~', $value))	{
+			
+			$this->setErrorMessage(sprintf("'%s' is not a properly formatted time string.", $value));
 			return FALSE;
+
 		}
 		
 		//check whether values are within range
 		
 		$tmp = explode(':', $value);
 		
-		return !((int) $tmp[0] > 23 || (int) $tmp[1] > 59 || isset($tmp[2]) && $tmp[2] > 59);
+		if(((int) $tmp[0] > 23 || (int) $tmp[1] > 59 || isset($tmp[2]) && $tmp[2] > 59)) {
+
+			$this->setErrorMessage(sprintf("'%s' is an invalid time value.", $value));
+			return FALSE;
+			
+		}
+
+		return TRUE;
 
 	}
 }

@@ -18,7 +18,7 @@ use vxPHP\Constraint\ConstraintInterface;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.7.0 2016-11-27
+ * @version 0.7.1 2016-11-28
  * @author Gregor Kofler
  * 
  */
@@ -360,15 +360,16 @@ abstract class FormElement implements FormElementInterface {
 		$value = $this->applyModifiers();
 
 		// first check whether form data is required
+		// if not, then empty strings or null values are considered valid
 
 		if(
-			$this->required &&
+			!$this->required &&
 			(
-				$this->value === '' ||
-				is_null($this->value)
+				$value === '' ||
+				is_null($value)
 			)
 		) {
-			$this->valid = FALSE;
+			$this->valid = TRUE;
 			return;
 		}
 
