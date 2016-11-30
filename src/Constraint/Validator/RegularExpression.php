@@ -16,7 +16,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check against an arbitrary regular expression
  * 
- * @version 0.1.0 2016-11-25
+ * @version 0.1.1 2016-11-30
  * @author Gregor Kofler
  */
 class RegularExpression extends AbstractConstraint implements ConstraintInterface {
@@ -39,7 +39,7 @@ class RegularExpression extends AbstractConstraint implements ConstraintInterfac
 	public function __construct($regExp) {
 
 		if(@preg_match($regExp, '') === FALSE) {
-			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression."));
+			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $regExp));
 		}
 
 		$this->regExp = $regExp;
