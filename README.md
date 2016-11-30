@@ -1,4 +1,4 @@
-vxPHP is a lean MVC PHP framework to support web application development.
+vxPHP is a lean PHP framework to support web application development
 Features include
 
 * routing
