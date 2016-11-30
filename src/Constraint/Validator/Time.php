@@ -14,7 +14,8 @@ use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
- * check a time input whether it matches [h]h:[m]m[:[s]s]
+ * check a string whether it can be interpreted
+ * as time string in a [h]h:[m]m[:[s]s] form
  * 
  * @version 0.3.0 2016-11-28
  * @author Gregor Kofler
