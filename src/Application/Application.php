@@ -27,7 +27,7 @@ use vxPHP\Database\DatabaseInterfaceFactory;
  * The application singleton wraps configuration, database and service access.
  *
  * @author Gregor Kofler
- * @version 1.5.0 2016-11-01
+ * @version 1.6.0 2016-12-03
  */
 class Application {
 
@@ -134,13 +134,6 @@ class Application {
 	 * @var SubscriberInterface[]
 	 */
 	private $plugins = [];
-
-	/**
-	 * loader instance
-	 * 
-	 * @var Psr4
-	 */
-	private $loader;
 
 	/**
 	 * Constructor.
@@ -263,19 +256,6 @@ class Application {
 
 	}
 
-	/**
-	 * make Psr4 loader in application available
-	 * 
-	 * @param Psr4 $loader
-	 * @return Application
-	 */
-	public function setLoader(Psr4 $loader) {
-
-		$this->loader = $loader;
-		return $this;
-		
-	}
-	
 	/**
 	 * returns default database object reference
 	 *
