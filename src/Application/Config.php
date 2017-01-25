@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.9.0 2016-11-01
+ * @version 1.10.0 2017-01-25
  *
  * @todo refresh() method
  */
@@ -38,6 +38,11 @@ class Config {
 	 */
 	public	$db;
 
+	/**
+	 * @var array
+	 */
+	public $datasources;
+	
 	/**
 	 * @var \stdClass
 	 */
@@ -162,8 +167,12 @@ class Config {
 		}
 	}
 
+	
+	
 	/**
 	 * parse db settings
+	 * 
+	 * @deprecated will be replaced by datasource settings 
 	 *
 	 * @param SimpleXMLElement $db
 	 */
@@ -183,6 +192,40 @@ class Config {
 			foreach($d[0]->children() as $k => $v) {
 				$this->db->$k = (string) $v;
 			}
+		}
+	}
+	
+	/**
+	 * parse datasource settings
+	 * 
+	 * @param \SimpleXMLElement $datasources
+	 * @throws ConfigException
+	 */
+	private function parseDatasourcesSettings(\SimpleXMLElement $datasources) {
+		
+		$this->datasources = [];
+		
+		foreach($datasources->datasource as $datasource) {
+			$id = (string) $datasource->attributes()->id ?: 'default';
+
+			if(array_key_exists($id,  $this->datasources)) {
+				throw new ConfigException(sprintf("Datasource '%s' declared twice.", $id));
+			}
+			
+			if(!($driver = (string) $datasource->driver)) {
+				throw new ConfigException(sprintf("No driver defined for datasource '%s'.", $id));
+			}
+
+			$this->datasources[$id] = (object) [
+				'driver'	=> $driver,
+				'dsn'		=> (string) $datasource->dsn,
+				'host'		=> (string) $datasource->host,
+				'port'		=> (string) $datasource->port,
+				'user'		=> (string) $datasource->user,
+				'pass'		=>  (string) $datasource->pass,
+				'dbname'	=> (string) $datasource->dbname
+			];
+
 		}
 	}
 
@@ -233,7 +276,7 @@ class Config {
 			}
 
 			$this->binaries = new \stdClass;
-			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$this->binaries->path = rtrim((string) $p[0], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 			foreach($e[0]->executable as $v) {
 				$id = (string) $v->attributes()->id;

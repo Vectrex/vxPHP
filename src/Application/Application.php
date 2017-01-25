@@ -27,7 +27,7 @@ use vxPHP\Database\DatabaseInterfaceFactory;
  * The application singleton wraps configuration, database and service access.
  *
  * @author Gregor Kofler
- * @version 1.6.0 2016-12-03
+ * @version 1.7.0 2017-01-26
  */
 class Application {
 
@@ -45,6 +45,12 @@ class Application {
 	 */
 	private	$db;
 
+	/**
+	 * the instanced datasources
+	 * @var DatabaseInterface[]
+	 */
+	private $datasources = [];
+	
 	/**
 	 * configuration instance of application
 	 * 
@@ -257,7 +263,7 @@ class Application {
 	}
 
 	/**
-	 * returns default database object reference
+	 * get default database object reference
 	 *
 	 * @return DatabaseInterface
 	 */
@@ -287,6 +293,41 @@ class Application {
 
 	}
 
+	/**
+	 * get configured datasource instance
+	 * 
+	 * @param string $id
+	 * @throws ApplicationException
+	 * 
+	 * @return \vxPHP\Database\DatabaseInterface
+	 */
+	public function getDatasource($id = 'default') {
+		
+		if(!array_key_exists($id, $this->config->datasources)) {
+			throw new ApplicationException(sprintf("Datasource '%s' not found.", $id));
+		}
+		
+		if(!array_key_exists($id, $this->datasources)) {
+			
+			$dsConfig = $this->config->datasources[$id];
+
+			$this->datasources[$id] = DatabaseInterfaceFactory::create(
+				$dsConfig->driver,
+				[
+					'dsn'		=> $dsConfig->dsn,
+					'host'		=> $dsConfig->host,
+					'port'		=> $dsConfig->port,
+					'dbname'	=> $dsConfig->dbname,
+					'user'		=> $dsConfig->user,
+					'pass'		=> $dsConfig->pass,
+				]
+			);
+		}
+
+		return $this->datasources[$id];
+		
+	}
+	
 	/**
 	 * returns config instance reference
 	 *

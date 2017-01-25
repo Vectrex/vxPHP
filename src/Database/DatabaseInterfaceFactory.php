@@ -17,7 +17,7 @@ use vxPHP\Application\Exception\ConfigException;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.0, 2016-10-30
+ * @version 0.3.0, 2017-01-26
  */
 class DatabaseInterfaceFactory {
 	
@@ -35,10 +35,10 @@ class DatabaseInterfaceFactory {
 	 * 
 	 * @throws \Exception
 	 */
-	public static function create($type = 'mysql', array $config = []) {
+	public static function create($type, array $config = []) {
 		
 		$type = strtolower($type);
-		
+
 		$className =
 			__NAMESPACE__ .
 			'\\Wrapper\\' .
@@ -48,8 +48,8 @@ class DatabaseInterfaceFactory {
 			
 		if(!class_exists($className)) {
 
-			throw new ConfigException(sprintf("No database wrapper class for '%s' supported.", $type));
-			
+			throw new ConfigException(sprintf("No class for driver '%s' supported.", $type));
+
 		}
 			
 		return new $className($config);
