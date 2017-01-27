@@ -8,7 +8,7 @@ use vxPHP\Constraint\AbstractConstraint;
  * Validate IBANs
  * 
  * @author Gregor Kofler
- * @version 0.1.0 2016-11-15
+ * @version 0.2.0 2017-01-27
  *
  */
 class IbanValidator extends AbstractConstraint implements ConstraintInterface {
@@ -134,8 +134,13 @@ class IbanValidator extends AbstractConstraint implements ConstraintInterface {
 			$newString .= $key;
 		}
 
-		$result = bcmod($newString, '97') === '1';
-		
+		if(function_exists('bcmod')) {
+			$result = bcmod($newString, '97') === '1';
+		}
+		else {
+			$result = $this->bcmod97($newString) === 1;
+		}
+
 		if(!$result) {
 
 			$this->setErrorMessage('IBAN checksum failed.');
@@ -144,6 +149,24 @@ class IbanValidator extends AbstractConstraint implements ConstraintInterface {
 
 		return $result;
 
+	}
+
+	/**
+	 * fallback for bcmod() function
+	 * modulus is hardcoded with 97
+	 * 
+	 * @param string $bigInt
+	 * @return number
+	 */
+	private function bcmod97 ($bigInt) {
+
+		$rest = 0;
+	
+		foreach (str_split($bigInt, 7) as $part) {
+			$rest = ($rest . $part) % 97;
+		}
+
+		return $rest;
 	}
 
 }
