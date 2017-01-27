@@ -284,7 +284,6 @@ class Application {
 					'dbname'	=> $config->name,
 					'user'		=> $config->user,
 					'pass'		=> $config->pass,
-					'logtype'	=> $config->logtype
 				]
 			);
 		}

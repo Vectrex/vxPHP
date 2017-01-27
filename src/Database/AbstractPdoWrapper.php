@@ -71,14 +71,6 @@ abstract class AbstractPdoWrapper implements DatabaseInterface {
 	protected	$connection;
 
 	/**
-	 * the logtype used to log database activity
-	 * can be 'text' or 'xml'
-	 *
-	 * @var string
-	 */
-	protected	$logtype;
-
-	/**
 	 *
 	 * {@inheritdoc}
 	 *
@@ -104,8 +96,6 @@ abstract class AbstractPdoWrapper implements DatabaseInterface {
 			$this->port = (int) $config['port'];
 		}
 
-		$this->logtype	= isset($config['logtype']) && strtolower($config['logtype']) === 'xml' ? 'xml' : 'plain';
-		
 	}
 	
 	/**
