@@ -17,7 +17,7 @@ use vxPHP\Application\Exception\ConfigException;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.0, 2017-01-26
+ * @version 0.3.1, 2017-01-27
  */
 class DatabaseInterfaceFactory {
 	
@@ -39,20 +39,31 @@ class DatabaseInterfaceFactory {
 		
 		$type = strtolower($type);
 
-		$className =
-			__NAMESPACE__ .
-			'\\Wrapper\\' .
-			ucfirst($type);
+		if($type === 'propel') {
 
-		// check whether driver is available
-			
-		if(!class_exists($className)) {
-
-			throw new ConfigException(sprintf("No class for driver '%s' supported.", $type));
+			/*
+			 * @todo init Propel connection an inject PropelPDO connection in vxPHP wrapper
+			 */
 
 		}
-			
-		return new $className($config);
+		else {
+
+			$className =
+				__NAMESPACE__ .
+				'\\Wrapper\\' .
+				ucfirst($type);
+	
+			// check whether driver is available
+				
+			if(!class_exists($className)) {
+	
+				throw new ConfigException(sprintf("No class for driver '%s' supported.", $type));
+	
+			}
+				
+			return new $className($config);
+
+		}
 
 	}
 }

@@ -80,17 +80,14 @@ abstract class AbstractPdoWrapper implements DatabaseInterface {
 		
 		$config = array_change_key_case($config, CASE_LOWER);
 		
-		foreach(['host', 'dbname', 'user', 'pass'] as $configParam) {
-		
-			if(!isset($config[$configParam])) {
-				throw new \PDOException(sprintf("Missing parameter '%s' in db connection configuration.", $configParam));
-			}
-		}
-
 		$this->host		= $config['host'];
 		$this->dbname	= $config['dbname'];
 		$this->user		= $config['user'];
 		$this->pass		= $config['pass'];
+		
+		if(isset($config['dsn'])) {
+			$this->dsn = $config['dsn'];
+		}
 
 		if(isset($config['port'])) {
 			$this->port = (int) $config['port'];

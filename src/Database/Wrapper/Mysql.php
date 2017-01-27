@@ -18,7 +18,7 @@ use vxPHP\Database\DatabaseInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.1.0, 2016-10-30
+ * @version 1.2.0, 2017-01-27
  */
 class Mysql extends AbstractPdoWrapper implements DatabaseInterface {
 
@@ -90,18 +90,28 @@ class Mysql extends AbstractPdoWrapper implements DatabaseInterface {
 		
 		}
 		
-		$this->dsn = sprintf(
-			"%s:dbname=%s;host=%s;charset=%s",
-			'mysql',
-			$this->dbname,
-			$this->host,
-			$charset
-		);
+		if(!$this->dsn) {
 
-		if($this->port) {
-			$this->dsn .= ';port=' . $this->port;
+			if(!$this->host) {
+				throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+			}
+			if(!$this->dbname) {
+				throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
+			}
+
+			$this->dsn = sprintf(
+				"%s:dbname=%s;host=%s;charset=%s",
+				'mysql',
+				$this->dbname,
+				$this->host,
+				$charset
+			);
+			if($this->port) {
+				$this->dsn .= ';port=' . $this->port;
+			}
+
 		}
-		
+
 		$options = [
 			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC

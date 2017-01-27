@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoWrapper;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.0.1, 2016-10-30
+ * @version 0.0.2, 2017-01-27
  */
 class Postgresql extends AbstractPdoWrapper implements DatabaseInterface {
 
@@ -40,17 +40,26 @@ class Postgresql extends AbstractPdoWrapper implements DatabaseInterface {
 
 		parent::__construct($config);
 		
-		$this->dsn = sprintf(
-			"%s:dbname=%s;host=%s",
-			'pgsql',
-			$this->dbname,
-			$this->host
-		);
+		if(!$this->dsn) {
 		
-		if($this->port) {
-			$this->dsn .= ';port=' . $this->port;
+			if(!$this->host) {
+				throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+			}
+			if(!$this->dbname) {
+				throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
+			}
+		
+			$this->dsn = sprintf(
+				"%s:dbname=%s;host=%s",
+				'pgsql',
+				$this->dbname,
+				$this->host
+			);
+			if($this->port) {
+				$this->dsn .= ';port=' . $this->port;
+			}
 		}
-		
+
 		$options = [
 			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
