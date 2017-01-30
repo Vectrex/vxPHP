@@ -13,13 +13,13 @@ namespace vxPHP\Database;
 use vxPHP\Database\DatabaseInterface;
 
 /**
- * abstract class pooling all PDO wrapper methods
+ * abstract class pooling all PDO adapter methods
  * currently a stub
  *
  * @author Gregor Kofler
  *        
  */
-abstract class AbstractPdoWrapper implements DatabaseInterface {
+abstract class AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
 	 * host address of connection
@@ -47,7 +47,7 @@ abstract class AbstractPdoWrapper implements DatabaseInterface {
 	 * 
 	 * @var string
 	 */
-	protected	$pass;
+	protected	$password;
 	
 	/**
 	 * name of database for connection
@@ -83,7 +83,7 @@ abstract class AbstractPdoWrapper implements DatabaseInterface {
 		$this->host		= $config['host'];
 		$this->dbname	= $config['dbname'];
 		$this->user		= $config['user'];
-		$this->pass		= $config['pass'];
+		$this->password	= $config['password'];
 		
 		if(isset($config['dsn'])) {
 			$this->dsn = $config['dsn'];

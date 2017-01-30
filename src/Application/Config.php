@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.10.0 2017-01-25
+ * @version 1.10.1 2017-01-30
  *
  * @todo refresh() method
  */
@@ -34,14 +34,20 @@ class Config {
 	public	$site;
 
 	/**
+	 * db settings
+	 * will be replaced by vxpdo settings
+	 * 
+	 * @deprecated 
 	 * @var \stdClass
 	 */
 	public	$db;
 
 	/**
+	 * vxpdo settings
+	 * 
 	 * @var array
 	 */
-	public $datasources;
+	public $vxpdo;
 	
 	/**
 	 * @var \stdClass
@@ -201,28 +207,28 @@ class Config {
 	 * @param \SimpleXMLElement $datasources
 	 * @throws ConfigException
 	 */
-	private function parseDatasourcesSettings(\SimpleXMLElement $datasources) {
+	private function parseVxpdoSettings(\SimpleXMLElement $vxpdo) {
 		
-		$this->datasources = [];
+		$this->vxpdo = [];
 		
-		foreach($datasources->datasource as $datasource) {
-			$id = (string) $datasource->attributes()->id ?: 'default';
+		foreach($vxpdo->datasource as $datasource) {
+			$name = (string) $datasource->attributes()->name ?: 'default';
 
-			if(array_key_exists($id,  $this->datasources)) {
-				throw new ConfigException(sprintf("Datasource '%s' declared twice.", $id));
+			if(array_key_exists($name,  $this->vxpdo)) {
+				throw new ConfigException(sprintf("Datasource '%s' declared twice.", $name));
 			}
 			
 			if(!($driver = (string) $datasource->driver)) {
-				throw new ConfigException(sprintf("No driver defined for datasource '%s'.", $id));
+				throw new ConfigException(sprintf("No driver defined for datasource '%s'.", $name));
 			}
 
-			$this->datasources[$id] = (object) [
+			$this->vxpdo[$name] = (object) [
 				'driver'	=> $driver,
 				'dsn'		=> (string) $datasource->dsn,
 				'host'		=> (string) $datasource->host,
 				'port'		=> (string) $datasource->port,
 				'user'		=> (string) $datasource->user,
-				'pass'		=>  (string) $datasource->pass,
+				'password'	=>  (string) $datasource->password,
 				'dbname'	=> (string) $datasource->dbname
 			];
 

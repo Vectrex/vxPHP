@@ -41,16 +41,36 @@ class DatabaseInterfaceFactory {
 
 		if($type === 'propel') {
 
-			/*
-			 * @todo init Propel connection an inject PropelPDO connection in vxPHP wrapper
-			 */
+			// check whether Propel is available
+			
+			if(!class_exists('\\Propel')) {
+				throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
+			}
+
+			if(!\Propel::isInit()) {
+
+				throw new \Exception('Propel not initialized.');
+				
+//				\Propel::setConfiguration(self::builtPropelConfiguration($config));
+//				\Propel::initialize();
+			}
+			
+			else {
+				
+				// retrieve adapter information
+
+				$propelConfig = \Propel::getConfiguration();
+				
+				var_dump($propelConfig);
+			}
 
 		}
+
 		else {
 
 			$className =
 				__NAMESPACE__ .
-				'\\Wrapper\\' .
+				'\\Adapter\\' .
 				ucfirst($type);
 	
 			// check whether driver is available

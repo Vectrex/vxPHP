@@ -8,10 +8,10 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Database\Wrapper;
+namespace vxPHP\Database\Adapter;
 
 use vxPHP\Database\DatabaseInterface;
-use vxPHP\Database\AbstractPdoWrapper;
+use vxPHP\Database\AbstractPdoAdapter;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
@@ -21,7 +21,7 @@ use vxPHP\Database\AbstractPdoWrapper;
  * 
  * @version 0.0.2, 2017-01-27
  */
-class Postgresql extends AbstractPdoWrapper implements DatabaseInterface {
+class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
  	 * store column details of tables
@@ -65,7 +65,7 @@ class Postgresql extends AbstractPdoWrapper implements DatabaseInterface {
 			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
 		];
 		
-		$connection = new \PDO($this->dsn, $this->user, $this->pass, $options);
+		$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
 		
 		$connection->setAttribute(
 			\PDO::ATTR_STRINGIFY_FETCHES,

@@ -27,7 +27,7 @@ use vxPHP\Database\DatabaseInterfaceFactory;
  * The application singleton wraps configuration, database and service access.
  *
  * @author Gregor Kofler
- * @version 1.7.0 2017-01-26
+ * @version 1.7.1 2017-01-30
  */
 class Application {
 
@@ -46,10 +46,10 @@ class Application {
 	private	$db;
 
 	/**
-	 * the instanced datasources
+	 * the instanced vxPDO datasources
 	 * @var DatabaseInterface[]
 	 */
-	private $datasources = [];
+	private $vxPDOInstances = [];
 	
 	/**
 	 * configuration instance of application
@@ -283,7 +283,7 @@ class Application {
 					'host'		=> $config->host,
 					'dbname'	=> $config->name,
 					'user'		=> $config->user,
-					'pass'		=> $config->pass,
+					'password'	=> $config->pass,
 				]
 			);
 		}
@@ -293,24 +293,24 @@ class Application {
 	}
 
 	/**
-	 * get configured datasource instance
+	 * get configured vxPDO instance
 	 * 
-	 * @param string $id
+	 * @param string $name
 	 * @throws ApplicationException
 	 * 
 	 * @return \vxPHP\Database\DatabaseInterface
 	 */
-	public function getDatasource($id = 'default') {
+	public function getVxPDO($name = 'default') {
 		
-		if(!array_key_exists($id, $this->config->datasources)) {
-			throw new ApplicationException(sprintf("Datasource '%s' not found.", $id));
-		}
-		
-		if(!array_key_exists($id, $this->datasources)) {
-			
-			$dsConfig = $this->config->datasources[$id];
+		if(!array_key_exists($name, $this->vxPDOInstances)) {
 
-			$this->datasources[$id] = DatabaseInterfaceFactory::create(
+			if(!array_key_exists($name, $this->config->vxpdo)) {
+				throw new ApplicationException(sprintf("vxPDO configuration for '%s' not found.", $name));
+			}
+			
+			$dsConfig = $this->config->vxpdo[$name];
+
+			$this->vxPDOInstances[$name] = DatabaseInterfaceFactory::create(
 				$dsConfig->driver,
 				[
 					'dsn'		=> $dsConfig->dsn,
@@ -318,12 +318,13 @@ class Application {
 					'port'		=> $dsConfig->port,
 					'dbname'	=> $dsConfig->dbname,
 					'user'		=> $dsConfig->user,
-					'pass'		=> $dsConfig->pass,
+					'password'	=> $dsConfig->password,
+					'name'		=> $name
 				]
 			);
 		}
 
-		return $this->datasources[$id];
+		return $this->vxPDOInstances[$name];
 		
 	}
 	
