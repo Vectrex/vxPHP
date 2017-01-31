@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.0.2, 2017-01-27
+ * @version 0.0.3, 2017-01-30
  */
 class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -36,44 +36,48 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
 	 */
-	public function __construct(array $config) {
+	public function __construct(array $config = NULL) {
 
-		parent::__construct($config);
-		
-		if(!$this->dsn) {
-		
-			if(!$this->host) {
-				throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+		if($config) {
+
+			parent::__construct($config);
+			
+			if(!$this->dsn) {
+			
+				if(!$this->host) {
+					throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+				}
+				if(!$this->dbname) {
+					throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
+				}
+			
+				$this->dsn = sprintf(
+					"%s:dbname=%s;host=%s",
+					'pgsql',
+					$this->dbname,
+					$this->host
+				);
+				if($this->port) {
+					$this->dsn .= ';port=' . $this->port;
+				}
 			}
-			if(!$this->dbname) {
-				throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
-			}
-		
-			$this->dsn = sprintf(
-				"%s:dbname=%s;host=%s",
-				'pgsql',
-				$this->dbname,
-				$this->host
+	
+			$options = [
+				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+			];
+			
+			$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+			
+			$connection->setAttribute(
+				\PDO::ATTR_STRINGIFY_FETCHES,
+				FALSE
 			);
-			if($this->port) {
-				$this->dsn .= ';port=' . $this->port;
-			}
+	
+			$this->connection = $connection;
+
 		}
 
-		$options = [
-			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
-		];
-		
-		$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
-		
-		$connection->setAttribute(
-			\PDO::ATTR_STRINGIFY_FETCHES,
-			FALSE
-		);
-
-		$this->connection = $connection;
-		
 	}
 	
 	/**

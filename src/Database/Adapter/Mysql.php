@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.0, 2017-01-27
+ * @version 1.2.1, 2017-01-30
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -69,69 +69,73 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @param array $config
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config = []) {
+	public function __construct(array $config = NULL) {
 
-		parent::__construct($config);
+		if($config) {
 
-		if(defined('DEFAULT_ENCODING')) {
-		
-			if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
-				$charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+			parent::__construct($config);
+	
+			if(defined('DEFAULT_ENCODING')) {
+			
+				if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
+					$charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+				}
+				else {
+					throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
+				}
+			
 			}
+	
 			else {
-				throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
+			
+				$charset = 'utf8';
+			
 			}
-		
-		}
-
-		else {
-		
-			$charset = 'utf8';
-		
-		}
-		
-		if(!$this->dsn) {
-
-			if(!$this->host) {
-				throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+			
+			if(!$this->dsn) {
+	
+				if(!$this->host) {
+					throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+				}
+				if(!$this->dbname) {
+					throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
+				}
+	
+				$this->dsn = sprintf(
+					"%s:dbname=%s;host=%s;charset=%s",
+					'mysql',
+					$this->dbname,
+					$this->host,
+					$charset
+				);
+				if($this->port) {
+					$this->dsn .= ';port=' . $this->port;
+				}
+	
 			}
-			if(!$this->dbname) {
-				throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
-			}
-
-			$this->dsn = sprintf(
-				"%s:dbname=%s;host=%s;charset=%s",
-				'mysql',
-				$this->dbname,
-				$this->host,
-				$charset
+	
+			$options = [
+				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+			];
+			
+			$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+	
+			$connection->setAttribute(
+				\PDO::ATTR_STRINGIFY_FETCHES,
+				FALSE
 			);
-			if($this->port) {
-				$this->dsn .= ';port=' . $this->port;
-			}
+	
+			// set emulated prepares for MySQL servers < 5.1.17
+	
+			$connection->setAttribute(
+				\PDO::ATTR_EMULATE_PREPARES,
+				version_compare($connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
+			);
+	
+			$this->connection = $connection;
 
 		}
-
-		$options = [
-			\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-			\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
-		];
-		
-		$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
-
-		$connection->setAttribute(
-			\PDO::ATTR_STRINGIFY_FETCHES,
-			FALSE
-		);
-
-		// set emulated prepares for MySQL servers < 5.1.17
-
-		$connection->setAttribute(
-			\PDO::ATTR_EMULATE_PREPARES,
-			version_compare($connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
-		);
-
-		$this->connection = $connection;
 
 	}
 
