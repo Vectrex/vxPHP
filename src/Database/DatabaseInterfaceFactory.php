@@ -17,7 +17,7 @@ use vxPHP\Application\Exception\ConfigException;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.1, 2017-01-27
+ * @version 0.3.2, 2017-01-30
  */
 class DatabaseInterfaceFactory {
 	
@@ -49,7 +49,7 @@ class DatabaseInterfaceFactory {
 
 			if(!\Propel::isInit()) {
 
-				throw new \Exception('Propel not initialized.');
+				throw new \Exception('Propel is not initialized.');
 				
 //				\Propel::setConfiguration(self::builtPropelConfiguration($config));
 //				\Propel::initialize();
@@ -59,9 +59,34 @@ class DatabaseInterfaceFactory {
 				
 				// retrieve adapter information
 
-				$propelConfig = \Propel::getConfiguration();
+				// retrieve adapter information
 				
-				var_dump($propelConfig);
+				$propelConfig = \Propel::getConfiguration(\PropelConfiguration::TYPE_OBJECT);
+				
+				$adapter = $propelConfig->getParameter('datasources.' . $config['name'] . '.adapter');
+				
+				if(is_null($adapter)) {
+						
+					throw new \Exception(sprintf("Propel for datasource '%s' not configured.", $config['name']));
+				
+				}
+				
+				if(!in_array($adapter, ['mysql', 'pgsql'])) {
+						
+					throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $config['name'], $adapter));
+						
+				}
+				
+				$className =
+					__NAMESPACE__ .
+					'\\Adapter\\' .
+					ucfirst($adapter);
+				
+				$vxPDO = new $className();
+				$vxPDO->setConnection(\Propel::getConnection($config['name']));
+					
+				return $vxPDO;
+
 			}
 
 		}
