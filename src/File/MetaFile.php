@@ -30,7 +30,7 @@ use vxPHP\Observer\PublisherInterface;
  *
  * @author Gregor Kofler
  *
- * @version 0.9.0 2015-12-21
+ * @version 1.0.0 2017-02-03
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -38,8 +38,19 @@ use vxPHP\Observer\PublisherInterface;
  */
 class MetaFile implements PublisherInterface {
 
-	private static	$instancesById		= array();
-	private static	$instancesByPath	= array();
+	/**
+	 * retrieved instances accesible by their id 
+	 * 
+	 * @var MetaFile[]
+	 */
+	private static	$instancesById		= [];
+
+	/**
+	 * retrieved instances accesible by their path
+	 *
+	 * @var MetaFile[]
+	 */
+	private static	$instancesByPath	= [];
 
 	/**
 	 * @var FilesystemFile
@@ -51,23 +62,35 @@ class MetaFile implements PublisherInterface {
 	 */
 	private	$metaFolder;
 
-	private	$id,
-			$isObscured,
-			$data,
+	/**
+	 * @var integer
+	 */
+	private	$id;
+	
+	/**
+	 * @var boolean
+	 */
+	private	$isObscured;
 
-			/**
-			 * @var User
-			 */
-			$createdBy,
+	/**
+	 * @var array
+	 */
+	private	$data;
 
-			/**
-			 * @var User
-			 */
-			$updatedBy,
-			/**
-			 * @var Article[]
-			 */
-			$linkedArticles;
+	/**
+	 * @var User
+	 */
+	private	$createdBy;
+
+	/**
+	 * @var User
+	 */
+	private $updatedBy;
+
+	/**
+	 * @var Article[]
+	 */
+	private	$linkedArticles;
 	
 	/**
 	 * returns MetaFile instance alternatively identified by its path or its primary key in the database
@@ -118,7 +141,7 @@ class MetaFile implements PublisherInterface {
 	 */
 	public static function getInstancesByIds(array $ids) {
 
-		$toRetrieveById = array();
+		$toRetrieveById = [];
 
 		// collect ids that must be read from db
 
@@ -152,7 +175,7 @@ class MetaFile implements PublisherInterface {
 
 		// return instances
 
-		$metafiles = array();
+		$metafiles = [];
 
 		foreach($ids as $id) {
 			$metafiles[] = self::$instancesById[$id];
@@ -171,12 +194,12 @@ class MetaFile implements PublisherInterface {
 	 */
 	public static function getInstancesByPaths(array $paths) {
 
-		$toRetrieveByPath	= array();
-		$lookupPaths		= array();
+		$toRetrieveByPath	= [];
+		$lookupPaths		= [];
 
 		// collect paths, that must be read from db
 
-		$lookupPaths = array();
+		$lookupPaths = [];
 
 		foreach($paths as $path) {
 
@@ -219,7 +242,7 @@ class MetaFile implements PublisherInterface {
 
 		// return instances
 
-		$metafiles = array();
+		$metafiles = [];
 
 		foreach($lookupPaths as $path) {
 			$metafiles[] = self::$instancesByPath[$path];
@@ -244,7 +267,7 @@ class MetaFile implements PublisherInterface {
 
 		FilesystemFile::getFilesystemFilesInFolder($folder->getFilesystemFolder());
 
-		$result = array();
+		$result = [];
 
 		$files = Application::getInstance()->getDb()->doPreparedQuery("SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON f.foldersID = fo.foldersID WHERE fo.foldersID = ?", array((int) $folder->getId()));
 
@@ -286,7 +309,7 @@ class MetaFile implements PublisherInterface {
 	 */
 	public static function getFilesForArticle(Article $article, $callBackSort = NULL) {
 
-		$result = array();
+		$result = [];
 		
 		$files = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
@@ -341,9 +364,9 @@ class MetaFile implements PublisherInterface {
 	 */
 	public static function getImagesForArticle(Article $article, $callBackSort = NULL) {
 		
-		$result = array();
+		$result = [];
 
-		$mimeTypes = array('image/jpeg', 'image/png', 'image/gif');
+		$mimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
 		$files = Application::getInstance()->getDb()->doPreparedQuery("
 			SELECT
@@ -358,7 +381,7 @@ class MetaFile implements PublisherInterface {
 				AND f.Mimetype IN ('".implode("','", $mimeTypes)."')
 			ORDER BY
 				af.customSort
-			", array($article->getId()));
+			", [$article->getId()]);
 				
 		foreach($files as &$f) {
 			if(isset(self::$instancesById[$f['filesID']])) {
@@ -425,11 +448,14 @@ class MetaFile implements PublisherInterface {
 	/**
 	 * creates a metafile instance
 	 * requires either id or path stored in db
+	 * when an array is passed to constructor
+	 * it sets MetaFile::data directly; used internally to avoid extra db queries
 	 *
 	 * @param string $path of metafile
 	 * @param integer $id of metafile
+	 * @param array $data
 	 */
-	private function __construct($path = NULL, $id = NULL, $dbEntry = NULL) {
+	private function __construct($path = NULL, $id = NULL, array $dbEntry = NULL) {
 		if(isset($path)) {
 			$this->data = $this->getDbEntryByPath($path);
 		}
@@ -437,16 +463,16 @@ class MetaFile implements PublisherInterface {
 			$this->data = $this->getDbEntryById($id);
 		}
 		else if(isset($dbEntry)) {
-			$this->data = $dbEntry;
+			$this->data = array_change_key_case($dbEntry, CASE_LOWER);
 		}
 
-		$this->id				= $this->data['filesID'];
-		$this->filesystemFile	= FilesystemFile::getInstance(Application::getInstance()->extendToAbsoluteAssetsPath($this->data['FullPath']));
+		$this->id				= $this->data['filesid'];
+		$this->filesystemFile	= FilesystemFile::getInstance(Application::getInstance()->extendToAbsoluteAssetsPath($this->data['fullpath']));
 		$this->metaFolder		= MetaFolder::getInstance($this->filesystemFile->getFolder()->getPath());
 
 		// when record features an obscured_filename, the FilesystemFile is bound to this obscured filename, while the metafile always references the non-obscured filename
 
-		$this->isObscured		= $this->data['File'] !== $this->filesystemFile->getFilename();
+		$this->isObscured		= $this->data['file'] !== $this->filesystemFile->getFilename();
 	}
 
 	public function __toString() {
@@ -469,16 +495,16 @@ class MetaFile implements PublisherInterface {
 			"SELECT f.*, CONCAT(fo.Path, IFNULL(f.Obscured_Filename, f.File)) as FullPath FROM files f INNER JOIN folders fo ON fo.foldersID = f.foldersID WHERE f.File = ? AND fo.Path IN(?, ?) LIMIT 1",
 			array(
 				$pathinfo['basename'],
-				$pathinfo['dirname'].DIRECTORY_SEPARATOR,
+				$pathinfo['dirname'] . DIRECTORY_SEPARATOR,
 				str_replace(Application::getInstance()->getAbsoluteAssetsPath(), '', $pathinfo['dirname']) . DIRECTORY_SEPARATOR
 			)
 		);
 
 		if(isset($rows[0])) {
-			return $rows[0];
+			return array_change_key_case($rows[0], CASE_LOWER);
 		}
 		else {
-			throw new MetaFileException("MetaFile database entry for '$path' not found.");
+			throw new MetaFileException(sprintf("MetaFile database entry for '%s' not found.", $path));
 		}
 	}
 
@@ -490,10 +516,10 @@ class MetaFile implements PublisherInterface {
 		);
 
 		if(isset($rows[0])) {
-			return $rows[0];
+			return array_change_key_case($rows[0], CASE_LOWER);
 		}
 		else {
-			throw new MetaFileException("MetaFile database entry for id ($id) not found.");
+			throw new MetaFileException(sprintf("MetaFile database entry for id '%d' not found.", $id));
 		}
 	}
 
@@ -509,10 +535,21 @@ class MetaFile implements PublisherInterface {
 	/**
 	 * get any data stored with metafile in database entry
 	 *
-	 * @return array
-	 */
-	public function getData() {
-		return $this->data;
+	* @param string $ndx
+	* @return mixed
+	*/
+	public function getData($ndx = NULL) {
+		
+		if(is_null($ndx)) {
+			return $this->data;
+		}
+		
+		$ndx = strtolower($ndx);
+		
+		if(isset($this->data[$ndx])) {
+			return $this->data[$ndx];
+		}
+
 	}
 
 	/**
@@ -564,18 +601,18 @@ class MetaFile implements PublisherInterface {
 				
 			// no user was stored with instance
 	
-			if(empty($this->data['createdBy'])) {
+			if(empty($this->data['createdby'])) {
 				return NULL;
 			}
 				
 			// retrieve user instance and store it for subsequent calls
 				
 			else {
-				$this->createdBy = User::getInstance($this->data['createdBy']);
+				$this->createdBy = User::getInstance($this->data['createdby']);
 			}
 		}
 	
-		return $this->createdBy;
+		return $this->createdby;
 	}
 	
 	/**
@@ -590,18 +627,18 @@ class MetaFile implements PublisherInterface {
 	
 			// no user was stored with instance
 	
-			if(empty($this->data['updatedBy'])) {
+			if(empty($this->data['updatedby'])) {
 				return NULL;
 			}
 	
 			// retrieve user instance and store it for subsequent calls
 	
 			else {
-				$this->createdBy = User::getInstance($this->data['updatedBy']);
+				$this->createdBy = User::getInstance($this->data['updatedby']);
 			}
 		}
 	
-		return $this->updatedBy;
+		return $this->updatedby;
 	}
 	
 	/**
@@ -670,7 +707,7 @@ class MetaFile implements PublisherInterface {
 	 * @return string
 	 */
 	public function getMetaFilename() {
-		return $this->data['File'];
+		return $this->getData('file');
 	}
 
 	/**
@@ -705,7 +742,7 @@ class MetaFile implements PublisherInterface {
 		// obscured files only need to rename the metadata
 
 		$oldpath = $this->filesystemFile->getPath();
-		$newpath = $this->filesystemFile->getFolder()->getPath().$to;
+		$newpath = $this->filesystemFile->getFolder()->getPath() . $to;
 
 		if(!$this->isObscured) {
 			try {
@@ -721,10 +758,10 @@ class MetaFile implements PublisherInterface {
 		}
 
 		catch(\Exception $e) {
-			throw new MetaFileException("Rename from '$oldpath' to '$newpath' failed.");
+			throw new MetaFileException(sprintf("Rename from '%s' to '%s' failed.", $oldpath, $newpath));
 		}
 
-		$this->data['File'] = $to;
+		$this->data['file'] = $to;
 
 		self::$instancesByPath[$newpath] = $this;
 		unset(self::$instancesByPath[$oldpath]);
@@ -819,15 +856,18 @@ class MetaFile implements PublisherInterface {
 	 */
 	public function setMetaData($data) {
 
+		$data = array_change_key_case($data, CASE_LOWER);
+
 		/*
 		 * @todo improve this hack
 		 */
-		if(isset($data['customSort']) && trim($data['customSort']) === '') {
-			$data['customSort'] = NULL;
+
+		if(isset($data['customsort']) && trim($data['customsort']) === '') {
+			$data['customsort'] = NULL;
 		}
 
-		unset($data['File']);
-		unset($data['filesID']);
+		unset($data['file']);
+		unset($data['filesid']);
 		
 		$this->data = $data + $this->data;
 		$this->commit();
@@ -842,26 +882,8 @@ class MetaFile implements PublisherInterface {
 			Application::getInstance()->getDb()->updateRecord('files', $this->id, $this->data);
 		}
 		catch (\PDOException $e) {
-			throw new MetaFileException("Data commit of file '". $this->filesystemFile->getFilename() . "' failed. PDO reports " . $e->getMessage());
+			throw new MetaFileException(sprintf("Data commit of file '%s' failed. PDO reports %s", $this->filesystemFile->getFilename(), $e->getMessage()));
 		}
 	}
 
-	/**
-	 * various callback functions for sorting files
-	 */
-	private static function sortByCustomSort($a, $b) {
-		$dA = $a->getData();
-		$dB = $b->getData();
-
-		if($dA['customSort'] === $dB['customSort']) {
-			return $dA['firstCreated'] < $dB['firstCreated'] ? -1 : 1;
-		}
-		if(is_null($dA['customSort'])) {
-			return 1;
-		}
-		if(is_null($dB['customSort'])) {
-			return -1;
-		}
-		return $dA['customSort'] < $dB['customSort'] ? -1 : 1;
-	}
 }
