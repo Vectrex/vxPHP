@@ -22,7 +22,7 @@ use vxPHP\File\Exception\FilesystemFileException;
  * 
  * @author Gregor Kofler
  *
- * @version 0.5.1 2015-01-22
+ * @version 0.5.2 2017-02-04
  */
 class UploadedFile extends FilesystemFile {
 	
@@ -129,13 +129,13 @@ class UploadedFile extends FilesystemFile {
 			}
 
 			else {
-				throw new FilesystemFileException("Could not move uploaded file '" . $this->originalName . "' to '" . $newpath . "'.", FilesystemFileException::FILE_RENAME_FAILED);
+				throw new FilesystemFileException(sprintf("Could not move uploaded file '%s' to '%s'.", $this->originalName, $newpath), FilesystemFileException::FILE_RENAME_FAILED);
 			}
 
 		}
 		
 		else {
-			throw new FilesystemFileException("File '" . $oldpath . "' was not identified as uploaded file.");
+			throw new FilesystemFileException(sprintf("File '%s' was not identified as uploaded file.", $oldpath));
 		}
 		
 		return $this;

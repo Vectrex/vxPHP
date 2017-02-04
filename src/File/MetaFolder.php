@@ -23,7 +23,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2016-10-23
+ * @version 1.0.0 2017-02-04
  *
  * @todo compatibility checks on windows systems
  * @todo allow update of createdBy user
@@ -33,12 +33,12 @@ class MetaFolder {
 	/**
 	 * @var MetaFile[]
 	 */
-	private static	$instancesById		= [];
+	private static	$instancesById = [];
 
 	/**
 	 * @var MetaFile[]
 	 */
-	private static	$instancesByPath	= [];
+	private static	$instancesByPath = [];
 
 	/**
 	 * @var FilesystemFolder
@@ -55,9 +55,34 @@ class MetaFolder {
 	 */
 	private $name;
 
+	/**
+	 * primary key of metafolder row
+	 * 
+	 * @var integer
+	 */
 	private	$id;
+	
+	/**
+	 * all stored additional data
+	 * 
+	 * @var array
+	 */
 	private $data;
+	
+	/**
+	 * data required for nesting
+	 * 
+	 * @var integer $level
+	 * @var integer $l
+	 * @var integer $r
+	 */
 	private	$level, $l, $r;
+	
+	/**
+	 * flag to indicate, that contained files should be obscured
+	 * 
+	 * @var boolean
+	 */
 	private $obscure_files;
 
 	/**
@@ -116,11 +141,13 @@ class MetaFolder {
 	/**
 	 * creates a metafolder instance
 	 * requires either id or path stored in db
+	 * when an array is passed to constructor
+	 * it sets MetaFolder::data directly; used internally to avoid extra db queries
 	 *
 	 * @param string $path of metafolder
 	 * @param integer $id of metafolder
 	 */
-	private function __construct($path = NULL, $id = NULL, $dbEntry = NULL) {
+	private function __construct($path = NULL, $id = NULL, array $dbEntry = NULL) {
 
 		if(isset($path)) {
 			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
@@ -130,21 +157,21 @@ class MetaFolder {
 
 		else if(isset($id)) {
 			$this->data = $this->getDbEntryById($id);
-			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['Path'];
+			$this->fullPath = substr($this->data['path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['path'];
 		}
 
 		else if(isset($dbEntry)) {
 			$this->data = $dbEntry;
-			$this->fullPath = substr($this->data['Path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['Path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['Path'];
+			$this->fullPath = substr($this->data['path'], 0, 1) == DIRECTORY_SEPARATOR ? $this->data['path'] : Application::getInstance()->getAbsoluteAssetsPath() . $this->data['path'];
 		}
 
 		$this->filesystemFolder = FilesystemFolder::getInstance($this->fullPath);
 
-		$this->id				= $this->data['foldersID'];
+		$this->id				= $this->data['foldersid'];
 		$this->level			= (int) $this->data['level'];
 		$this->l				= (int) $this->data['l'];
 		$this->r				= (int) $this->data['r'];
-		$this->obscure_files	= (boolean) $this->data['Obscure_Files'];
+		$this->obscure_files	= (boolean) $this->data['obscure_files'];
 		$this->name				= basename($this->fullPath);
 		
 	}
@@ -165,10 +192,10 @@ class MetaFolder {
 		);
 
 		if(isset($rows[0])) {
-			return $rows[0];
+			return array_change_key_case($rows[0], CASE_LOWER);
 		}
 		else {
-			throw new MetaFolderException("MetaFolder database entry for '{$this->fullPath} ($path)' not found.", MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
+			throw new MetaFolderException(sprintf("MetaFolder database entry for '%s (%s)' not found.", $this->fullPath, $path), MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
 		}
 	}
 
@@ -180,10 +207,10 @@ class MetaFolder {
 		);
 
 		if(isset($rows[0])) {
-			return $rows[0];
+			return array_change_key_case($rows[0], CASE_LOWER);
 		}
 		else {
-			throw new MetaFolderException("MetaFolder database entry for id ($id) not found.", MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
+			throw new MetaFolderException(sprintf("MetaFolder database entry for id '%d' not found.", $id), MetaFolderException::METAFOLDER_DOES_NOT_EXIST);
 		}
 	}
 
@@ -228,7 +255,7 @@ class MetaFolder {
 			
 			// no user was stored with instance
 
-			if(empty($this->data['createdBy'])) {
+			if(empty($this->data['createdby'])) {
 				return NULL;
 			}
 			
@@ -236,7 +263,7 @@ class MetaFolder {
 			
 			else {
 				$this->createdBy = new User();
-				$this->createdBy->setUser($this->data['createdBy']);
+				$this->createdBy->setUser($this->data['createdby']);
 			}
 		}
 
@@ -255,7 +282,7 @@ class MetaFolder {
 				
 			// no user was stored with instance
 	
-			if(empty($this->data['updatedBy'])) {
+			if(empty($this->data['updatedby'])) {
 				return NULL;
 			}
 				
@@ -263,7 +290,7 @@ class MetaFolder {
 				
 			else {
 				$this->updatedBy = new User();
-				$this->updatedBy->setUser($this->data['updatedBy']);
+				$this->updatedBy->setUser($this->data['updatedby']);
 			}
 		}
 	
@@ -280,8 +307,24 @@ class MetaFolder {
 
 	}
 
-	public function getMetaData() {
-		return $this->data;
+	/**
+	 * get any data stored with metafolder in database entry
+	 *
+	 * @param string $ndx
+	 * @return mixed
+	 */
+	public function getData($ndx = NULL) {
+	
+		if(is_null($ndx)) {
+			return $this->data;
+		}
+	
+		$ndx = strtolower($ndx);
+	
+		if(isset($this->data[$ndx])) {
+			return $this->data[$ndx];
+		}
+	
 	}
 
 	/**
@@ -511,7 +554,7 @@ class MetaFolder {
 				$metaData['Path'] = trim(substr($f->getPath(), strlen(Application::getInstance()->getAbsoluteAssetsPath())), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			}
 			else {
-				$metaData['Path'] = rtrim($f->getPath(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+				$metaData['Path'] = rtrim($f->getPath(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			}
 
 			$metaData['Alias'] = strtolower(preg_replace('~[\\\\/]~', '_', rtrim($metaData['Path'], DIRECTORY_SEPARATOR)));
@@ -540,7 +583,7 @@ class MetaFolder {
 				array_pop($tree);
 
 				try {
-					$parent = self::getInstance(implode(DIRECTORY_SEPARATOR, $tree).DIRECTORY_SEPARATOR);
+					$parent = self::getInstance(implode(DIRECTORY_SEPARATOR, $tree) . DIRECTORY_SEPARATOR);
 
 					// has parent directory
 
