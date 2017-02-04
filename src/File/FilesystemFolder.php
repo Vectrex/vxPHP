@@ -12,7 +12,6 @@
 namespace vxPHP\File;
 
 use vxPHP\File\Exception\FilesystemFolderException;
-use vxPHP\File\Exception\MetaFolderException;
 use vxPHP\File\FilesystemFile;
 use vxPHP\Application\Application;
 
@@ -21,7 +20,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0 2016-10-23
+ * @version 0.5.0 2017-02-04
  *
  * @todo test delete()
  */
@@ -356,18 +355,5 @@ class FilesystemFolder {
 
 	}
 
-	/**
-	 * creates metafolder from current filesystemfolder
-	 */
-	public function createMetaFolder() {
-
-		try {
-			return MetaFolder::getInstance($this->getPath());
-		}
-		catch(MetaFolderException $e) {
-			return MetaFolder::create($this);
-		}
-
-	}
 }
 

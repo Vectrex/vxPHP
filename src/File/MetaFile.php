@@ -886,4 +886,60 @@ class MetaFile implements PublisherInterface {
 		}
 	}
 
+	/**
+	 * creates a meta file based on filesystem file
+	 * 
+	 * @param FilesystemFile $file
+	 * @throws FilesystemFileException
+	 * @return \vxPHP\File\MetaFile
+	 */
+	public static function createMetaFile(FilesystemFile $file) {
+	
+		$db = Application::getInstance()->getDb();
+	
+		if(count($db->doPreparedQuery("
+			SELECT
+				f.filesID
+			FROM
+				files f
+				INNER JOIN folders fo ON fo.foldersID = f.foldersID
+			WHERE
+				f.File  COLLATE utf8_bin = ? AND
+				fo.Path COLLATE utf8_bin = ?
+			LIMIT 1",
+			[
+				$file->getFilename(),
+				$file->getFolder()->getRelativePath()
+			]
+		))) {
+			throw new FilesystemFileException(
+				sprintf(
+					"Metafile '%s' in '%s' already exists as metafile.",
+					$file->getFilename(),
+					$file->getFolder()->getRelativePath()
+				),
+				FilesystemFileException::METAFILE_ALREADY_EXISTS
+			);
+		}
+	
+		$mf		= MetaFolder::createMetaFolder($file->getFolder());
+		$user	= User::getSessionUser();
+	
+		if(!($filesID = $db->insertRecord('files', [
+			'foldersID'		=> $mf->getId(),
+			'File'			=> $file->getFilename(),
+			'Mimetype'		=> $file->getMimetype(),
+			'createdBy'		=> is_null($user) ? NULL : $user->getAdminId()
+		]))) {
+			throw new FilesystemFileException(sprintf("Could not create metafile for '%s'.", $file->getFilename()), FilesystemFileException::METAFILE_CREATION_FAILED);
+		}
+		else {
+			$mfile = MetaFile::getInstance(NULL, $filesID);
+			FileEvent::create(FileEvent::AFTER_METAFILE_CREATE, $mfile)->trigger();
+
+			return $mfile;
+		}
+	}
+	
+	
 }

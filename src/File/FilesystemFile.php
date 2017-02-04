@@ -13,8 +13,6 @@ namespace vxPHP\File;
 
 use vxPHP\File\MimeTypeGetter;
 use vxPHP\File\Exception\FilesystemFileException;
-use vxPHP\Application\Application;
-use vxPHP\User\User;
 use vxPHP\Observer\PublisherInterface;
 
 /**
@@ -22,7 +20,7 @@ use vxPHP\Observer\PublisherInterface;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.1 2015-12-12
+ * @version 0.6.0 2017-02-04
  */
 
 class FilesystemFile implements PublisherInterface {
@@ -117,10 +115,12 @@ class FilesystemFile implements PublisherInterface {
 	 * @param bool $force forces re-read of mime type
 	 */
 	public function isWebImage($force = false) {
+
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return preg_match('~^image/(p?jpeg|png|gif)$~', $this->mimetype);
+
 	}
 
 	/**
@@ -155,7 +155,9 @@ class FilesystemFile implements PublisherInterface {
 	 * return filesystem folder of file
 	 */
 	public function getFolder() {
+
 		return $this->folder;
+
 	}
 
 	/**
@@ -198,7 +200,7 @@ class FilesystemFile implements PublisherInterface {
 			}
 	
 			else {
-				throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+				throw new FilesystemFileException(sprintf("Rename from '%s' to '%s' failed.", $oldpath, $newpath), FilesystemFileException::FILE_RENAME_FAILED);
 			}
 
 		}
@@ -352,56 +354,9 @@ class FilesystemFile implements PublisherInterface {
 				++$count;
 				$size += $fileinfo->getSize();
 			}
-			return array('count' => $count, 'totalSize' => $size);
+			return ['count' => $count, 'totalSize' => $size];
 		}
 		return FALSE;
-	}
-
-	/**
-	 * creates a meta file based on filesystem file
-	 * @return MetaFile
-	 * @throws FilesystemFileException
-	 */
-	public function createMetaFile() {
-
-		$db = Application::getInstance()->getDb();
-
-		if(count($db->doPreparedQuery("
-			SELECT
-				f.filesID
-			FROM
-				files f
-				INNER JOIN folders fo ON fo.foldersID = f.foldersID
-			WHERE
-				f.File  COLLATE utf8_bin = ? AND
-				fo.Path COLLATE utf8_bin = ?
-			LIMIT 1",
-
-			array(
-				$this->filename,
-				$this->folder->getRelativePath()
-			)
-		))) {
-			throw new FilesystemFileException("Metafile '{$this->filename}' in '{$this->folder->getRelativePath()}' already exists.", FilesystemFileException::METAFILE_ALREADY_EXISTS);
-		}
-
-		$mf			= $this->folder->createMetaFolder();
-		$user		= User::getSessionUser();
-
-		if(!($filesID = $db->insertRecord('files', array(
-			'foldersID'		=> $mf->getId(),
-			'File'			=> $this->filename,
-			'Mimetype'		=> $this->getMimetype(),
-			'createdBy'		=> is_null($user) ? NULL : $user->getAdminId()
-		)))) {
-			throw new FilesystemFileException("Could not create metafile for '{$this->filename}'.", FilesystemFileException::METAFILE_CREATION_FAILED);
-		}
-		else {
-			$mf = MetaFile::getInstance(NULL, $filesID);
-			FileEvent::create(FileEvent::AFTER_METAFILE_CREATE, $this)->trigger();
-
-			return $mf;
-		}
 	}
 
 	/**
@@ -412,7 +367,7 @@ class FilesystemFile implements PublisherInterface {
 	 */
 	public static function getFilesystemFilesInFolder(FilesystemFolder $folder) {
 
-		$files = array();
+		$files = [];
 
 		$glob = glob($folder->getPath() . '*', GLOB_NOSORT);
 
@@ -434,7 +389,10 @@ class FilesystemFile implements PublisherInterface {
 	}
 
 	/**
-	 * clean up $filename and avoid doublettes within folder $dir
+	 * clean up $filename and avoid duplicate filenames within folder $dir
+	 * the cleanup is simple and does not take reserved filenames into consideration
+	 * (e.g. PRN or CON on Windows systems)
+	 * @see https://msdn.microsoft.com/en-us/library/aa365247
 	 *
 	 * @param string $filename
 	 * @param FilesystemFolder $dir
@@ -443,25 +401,23 @@ class FilesystemFile implements PublisherInterface {
 	 */
 	public static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
 
-		$filename = str_replace(
-			array(' ', 'ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'),
-			array('_', 'ae', 'oe', 'ue', 'Ae', 'Oe', 'Ue', 'ss'),
-			$filename);
+		// remove any characters which are not allowed in any file system
 
-		$filename = preg_replace('/[^0-9a-z_#,;\-\.\(\)]/i', '_', $filename);
+		$filename = preg_replace('~[<>:"/\\|?*\\x00-\\x1F]~', '_', $filename);
 
-		if(!file_exists($dir->getPath().$filename)) {
+		if(!file_exists($dir->getPath() . $filename)) {
 			return $filename;
 		}
 
 		$pathinfo = pathinfo($filename);
 
-		$pathinfo['extension'] = !empty($pathinfo['extension']) ? '.'.$pathinfo['extension'] : '';
+		$pathinfo['extension'] = !empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
 
-		while(file_exists($dir->getPath().sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
+		while(file_exists($dir->getPath() . sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
 			++$ndx;
 		}
 
 		return sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']);
+
 	}
 }

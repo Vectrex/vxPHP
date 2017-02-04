@@ -150,7 +150,7 @@ class MetaFolder {
 	private function __construct($path = NULL, $id = NULL, array $dbEntry = NULL) {
 
 		if(isset($path)) {
-			$path = rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+			$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			$this->fullPath = Application::getInstance()->extendToAbsoluteAssetsPath($path);
 			$this->data = $this->getDbEntryByPath($path);
 		}
@@ -432,10 +432,8 @@ class MetaFolder {
 	 * @return MetaFolder
 	 */
 	public function createFolder($path) {
-		return self::create($this->filesystemFolder->createFolder($path));
-	}
 
-	public function purge() {
+		return self::createMetaFolder($this->filesystemFolder->createFolder($path));
 
 	}
 
@@ -495,9 +493,11 @@ class MetaFolder {
 			)
 		as $r) {
 			if($force || !isset(self::$instancesById[$r['foldersID']])) {
+				$r = array_change_key_case($r, CASE_LOWER);
 				$f = new self(NULL, NULL, $r);
+
 				self::$instancesByPath[$f->getFullPath()]	= $f;
-				self::$instancesById[$r['foldersID']]		= $f;
+				self::$instancesById[$r['foldersid']]		= $f;
 			}
 		}
 	}
@@ -506,7 +506,7 @@ class MetaFolder {
 	 * retrieve all folders with level 0
 	 *
 	 * @throws MetaFolderException
-	 * @return array rootFolders
+	 * @return MetaFolder[]
 	 */
 	public static function getRootFolders() {
 
@@ -529,17 +529,32 @@ class MetaFolder {
 	}
 
 	/**
-	 * creates metafolder from supplied filesystem folder
+	 * creates metafolder from supplied filesystem folder if not created previously
 	 * nested set is updated accordingly
+	 * returns either newly or previously created metafolder
 	 *
 	 * @param FilesystemFolder $f
 	 * @param array $metaData optional data for folder
+	 * 
 	 * @throws MetaFolderException
 	 */
-	public static function create(FilesystemFolder $f, Array $metaData = []) {
+	public static function createMetaFolder(FilesystemFolder $f, array $metaData = []) {
 
-		if(($parentFolder = $f->getParentFolder())) {
-			$parentFolder->createMetaFolder();
+		$roots = self::getRootFolders();
+		$rootFound = 0;
+
+		foreach($roots as $root) {
+			if($root->getRelativePath() === $f->getRelativePath()) {
+				
+				// root reached
+				
+				$rootFound = 1;
+				
+			}
+		}
+
+		if(!$rootFound && ($parentFolder = $f->getParentFolder())) {
+			self::createMetaFolder($parentFolder);
 		}
 
 		try {
@@ -548,25 +563,27 @@ class MetaFolder {
 
 		catch(MetaFolderException $e) {
 
+			$metaData = array_change_key_case($metaData, CASE_LOWER);
+
 			$db = Application::getInstance()->getDb();
 
 			if(strpos($f->getPath(), Application::getInstance()->getAbsoluteAssetsPath()) === 0) {
-				$metaData['Path'] = trim(substr($f->getPath(), strlen(Application::getInstance()->getAbsoluteAssetsPath())), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+				$metaData['path'] = trim(substr($f->getPath(), strlen(Application::getInstance()->getAbsoluteAssetsPath())), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			}
 			else {
-				$metaData['Path'] = rtrim($f->getPath(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+				$metaData['path'] = rtrim($f->getPath(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 			}
 
-			$metaData['Alias'] = strtolower(preg_replace('~[\\\\/]~', '_', rtrim($metaData['Path'], DIRECTORY_SEPARATOR)));
+			$metaData['alias'] = strtolower(preg_replace('~[\\\\/]~', '_', rtrim($metaData['path'], DIRECTORY_SEPARATOR)));
 
-			if(!isset($metaData['Access']) || !preg_match('~^rw?$~i', $metaData['Access'])) {
-				$metaData['Access'] = 'RW';
+			if(!isset($metaData['access']) || !preg_match('~^rw?$~i', $metaData['access'])) {
+				$metaData['access'] = 'RW';
 			}
 			else {
-				$metaData['Access'] = strtoupper($metaData['Access']);
+				$metaData['access'] = strtoupper($metaData['access']);
 			}
 
-			$tree = explode(DIRECTORY_SEPARATOR, trim($metaData['Path'], DIRECTORY_SEPARATOR));
+			$tree = explode(DIRECTORY_SEPARATOR, trim($metaData['path'], DIRECTORY_SEPARATOR));
 
 			if(count($tree) == 1) {
 
@@ -616,9 +633,10 @@ class MetaFolder {
 				self::getInstance(NULL, $id)->refreshNesting();
 			}
 
-			return self::getInstance($f->getPath());
 		}
 
-		throw new MetaFolderException('Metafolder for ' . $f->getPath() . ' already exists.', MetaFolderException::METAFOLDER_ALREADY_EXISTS);
+		return self::getInstance($f->getPath());
+		
 	}
+
 }
