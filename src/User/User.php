@@ -13,15 +13,15 @@ namespace vxPHP\User;
 
 use vxPHP\User\Notification\Notification;
 use vxPHP\User\Exception\UserException;
-use vxPHP\User\Util;
 
 use vxPHP\Mail\Email;
 use vxPHP\Application\Application;
 use vxPHP\Session\Session;
+use vxPHP\Security\Password\PasswordEncrypter;
 
 /**
  * @author Gregor Kofler
- * @version 1.1.1 2015-04-24
+ * @version 1.1.2 2017-02-08
  */
 
 class User {
@@ -225,7 +225,8 @@ class User {
 	 * @param string $password
 	 */
 	public function setPassword($password) {
-		$this->pwd = Util::hashPassword($password);
+		$encrypter = new PasswordEncrypter();
+		$this->pwd = $encrypter->hashPassword($password);
 		return $this;
 	}
 
@@ -415,7 +416,8 @@ class User {
 	 * @param string $pwd
 	 */
 	public function authenticate($pwd) {
-		$this->authenticated = Util::checkPasswordHash($pwd, $this->pwd);
+		$encrypter = new PasswordEncrypter();
+		$this->authenticated = $encrypter->isPasswordValid($pwd, $this->pwd);
 	}
 
 	/**

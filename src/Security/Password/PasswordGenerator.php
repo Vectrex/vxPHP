@@ -9,7 +9,7 @@
  */
 
 
-namespace vxPHP\Security;
+namespace vxPHP\Security\Password;
 
 /**
  * Create passwords
@@ -17,7 +17,7 @@ namespace vxPHP\Security;
  * @author Martin Jansen,  Olivier Vanhoucke
  * @author Gregor Kofler
  * 
- * @version 1.1.0 2016-07-20
+ * @version 1.1.1 2017-02-08
  */
 
 class PasswordGenerator {
@@ -92,16 +92,26 @@ class PasswordGenerator {
 	public static function createFromLogin($login, $type, $key = 0) {
 
 		switch($type) {
-			case 'reverse':			return strrev($login);
-			case 'shuffle':			return self::shuffle($login);
-			case 'xor':				return self::eXor($login, $key);
-			case 'rot13':			return str_rot13($login);
-			case 'rotx':			return self::rotx($login, $key);
-			case 'rotx++':			return self::rotxpp($login, $key);
-			case 'rotx--':			return self::rotxmm($login, $key);
-			case 'ascii_rotx':		return self::asciiRotx($login, $key);
-			case 'ascii_rotx++':	return self::asciiRotxpp($login, $key);
-			case 'ascii_rotx--':	return self::asciiRotxmm($login, $key);
+			case 'reverse':
+				return strrev($login);
+			case 'shuffle':
+				return self::shuffle($login);
+			case 'xor':
+				return self::eXor($login, $key);
+			case 'rot13':
+				return str_rot13($login);
+			case 'rotx':
+				return self::rotx($login, $key);
+			case 'rotx++':
+				return self::rotxpp($login, $key);
+			case 'rotx--':
+				return self::rotxmm($login, $key);
+			case 'ascii_rotx':
+				return self::asciiRotx($login, $key);
+			case 'ascii_rotx++':
+				return self::asciiRotxpp($login, $key);
+			case 'ascii_rotx--':
+				return self::asciiRotxmm($login, $key);
 		}
 	}
 
@@ -144,10 +154,15 @@ class PasswordGenerator {
 
 		for ($i = 0; $i < strlen($login); ++$i) {
 			$next = ord($login{$i}) ^ $key;
-			if		($next > 255)	{ $next -= 255; }
-			elseif	($next < 0)		{ $next += 255;	}
+			if ($next > 255) {
+				$next -= 255;
+			}
+			elseif ($next < 0) {
+				$next += 255;
+			}
 			$tmp .= chr($next);
 		}
+
 		return $tmp;
 
 	}
@@ -158,10 +173,15 @@ class PasswordGenerator {
 
 		for ($i = 0; $i < strlen($login); ++$i) {
 			$next = ord($login{$i}) + $key;
-			if		($next > 255)	{ $next -= 255; }
-			elseif	($next < 0)		{ $next += 255;	}
+			if ($next > 255) {
+				$next -= 255;
+			}
+			elseif ($next < 0) {
+				$next += 255;
+			}
 			$tmp .= chr($next);
 		}
+			
 		return $tmp;
 
 	}
@@ -186,10 +206,15 @@ class PasswordGenerator {
 
 		for ($i = 0; $i < strlen($login); $i++, --$key) {
 			$next = ord($login{$i}) + $key;
-			if		($next > 255)	{ $next -= 255; }
-			elseif	($next < 0)		{ $next += 255;	}
+			if ($next > 255) {
+				$next -= 255;
+			}
+			elseif ($next < 0) {
+				$next += 255;
+			}
 			$tmp .= chr($next);
 		}
+
 		return $tmp;
 
 	}
@@ -202,14 +227,19 @@ class PasswordGenerator {
 		for ($i = 0; $i < strlen($login); ++$i) {
 			if ((ord($login{$i}) >= 97) && (ord($login{$i}) <= 122)) { // 65, 90 for uppercase
 				$next = ord($login{$i}) + $key;
-				if		($next > 122)	{ $next -= 26; }
-				elseif	($next < 97)	{ $next += 26; }
+				if ($next > 122) {
+					$next -= 26;
+				}
+				elseif ($next < 97) {
+					$next += 26;
+				}
 				$tmp .= chr($next);
 			}
 			else {
 				$tmp .= $login{$i};
 			}
 		}
+
 		return $tmp;
 
 	}
@@ -222,14 +252,19 @@ class PasswordGenerator {
 		for ($i = 0; $i < strlen($login); ++$i, ++$key) {
 			if ((ord($login{$i}) >= 97) && (ord($login{$i}) <= 122)) { // 65, 90 for uppercase
 				$next = ord($login{$i}) + $key;
-				if		($next > 122)	{ $next -= 26; }
-				elseif	($next < 97)	{ $next += 26; }
+				if ($next > 122) {
+					$next -= 26;
+				}
+				elseif ($next < 97)	{
+					$next += 26;
+				}
 				$tmp .= chr($next);
 			}
 			else {
 				$tmp .= $login{$i};
 			}
 		}
+
 		return $tmp;
 
 	}
@@ -242,14 +277,19 @@ class PasswordGenerator {
 		for ($i = 0; $i < strlen($login); ++$i, --$key) {
 			if ((ord($login{$i}) >= 97) && (ord($login{$i}) <= 122)) { // 65, 90 for uppercase
 				$next = ord($login{$i}) + $key;
-				if		($next > 122)	{ $next -= 26; }
-				elseif	($next < 97)	{ $next += 26; }
+				if ($next > 122) {
+					$next -= 26;
+				}
+				elseif ($next < 97)	{
+					$next += 26;
+				}
 				$tmp .= chr($next);
 			}
 			else {
 				$tmp .= $login{$i};
 			}
 		}
+
 		return $tmp;
 
 	}
@@ -262,6 +302,7 @@ class PasswordGenerator {
 			$tmp[] = $login{$i};
 		}
 		shuffle($tmp);
+
 		return implode($tmp, '');
 
 	}
@@ -280,21 +321,21 @@ class PasswordGenerator {
 		$retVal = '';
 
 		$v = [
-				'a', 'e', 'i', 'o',
-				'u', 'ae', 'ou', 'io',
-				'ea', 'ou', 'ia', 'ai',
-				'ei'
+			'a', 'e', 'i', 'o',
+			'u', 'ae', 'ou', 'io',
+			'ea', 'ou', 'ia', 'ai',
+			'ei'
 		];
 
 		$c = [
-				'b', 'c', 'd', 'g',
-				'h', 'j', 'k', 'l',
-				'm', 'n', 'p', 'r',
-				's', 't', 'u', 'v',
-				'w', 'z', 'tr', 'cr',
-				'fr', 'dr', 'wr', 'pr',
-				'th', 'ch', 'ph', 'st',
-				'sl', 'cl', 'br'
+			'b', 'c', 'd', 'g',
+			'h', 'j', 'k', 'l',
+			'm', 'n', 'p', 'r',
+			's', 't', 'u', 'v',
+			'w', 'z', 'tr', 'cr',
+			'fr', 'dr', 'wr', 'pr',
+			'th', 'ch', 'ph', 'st',
+			'sl', 'cl', 'br', 'sw'
 		];
 
 		$lenV = count($v) - 1;
@@ -339,6 +380,7 @@ class PasswordGenerator {
 		$password = '';
 
 		switch($chars) {
+
 			case 'alphanumeric':
 				$regex = '[a-z0-9]';
 				break;
@@ -357,6 +399,7 @@ class PasswordGenerator {
 					$chars = substr($chars, 0, -1);
 				}
 				$regex = str_replace(',', '|', $chars);
+
 		}
 
 		// use the cryptographically secure random number generator
@@ -390,4 +433,3 @@ class PasswordGenerator {
 		return $password;
 	}
 }
-?>

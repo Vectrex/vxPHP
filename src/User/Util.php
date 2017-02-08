@@ -14,62 +14,15 @@ namespace vxPHP\User;
 use vxPHP\User\User;
 use vxPHP\User\Exception\UserException;
 use vxPHP\Application\Application;
-use vxPHP\Application\Session;
 
 /**
  * simple class to store utility methods
  *
  * @author Gregor Kofler
- * @version 1.1.1 2015-04-24
+ * @version 1.2.0 2017-02-08
  */
 
 class Util {
-
-	/**
-	 * hash password, the only place where hashing should be done
-	 *
-	 * @param string $plainPassword
-	 *
-	 * @return string hashed password
-	 */
-	public static function hashPassword($plainPassword) {
-
-		// use mcrypt functionality if possible
-
-		if(function_exists('mcrypt_create_iv')) {
-			$salt = strtr(base64_encode(mcrypt_create_iv(16, MCRYPT_DEV_URANDOM)), '+', '.');
-		}
-
-		// otherwise use some weaker generic replacement
-
-		else {
-			$salt = md5(uniqid('', TRUE));
-		}
-
-		// Blowfish algorithm, cost 10
-
-		return crypt($plainPassword, '$2a$10$' . $salt);
-
-
-//		$encoded = sha1($plainPwd);
-//		return $encoded;
-
-	}
-
-	/**
-	 * check whether a plain password matches the hash, the only place where checking should be done
-	 *
-	 * @param string $hash
-	 * @param string $passwordToCheck
-	 *
-	 * @return boolean
-	 */
-
-	public static function checkPasswordHash($passwordToCheck, $hash) {
-
-		return crypt($passwordToCheck, $hash) === $hash;
-
-	}
 
 	/**
 	 * check whether a user email is already assigned
