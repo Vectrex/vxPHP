@@ -75,6 +75,7 @@ class User2 {
 			throw new \InvalidArgumentException('An empty username is not allowed.');
 		}
 		
+		$this->username = $username;
 		$this->setHashedPassword($hashedPassword);
 		$this->setRoles($roles);
 		$this->attributes = $attributes;
