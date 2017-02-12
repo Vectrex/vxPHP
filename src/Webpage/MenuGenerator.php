@@ -395,149 +395,116 @@ class MenuGenerator {
 
 	/**
 	 * authenticate complete menu
-	 * checks whether current user/admin fulfills requirements defined in site.ini.xml
+	 * checks whether current user fulfills requirements defined in
+	 * site.ini.xml
 	 *
-	 * if a menu needs authentication and admin meets the required authentication level the menu entries are checked
-	 * if single entries require a higher authentication level, they are hidden by setting their display-property to "none"
-	 *
-	 * authenticateMenuByTableRowAccess(Menu $m)
-	 * authenticateMenuByMiscRules(Menu $m)
-	 * should be implemented on a per-application level
+	 * if a menu needs authentication and admin meets the required
+	 * authentication level the menu entries are checked
+	 * if single entries require a higher authentication level, they are
+	 * hidden by setting their display-property to "none"
+	 * 
+	 * if the user authentication level does not qualify for seeing the
+	 * menu, its menu entries are not checked and consequently hidden
 	 *
 	 * @param Menu $m
 	 * @return boolean
 	 */
 	protected function authenticateMenu(Menu $m) {
 
+		$app = Application::getInstance();
+		$currentUser = $app->getCurrentUser();
+
+		// retrieve roles of current user
+
+		if(!$currentUser || !$currentUser->isAuthenticated()) {
+
+			$userRoles = [];
+
+		}
+
+		else {
+
+			// role hierarchy defined? check roles and sub-roles
+			
+			if(($roleHierarchy = $app->getRoleHierarchy())) {
+				$userRoles = $currentUser->getRolesAnSubRoles($roleHierarchy);
+			}
+
+			// otherwise check only directly assigned roles
+			
+			else {
+				$userRoles = $currentUser->getRoles();
+			}
+
+		}
+		
+		// menu needs no authentication, then check all its entries
+
 		if(is_null($m->getAuth())) {
+			$this->authenticateMenuEntries($m, $userRoles);
 			return TRUE;
 		}
 
-		$admin = User::getSessionUser();
+		// no user, user not authenticated or no roles assigned and menu needs authentication
 
-		if(!$admin || !$admin->isAuthenticated()) {
+		if(!$currentUser || !$currentUser->isAuthenticated() || empty($userRoles)) {
 			return FALSE;
 		}
 
-		// unhide all menu entries, in case privileges have changed
+		$auth = $m->getAuth();
+		$authenticates = FALSE;
+
+		foreach($userRoles as $role) {
+	
+			if($role->getRoleName() === $auth) {
+				$authenticates = TRUE;
+				break;
+			}
+	
+		}
+		
+		// if user's role allows to access the menu proceed with checking menu entries
+		
+		if($authenticates) {
+		
+			$this->authenticateMenuEntries($m, $userRoles);
+			return TRUE;
+
+		}
+
+		return FALSE;
+
+	}
+
+	/**
+	 * authenticate menu entries by checking each one against the
+	 * user's roles if necessary
+	 * 
+	 * @param Menu $m
+	 * @param Role[] $userRoles
+	 */
+	private function authenticateMenuEntries(Menu $m, array $userRoles) {
 
 		foreach($m->getEntries() as $e) {
-			$e->setAttribute('display', NULL);
-		}
 
-		// superadmin sees everything
-
-		if($admin->hasSuperAdminPrivileges()) {
-			return TRUE;
-		}
-
-		// handle different authentication levels
-		
-		if($m->getAuth() === User::AUTH_OBSERVE_TABLE && $admin->getPrivilegeLevel() >= User::AUTH_OBSERVE_TABLE) {
-			if($this->authenticateMenuByTableRowAccess($m)) {
-				foreach($m->getEntries() as $e) {
-					if(!$this->authenticateMenuEntry($e)) {
-						$e->setAttribute('display', 'none');
-					}
-				}
-				return TRUE;
+			if(!$e->getAuth()) {
+				$e->setAttribute('display', NULL);
 			}
+
 			else {
-				return FALSE;
-			}
-		}
-
-		if($m->getAuth() === User::AUTH_OBSERVE_ROW && $admin->getPrivilegeLevel() >= User::AUTH_OBSERVE_ROW) {
-			if($this->authenticateMenuByTableRowAccess($m)) {
-				foreach($m->getEntries() as $e) {
-					if(!$this->authenticateMenuEntry($e)) {
-						$e->setAttribute('display', 'none');
-					}
-				}
-				return TRUE;
-			}
-			else {
-				return FALSE;
-			}
-		}
-
-		if($m->getAuth() >= $admin->getPrivilegeLevel()) {
-
-			foreach($m->getEntries() as $e) {
-				if(!$e->isAuthenticatedBy($admin->getPrivilegeLevel())) {
-					$e->setAttribute('display', 'none');
-				}
-			}
+				$e->setAttribute('display', 'none');
+	
+				foreach($userRoles as $role) {
 			
-			return TRUE;
-		}
-
-		// optional custom fallback
-
-		return $this->authenticateMenuByMiscRules($m);
-	}
-
-	/**
-	 * fallback method for authenticating menu access on observe_table/observe_row level
-	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
-	 *
-	 * @param Menu $m
-	 * @return boolean
-	 */
-	protected function authenticateMenuByTableRowAccess(Menu $m) {
-
-		$p = $m->getAuthParameters();
-
-		if(empty($p)) {
-			return FALSE;
-		}
-
-		$admin = User::getSessionUser();
+					if($e->isAuthenticatedByRole($role)) {
+						$e->setAttribute('display', NULL);
+						break;
+					}
+			
+				}
+			}
 		
-		if(!$admin) {
-			return FALSE;
 		}
-
-		$tables = preg_split('/\s*,\s*/', trim($p));
-
-		$matching = array_intersect($tables, $admin->getTableAccess());
-		return !empty($matching);
-	}
-
-	/**
-	 * fallback method for a proprietary authentication method
-	 *
-	 * @param Menu $m
-	 * @return boolean
-	 */
-	protected function authenticateMenuByMiscRules(Menu $m) {
-		return FALSE;
-	}
-
-	/**
-	 * fallback method for authenticating single menu entry access on observe_table/observe_row level
-	 * positive authentication if auth_parameter contains a table name found in the admins table access setting
-	 *
-	 * @param MenuEntry $e
-	 * @return boolean
-	 */
-	protected function authenticateMenuEntry(MenuEntry $e) {
-
-		$p = $e->getAuthParameters();
-
-		if(empty($p)) {
-			return FALSE;
-		}
-
-		$admin = User::getSessionUser();
 		
-		if(!$admin) {
-			return FALSE;
-		}
-
-		$tables = preg_split('/\s*,\s*/', trim($p));
-
-		return !array_intersect($tables, $admin->getTableAccess());
-
 	}
 }

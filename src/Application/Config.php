@@ -22,7 +22,7 @@ use vxPHP\Routing\Route;
  * Config
  * creates configuration singleton by parsing the XML ini-file
  *
- * @version 1.10.1 2017-01-30
+ * @version 1.11.0 2017-02-12
  *
  * @todo refresh() method
  */
@@ -124,8 +124,8 @@ class Config {
 
 		$this->sections	= $sections;
 
-		if(!($config = simplexml_load_file($xmlFile))) {
-			throw new ConfigException("Missing or malformed '" . $xmlFile ."'.");
+		if(!($config = simplexml_load_file($xmlFile, NULL, LIBXML_NOCDATA))) {
+			throw new ConfigException(sprintf("Missing or malformed XML configuration in '%s'.", $xmlFile));
 		}
 
 		$this->parseConfig($config);
@@ -235,6 +235,16 @@ class Config {
 		}
 	}
 
+	private function parsePropelSettings(\SimpleXMLElement $propel) {
+		
+		if(!class_exists('\\PropelConfiguration')) {
+			throw new ConfigException("Class 'PropelConfiguration' not found.");
+		}
+		
+		var_dump(json_decode(json_encode((array) $propel)), TRUE);
+		
+	}
+	
 	/**
 	 * parses all (optional) mail settings
 	 *
@@ -417,7 +427,7 @@ class Config {
 	 */
 	private function parsePagesSettings(\SimpleXMLElement $pages) {
 
-		$scriptName = empty($pages->attributes()->script) ? $this->site->root_document : (string) $pages->attributes()->script;
+		$scriptName = (string) $pages->attributes()->script ?: $this->site->root_document;
 		$redirect	= empty($pages->attributes()->default_redirect) ? NULL : (string) $pages->attributes()->default_redirect;
 
 		foreach($pages->page as $page) {
@@ -535,20 +545,14 @@ class Config {
 
 			if(isset($a->auth)) {
 
-				$auth = strtoupper(trim((string) $a->auth));
+				$auth = strtolower(trim((string) $a->auth));
 
-				if(defined("vxPHP\\User\\User::AUTH_$auth")) {
-					$auth = constant("vxPHP\\User\\User::AUTH_$auth");
-
-					if(isset($a->auth_parameters)) {
-						$parameters['authParameters'] = trim((string) $a->auth_parameters);
-					}
-				}
-				else {
-					$auth = -1;
+				if($auth && isset($a->auth_parameters)) {
+					$parameters['authParameters'] = trim((string) $a->auth_parameters);
 				}
 
 				$parameters['auth'] = $auth;
+
 			}
 
 			if(isset($this->routes[$scriptName][$pageId])) {
@@ -708,27 +712,24 @@ class Config {
 
 		if(isset($a->auth)) {
 
-			// set optional authentication level; if level is not defined, menu is locked for everyone
-			// if auth level is defined, additional authentication parameters can be set
+			// set optional authentication level
 
-			$menuAuth = strtoupper(trim((string) $a->auth));
+			$menuAuth = strtolower(trim((string) $a->auth));
 
-			if(defined("vxPHP\\User\\User::AUTH_$menuAuth")) {
-				$m->setAuth(constant("vxPHP\\User\\User::AUTH_$menuAuth"));
+			if($menuAuth) {
+
+				$m->setAuth($menuAuth);
+
+				// if auth level is defined, additional authentication parameters can be set
 
 				if(isset($a->auth_parameters)) {
 					$m->setAuthParameters((string) $a->auth_parameters);
 				}
+
 			}
-			else {
-				$m->setAuth(-1);
-			}
+
 		}
 		
-		else {
-			$menuAuth = NULL;
-		}
-
 		foreach($menu->children() as $entry) {
 
 			if($entry->getName() == 'menuentry') {
@@ -775,37 +776,24 @@ class Config {
 				
 				// handle authentication settings of menu entry
 				
-				if($menuAuth || isset($a->auth)) {
-				
-					// fallback to menu settings, when auth attribute is not set
-				
-					if(!isset($a->auth)) {
+				if(isset($a->auth)) {
+
+					// set optional authentication level
+					
+					$entryAuth = strtolower(trim((string) $a->auth));
+					
+					if($entryAuth) {
 							
-						$e->setAuth($m->getAuth());
-						$e->setAuthParameters($m->getAuthParameters());
-				
-					}
-				
-					else {
-				
-						// set optional authentication level; if level is not defined, entry is locked for everyone
+						$e->setAuth($entryAuth);
+
 						// if auth level is defined, additional authentication parameters can be set
 				
-						$auth = strtoupper(trim((string) $a->auth));
-				
-						if(defined("UserAbstract::AUTH_$auth")) {
-							$e->setAuth(constant("UserAbstract::AUTH_$auth"));
-				
-							if(isset($a->auth_parameters)) {
-								$e->setAuthParameters((string) $a->auth_parameters);
-							}
-						}
-						else {
-							$e->setAuth(-1);
+						if(isset($a->auth_parameters)) {
+							$e->setAuthParameters((string) $a->auth_parameters);
 						}
 					}
 				}
-				
+
 				$m->appendEntry($e);
 				
 				if(isset($entry->menu)) {

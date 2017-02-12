@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\User;
 
 use vxPHP\User\Notification\Notification;

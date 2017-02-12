@@ -11,7 +11,7 @@
 namespace vxPHP\User;
 
 /**
- * Represents a role assigned to a user
+ * A RoleHierarchy Instance represents the hierarchy of all roles
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * @version 0.1.0 2017-02-10
@@ -33,6 +33,8 @@ class RoleHierarchy {
 	protected $mappedRoleNames;
 
 	/**
+	 * Constructor
+	 * 
 	 * set a hierarchy of roles defined by an array 
 	 * containing this hierarchy
 	 * 
@@ -57,6 +59,7 @@ class RoleHierarchy {
 	 * get all possible sub roles of a role
 	 * 
 	 * @param $role the parent role
+	 * @return array
 	 */
 	public function getSubRoles(Role $role) {
 		

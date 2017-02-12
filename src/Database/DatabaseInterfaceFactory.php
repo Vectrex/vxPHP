@@ -58,8 +58,6 @@ class DatabaseInterfaceFactory {
 			else {
 				
 				// retrieve adapter information
-
-				// retrieve adapter information
 				
 				$propelConfig = \Propel::getConfiguration(\PropelConfiguration::TYPE_OBJECT);
 				

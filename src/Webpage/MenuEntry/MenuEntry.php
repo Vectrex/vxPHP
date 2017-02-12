@@ -15,12 +15,13 @@ use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Application\Application;
 use vxPHP\Routing\Route;
 use vxPHP\Routing\Router;
+use vxPHP\User\Role;
 
 /**
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.3.7 2014-04-06
+ * @version 0.4.0 2017-02-12
  */
 class MenuEntry {
 	
@@ -139,8 +140,16 @@ class MenuEntry {
 		$this->authParameters = $authParameters;
 	}
 
-	public function isAuthenticatedBy($privilege) {
-		return isset($this->auth) && $privilege <= $this->auth;
+	/**
+	 * check whether a role matches the auth attribute of the menu entry
+	 * 
+	 * @param Role $role
+	 * @return boolean
+	 */
+	public function isAuthenticatedByRole(Role $role) {
+
+		return !isset($this->auth) || $this->auth === $role->getRoleName();
+
 	}
 
 	public function refersLocalPage() {

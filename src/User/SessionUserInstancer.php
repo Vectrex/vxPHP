@@ -17,29 +17,15 @@ use vxPHP\User\Exception\UserException;
 use vxPHP\Session\Session;
 
 /**
- *
+ * represents users within a vxWeb application, which are stored in the
+ * session after initialization
+ * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0
+ * @version 0.2.0, 2017-02-12
  *        
  */
 class SessionUserInstancer implements UserInstancerInterface {
 	
-	const AUTH_SUPERADMIN		= 1;
-	const AUTH_PRIVILEGED		= 16;
-	const AUTH_OBSERVE_TABLE	= 256;
-	const AUTH_OBSERVE_ROW		= 4096;
-	
-	private $roles = [
-		'superadmin' => ['privileged'],
-		'privileged' => ['observe_table'],
-		'observe_table' => ['observe_row']
-	];
-
-	/**
-	 * @var RoleHierarchy
-	 */
-	private $roleHierarchy;
-
 	/**
 	 * @var User[]
 	 */
@@ -63,7 +49,38 @@ class SessionUserInstancer implements UserInstancerInterface {
 	 */
 	public function refreshUser(User2 $user) {
 
-		// TODO Auto-generated method stub
+		$rows = $this->db->doPreparedQuery("
+			SELECT
+				a.*,
+				ag.privilege_Level,
+				ag.admingroupsID as groupid,
+				LOWER(ag.alias) as group_alias
+		
+			FROM
+				admin a
+				LEFT JOIN admingroups ag on a.admingroupsID = ag.admingroupsID
+		
+			WHERE
+				username = ?", [$user->getUsername()]
+				);
+		
+		if(count($rows) !== 1) {
+			throw new UserException(sprintf("User '%s' no longer exists.", $user->getUsername()));
+		}
+
+		$user
+			->setHashedPassword($rows[0]['pwd'])
+			->setRoles([new Role($rows[0]['group_alias'])])
+			->replaceAttributes([
+				'email' => $rows[0]['email'],
+				'name' => $rows[0]['email'],
+				'misc_data' => $rows[0]['misc_data'],
+				'table_access' => $rows[0]['table_access'],
+				'row_access' => $rows[0]['row_access'],
+			])
+		;
+
+		return $user;
 
 	}
 	
@@ -122,11 +139,9 @@ class SessionUserInstancer implements UserInstancerInterface {
 	
 	/**
 	 * constructor
-	 * initializes role hierarchy
 	 */
 	public function __construct() {
-		
-		$this->roleHierarchy = new RoleHierarchy($this->roles);
+
 		$this->db = Application::getInstance()->getDb();
 
 	}
@@ -158,11 +173,22 @@ class SessionUserInstancer implements UserInstancerInterface {
 
 	}
 
+	/**
+	 * retrieve a stored session user stored under a session key
+	 * returns stored value only, when it is a SessionUser instance
+	 * 
+	 * @param string $sessionKey
+	 * @return \vxPHP\User\SessionUser
+	 */
 	public function getSessionUser($sessionKey = NULL) {
 
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
-		return Session::getSessionDataBag()->get($sessionKey);
+		$sessionUser = Session::getSessionDataBag()->get($sessionKey);
+
+		if($sessionUser instanceof SessionUser) {
+			return $sessionUser;
+		}
 		
 	}
 	

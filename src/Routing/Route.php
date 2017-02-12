@@ -19,33 +19,36 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler
  *
- * @version 0.11.2 2016-07-31
+ * @version 0.12.0 2017-02-12
  *
  */
 class Route {
 
 	/**
 	 * unique id of route
+	 * 
 	 * @var string
 	 */
 	private $routeId;
 	
 	/**
-	 * path which will trigger route
-	 * if no path is configured, the path
+	 * path which will trigger route if no path is configured, the path
 	 * defaults to routeId
+	 * 
 	 * @var string
 	 */
 	private $path;
 	
 	/**
 	 * the script with which a route becomes active
+	 * 
 	 * @var string
 	 */
 	private $scriptName;
 	
 	/**
-	 * the name of the controller class, which will handle the route 
+	 * the name of the controller class, which will handle the route
+	 *  
 	 * @var string
 	 */
 	private $controllerClassName;
@@ -53,18 +56,21 @@ class Route {
 	/**
 	 * the method name which is called, when handling the route
 	 * defaults to Controller::execute(), when no method is specified
+	 * 
 	 * @var string
 	 */
 	private $methodName;
 
 	/**
 	 * redirect destination which is used when Route::redirect() is invoked
+	 * 
 	 * @var string
 	 */
 	private $redirect;
 	
 	/**
-	 * authentication level of route
+	 * authentication attribute which will be parsed by router
+	 * 
 	 * @var string $auth
 	 */
 	private $auth;
@@ -77,13 +83,16 @@ class Route {
 	private $authParameters;
 	
 	/**
+	 * caches the route url
+	 * 
 	 * @var string $url
 	 */
 	private $url;
 	
 	/**
 	 * match expression which matches route
-	 * used by router 
+	 * used by router
+	 * 
 	 * @var string $match
 	 */
 	private $match;
@@ -92,23 +101,27 @@ class Route {
 	 * associative array with complete placeholder information
 	 * (name, default)
 	 * array keys are the placeholder names
+	 * 
 	 * @var array
 	 */
 	private $placeholders;
 
 	/**
 	 * holds all values of placeholders of current path
+	 * 
 	 * @var array
 	 */
 	private $pathParameters;
 
 	/**
 	 * allowed request methods with route
+	 * 
 	 * @var array
 	 */
 	private $requestMethods;
 
 	/**
+	 * Constructor.
 	 *
 	 * @param string $route id, the route identifier
 	 * @param string $scriptName, name of assigned script
@@ -167,78 +180,92 @@ class Route {
 	 * prevent caching of path parameters
 	 */
 	public function __destruct() {
+
 		unset ($this->pathParameters);
+
 	}
 
 	/**
+	 * return id of route
+	 * 
 	 * @return string $page
 	 */
 	public function getRouteId() {
+
 		return $this->routeId;
+
 	}
 
 	/**
-	 * @param string $page
-	 * @return \vxPHP\Routing\Route
-	 */
-	private function setRouteId($routeId) {
-		$this->routeId = $routeId;
-		return $this;
-	}
-
-	/**
+	 * return name of script the route is assigned to
+	 * 
 	 * @return string $scriptName
 	 */
 	public function getScriptName() {
+
 		return $this->scriptName;
+
 	}
 
 	/**
+	 * return expression which is used for matching path parameters 
+	 * 
 	 * @return string $matchExpression
 	 */
 	public function getMatchExpression() {
+
 		return $this->match;
+
 	}
 
 	/**
-	 * @param string $scriptName
-	 * @return \vxPHP\Routing\Route
-	 */
-	private function setScriptName($scriptName) {
-		$this->scriptName = $scriptName;
-		return $this;
-	}
-
-	/**
+	 * return authentication attribute
+	 * parsed by router to evaluate route access
+	 * 
 	 * @return the $auth
 	 */
 	public function getAuth() {
+
 		return $this->auth;
+
 	}
 
 	/**
+	 * set authentication attribute
+	 * parsed by router to evaluate route access
+	 * 
 	 * @param string $auth
 	 * @return \vxPHP\Routing\Route
 	 */
 	public function setAuth($auth) {
+
 		$this->auth = $auth;
 		return $this;
+
 	}
 
 	/**
+	 * return parameters with additional authentication information
+	 * 
 	 * @return string
 	 */
 	public function getAuthParameters() {
+
 		return $this->authParameters;
+
 	}
 
 	/**
+	 * set additional auth parameters
+	 * 
 	 * @param string $authParameters
 	 * @return \vxPHP\Routing\Route
 	 */
 	public function setAuthParameters($authParameters) {
+
 		$this->authParameters = $authParameters;
 		return $this;
+
 	}
 
 	/**
@@ -361,6 +388,7 @@ class Route {
 		}
 
 		return $this->url;
+
 	}
 
 	/**
@@ -377,7 +405,8 @@ class Route {
 	}
 
 	/**
-	 * get controller class name of route
+	 * return controller class name of route
+	 * 
 	 * @return string
 	 */
 	public function getControllerClassName() {
@@ -387,19 +416,28 @@ class Route {
 	}
 
 	/**
+	 * return route id of redirect route
+	 * 
 	 * @return string $redirect route id
 	 */
 	public function getRedirect() {
+
 		return $this->redirect;
+
 	}
 
 	/**
-	 * @param string $redirect
+	 * set route id which is used when a redirect of this route is
+	 * invoked
+	 * 
+	 * @param string $redirectRouteId
 	 * @return \vxPHP\Routing\Route
 	 */
-	public function setRedirect($redirect) {
-		$this->redirect = $redirect;
+	public function setRedirect($redirectRouteId) {
+
+		$this->redirect = $redirectRouteId;
 		return $this;
+
 	}
 
 	/**
@@ -408,7 +446,9 @@ class Route {
 	 * @return array
 	 */
 	public function getRequestMethods() {
+
 		return $this->requestMethods;
+
 	}
 
 	/**

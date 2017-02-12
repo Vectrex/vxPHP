@@ -15,12 +15,13 @@ use vxPHP\Application\Application;
 use vxPHP\User\User;
 use vxPHP\Http\Request;
 use vxPHP\Session\Session;
+use vxPHP\User\RoleHierarchy;
 
 /**
  *
  * @author Gregor Kofler
  *
- * @version 0.5.0 2016-06-08
+ * @version 0.6.0 2017-02-12
  *
  */
 class Router {
@@ -174,29 +175,55 @@ class Router {
 	}
 
 	/**
-	 * check whether authentication level required by route is met by user
+	 * check whether authentication level required by route is met by
+	 * currently active user
 	 *
 	 * @param Route $route
-	 * @param User $user
 	 * @return boolean
 	 */
-	private static function authenticateRoute(Route $route, User $user = NULL) {
+	private static function authenticateRoute(Route $route) {
 
 		$auth = $route->getAuth();
 
+		// authentication required?
+
 		if(!is_null($auth)) {
 
-			if(is_null($user) && !($user = User::getSessionUser())) {
+			$app = Application::getInstance();
+			$currentUser = $app->getCurrentUser();
+
+			// no user or no authenticated user?
+
+			if(is_null($currentUser) || !$currentUser->isAuthenticated()) {
 				return FALSE;
 			}
 
-			if(!$user->isAuthenticated()) {
-				return FALSE;
+			// role hierarchy defined? check roles and sub-roles
+
+			if(($roleHierarchy = $app->getRoleHierarchy())) {
+				$userRoles = $currentUser->getRolesAnSubRoles($roleHierarchy);
 			}
 
-			// UserAbstract::AUTH_OBSERVE_TABLE and UserAbstract::AUTH_OBSERVE_ROW are handled by controller
+			// otherwise check only directly assigned roles
 
-			return $auth >= $user->getPrivilegeLevel();
+			else {
+				$userRoles = $currentUser->getRoles();
+			}
+
+			// any roles found?
+
+			if(!empty($userRoles)) {
+
+				foreach($userRoles as $role) {
+
+					if($role->getRoleName() === $auth) {
+						return TRUE;
+					}
+	
+				}
+			}
+			
+			return FALSE;
 		}
 
 		return TRUE;
@@ -226,7 +253,5 @@ class Router {
 		return [];
 	
 	}
-	
-	
 	
 }

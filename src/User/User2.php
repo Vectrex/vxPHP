@@ -164,6 +164,19 @@ class User2 {
 	}
 	
 	/**
+	 * replace all attributes
+	 * 
+	 * @param array $attributes
+	 * @return \vxPHP\User\User2
+	 */
+	public function replaceAttributes(array $attributes) {
+		
+		$this->attributes = $attributes;
+		return $this;
+		
+	}
+	
+	/**
 	 * compare passed plain text password with
 	 * stored hashed password and store result
 	 * 
@@ -213,11 +226,16 @@ class User2 {
 		$this->roles = [];
 		
 		foreach($roles as $role) {
+
 			if(!$role instanceof Role) {
 				throw new \InvalidArgumentException('Role is not a role instance.');
 			}
-			
+			if(array_key_exists($role->getRoleName(), $this->roles)) {
+				throw new \InvalidArgumentException(sprintf("Role '%s' defined twice.", $role->getRoleName()));
+			}
+
 			$this->roles[$role->getRoleName()] = $role;
+
 		}
 
 		return $this;
@@ -233,7 +251,27 @@ class User2 {
 		return array_values($this->roles);
 
 	}
-	
+
+	/**
+	 * return all possible roles and subroles - defined by a role
+	 * hierarchy - the user can take
+	 * 
+	 * @param RoleHierarchy $roleHierarchy
+	 * @return Role[]
+	 */
+	public function getRolesAnSubRoles(RoleHierarchy $roleHierarchy) {
+
+		$possibleRoles = [];
+		
+		foreach($this->roles as $role) {
+			
+			$possibleRoles[] = $role;
+			$possibleRoles = array_merge($possibleRoles, $roleHierarchy->getSubRoles($role));
+			
+			return $possibleRoles;
+
+		}
+	}
 	
 	
 }

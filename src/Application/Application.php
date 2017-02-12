@@ -15,19 +15,22 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
-use vxPHP\Autoload\Psr4;
 use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\DatabaseInterfaceFactory;
+use vxPHP\User\UserInstancerInterface;
+use vxPHP\User\User2;
+use vxPHP\User\RoleHierarchy;
 
 /**
  * Application singleton.
  * 
- * The application singleton wraps configuration, database and service access.
+ * The application singleton provides an "application scope", which
+ * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.7.1 2017-01-30
+ * @version 1.8.0 2017-02-11
  */
 class Application {
 
@@ -141,6 +144,20 @@ class Application {
 	 */
 	private $plugins = [];
 
+	/**
+	 * the user instancing instance
+	 * 
+	 * @var User2
+	 */
+	private $currentUser;
+
+	/**
+	 * the user role hierarchy in use
+	 *
+	 * @var RoleHierarchy
+	 */
+	private $roleHierarchy;
+	
 	/**
 	 * Constructor.
 	 *
@@ -541,6 +558,54 @@ class Application {
 
 	}
 
+	/**
+	 * return the current application user
+	 * 
+	 * @return \vxPHP\User\User2
+	 */
+	public function getCurrentUser() {
+
+		return $this->currentUser;
+
+	}
+
+	/**
+	 * set the user which is currently using the application
+	 * 
+	 * @param User2 $user
+	 * @return \vxPHP\Application\Application
+	 */
+	public function setCurrentUser(User2 $user) {
+
+		$this->currentUser = $user;
+		return $this;
+
+	}
+	
+	/**
+	 * set role hierarchy
+	 * 
+	 * @param RoleHierarchy $roleHierarchy
+	 * @return \vxPHP\Application\Application
+	 */
+	public function setRoleHierarchy(RoleHierarchy $roleHierarchy) {
+
+		$this->roleHierarchy = $roleHierarchy;
+		return $this;
+
+	}
+	
+	/**
+	 * return role hierarchy
+	 *
+	 * @return RoleHierarchy
+	 */
+	public function getRoleHierarchy() {
+	
+		return $this->roleHierarchy;
+	
+	}
+	
 	/**
 	 * tries to interpret $path as relative path within assets path
 	 * if $path is an absolute path (starting with "/" or "c:\") it is returned unchanged
