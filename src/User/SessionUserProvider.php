@@ -10,11 +10,11 @@
 
 namespace vxPHP\User;
 
-use vxPHP\User\UserInstancerInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Application\Application;
 use vxPHP\User\Exception\UserException;
 use vxPHP\Session\Session;
+use vxPHP\User\UserProviderInterface;
 
 /**
  * represents users within a vxWeb application, which are stored in the
@@ -24,7 +24,7 @@ use vxPHP\Session\Session;
  * @version 0.2.0, 2017-02-12
  *        
  */
-class SessionUserInstancer implements UserInstancerInterface {
+class SessionUserProvider implements UserProviderInterface {
 	
 	/**
 	 * @var User[]
@@ -45,7 +45,7 @@ class SessionUserInstancer implements UserInstancerInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\User\UserInstancerInterface::refreshUser()
+	 * @see \vxPHP\User\UserProviderInterface::refreshUser()
 	 */
 	public function refreshUser(User2 $user) {
 
@@ -88,7 +88,7 @@ class SessionUserInstancer implements UserInstancerInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\User\UserInstancerInterface::instanceUserByUsername()
+	 * @see \vxPHP\User\UserProviderInterface::instanceUserByUsername()
 	 */
 	public function instanceUserByUsername($username) {
 

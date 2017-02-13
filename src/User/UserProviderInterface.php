@@ -13,14 +13,14 @@ namespace vxPHP\User;
 use vxPHP\User\Exception\UserException;
 
 /**
- * Represents a class which instantiates User objects,
+ * Represents a class which provides User instances,
  * which can then be authenticated
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * @version 0.1.0 2017-02-10
  *
  */
-interface UserInstancerInterface {
+interface UserProviderInterface {
 	
 	/**
 	 * create a user instance identified by a (unique) username

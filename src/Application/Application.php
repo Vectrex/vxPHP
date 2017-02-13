@@ -19,7 +19,6 @@ use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\DatabaseInterfaceFactory;
-use vxPHP\User\UserInstancerInterface;
 use vxPHP\User\User2;
 use vxPHP\User\RoleHierarchy;
 
@@ -30,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.0 2017-02-11
+ * @version 1.8.1 2017-02-14
  */
 class Application {
 
@@ -744,9 +743,6 @@ class Application {
 		// create instance and pass additional parameters to constructor
 
 		try {
-			
-			//@FIXME: or maybe not; unpacking operator is currently the only reason for PHP >= 5.6 
-			
 			$service = new $class(...$constructorArguments);
 		}
 		catch(\Exception $e) {

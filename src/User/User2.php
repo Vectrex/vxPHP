@@ -17,7 +17,7 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 1.99.0 2017-02-10 
+ * @version 1.99.2 2017-02-13 
  */
 class User2 {
 	
@@ -38,6 +38,7 @@ class User2 {
 	/**
 	 * additional attributes of user
 	 * like email, full name
+	 * all attributes are lower key cased
 	 * 
 	 * @var array
 	 */
@@ -78,7 +79,7 @@ class User2 {
 		$this->username = $username;
 		$this->setHashedPassword($hashedPassword);
 		$this->setRoles($roles);
-		$this->attributes = $attributes;
+		$this->attributes = array_change_key_case($attributes, CASE_LOWER);
 
 	}
 
@@ -143,10 +144,10 @@ class User2 {
 	 */
 	public function getAttribute($attribute, $default = NULL) {
 
-		if (!$this->attributes || !array_key_exists($attribute, $this->attributes)) {
+		if (!$this->attributes || !array_key_exists(strtolower($attribute), $this->attributes)) {
 			return $default;
 		}
-		return $this->attributes[$attribute];
+		return $this->attributes[strtolower($attribute)];
 	
 	}
 
@@ -159,7 +160,7 @@ class User2 {
 	 */
 	public function setAttribute($attribute, $value) {
 		
-		$this->attributes[$attribute] = $value;
+		$this->attributes[strtolower($attribute)] = $value;
 		return $this;
 
 	}
@@ -172,7 +173,7 @@ class User2 {
 	 */
 	public function replaceAttributes(array $attributes) {
 		
-		$this->attributes = $attributes;
+		$this->attributes = array_change_key_case($attributes, CASE_LOWER);
 		return $this;
 		
 	}
