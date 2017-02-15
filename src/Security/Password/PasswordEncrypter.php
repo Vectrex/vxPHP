@@ -59,6 +59,7 @@ class PasswordEncrypter {
 	 * 
 	 * @param string $plaintextPassword
 	 * @param string $hashedPassword
+	 * @return boolean
 	 */
 	public function isPasswordValid($plaintextPassword, $hashedPassword) {
 		
@@ -74,7 +75,7 @@ class PasswordEncrypter {
 	 * 
 	 * @param string $plainTextPassword
 	 * @throws \InvalidArgumentException when password ist too short or too long
-	 * @return string
+	 * @return string hashed password
 	 */
 	public function hashPassword($plainTextPassword) {
 

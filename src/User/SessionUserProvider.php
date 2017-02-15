@@ -27,16 +27,6 @@ use vxPHP\User\UserProviderInterface;
 class SessionUserProvider implements UserProviderInterface {
 	
 	/**
-	 * @var User[]
-	 */
-	private $usersByUsername = [];
-	
-	/**
-	 * @var User[]
-	 */
-	private $usersById = [];
-
-	/**
 	 * @var DatabaseInterface
 	 */
 	private $db;
@@ -73,7 +63,7 @@ class SessionUserProvider implements UserProviderInterface {
 			->setRoles([new Role($rows[0]['group_alias'])])
 			->replaceAttributes([
 				'email' => $rows[0]['email'],
-				'name' => $rows[0]['email'],
+				'name' => $rows[0]['name'],
 				'misc_data' => $rows[0]['misc_data'],
 				'table_access' => $rows[0]['table_access'],
 				'row_access' => $rows[0]['row_access'],
@@ -92,10 +82,6 @@ class SessionUserProvider implements UserProviderInterface {
 	 */
 	public function instanceUserByUsername($username) {
 
-		if(array_key_exists($username, $this->usersByUsername)) {
-			return $this->usersByUsername[$username];
-		}
-		
 		$rows = $this->db->doPreparedQuery("
 			SELECT
 				a.*,
@@ -123,15 +109,12 @@ class SessionUserProvider implements UserProviderInterface {
 			],
 			[
 				'email' => $rows[0]['email'],
-				'name' => $rows[0]['email'],
+				'name' => $rows[0]['name'],
 				'misc_data' => $rows[0]['misc_data'],
 				'table_access' => $rows[0]['table_access'],
 				'row_access' => $rows[0]['row_access'],
 			]
 		);
-		
-		$this->usersByUsername[$username] = $user;
-		$this->usersById[$rows[0]['adminID']] = $user;
 		
 		return $user;
 
