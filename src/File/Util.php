@@ -22,7 +22,7 @@ namespace vxPHP\File;
 class Util {
 
 	/**
-	 * Check filename and avoid doublettes
+	 * Check filename and avoid duplicates
 	 *
 	 * @param string $wanted_filename
 	 * @param string $path
