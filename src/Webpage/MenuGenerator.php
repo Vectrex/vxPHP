@@ -19,7 +19,6 @@ use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
 use vxPHP\Application\Config;
-use vxPHP\User\User;
 
 /**
  * Wrapper class for rendering menus
@@ -29,7 +28,7 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.1, 2016-08-01
+ * @version 0.6.0, 2017-02-16
  *
  * @throws MenuGeneratorException
  */

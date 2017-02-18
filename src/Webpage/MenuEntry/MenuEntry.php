@@ -13,8 +13,6 @@ namespace vxPHP\Webpage\MenuEntry;
 
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Application\Application;
-use vxPHP\Routing\Route;
-use vxPHP\Routing\Router;
 use vxPHP\User\Role;
 
 /**

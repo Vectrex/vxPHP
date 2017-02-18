@@ -14,7 +14,6 @@ namespace vxPHP\File;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\File\Exception\MetaFolderException;
 use vxPHP\Application\Application;
-use vxPHP\User\User;
 
 /**
  * mapper for metafolder
@@ -23,10 +22,9 @@ use vxPHP\User\User;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.0 2017-02-04
+ * @version 1.2.0 2017-02-16
  *
  * @todo compatibility checks on windows systems
- * @todo allow update of createdBy user
  */
 class MetaFolder {
 
@@ -84,16 +82,6 @@ class MetaFolder {
 	 * @var boolean
 	 */
 	private $obscure_files;
-
-	/**
-	 * @var UserAbstract
-	 */
-	private	$createdBy;
-			
-	/**
-	 * @var UserAbstract
-	 */
-	private $updatedBy;
 
 	/**
 	 * @var MetaFile[]
@@ -241,61 +229,6 @@ class MetaFolder {
 
 	public function getName() {
 		return $this->name;
-	}
-	
-	/**
-	 * get user instance which created database entry of metafolder
-	 * the creator is considered immutable
-	 * 
-	 * @return NULL|\vxPHP\User\User
-	 */
-	public function getCreatedBy() {
-		
-		if(is_null($this->createdBy)) {
-			
-			// no user was stored with instance
-
-			if(empty($this->data['createdby'])) {
-				return NULL;
-			}
-			
-			// retrieve user instance and store it for subsequent calls
-			
-			else {
-				$this->createdBy = new User();
-				$this->createdBy->setUser($this->data['createdby']);
-			}
-		}
-
-		return $this->createdBy;
-	}
-
-	/**
-	 * get user instance which last updated database entry of metafolder
-	 * the updater can be changed
-	 *
-	 * @return NULL|\vxPHP\User\User
-	 */
-	public function getUpdatedBy() {
-	
-		if(is_null($this->updatedBy)) {
-				
-			// no user was stored with instance
-	
-			if(empty($this->data['updatedby'])) {
-				return NULL;
-			}
-				
-			// retrieve user instance and store it for subsequent calls
-				
-			else {
-				$this->updatedBy = new User();
-				$this->updatedBy->setUser($this->data['updatedby']);
-			}
-		}
-	
-		return $this->updatedBy;
-
 	}
 	
 	/**

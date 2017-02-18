@@ -8,13 +8,9 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Orm\Custom;
 
 use vxPHP\Orm\Custom\Exception\ArticleException;
-
-use vxPHP\User\User;
-use vxPHP\User\Exception\UserException;
 
 use vxPHP\File\MetaFile;
 use vxPHP\Application\Application;
@@ -25,44 +21,49 @@ use vxPHP\Database\MysqlPDOUtil;
  * Mapper class for articles, stored in table `articles`
  *
  * @author Gregor Kofler
- * @version 0.12.0 2016-09-17
+ * @version 0.99.0 2017-02-17
  */
 
 class Article implements PublisherInterface {
 
 	/**
 	 * cached instances identified by their id
-	 * @var array
+	 * 
+	 * @var Article[]
 	 */
 	private static	$instancesById;
 
 	/**
 	 * cached instances identified by their alias
-	 * @var array
+	 * 
+	 * @var Article[]
 	 */
 	private static	$instancesByAlias;
 
 	/**
 	 * primary key
-	 * @var int
+	 * 
+	 * @var integer
 	 */
 	private	$id;
 	
 	/**
 	 * unique alias
+	 * 
 	 * @var string
 	 */
 	private	$alias;
 			
 	/**
 	 * headline of article
+	 * 
 	 * @var string
 	 */
 	private $headline;
 			
 	/**
 	 * "other" data of article
-	 * currently array keys in self::$dataCols are supported
+	 * 
 	 * @var array
 	 */
 	private	$data;
@@ -70,87 +71,117 @@ class Article implements PublisherInterface {
 	/**
 	 * arbitrary flags
 	 * controllers can decide how to interpret them
-	 * @var int
+	 * 
+	 * @var integer
 	 */
 	private	$customFlags;
 			
 	/**
 	 * numeric indicator that can be used by
 	 * controllers to enhance or override other sorting rules
-	 * @var int
+	 * 
+	 * @var integer
 	 */
 	private	$customSort;
 
 	/**
+	 * flags an article as published
+	 * 
 	 * @var boolen
 	 */
 	private	$published;
 	
 	/**
-	 * @var array [MetaFile]
+	 * all files linked to this article
+	 * 
+	 * @var array MetaFile[]
 	 */
 	private	$linkedFiles;
 			
 	/**
+	 * flag which indicates that linked files need to be updated
+	 * 
 	 * @var boolean
 	 */
 	private	$updateLinkedFiles;
 			
 	/**
+	 * stores previously saved attribute values of article
+	 * allows verification whether changes of article have occured
+	 * 
 	 * @var array
 	 */
 	private	$previouslySavedValues;
 
 	/**
-	 * colunms 
+	 * colunms which can be retrieved with the getData() method
+	 *  
 	 * @var array
 	 */
 	private	$dataCols = ['teaser', 'content'];
 
 	/**
+	 * the category the article belongs to
+	 * 
 	 * @var ArticleCategory
 	 */
 	private	$category;
 
 	/**
+	 * the article date
+	 * 
 	 * @var \DateTime
 	 */
 	private	$articleDate;
 
 	/**
+	 * optional date information which can be used by controllers 
+	 * 
 	 * @var \DateTime
 	 */
 	private	$displayFrom;
 
 	/**
+	 * optional date information which can be used by controllers 
+	 * 
 	 * @var \DateTime
 	 */
 	private	$displayUntil;
 
 	/**
+	 * timestamp of last update of article 
+	 * 
 	 * @var \DateTime
 	 */
 	private	$lastUpdated;
 
 	/**
+	 * timestamp of article creation
+	 *  
 	 * @var \DateTime
 	 */
 	private	$firstCreated;
 
 	/**
-	 * @var User
+	 * the id of the user which created the article
+	 * 
+	 * @var integer
 	 */
-	private	$createdBy;
+	private	$createdById;
 
 	/**
-	 * @var User
+	 * the id of the user which caused the last update
+	 * 
+	 * @var integer
 	 */
-	private	$updatedBy;
+	private	$updatedById;
 
 	/**
+	 * the id of the user which published or unpublished the article
+	 *  
 	 * @var User
 	 */
-	private	$publishedBy;
+	private	$publishedById;
 
 	/**
 	 * these attributes do not indicate
@@ -169,11 +200,10 @@ class Article implements PublisherInterface {
 	 * @var array
 	 */
 	private $propertiesToReset = [
-		'updatedBy',
+		'updatedById',
 		'id',
 		'alias'
 	];
-	
 	
 	public function __construct() {
 	}
@@ -203,7 +233,9 @@ class Article implements PublisherInterface {
 	}
 
 	public function __toString() {
+
 		return $this->alias;
+
 	}
 
 	/**
@@ -287,7 +319,7 @@ class Article implements PublisherInterface {
 
 		$cols = array_merge(
 			(array) $this->getData(),
-			array(
+			[
 				'Alias'					=> $this->alias,
 				'articlecategoriesID'	=> $this->category->getId(),
 				'Headline'				=> $this->headline,
@@ -297,9 +329,9 @@ class Article implements PublisherInterface {
 				'published'				=> $this->published,
 				'customFlags'			=> $this->customFlags,
 				'customSort'			=> $this->customSort,
-				'publishedBy'			=> $this->publishedBy	? $this->publishedBy->getAdminId()	: NULL,
-				'updatedBy'				=> $this->updatedBy		? $this->updatedBy->getAdminId()	: NULL
-			)
+				'publishedBy'			=> $this->publishedById ?: NULL,
+				'updatedBy'				=> $this->updatedById ?: NULL
+			]
 		);
 
 		if(!is_null($this->id)) {
@@ -336,7 +368,7 @@ class Article implements PublisherInterface {
 
 			$cols = array_merge(
 				(array) $this->getData(),
-				array(
+				[
 					'Alias'					=> $this->alias,
 					'articlecategoriesID'	=> $this->category->getId(),
 					'Headline'				=> $this->headline,
@@ -346,9 +378,9 @@ class Article implements PublisherInterface {
 					'published'				=> $this->published,
 					'customFlags'			=> $this->customFlags,
 					'customSort'			=> $this->customSort,
-					'publishedBy'			=> $this->publishedBy	? $this->publishedBy->getAdminId()	: NULL,
-					'createdBy'				=> $this->createdBy		? $this->createdBy->getAdminId()	: NULL
-				)
+					'publishedBy'			=> $this->publishedById ?: NULL,
+					'createdBy'				=> $this->createdById ?: NULL
+				]
 			);
 
 			$this->id = $db->insertRecord('articles', $cols);
@@ -534,51 +566,65 @@ class Article implements PublisherInterface {
 	}
 
 	/**
-	 * set user which created the article
+	 * set user id which created the article
 	 * will only be effective with first save of article
 	 * 
-	 * @param User $user
+	 * @param integer $userId
+	 * @return \vxPHP\Orm\Custom\Article
 	 */
-	public function setCreatedBy(User $user) {
-		if(is_null($this->createdBy)) {
-			$this->createdBy = $user;
+	public function setCreatedById($userId) {
+
+		if(is_null($this->createdById)) {
+			$this->createdById = (int) $userId;
 		}
+		return $this;
+
 	}
 
 	/**
-	 * get user which created article
+	 * get user id which created article
 	 *
-	 * @return User
+	 * @return integer
 	 */
-	public function getCreatedBy() {
-		return $this->createdBy;
+	public function getCreatedById() {
+
+		return $this->createdById;
+
 	}
 
 	/**
-	 * set user which updated the article
-	 * 
-	 * @param User $user
-	 */
-	public function setUpdatedBy(User $user) {
-		$this->updatedBy = $user;
-	}
-
-	/**
-	 * get user which updated article
+	 * set user id which (last) updated the article
 	 *
-	 * @return User
+	 * @param integer $userId
+	 * @return \vxPHP\Orm\Custom\Article
 	 */
-	public function getUpdatedBy() {
-		return $this->updatedBy;
+	public function setUpdatedById($userId) {
+	
+		$this->updatedById = (int) $userId;
+		return $this;
+	
+	}
+	
+	/**
+	 * get id of user which (last) updated article
+	 *
+	 * @return integer
+	 */
+	public function getUpdatedById() {
+
+		return $this->updatedById;
+
 	}
 
 	/**
-	 * get user which (un)published article
+	 * get id of user which (un)published article
 	 *
-	 * @return User
+	 * @return integer
 	 */
-	public function getPublishedBy() {
-		return $this->publishedBy;
+	public function getPublishedById() {
+
+		return $this->publishedById;
+
 	}
 
 	/**
@@ -587,7 +633,9 @@ class Article implements PublisherInterface {
 	 *  @return DateTime
 	 */
 	public function getFirstCreated() {
+
 		return $this->firstCreated;
+
 	}
 
 	/**
@@ -596,7 +644,9 @@ class Article implements PublisherInterface {
 	 *  @return DateTime
 	 */
 	public function getLastUpdated() {
+
 		return $this->lastUpdated;
+
 	}
 
 	/**
@@ -736,6 +786,7 @@ class Article implements PublisherInterface {
 	 * sets misc data of article; only keys listet in Article::dataCols are accepted
 	 *
 	 * @param array $data
+	 * @return \vxPHP\Orm\Custom\Article
 	 */
 	public function setData(array $data) {
 
@@ -746,6 +797,9 @@ class Article implements PublisherInterface {
 				$this->data[$c] = $data[$c];
 			}
 		}
+		
+		return $this;
+
 	}
 
 	/**
@@ -763,14 +817,14 @@ class Article implements PublisherInterface {
 	}
 
 	/**
-	 * set 'published' attribute and store $user as publishedBy attribute
+	 * set 'published' attribute and store user id
 	 * 
-	 * @param User $user
+	 * @param integer $userId
 	 * @return \vxPHP\Orm\Custom\Article
 	 */
-	public function publish(User $user = NULL) {
+	public function publish($userId = NULL) {
 
-		$this->setPublishedBy($user);
+		$this->setPublishedById($userId);
 		$this->published = TRUE;
 				
 		return $this;
@@ -778,14 +832,14 @@ class Article implements PublisherInterface {
 	}
 
 	/**
-	 * unset 'published' attribute and store $user as publishedBy attribute
+	 * unset 'published' attribute and store user id
 	 * 
-	 * @param User $user
+	 * @param integer $userId
 	 * @return \vxPHP\Orm\Custom\Article
 	 */
-	public function unpublish(User $user = NULL) {
+	public function unpublish($userId = NULL) {
 
-		$this->setPublishedBy($user);
+		$this->setPublishedById($userId);
 		$this->published = FALSE;
 
 		return $this;
@@ -804,29 +858,29 @@ class Article implements PublisherInterface {
 	}
 
 	/**
-	 * set publishedBy user
+	 * set id of user who published or unpublished article 
 	 * helper method for publish and unpublish
 	 *  
-	 * @param User $user
+	 * @param integer $userId
 	 */
-	private function setPublishedBy($user) {
+	private function setPublishedById($userId = NULL) {
 
 		// was a user specified?
 
-		if($user) {
-			$this->publishedBy = $user;
+		if($userId) {
+			$this->publishedById = $userId;
 		}
 
-		// do we have a session user
+		// do we have a session user?
 
-		else if($user = User::getSessionUser()) {
-			$this->publishedBy = $user;
+		else if($user = Application::getInstance()->getCurrentUser()) {
+			$this->publishedById = $user->getAttribute('id');
 		}
 
-		// delete any previously set user
+		// delete any previously set user id
 
 		else {
-			$this->publishedBy = NULL;
+			$this->publishedById = NULL;
 		}
 
 	}
@@ -850,34 +904,11 @@ class Article implements PublisherInterface {
 
 		$article->category	= ArticleCategory::getInstance($articleData['articlecategoriesID']);
 
-		/*
-		 * set admin information (cast type explicitly to ensure lookup by adminID)
-		 * exceptions with invalid user ids are caught and ignored
-		 */ 
-
-		if($articleData['createdBy']) {
-			try {
-				$article->createdBy = User::getInstance((int) $articleData['createdBy']);
-			}
-			catch(\InvalidArgumentException $e) {}
-			catch(UserException $e) {}
-		}
-
-		if($articleData['updatedBy']) {
-			try {
-				$article->updatedBy = User::getInstance((int) $articleData['updatedBy']);
-			}
-			catch(\InvalidArgumentException $e) {}
-			catch(UserException $e) {}
-		}
-
-		if($articleData['publishedBy']) {
-			try {
-				$article->publishedBy = User::getInstance((int) $articleData['publishedBy']);
-			}
-			catch(\InvalidArgumentException $e) {}
-			catch(UserException $e) {}
-		}
+		// set user id's
+		
+		$article->setCreatedById($articleData['createdBy']);
+		$article->setUpdatedById($articleData['updatedBy']);
+		$article->setPublishedById($articleData['publishedBy']);
 
 		// set date information
 
@@ -927,6 +958,7 @@ class Article implements PublisherInterface {
 		$article->previouslySavedValues->customSort		= $article->customSort;
 		
 		return $article;
+
 	}
 
 	/**
@@ -976,6 +1008,7 @@ class Article implements PublisherInterface {
 		self::$instancesById[$article->id]			= $article;
 
 		return $article;
+
 	}
 
 	/**

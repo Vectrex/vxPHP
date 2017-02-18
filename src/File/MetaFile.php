@@ -18,7 +18,6 @@ use vxPHP\File\MetaFolder;
 use vxPHP\File\FilesystemFile;
 
 use vxPHP\Application\Application;
-use vxPHP\User\User;
 use vxPHP\Orm\Custom\Article;
 use vxPHP\Orm\Custom\ArticleQuery;
 use vxPHP\Observer\PublisherInterface;
@@ -30,7 +29,7 @@ use vxPHP\Observer\PublisherInterface;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.0 2017-02-03
+ * @version 1.2.0 2017-02-16
  *
  * @todo merge rename() with commit()
  * @todo cleanup getImagesForReference()
@@ -76,16 +75,6 @@ class MetaFile implements PublisherInterface {
 	 * @var array
 	 */
 	private	$data;
-
-	/**
-	 * @var User
-	 */
-	private	$createdBy;
-
-	/**
-	 * @var User
-	 */
-	private $updatedBy;
 
 	/**
 	 * @var Article[]
@@ -590,58 +579,6 @@ class MetaFile implements PublisherInterface {
 	}
 
 	/**
-	 * get user instance which created database entry of metafile
-	 * the creator is considered immutable
-	 *
-	 * @return NULL|\vxPHP\User\User
-	 */
-	public function getCreatedBy() {
-	
-		if(is_null($this->createdBy)) {
-				
-			// no user was stored with instance
-	
-			if(empty($this->data['createdby'])) {
-				return NULL;
-			}
-				
-			// retrieve user instance and store it for subsequent calls
-				
-			else {
-				$this->createdBy = User::getInstance($this->data['createdby']);
-			}
-		}
-	
-		return $this->createdby;
-	}
-	
-	/**
-	 * get user instance which last updated database entry of metafile
-	 * the updater can be changed
-	 *
-	 * @return NULL|\vxPHP\User\User
-	 */
-	public function getUpdatedBy() {
-	
-		if(is_null($this->updatedBy)) {
-	
-			// no user was stored with instance
-	
-			if(empty($this->data['updatedby'])) {
-				return NULL;
-			}
-	
-			// retrieve user instance and store it for subsequent calls
-	
-			else {
-				$this->createdBy = User::getInstance($this->data['updatedby']);
-			}
-		}
-	
-		return $this->updatedby;
-	}
-	
-	/**
 	 * retrieve mime type
 	 *
 	 * @param bool $force forces re-read of mime type
@@ -923,13 +860,13 @@ class MetaFile implements PublisherInterface {
 		}
 	
 		$mf		= MetaFolder::createMetaFolder($file->getFolder());
-		$user	= User::getSessionUser();
+		$user	= Application::getInstance()->getCurrentUser();
 	
 		if(!($filesID = $db->insertRecord('files', [
 			'foldersID'		=> $mf->getId(),
 			'File'			=> $file->getFilename(),
 			'Mimetype'		=> $file->getMimetype(),
-			'createdBy'		=> is_null($user) ? NULL : $user->getAdminId()
+			'createdBy'		=> is_null($user) ? NULL : $user->getAttribute('id')
 		]))) {
 			throw new FilesystemFileException(sprintf("Could not create metafile for '%s'.", $file->getFilename()), FilesystemFileException::METAFILE_CREATION_FAILED);
 		}

@@ -12,7 +12,6 @@
 namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
-use vxPHP\User\User;
 use vxPHP\Http\Request;
 use vxPHP\Session\Session;
 use vxPHP\User\RoleHierarchy;
