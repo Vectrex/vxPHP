@@ -10,7 +10,7 @@
 
 namespace vxPHP\User;
 
-use vxPHP\User\User2;
+use vxPHP\User\User;
 use vxPHP\Session\Session;
 
 /**
@@ -21,7 +21,7 @@ use vxPHP\Session\Session;
  * @version 0.2.0 2017-02-15
  *        
  */
-class SessionUser extends User2 {
+class SessionUser extends User {
 	
 	/**
 	 * the default key name under which a session user stored in the

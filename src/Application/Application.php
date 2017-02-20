@@ -19,7 +19,7 @@ use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\DatabaseInterfaceFactory;
-use vxPHP\User\User2;
+use vxPHP\User\User;
 use vxPHP\User\RoleHierarchy;
 
 /**
@@ -146,7 +146,7 @@ class Application {
 	/**
 	 * the user instancing instance
 	 * 
-	 * @var User2
+	 * @var User
 	 */
 	private $currentUser;
 
@@ -560,7 +560,7 @@ class Application {
 	/**
 	 * return the current application user
 	 * 
-	 * @return \vxPHP\User\User2
+	 * @return \vxPHP\User\User
 	 */
 	public function getCurrentUser() {
 
@@ -571,10 +571,10 @@ class Application {
 	/**
 	 * set the user which is currently using the application
 	 * 
-	 * @param User2 $user
+	 * @param User $user
 	 * @return \vxPHP\Application\Application
 	 */
-	public function setCurrentUser(User2 $user) {
+	public function setCurrentUser(User $user) {
 
 		$this->currentUser = $user;
 		return $this;

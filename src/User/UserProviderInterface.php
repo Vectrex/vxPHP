@@ -27,7 +27,7 @@ interface UserProviderInterface {
 	 * throws a UserException when the user is not found 
 	 * 
 	 * @param string $username
-	 * @return User2
+	 * @return User
 	 * @throws UserException
 	 */
 	public function instanceUserByUsername($username);
@@ -35,8 +35,8 @@ interface UserProviderInterface {
 	/**
 	 * refresh a user
 	 * 
-	 * @param User2 $user
+	 * @param User $user
 	 */
-	public function refreshUser(User2 $user);
+	public function refreshUser(User $user);
 
 }
