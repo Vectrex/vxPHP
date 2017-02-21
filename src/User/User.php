@@ -17,9 +17,9 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 2.0.0 2017-02-20 
+ * @version 2.1.0 2017-02-21 
  */
-class User {
+class User implements UserInterface {
 	
 	/**
 	 * name of user
@@ -84,9 +84,8 @@ class User {
 	}
 
 	/**
-	 * return the username
-	 * 
-	 * @return string
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::getUsername()
 	 */
 	public function getUsername() {
 
@@ -104,11 +103,10 @@ class User {
 		return $this->username;
 
 	}
-	
+
 	/**
-	 * return the password hash
-	 * 
-	 * @return string
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::getHashedPassword()
 	 */
 	public function getHashedPassword() {
 
@@ -136,11 +134,8 @@ class User {
 	}
 
 	/**
-	 * return an additional attribute
-	 * 
-	 * @param string $attribute
-	 * @param mixed $default
-	 * @return string|mixed
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::getAttribute()
 	 */
 	public function getAttribute($attribute, $default = NULL) {
 
@@ -152,10 +147,8 @@ class User {
 	}
 
 	/**
-	 * set an additional attribute
-	 * 
-	 * @param string $attribute
-	 * @param mixed $value
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::setAttribute()
 	 * @return \vxPHP\User\User
 	 */
 	public function setAttribute($attribute, $value) {
@@ -166,9 +159,8 @@ class User {
 	}
 	
 	/**
-	 * replace all attributes
-	 * 
-	 * @param array $attributes
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::replaceAttributes()
 	 * @return \vxPHP\User\User
 	 */
 	public function replaceAttributes(array $attributes) {
@@ -192,11 +184,10 @@ class User {
 		return $this;
 
 	}
-	
+
 	/**
-	 * return result of previous authentication
-	 * 
-	 * @return boolean
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::isAuthenticated()
 	 */
 	public function isAuthenticated() {
 		
@@ -205,10 +196,11 @@ class User {
 	}
 
 	/**
-	 * check whether user can take a certain role
+	 * check whether user can take a certain role, only directly
+	 * assigned roles are checked
 	 * 
-	 * @param string $roleName
-	 * @return boolean
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::hasRole()
 	 */
 	public function hasRole($roleName) {
 
@@ -242,11 +234,12 @@ class User {
 
 		return $this;
 	}
-	
+
 	/**
-	 * return all roles a user can take
-	 *
-	 * @return Role[]
+	 * return all directly assigned roles
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\User\UserInterface::getRoles()
 	 */
 	public function getRoles() {
 	

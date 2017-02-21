@@ -37,6 +37,6 @@ interface UserProviderInterface {
 	 * 
 	 * @param User $user
 	 */
-	public function refreshUser(User $user);
+	public function refreshUser(UserInterface $user);
 
 }

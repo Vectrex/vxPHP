@@ -19,7 +19,7 @@ use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\DatabaseInterfaceFactory;
-use vxPHP\User\User;
+use vxPHP\User\UserInterface;
 use vxPHP\User\RoleHierarchy;
 
 /**
@@ -29,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.1 2017-02-14
+ * @version 1.8.2 2017-02-21
  */
 class Application {
 
@@ -560,7 +560,7 @@ class Application {
 	/**
 	 * return the current application user
 	 * 
-	 * @return \vxPHP\User\User
+	 * @return \vxPHP\User\UserInterface
 	 */
 	public function getCurrentUser() {
 
@@ -571,10 +571,10 @@ class Application {
 	/**
 	 * set the user which is currently using the application
 	 * 
-	 * @param User $user
+	 * @param UserInterface $user
 	 * @return \vxPHP\Application\Application
 	 */
-	public function setCurrentUser(User $user) {
+	public function setCurrentUser(UserInterface $user) {
 
 		$this->currentUser = $user;
 		return $this;
