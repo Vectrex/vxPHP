@@ -14,16 +14,27 @@ namespace vxPHP\Routing;
 use vxPHP\Application\Application;
 use vxPHP\Http\Request;
 use vxPHP\Session\Session;
-use vxPHP\User\RoleHierarchy;
 
 /**
+ * The router analyzes the current request and checks whether a route
+ * is configured to handle both URI and request method and whether
+ * certain authentication requirements are met; if a route is found the
+ * control is handed over to the controller configured for the
+ * found route
  *
- * @author Gregor Kofler
+ * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.6.0 2017-02-12
+ * @version 0.7.0 2017-02-27
  *
  */
 class Router {
+
+	/**
+	 * class used for route authentication
+	 * 
+	 * @var RouteAuthenticatorInterface
+	 */
+	protected static $authenticator;
 
 	/**
 	 * analyse path and return route associated with it
@@ -102,6 +113,20 @@ class Router {
 	}
 
 	/**
+	 * configure the route authentication mechanism
+	 * if no authenticator is set explicitly a default authenticator
+	 * will be used
+	 * 
+	 * @param RouteAuthenticatorInterface $authenticator
+	 */
+	public static function setAuthenticator(RouteAuthenticatorInterface $authenticator) {
+		
+		self::$authenticator = $authenticator;
+		
+	}
+
+	/**
+	 * get a configured route which matches the passed path segments
 	 *
 	 * @param string $scriptName (e.g. index.php, admin.php)
 	 * @param array $pathSegments
@@ -186,46 +211,19 @@ class Router {
 
 		// authentication required?
 
-		if(!is_null($auth)) {
+		if(is_null($auth)) {
 
-			$app = Application::getInstance();
-			$currentUser = $app->getCurrentUser();
+			return TRUE;
 
-			// no user or no authenticated user?
-
-			if(is_null($currentUser) || !$currentUser->isAuthenticated()) {
-				return FALSE;
-			}
-
-			// role hierarchy defined? check roles and sub-roles
-
-			if(($roleHierarchy = $app->getRoleHierarchy())) {
-				$userRoles = $currentUser->getRolesAnSubRoles($roleHierarchy);
-			}
-
-			// otherwise check only directly assigned roles
-
-			else {
-				$userRoles = $currentUser->getRoles();
-			}
-
-			// any roles found?
-
-			if(!empty($userRoles)) {
-
-				foreach($userRoles as $role) {
-
-					if($role->getRoleName() === $auth) {
-						return TRUE;
-					}
-	
-				}
-			}
-			
-			return FALSE;
 		}
 
-		return TRUE;
+		if(!self::$authenticator) {
+			
+			self::$authenticator = new DefaultRouteAuthenticator();
+
+		}
+
+		return self::$authenticator->authenticate($route, Application::getInstance()->getCurrentUser());
 
 	}
 

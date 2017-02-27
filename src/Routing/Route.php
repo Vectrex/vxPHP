@@ -16,8 +16,11 @@ use vxPHP\Http\Request;
 use vxPHP\Http\RedirectResponse;
 
 /**
+ * The route class
+ * a route instance binds a controller to a certain URL and request
+ * method and might enforce additional authentication requirements 
  *
- * @author Gregor Kofler
+ * @author Gregor Kofler, info@gregorkofler.com
  *
  * @version 0.12.0 2017-02-12
  *
