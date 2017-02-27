@@ -21,10 +21,7 @@ use vxPHP\Application\Application;
 use vxPHP\Application\Config;
 
 /**
- * Wrapper class for rendering menus
- * custom authentication methods and
- * custom methods for adding menus and menuentries and reworking menus
- * should be implemented in derived classes
+ * Wrapper class for rendering a menu
  *
  * @author Gregor Kofler
  *
@@ -35,13 +32,19 @@ use vxPHP\Application\Config;
 class MenuGenerator {
 
 	/**
+	 * flag indicating that currently selected menu entries still stay
+	 * "active", i.e. still render as anchor elements which can be
+	 * clicked
+	 * 
 	 * @var boolean
 	 */
 	protected static $forceActiveMenu;
 
 	/**
-	 * @var array
-	 * caches already parsed menus
+	 * cache holding already parsed menus in case they are rendered
+	 * more than once
+	 * 
+	 * @var Menu[]
 	 */
 	protected static $primedMenus = [];
 
@@ -51,50 +54,62 @@ class MenuGenerator {
 	protected $route;
 
 	/**
-	 * @var Config
-	 */
-	protected $config;
-
-	/**
+	 * indicates whether mod-rewrite like URLs are to be used
+	 * 
 	 * @var boolean
 	 */
 	protected $useNiceUris;
 
 	/**
-	 * @var Request
-	 */
-	protected $request;
-
-	/**
+	 * path segments matched against menu structure to evaluate the
+	 * active menu entry
+	 * 
 	 * @var array
 	 */
 	protected $pathSegments;
 
 	/**
+	 * the generated menu instance
+	 * 
 	 * @var Menu
 	 */
 	protected $menu;
 
 	/**
+	 * class name of decorator to be used
+	 * 
 	 * @var string
 	 */
 	protected $decorator;
 
 	/**
+	 * unique id of menu
+	 * 
 	 * @var string
 	 */
 	protected $id;
 
 	/**
+	 * level of menu in menu hierarchy
+	 * 
 	 * @var integer
 	 */
 	protected $level;
 
 	/**
+	 * additional parameters passed to menu renderer
+	 * 
 	 * @var array
 	 */
 	protected $renderArgs;
 
+	/**
+	 * class used for menu and menu entry authentication
+	 *
+	 * @var MenuAuthenticatorInterface
+	 */
+	protected static $authenticator;
+	
 	/**
 	 * sets active menu entries, allows addition of dynamic entries and
 	 * prints level $level of a menu, identified by $id
@@ -108,20 +123,19 @@ class MenuGenerator {
 	 * @param string $decorator
 	 * @param mixed $renderArgs
 	 *
-	 * @return string html
+	 * @return string html markup
 	 */
 	public function __construct($id = NULL, $level = FALSE, $forceActiveMenu = NULL, $decorator = NULL, $renderArgs = NULL) {
 
 		$application = Application::getInstance();
 
-		$this->config		= $application->getConfig();
-		$this->useNiceUris	= $application->hasNiceUris();
+		$config = $application->getConfig();
+		$this->useNiceUris = $application->hasNiceUris();
 
-		if(empty($id) && !is_null($this->config->menus)) {
+		if(empty($id) && !is_null($config->menus)) {
 			throw new MenuGeneratorException();
 		}
 
-		$this->request	= Request::createFromGlobals();
 		$this->route	= $application->getCurrentRoute();
 
 		if(is_null($this->route)) {
@@ -129,18 +143,18 @@ class MenuGenerator {
 		}
 
 		if(empty($id)) {
-			$id = array_shift(array_keys($this->config->menus));
+			$id = array_shift(array_keys($config->menus));
 		}
 
 		if(
-			!isset($this->config->menus[$id]) ||
-			!count($this->config->menus[$id]->getEntries()) &&
-			$this->config->menus[$id]->getType() == 'static'
+			!isset($config->menus[$id]) ||
+			!count($config->menus[$id]->getEntries()) &&
+			$config->menus[$id]->getType() == 'static'
 		) {
 			throw new MenuGeneratorException("Menu '" .$id. "' not found or empty.");
 		}
 
-		$this->menu = $this->config->menus[$id];
+		$this->menu = $config->menus[$id];
 
 		$this->id			= $id;
 		$this->level		= $level;
@@ -177,6 +191,18 @@ class MenuGenerator {
 		self::$forceActiveMenu = (boolean) $state;
 
 	}
+	
+	/**
+	 * set the authenticator class which will be used to authenticate
+	 * the menu and menu entries
+	 * 
+	 * @param MenuAuthenticatorInterface $authenticator
+	 */
+	public static function setMenuAuthenticator(MenuAuthenticatorInterface $authenticator) {
+
+		self::$authenticator = $authenticator;
+
+	}
 
 	/**
 	 * render menu markup
@@ -191,6 +217,8 @@ class MenuGenerator {
 			return '';
 		}
 
+		$request = Request::createFromGlobals();
+		
 		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
 
 		if(!in_array($this->menu, self::$primedMenus, TRUE)) {
@@ -205,11 +233,11 @@ class MenuGenerator {
 			
 			// prepare path segments to identify active menu entries
 
-			$this->pathSegments = explode('/', trim($this->request->getPathInfo(), '/'));
+			$this->pathSegments = explode('/', trim($request->getPathInfo(), '/'));
 
 			// skip script name
 
-			if($this->useNiceUris && basename($this->request->getScriptName()) != 'index.php') {
+			if($this->useNiceUris && basename($request->getScriptName()) != 'index.php') {
 				array_shift($this->pathSegments);
 			}
 
@@ -393,117 +421,23 @@ class MenuGenerator {
 	}
 
 	/**
-	 * authenticate complete menu
-	 * checks whether current user fulfills requirements defined in
-	 * site.ini.xml
+	 * authenticates the complete menu
+	 * invokes a previously set authenticator class or falls back
+	 * to a default menu authenticator
 	 *
-	 * if a menu needs authentication and admin meets the required
-	 * authentication level the menu entries are checked
-	 * if single entries require a higher authentication level, they are
-	 * hidden by setting their display-property to "none"
-	 * 
-	 * if the user authentication level does not qualify for seeing the
-	 * menu, its menu entries are not checked and consequently hidden
-	 *
-	 * @param Menu $m
+	 * @param Menu $menu
 	 * @return boolean
 	 */
-	protected function authenticateMenu(Menu $m) {
+	protected function authenticateMenu(Menu $menu) {
 
-		$app = Application::getInstance();
-		$currentUser = $app->getCurrentUser();
-
-		// retrieve roles of current user
-
-		if(!$currentUser || !$currentUser->isAuthenticated()) {
-
-			$userRoles = [];
-
-		}
-
-		else {
-
-			// role hierarchy defined? check roles and sub-roles
-			
-			if(($roleHierarchy = $app->getRoleHierarchy())) {
-				$userRoles = $currentUser->getRolesAnSubRoles($roleHierarchy);
-			}
-
-			// otherwise check only directly assigned roles
-			
-			else {
-				$userRoles = $currentUser->getRoles();
-			}
-
+		if(!self::$authenticator) {
+				
+			self::$authenticator = new DefaultMenuAuthenticator();
+		
 		}
 		
-		// menu needs no authentication, then check all its entries
-
-		if(is_null($m->getAuth())) {
-			$this->authenticateMenuEntries($m, $userRoles);
-			return TRUE;
-		}
-
-		// no user, user not authenticated or no roles assigned and menu needs authentication
-
-		if(!$currentUser || !$currentUser->isAuthenticated() || empty($userRoles)) {
-			return FALSE;
-		}
-
-		$auth = $m->getAuth();
-		$authenticates = FALSE;
-
-		foreach($userRoles as $role) {
-	
-			if($role->getRoleName() === $auth) {
-				$authenticates = TRUE;
-				break;
-			}
-	
-		}
-		
-		// if user's role allows to access the menu proceed with checking menu entries
-		
-		if($authenticates) {
-		
-			$this->authenticateMenuEntries($m, $userRoles);
-			return TRUE;
-
-		}
-
-		return FALSE;
+		return self::$authenticator->authenticate($menu, Application::getInstance()->getCurrentUser());
 
 	}
 
-	/**
-	 * authenticate menu entries by checking each one against the
-	 * user's roles if necessary
-	 * 
-	 * @param Menu $m
-	 * @param Role[] $userRoles
-	 */
-	private function authenticateMenuEntries(Menu $m, array $userRoles) {
-
-		foreach($m->getEntries() as $e) {
-
-			if(!$e->getAuth()) {
-				$e->setAttribute('display', NULL);
-			}
-
-			else {
-				$e->setAttribute('display', 'none');
-	
-				foreach($userRoles as $role) {
-			
-					if($e->isAuthenticatedByRole($role)) {
-						$e->setAttribute('display', NULL);
-						break;
-					}
-			
-				}
-			}
-		
-		}
-		
-	}
 }
