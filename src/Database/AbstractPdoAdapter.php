@@ -148,6 +148,14 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	public abstract function insertRecord($tableName, array $data);
 	
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * 
+	 * @see \vxPHP\Database\DatabaseInterface::insertRecords()
+	 */
+	public abstract function insertRecords($tableName, array $rowsData);	
+	
+	/**
 	 *
 	 * {@inheritdoc}
 	 *

@@ -225,6 +225,87 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	}
 
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\AbstractPdoAdapter::insertRecords()
+	 * 
+	 */
+	public function insertRecords($tableName, array $rowsData) {
+		
+		// empty array, nothing to do, no rows inserted
+
+		if(!count($rowsData)) {
+			return 0;
+		}
+
+		if(!is_array($rowsData[0])) {
+			throw new \InvalidArgumentException('Rows data contains a non-array value. Attributes cannot be determined.');
+		}
+
+		// get initial set of attributes
+
+		$firstRow = array_change_key_case($rowsData[0], CASE_LOWER);
+		
+		// check all subsequent rowData whether they are arrays and whether the array keys match with the attributes
+
+		for($i = 1, $l = count($rowsData); $i < $l; ++$i) {
+			
+			$row = $rowsData[$i];
+
+			if(!is_array($row)) {
+				throw new \InvalidArgumentException(sprintf("Row %d contains a non-array value.", $i));
+			}
+			
+			if(count(array_diff_key($firstRow, array_change_key_case($row, CASE_LOWER)))) {
+				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($firstRow)), implode(', ', array_keys(array_change_key_case($row, CASE_LOWER)))));
+			}
+
+		}
+
+		// proceed when all rows are arrays and share the same keys
+
+		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
+			
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
+		
+		// match array keys with table attributes
+		
+		$names = [];
+		$attributes = array_keys($this->tableStructureCache[$tableName]); 
+		
+		foreach($attributes as $attribute) {
+
+			if (array_key_exists($attribute, $firstRow)) {
+				$names[] = $attribute;
+			}
+
+		}
+
+		// nothing to do
+		
+		if(!count($names)) {
+			return 0;
+		}
+
+		// append create field, if not already covered
+
+		if(
+			in_array(strtolower(self::CREATE_FIELD), $attributes) &&
+			!in_array(strtolower(self::CREATE_FIELD), array_keys($firstRow))
+		) {
+			$names[] = self::CREATE_FIELD;
+		}
+
+		// prepare statement
+		
+		
+	}
+	
+	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::updateRecord()
 	 * 

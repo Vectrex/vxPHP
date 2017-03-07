@@ -22,22 +22,40 @@ interface DatabaseInterface {
 	/**
 	 * insert a record in table $tableName
 	 * returns last insert id or NULL
-	 * when no insert was possible due to complete mismatch of data keys and column names
+	 * when no insert was possible due to complete mismatch of data keys
+	 * and column names
 	 *
 	 * @param string $tableName
-	 * @param array $data
+	 * @param array $rowData
 	 *
 	 * @return mixed
 	 */
-	public function insertRecord($tableName, array $data);
+	public function insertRecord($tableName, array $rowData);
+	
+	/**
+	 * insert several records in table $tableName
+	 * returns number of inserted records
+	 * $rowData is assumed to consist of arrays with identical array
+	 * keys
+	 * if a non-array is encountered or a mismatch of keys an exception
+	 * is raised
+	 * 
+	 * @param unknown $tableName
+	 * @param array $rowsData
+	 * @throws \InvalidArgumentException
+	 * 
+	 * @return integer
+	 */
+	public function insertRecords($tableName, array $rowsData);
 	
 	/**
 	 * update a record in table $tableName, identified by $keyValue
-	 * $keyValue can either be a scalar (matching a single-field primary key)
-	 * or an associative array
+	 * $keyValue can either be a scalar (matching a single-field primary
+	 * key) or an associative array
 	 *
-	 * returns affected row count; when no update was necessary, 0 is returned
-	 * when no update was possible due to complete mismatch of data keys and column names
+	 * returns affected row count; when no update was necessary, 0 is
+	 * returned when no update was possible due to complete mismatch of
+	 * data keys and column names
 	 *
 	 * @param string $tableName
 	 * @param mixed $keyValue
@@ -49,8 +67,8 @@ interface DatabaseInterface {
 
 	/**
 	 * delete a record in table $tableName, identified by $keyValue
-	 * $keyValue can either be a scalar (matching a single-field primary key)
-	 * or an associative array
+	 * $keyValue can either be a scalar (matching a single-field primary
+	 * key) or an associative array
 	 *
 	 * returns affected row count
 	 *
@@ -91,7 +109,8 @@ interface DatabaseInterface {
 
 	/**
 	 * ignore lastUpdated attribute when creating or updating record
-	 * leaves setting value of this field to database internal mechanisms
+	 * leaves setting value of this field to database internal
+	 * mechanisms
 	 *
 	 * @return DatabaseInterface
 	 */
