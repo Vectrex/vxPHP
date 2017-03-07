@@ -34,11 +34,13 @@ interface DatabaseInterface {
 	
 	/**
 	 * insert several records in table $tableName
-	 * returns number of inserted records
-	 * $rowData is assumed to consist of arrays with identical array
-	 * keys
-	 * if a non-array is encountered or a mismatch of keys an exception
-	 * is raised
+	 * 
+	 * the first row of $rowData determines which keys are matched with
+	 * the attributes of the database, additional keys of
+	 * following rows are ignored, missing keys raise an exception
+	 * rows which do not contain an array raise an exception
+	 * 
+	 * returns the number of inserted rows
 	 * 
 	 * @param unknown $tableName
 	 * @param array $rowsData

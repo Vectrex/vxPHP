@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.1, 2017-01-30
+ * @version 1.3.0, 2017-03-07
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -242,10 +242,45 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			throw new \InvalidArgumentException('Rows data contains a non-array value. Attributes cannot be determined.');
 		}
 
-		// get initial set of attributes
+		// get keys of first record, which determines which attributes will be written
 
 		$firstRow = array_change_key_case($rowsData[0], CASE_LOWER);
 		
+		// retrieve attributes of table 
+		
+		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
+			
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
+		
+		// match keys with table attributes
+
+		$matchedFirstRow = [];
+		$attributes = array_keys($this->tableStructureCache[$tableName]);
+		
+		foreach($attributes as $attribute) {
+		
+			if (array_key_exists($attribute, $firstRow)) {
+				$matchedFirstRow[$attribute] = $firstRow[$attribute];
+			}
+		
+		}
+		
+		// nothing to do, when no intersection exists
+		
+		if(!count($matchedFirstRow)) {
+			return 0;
+		}
+
+		// sort by key to ensure same key order for all record
+
+		ksort($matchedFirstRow);
+
+		$values = array_values($matchedFirstRow);
+
 		// check all subsequent rowData whether they are arrays and whether the array keys match with the attributes
 
 		for($i = 1, $l = count($rowsData); $i < $l; ++$i) {
@@ -255,41 +290,27 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			if(!is_array($row)) {
 				throw new \InvalidArgumentException(sprintf("Row %d contains a non-array value.", $i));
 			}
-			
-			if(count(array_diff_key($firstRow, array_change_key_case($row, CASE_LOWER)))) {
-				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($firstRow)), implode(', ', array_keys(array_change_key_case($row, CASE_LOWER)))));
+
+			// remove any additional key-value pairs
+
+			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $matchedFirstRow); 
+
+			if(count($matchedRow) !== count($matchedFirstRow)) {
+				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($matchedFirstRow)), implode(', ', array_keys($matchedRow))));
 			}
 
+			// collect values (in consistent order) for statement execution
+
+			ksort($matchedRow);
+			$values = array_merge($values, array_values($matchedRow));
+
 		}
 
-		// proceed when all rows are arrays and share the same keys
-
-		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
-			$this->fillTableStructureCache($tableName);
-		}
-			
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
-			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
-		}
+		$names = array_keys($matchedFirstRow);
 		
-		// match array keys with table attributes
+		// generate a single placeholder row
 		
-		$names = [];
-		$attributes = array_keys($this->tableStructureCache[$tableName]); 
-		
-		foreach($attributes as $attribute) {
-
-			if (array_key_exists($attribute, $firstRow)) {
-				$names[] = $attribute;
-			}
-
-		}
-
-		// nothing to do
-		
-		if(!count($names)) {
-			return 0;
-		}
+		$valuePlaceholders = implode(', ', array_fill(0, count($names), '?'));
 
 		// append create field, if not already covered
 
@@ -298,11 +319,35 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			!in_array(strtolower(self::CREATE_FIELD), array_keys($firstRow))
 		) {
 			$names[] = self::CREATE_FIELD;
+			$valuePlaceholders .= ', NOW()';
 		}
+
+		$valuePlaceholders = '(' . $valuePlaceholders . ')';
 
 		// prepare statement
 		
-		
+		$this->statement = $this->connection->prepare(
+			sprintf("
+				INSERT INTO
+					%s
+						(%s%s%s)
+					VALUES
+						%s
+				",
+				$tableName,
+				self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
+				implode(',', array_fill(0, count($rowsData), $valuePlaceholders))
+			)
+		);
+
+		if(
+			$this->statement->execute($values)
+		) {
+			return $this->statement->rowCount();
+		}
+
+		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
+
 	}
 	
 	/**
