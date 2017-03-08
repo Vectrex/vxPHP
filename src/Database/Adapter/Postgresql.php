@@ -121,114 +121,6 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
-	 */
-	public function doPreparedQuery($statementString, array $parameters) {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::insertRecord()
-	 * 
-	 * @throws \PDOException
-	 */
-	public function insertRecord($tableName, array $data) {
-
-		$data = array_change_key_case($data, CASE_LOWER);
-		
-		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
-			$this->fillTableStructureCache($tableName);
-		}
-		
-		if(!array_key_exists($tableName, $this->tableStructureCache)) {
-			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
-		}
-		
-		$attributes = array_keys($this->tableStructureCache[$tableName]);
-
-		$names	= [];
-		$values	= [];
-		
-		foreach($attributes as $attribute) {
-		
-			if (array_key_exists($attribute, $data)) {
-				$names[]	= $this->tableStructureCache[$tableName][$attribute]['columnName'];
-				$values[]	= $data[$attribute];
-			}
-		
-		}
-		
-		// nothing to do
-		
-		if(!count($names)) {
-			return NULL;
-		}
-		
-		$valuePlaceholders = implode(', ', array_fill(0, count($values), '?'));
-		
-		// append create timestamp when applicable
-		
-		if(
-				in_array(strtolower(self::CREATE_FIELD), $attributes) &&
-				!in_array(strtolower(self::CREATE_FIELD), array_keys($data))
-				) {
-					$names[] = $this->tableStructureCache[$tableName][strtolower(self::CREATE_FIELD)]['columnName'];
-					$valuePlaceholders .= ', NOW()';
-				}
-		
-				// execute statement
-		
-				$this->statement = $this->connection->prepare(
-						sprintf("
-					INSERT INTO
-						%s
-					(%s%s%s)
-					VALUES
-					(%s)
-				",
-								self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
-								self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
-								$valuePlaceholders
-								)
-						);
-		var_dump($this->statement);
-				if(
-						$this->statement->execute($values)
-						) {
-							return $this->connection->lastInsertId();
-						}
-		
-						throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-		
-	}
-
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::insertRecords()
-	 */
-	public function insertRecords($tableName, array $rowsData) {
-		// TODO Auto-generated method stub
-	}
-
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::execute()
-	 */
-	public function execute($statementString, array $parameters) {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
 	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
 	 */
 	public function ignoreLastUpdated() {
@@ -239,39 +131,9 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::getPrimaryKey()
-	 */
-	public function getPrimaryKey($tableName) {
-		// TODO Auto-generated method stub
-	}
-
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
 	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
 	 */
 	public function updateLastUpdated() {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::updateRecord()
-	 */
-	public function updateRecord($tableName, $keyValue, array $data) {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::deleteRecord()
-	 */
-	public function deleteRecord($tableName, $keyValue) {
 		// TODO Auto-generated method stub
 	}
 	
