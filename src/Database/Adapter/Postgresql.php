@@ -23,10 +23,24 @@ use vxPHP\Database\AbstractPdoAdapter;
  */
 class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
-	const		UPDATE_FIELD	= 'lastUpdated';
-	const		CREATE_FIELD	= 'firstCreated';
-	const		SORT_FIELD		= 'customSort';
+	/**
+	 * attribute which stores the timestamp of the last update of the
+	 * record; must be an all lowercase string, though the attribute in
+	 * the database might be not
+	 *
+	 * @var string
+	 */
+	const UPDATE_FIELD = 'lastupdated';
 	
+	/**
+	 * attribute which stores the timestamp of the creation timestamp of
+	 * a record; must be an all lowercase string, though the attribute
+	 * in the database might be not
+	 *
+	 * @var string
+	 */
+	const CREATE_FIELD = 'firstcreated';
+
 	/**
 	 * the identifier quote character
 	 *
@@ -41,6 +55,15 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	protected $tableStructureCache;
 	
+	/**
+	 * automatically touch a lastUpdated column whenever
+	 * a record is updated
+	 * any internal db mechanism is notoverwritten
+	 *
+	 * @var boolean
+	 */
+	protected $touchLastUpdated = TRUE;
+
 	/**
 	 *
 	 * {@inheritdoc}

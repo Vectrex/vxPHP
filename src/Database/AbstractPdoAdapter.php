@@ -489,7 +489,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 
 		$data = array_change_key_case($data, CASE_LOWER);
 		
-		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 
@@ -622,7 +622,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function deleteRecord($tableName, $keyValue) {
 		
-		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 		
