@@ -18,15 +18,34 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.3.0, 2017-03-07
+ * @version 1.7.0, 2017-03-08
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
-	const		UPDATE_FIELD	= 'lastUpdated';
-	const		CREATE_FIELD	= 'firstCreated';
-	const		SORT_FIELD		= 'customSort';
+	/**
+	 * attribute which stores the timestamp of the last update of the
+	 * record; must be an all lowercase string, though the attribute in
+	 * the database might be not
+	 * 
+	 * @var string
+	 */
+	const UPDATE_FIELD = 'lastupdated';
 
-	const		QUOTE_CHAR		= '`';
+	/**
+	 * attribute which stores the timestamp of the creation timestamp of
+	 * a record; must be an all lowercase string, though the attribute
+	 * in the database might be not
+	 *
+	 * @var string
+	 */
+	const CREATE_FIELD = 'firstcreated';
+
+	/**
+	 * the identifier quote character
+	 * 
+	 * @var string
+	 */
+	const QUOTE_CHAR = '`';
 
 	/**
 	 * automatically touch a lastUpdated column whenever
@@ -37,13 +56,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	protected	$touchLastUpdated	= TRUE;
 	
-	/**
-	 * holds last executed statement
-	 * 
-	 * @var \PDOStatement
-	 */
-	protected	$statement;
-
 	/**
 	 * map translating encoding names
 	 * 
@@ -144,10 +156,20 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
 	public function setConnection(\PDO $connection) {
-		
-		// ensure that a cached statement is deleted
 
-		$this->statement = NULL;
+		// redeclaring a connection is not possible
+
+		if($this->connection) {
+			throw new \PDOException('Connection is already set and cannot be redeclared.');
+		}
+
+		// check whether connection driver matches this adapter
+		
+		$drivername = strtolower($connection->getAttribute(\PDO::ATTR_DRIVER_NAME)); 
+
+		if($drivername !== 'mysql') {
+			throw new \PDOException(sprintf("Wrong driver type of connection. Connection reports '%s', should be 'mysql'.", $drivername));
+		}
 
 		$this->connection = $connection;
 
@@ -163,7 +185,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 		$data = array_change_key_case($data, CASE_LOWER);
 
-		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 
@@ -171,31 +193,40 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
 		}
 
-		$names	= [];
-		$values	= [];
+		$attributes = array_keys($this->tableStructureCache[$tableName]);
+		$columns = $this->tableStructureCache[$tableName];
 
-		foreach(array_keys($this->tableStructureCache[$tableName]) as $attribute) {
+		$names = [];
+		$values = [];
+
+		foreach($attributes as $attribute) {
 
 			if (array_key_exists($attribute, $data)) {
-				$names[]	= $attribute;
+				$names[]	= $columns[$attribute]['columnName'];
 				$values[]	= $data[$attribute];
 			}
 
-			else if($attribute === strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
-				$names[]	= self::UPDATE_FIELD;
-				$values[]	= date('Y-m-d H:i:s');
-			}
-		
-			else if($attribute === strtolower(self::CREATE_FIELD)) {
-				$names[]	= self::CREATE_FIELD;
-				$values[]	= date('Y-m-d H:i:s');
-			}
 		}
 
 		// nothing to do
 		
 		if(!count($names)) {
 			return NULL;
+		}
+		
+		$valuePlaceholders = implode(', ', array_fill(0, count($values), '?'));
+
+		// append create timestamp when applicable
+
+		if(
+			in_array(self::CREATE_FIELD, $attributes) &&
+			!in_array(self::CREATE_FIELD, array_keys($data))
+		) {
+			
+			// for compatibility purposes get the real column name
+			
+			$names[] = $columns[self::CREATE_FIELD]['columnName'];
+			$valuePlaceholders .= ', NOW()';
 		}
 
 		// execute statement
@@ -208,9 +239,9 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 					VALUES
 					(%s)
 				",
-				$tableName,
+				self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
 				self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
-				implode(', ', array_fill(0, count($names), '?'))
+				$valuePlaceholders
 			)
 		);
 
@@ -248,7 +279,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		
 		// retrieve attributes of table 
 		
-		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 			
@@ -258,28 +289,40 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		
 		// match keys with table attributes
 
-		$matchedFirstRow = [];
 		$attributes = array_keys($this->tableStructureCache[$tableName]);
+		$columns = $this->tableStructureCache[$tableName];
+
+		$names = [];
+
+		/*
+		 * $firstRow contains all elements which match with attributes with lower case keys
+		 * $firstRow is needed for subsequent array_intersect() calls with the following rows
+		 * $names contains all "real" attribute names
+		 */
 		
+		// sort by key to ensure same key order for all record
+		
+		ksort($firstRow);
+
 		foreach($attributes as $attribute) {
 		
 			if (array_key_exists($attribute, $firstRow)) {
-				$matchedFirstRow[$attribute] = $firstRow[$attribute];
+				$names[] = $columns[$attribute]['columnName'];
+			}
+			
+			else {
+				unset($firstRow[$attribute]);
 			}
 		
 		}
-		
+
 		// nothing to do, when no intersection exists
 		
-		if(!count($matchedFirstRow)) {
+		if(!count($names)) {
 			return 0;
 		}
 
-		// sort by key to ensure same key order for all record
-
-		ksort($matchedFirstRow);
-
-		$values = array_values($matchedFirstRow);
+		$values = array_values($firstRow);
 
 		// check all subsequent rowData whether they are arrays and whether the array keys match with the attributes
 
@@ -293,10 +336,10 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			// remove any additional key-value pairs
 
-			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $matchedFirstRow); 
+			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $firstRow); 
 
-			if(count($matchedRow) !== count($matchedFirstRow)) {
-				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($matchedFirstRow)), implode(', ', array_keys($matchedRow))));
+			if(count($matchedRow) !== count($firstRow)) {
+				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($names)), implode(', ', array_keys($matchedRow))));
 			}
 
 			// collect values (in consistent order) for statement execution
@@ -306,8 +349,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 		}
 
-		$names = array_keys($matchedFirstRow);
-		
 		// generate a single placeholder row
 		
 		$valuePlaceholders = implode(', ', array_fill(0, count($names), '?'));
@@ -318,7 +359,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			in_array(strtolower(self::CREATE_FIELD), $attributes) &&
 			!in_array(strtolower(self::CREATE_FIELD), array_keys($firstRow))
 		) {
-			$names[] = self::CREATE_FIELD;
+			$names[] = $columns[self::CREATE_FIELD]['columnName'];
 			$valuePlaceholders .= ', NOW()';
 		}
 
@@ -334,7 +375,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 					VALUES
 						%s
 				",
-				$tableName,
+				self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
 				self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
 				implode(',', array_fill(0, count($rowsData), $valuePlaceholders))
 			)
@@ -367,99 +408,120 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		if(!array_key_exists($tableName, $this->tableStructureCache)) {
 			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
 		}
-		
-		$names	= [];
+
+		$attributes = array_keys($this->tableStructureCache[$tableName]);
+		$columns = $this->tableStructureCache[$tableName];
+
+		$names = [];
 		$values	= [];
 		
-		foreach(array_keys($this->tableStructureCache[$tableName]) as $attribute) {
+		foreach($attributes as $attribute) {
 		
 			if (array_key_exists($attribute, $data)) {
-				$names[]	= $attribute;
+				$names[]	= $columns[$attribute]['columnName'];
 				$values[]	= $data[$attribute];
 			}
-		
-			else if($attribute === strtolower(self::UPDATE_FIELD) && $this->touchLastUpdated) {
-				$names[]	= self::UPDATE_FIELD;
-				$values[]	= date('Y-m-d H:i:s');
-			}
-		
+
 		}
 
 		// are there any fields to update?
 	
-		if(count($names)) {
+		if(!count($names)) {
+			return 0;
+		}
+
+		$setPlaceholders = self::QUOTE_CHAR . implode(self::QUOTE_CHAR . ' = ?, ' . self::QUOTE_CHAR, $names) . self::QUOTE_CHAR . '= ?';
+
+		// append update timestamp when applicable
 		
-			// record identified by primary key
+		if(
+			in_array(strtolower(self::UPDATE_FIELD), $attributes) &&
+			!in_array(strtolower(self::UPDATE_FIELD), array_keys($data)) &&
+			$this->touchLastUpdated
+		) {
+			$setPlaceholders .= ', ' . self::QUOTE_CHAR . $columns[self::CREATE_FIELD]['columnName'] . self::QUOTE_CHAR . ' = NOW()';
+		}
+		
+		// record identified by primary key
 			
-			if(!is_array($keyValue)) {
+		if(!is_array($keyValue)) {
 	
-				// do we have only one pk column?
+			// do we have only one pk column?
 	
-				if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
-			
-					$this->statement = $this->connection->prepare(
-						sprintf("
-								UPDATE
-									%s
-								SET
-									%s%s%s = ?
-								WHERE
-									%s%s%s = ?
-							",
-							$tableName,
-							self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ' = ?, ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
-							self::QUOTE_CHAR, $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], self::QUOTE_CHAR
-						)
-					);
-					
-					// add pk as parameter
-	
-					$values[] = $keyValue;
-					
-				}
-				
-				else {
-					throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
-				}
-			
-			}
-			
-			else { 
-				
-				// record identified with one or more specific attributes
-			
+			if(count($columns['_primaryKeyColumns']) === 1) {
+
 				$this->statement = $this->connection->prepare(
 					sprintf("
 							UPDATE
 								%s
 							SET
-								%s%s%s = ?
+								%s
 							WHERE
-								%s%s%s = ?
+								%s = ?
 						",
-						$tableName,
-						self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ' = ?, ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
-						self::QUOTE_CHAR, implode (self::QUOTE_CHAR . ' = ? AND ' . self::QUOTE_CHAR, array_keys($keyValue)), self::QUOTE_CHAR
+						self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
+						$setPlaceholders,
+						self::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . self::QUOTE_CHAR
 					)
 				);
-				
-				// add filtering values as parameter
-				
-				$values = array_merge($values, array_values($keyValue));
-			
-			}
+				// add pk as parameter
 
-			if(
-				$this->statement->execute($values)
-			) {
-				return $this->statement->rowCount();
+				$values[] = $keyValue;
+				
 			}
 			
-			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-
+			else {
+				throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
+			}
+		
 		}
 		
-		return 0;
+		else {
+			
+			// record identified with one or more specific attributes
+
+			$keyValue = array_change_key_case($keyValue, CASE_LOWER);
+
+			$whereNames = []; 
+			$whereValues = [];
+				
+			foreach($keyValue as $whereName => $whereValue) {
+				
+				if (!in_array($whereName, $attributes)) {
+					throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
+				}
+				$whereNames[] = $columns[$whereName]['columnName'];
+				$whereValues[] = $whereValue;
+			}
+			
+			$this->statement = $this->connection->prepare(
+				sprintf("
+						UPDATE
+							%s
+						SET
+							%s
+						WHERE
+							%s = ?
+					",
+					self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
+					$setPlaceholders,
+					self::QUOTE_CHAR . implode (self::QUOTE_CHAR . ' = ? AND ' . self::QUOTE_CHAR, $whereNames) . self::QUOTE_CHAR
+				)
+			);
+			
+			// add filtering values as parameter
+			
+			$values = array_merge($values, $whereValues);
+		
+		}
+
+		if(
+			$this->statement->execute($values)
+		) {
+			return $this->statement->rowCount();
+		}
+		
+		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 
 	}
 	
@@ -471,27 +533,30 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function deleteRecord($tableName, $keyValue) {
 		
+		if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
+		
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
+		
+		$attributes = array_keys($this->tableStructureCache[$tableName]);
+		$columns = $this->tableStructureCache[$tableName];
+
 		if(!is_array($keyValue)) {
 			
-			if(!array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
-				$this->fillTableStructureCache($tableName);
-			}
-
-			if(!array_key_exists($tableName, $this->tableStructureCache)) {
-				throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
-			}
-
-			if(count($this->tableStructureCache[$tableName]['_primaryKeyColumns']) === 1) {
+			if(count($columns['_primaryKeyColumns']) === 1) {
 
 				$this->statement = $this->connection->prepare(
 					sprintf("
 							DELETE FROM
 								%s
 							WHERE
-								%s%s%s = ?
+								%s = ?
 						",
-						$tableName,
-						self::QUOTE_CHAR, $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0], self::QUOTE_CHAR
+						self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
+						self::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . self::QUOTE_CHAR
 					)
 				);
 
@@ -509,10 +574,20 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 		else {
 			
-			$fieldNames = [];
+			// record identified with one or more specific attributes
 			
-			foreach(array_keys($keyValue) as $fieldName) {
-				$fieldNames[]	= self::QUOTE_CHAR . $fieldName . self::QUOTE_CHAR . ' = ?';
+			$keyValue = array_change_key_case($keyValue, CASE_LOWER);
+			
+			$whereNames = [];
+			$whereValues = [];
+			
+			foreach($keyValue as $whereName => $whereValue) {
+			
+				if (!in_array($whereName, $attributes)) {
+					throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
+				}
+				$whereNames[] = $columns[$whereName]['columnName'];
+				$whereValues[] = $whereValue;
 			}
 
 			$this->statement = $this->connection->prepare(
@@ -520,15 +595,15 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 						DELETE FROM
 							%s
 						WHERE
-							%s
+							%s = ?
 					",
-					$tableName,
-					implode(' AND ', $fieldNames)
+					self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
+					self::QUOTE_CHAR . implode (self::QUOTE_CHAR . ' = ? AND ' . self::QUOTE_CHAR, $whereNames) . self::QUOTE_CHAR
 				)
 			);
-			
+
 			if(
-				$this->statement->execute(array_values($keyValue))
+				$this->statement->execute($whereValues)
 			) {
 				return $this->statement->rowCount();
 			}
@@ -536,28 +611,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 			
 		}
-
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
-	 */
-	public function beginTransaction() {
-		
-		return $this->connection->beginTransaction();
-		
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::commit()
-	 */
-	public function commit() {
-		
-		return $this->connection->commit();
 
 	}
 	
@@ -606,59 +659,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		$this->statement->execute();
 
 		return $this->statement->rowCount();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
-	 */
-	public function tableExists($tableName) {
-
-		// fill cache with table names
-
-		if(empty($this->tableStructureCache)) {
-			$this->fillTableStructureCache($tableName);
-		}
-
-		return array_key_exists($tableName, $this->tableStructureCache);
-
-	} 
-
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
-	 */
-	public function columnExists($tableName, $columnName) {
-
-		// fill cache with table information
-				
-		if(empty($this->tableStructureCache)) {
-			$this->fillTableStructureCache($tableName);
-		}
-
-		// return FALSE when either table or column can not be found
-		
-		return
-			array_key_exists($tableName, $this->tableStructureCache) && 
-			array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
-
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
-	 *
-	 * @throws \PDOException
-	 */
-	public function getColumnDefaultValue($tableName, $columnName) {
-		
-		// check whether column exists
-
-		if(!$this->columnExists($tableName, $columnName)) {
-			throw new \PDOException("Unknown column '" . $columnName ."' in table '" . $tableName ."'.");
-		}
-		
-		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
 	}
 
 	/**
@@ -739,10 +739,12 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
 	 * clears the table structure cache
-	 * required after altering table structures
+	 * might be required after extensive alterations to several table
+	 * structures
 	 * 
-	 * @return MysqlPDO
+	 * @return \vxPHP\Database\Adapter\Mysql
 	 */
+	
 	public function clearTableStructureCache() {
 
 		$this->tableStructureCache = [];
@@ -750,6 +752,22 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	}
 
+	/**
+	 * refresh table structure cache for a single table
+	 * required after changes to a tables structure
+	 * 
+	 * @param string $tableName
+	 * @return \vxPHP\Database\Adapter\Mysql
+	 */
+	public function refreshTableStructureCache($tableName) {
+
+		unset ($this->tableStructureCache[$tableName]);
+		$this->fillTableStructureCache($tableName);
+		
+		return $this;
+		
+	}
+	
 	/**
 	 * get last PDO statement prepared/executed
 	 * 
@@ -762,58 +780,9 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	}
 
 	/**
-	 * prepare a statement and bind parameters
 	 * 
-	 * @param string $statementString
-	 * @param array $parameters
-	 * 
-	 * @return void
-	 */
-	private function primeQuery($statementString, array $parameters) {
-
-		$this->statement = $this->connection->prepare($statementString);
-		
-		foreach($parameters as $name => $value) {
-				
-			// question mark placeholders start with 1
-				
-			if(is_int($name)) {
-				++$name;
-			}
-				
-			// otherwise ensure colons
-		
-			else {
-				$name = ':' . ltrim($name, ':');
-			}
-		
-			// set parameter types, depending on parameter values
-		
-			$type = \PDO::PARAM_STR;
-				
-			if(is_bool($value)) {
-				$type = \PDO::PARAM_BOOL;
-			}
-				
-			else if(is_int($value)) {
-				$type = \PDO::PARAM_INT;
-			}
-				
-			else if(is_null($value)) {
-				$type = \PDO::PARAM_NULL;
-			}
-		
-			$this->statement->bindValue($name, $value, $type);
-				
-		}
-	}
-
-	/**
-	 * analyze columns of table $tableName
-	 * and store result
-	 * 
-	 * @param string $tableName
-	 * @return void
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()
 	 */
 	protected function fillTableStructureCache($tableName) {
 

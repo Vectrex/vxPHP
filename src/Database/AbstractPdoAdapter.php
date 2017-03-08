@@ -13,11 +13,11 @@ namespace vxPHP\Database;
 use vxPHP\Database\DatabaseInterface;
 
 /**
- * abstract class pooling all PDO adapter methods
- * currently a stub
+ * abstract class pooling all shared methods of PDO adapters
  *
- * @author Gregor Kofler
- *        
+ * @author Gregor Kofler, info@gregorkofler.com
+ * 
+ * @version 0.4.0, 2017-03-08
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -71,6 +71,13 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	protected	$connection;
 
 	/**
+	 * holds last prepared or executed statement
+	 *
+	 * @var \PDOStatement
+	 */
+	protected $statement;
+
+	/**
 	 *
 	 * {@inheritdoc}
 	 *
@@ -109,11 +116,162 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
 	 *
+	 * {@inheritDoc}
+	 *
+	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
+	 */
+	public function beginTransaction() {
+	
+		return $this->connection->beginTransaction();
+	
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 *
+	 * @see \vxPHP\Database\DatabaseInterface::commit()
+	 */
+	public function commit() {
+	
+		return $this->connection->commit();
+	
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
+	 *
+	 * @throws \PDOException
+	 */
+	public function getColumnDefaultValue($tableName, $columnName) {
+	
+		// check whether column exists
+	
+		if(!$this->columnExists($tableName, $columnName)) {
+			throw new \PDOException(sprintf("Unknown column '%s' in table '%s'.", $columnName, $tableName));
+		}
+	
+		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
+	 */
+	public function columnExists($tableName, $columnName) {
+	
+		// fill cache with table information
+	
+		if(empty($this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
+	
+		// return FALSE when either table or column can not be found
+	
+		return
+		array_key_exists($tableName, $this->tableStructureCache) &&
+		array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
+	
+	}
+
+	/**
+	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
+	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
 	 */
-	public abstract function getColumnDefaultValue($tableName, $columnName);
+	public function tableExists($tableName) {
+	
+		// fill cache with table names
+	
+		if(empty($this->tableStructureCache)) {
+			$this->fillTableStructureCache($tableName);
+		}
+	
+		return array_key_exists($tableName, $this->tableStructureCache);
+	
+	}
+
+	/**
+	 * clears the table structure cache
+	 * might be required after extensive alterations to several
+	 * table structures
+	 *
+	 * @return \vxPHP\Database\Adapter\Postgresql
+	 */
+	public function clearTableStructureCache() {
+	
+		$this->tableStructureCache = [];
+		return $this;
+	
+	}
+
+	/**
+	 * refresh table structure cache for a single table
+	 * required after changes to a tables structure
+	 *
+	 * @param string $tableName
+	 * @return \vxPHP\Database\Adapter\Postgresql
+	 */
+	public function refreshTableStructureCache($tableName) {
+	
+		unset ($this->tableStructureCache[$tableName]);
+		$this->fillTableStructureCache($tableName);
+	
+		return $this;
+	
+	}
+
+	/**
+	 * prepare a statement and bind parameters
+	 *
+	 * @param string $statementString
+	 * @param array $parameters
+	 *
+	 * @return void
+	 */
+	protected function primeQuery($statementString, array $parameters) {
+	
+		$this->statement = $this->connection->prepare($statementString);
+	
+		foreach($parameters as $name => $value) {
+	
+			// question mark placeholders start with 1
+	
+			if(is_int($name)) {
+				++$name;
+			}
+	
+			// otherwise ensure colons
+	
+			else {
+				$name = ':' . ltrim($name, ':');
+			}
+	
+			// set parameter types, depending on parameter values
+	
+			$type = \PDO::PARAM_STR;
+	
+			if(is_bool($value)) {
+				$type = \PDO::PARAM_BOOL;
+			}
+	
+			else if(is_int($value)) {
+				$type = \PDO::PARAM_INT;
+			}
+	
+			else if(is_null($value)) {
+				$type = \PDO::PARAM_NULL;
+			}
+	
+			$this->statement->bindValue($name, $value, $type);
+	
+		}
+	}
+	
 	
 	/**
 	 *
@@ -122,22 +280,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
 	 */
 	public abstract function doPreparedQuery($statementString, array $parameters);
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
-	 */
-	public abstract function columnExists($tableName, $columnName);
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::commit()
-	 */
-	public abstract function commit();
 
 	/**
 	 *
@@ -167,14 +309,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
-	 */
-	public abstract function tableExists($tableName);
-
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
 	 * @see \vxPHP\Database\DatabaseInterface::execute()
 	 */
 	public abstract function execute($statementString, array $parameters);
@@ -199,14 +333,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
-	 */
-	public abstract function beginTransaction();	
-
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
 	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
 	 */
 	public abstract function updateLastUpdated();
@@ -226,5 +352,15 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::deleteRecord()
 	 */
 	public abstract function deleteRecord($tableName, $keyValue);
+
+
+	/**
+	 * analyze column metadata of table $tableName
+	 * and store result
+	 *
+	 * @param string $tableName
+	 * @return void
+	 */
+	protected abstract function fillTableStructureCache($tableName);
 
 }

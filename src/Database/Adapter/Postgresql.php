@@ -19,10 +19,21 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.0.3, 2017-01-30
+ * @version 0.0.4, 2017-03-08
  */
 class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
+	const		UPDATE_FIELD	= 'lastUpdated';
+	const		CREATE_FIELD	= 'firstCreated';
+	const		SORT_FIELD		= 'customSort';
+	
+	/**
+	 * the identifier quote character
+	 *
+	 * @var string
+	 */
+	const QUOTE_CHAR = '"';
+	
 	/**
  	 * store column details of tables
 	 * 
@@ -66,7 +77,7 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
 			];
-			
+
 			$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
 			
 			$connection->setAttribute(
@@ -79,17 +90,33 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
+	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function getColumnDefaultValue($tableName, $columnName) {
-		// TODO Auto-generated method stub
-	}
+	public function setConnection(\PDO $connection) {
 	
+		// redeclaring a connection is not possible
+	
+		if($this->connection) {
+			throw new \PDOException('Connection is already set and cannot be redeclared.');
+		}
+	
+		// check whether connection driver matches this adapter
+	
+		$drivername = strtolower($connection->getAttribute(\PDO::ATTR_DRIVER_NAME));
+	
+		if($drivername !== 'pgsql') {
+			throw new \PDOException(sprintf("Wrong driver type of connection. Connection reports '%s', should be 'pgsql'.", $drivername));
+		}
+	
+		$this->connection = $connection;
+	
+	}
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -104,57 +131,90 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
-	 */
-	public function columnExists($tableName, $columnName) {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::commit()
-	 */
-	public function commit() {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
 	 * @see \vxPHP\Database\DatabaseInterface::insertRecord()
+	 * 
+	 * @throws \PDOException
 	 */
 	public function insertRecord($tableName, array $data) {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
-	 */
-	public function setConnection(\PDO $connection) {
 
-		// ensure that a cached statement is deleted
+		$data = array_change_key_case($data, CASE_LOWER);
 		
-		$this->statement = NULL;
+		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
+			$this->fillTableStructureCache($tableName);
+		}
 		
-		$this->connection = $connection;
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
+			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
+		}
+		
+		$attributes = array_keys($this->tableStructureCache[$tableName]);
+
+		$names	= [];
+		$values	= [];
+		
+		foreach($attributes as $attribute) {
+		
+			if (array_key_exists($attribute, $data)) {
+				$names[]	= $this->tableStructureCache[$tableName][$attribute]['columnName'];
+				$values[]	= $data[$attribute];
+			}
+		
+		}
+		
+		// nothing to do
+		
+		if(!count($names)) {
+			return NULL;
+		}
+		
+		$valuePlaceholders = implode(', ', array_fill(0, count($values), '?'));
+		
+		// append create timestamp when applicable
+		
+		if(
+				in_array(strtolower(self::CREATE_FIELD), $attributes) &&
+				!in_array(strtolower(self::CREATE_FIELD), array_keys($data))
+				) {
+					$names[] = $this->tableStructureCache[$tableName][strtolower(self::CREATE_FIELD)]['columnName'];
+					$valuePlaceholders .= ', NOW()';
+				}
+		
+				// execute statement
+		
+				$this->statement = $this->connection->prepare(
+						sprintf("
+					INSERT INTO
+						%s
+					(%s%s%s)
+					VALUES
+					(%s)
+				",
+								self::QUOTE_CHAR . $tableName . self::QUOTE_CHAR,
+								self::QUOTE_CHAR, implode(self::QUOTE_CHAR . ', ' . self::QUOTE_CHAR, $names), self::QUOTE_CHAR,
+								$valuePlaceholders
+								)
+						);
+		var_dump($this->statement);
+				if(
+						$this->statement->execute($values)
+						) {
+							return $this->connection->lastInsertId();
+						}
+		
+						throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
+		
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
+	 * @see \vxPHP\Database\DatabaseInterface::insertRecords()
 	 */
-	public function tableExists($tableName) {
+	public function insertRecords($tableName, array $rowsData) {
 		// TODO Auto-generated method stub
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -184,17 +244,7 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	public function getPrimaryKey($tableName) {
 		// TODO Auto-generated method stub
 	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
-	 */
-	public function beginTransaction() {
-		// TODO Auto-generated method stub
-	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -225,6 +275,11 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 		// TODO Auto-generated method stub
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()
+	 */
 	protected function fillTableStructureCache($tableName) {
 		
 		// get all table names
@@ -267,7 +322,7 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 				LEFT JOIN information_schema.constraint_column_usage ccu ON ccu.table_schema = c.table_schema AND ccu.table_name = c.table_name AND ccu.column_name = c.column_name
 				LEFT JOIN information_schema.table_constraints tc ON tc.constraint_schema = ccu.constraint_schema AND ccu.constraint_name = tc.constraint_name
 			WHERE
-				c.table_schema = ?
+				c.table_schema = ? AND
 				c.table_name = ?
 		');
 
@@ -280,17 +335,17 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 		$primaryKeyColumns	= [];
 		
 		foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $column) {
-		
+
 			// get standard information for column
 				
-			$name = strtolower($column['COLUMN_NAME']);
+			$name = strtolower($column['column_name']);
 		
 			$columns[$name] = [
-					'columnName'	=> $column['column_name'],
-					'columnKey'		=> $column['constraint_type'],
-					'columnDefault'	=> $column['column_default'],
-					'dataType'		=> $column['data_type'],
-					'isNullable'	=> $column['is_nullable'] === 'YES',
+				'columnName'	=> $column['column_name'],
+				'columnKey'		=> $column['constraint_type'],
+				'columnDefault'	=> $column['column_default'],
+				'dataType'		=> $column['data_type'],
+				'isNullable'	=> $column['is_nullable'] === 'YES',
 			];
 		
 			if($column['constraint_type'] === 'PRIMARY KEY') {
