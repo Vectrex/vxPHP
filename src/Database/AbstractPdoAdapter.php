@@ -78,6 +78,15 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	protected $statement;
 
 	/**
+	 * automatically touch a lastUpdated column whenever
+	 * a record is updated
+	 * any internal db mechanism is notoverwritten
+	 *
+	 * @var boolean
+	 */
+	protected	$touchLastUpdated = TRUE;
+
+	/**
 	 *
 	 * {@inheritdoc}
 	 *
@@ -730,6 +739,30 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	}
 
 	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
+	 */
+	public function ignoreLastUpdated() {
+	
+		$this->touchLastUpdated = FALSE;
+		return $this;
+	
+	}
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
+	 */
+	public function updateLastUpdated() {
+	
+		$this->touchLastUpdated = TRUE;
+		return $this;
+	
+	}
+
+	/**
 	 * prepare a statement and bind parameters
 	 *
 	 * @param string $statementString
@@ -784,22 +817,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public abstract function setConnection(\PDO $connection);
 
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
-	 */
-	public abstract function ignoreLastUpdated();
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
-	 */
-	public abstract function updateLastUpdated();
-	
 	/**
 	 * analyze column metadata of table $tableName
 	 * and store result

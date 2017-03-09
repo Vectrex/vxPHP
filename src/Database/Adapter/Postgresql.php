@@ -56,15 +56,6 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	protected $tableStructureCache;
 	
 	/**
-	 * automatically touch a lastUpdated column whenever
-	 * a record is updated
-	 * any internal db mechanism is notoverwritten
-	 *
-	 * @var boolean
-	 */
-	protected $touchLastUpdated = TRUE;
-
-	/**
 	 *
 	 * {@inheritdoc}
 	 *
@@ -140,26 +131,6 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	
 	}
 
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
-	 */
-	public function ignoreLastUpdated() {
-		// TODO Auto-generated method stub
-	}
-	
-	/**
-	 *
-	 * {@inheritdoc}
-	 *
-	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
-	 */
-	public function updateLastUpdated() {
-		// TODO Auto-generated method stub
-	}
-	
 	/**
 	 * 
 	 * {@inheritDoc}

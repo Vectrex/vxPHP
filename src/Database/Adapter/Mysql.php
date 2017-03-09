@@ -48,15 +48,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	const QUOTE_CHAR = '`';
 
 	/**
-	 * automatically touch a lastUpdated column whenever
-	 * a record is updated
-	 * any internal db mechanism is notoverwritten
-	 * 
-	 * @var boolean
-	 */
-	protected	$touchLastUpdated = TRUE;
-	
-	/**
 	 * map translating encoding names
 	 * 
 	 * @var array
@@ -175,28 +166,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
-	 */
-	public function ignoreLastUpdated() {
-
-		$this->touchLastUpdated = FALSE;
-		return $this;
-
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
-	 */
-	public function updateLastUpdated() {
-
-		$this->touchLastUpdated = TRUE;
-		return $this;
-
-	}
-
 	/**
 	 * return all possible options of an enum or set attribute
 	 * 
