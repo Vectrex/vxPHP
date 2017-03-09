@@ -346,7 +346,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 				'columnType'	=> $column['column_type']
 			];
 
-			if($column['column_name'] === 'PRI') {
+			if($column['column_key'] === 'PRI') {
 				$primaryKeyColumns[] = $column['column_name']; 
 			}
 		}
