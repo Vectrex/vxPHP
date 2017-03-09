@@ -527,7 +527,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			!in_array(strtolower(static::UPDATE_FIELD), array_keys($data)) &&
 			$this->touchLastUpdated
 		) {
-			$setPlaceholders .= ', ' . static::QUOTE_CHAR . $columns[static::CREATE_FIELD]['columnName'] . static::QUOTE_CHAR . ' = NOW()';
+			$setPlaceholders .= ', ' . static::QUOTE_CHAR . $columns[static::UPDATE_FIELD]['columnName'] . static::QUOTE_CHAR . ' = NOW()';
 		}
 		
 		// record identified by primary key
