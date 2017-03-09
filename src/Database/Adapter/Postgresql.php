@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.0.4, 2017-03-08
+ * @version 0.0.5, 2017-03-09
  */
 class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -98,17 +98,17 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	
 			$options = [
 				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
 			];
 
-			$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+			// if not explicitly specified, attributes are returned lower case
 			
-			$connection->setAttribute(
-				\PDO::ATTR_STRINGIFY_FETCHES,
-				FALSE
-			);
-	
-			$this->connection = $connection;
+			if(!$config->keep_key_case) {
+				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+			}
+
+			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
 
 		}
 

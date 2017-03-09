@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.7.0, 2017-03-08
+ * @version 1.8.0, 2017-03-09
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -128,24 +128,24 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	
 			$options = [
 				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC
+				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
 			];
 			
-			$connection = new \PDO($this->dsn, $this->user, $this->password, $options);
-	
-			$connection->setAttribute(
-				\PDO::ATTR_STRINGIFY_FETCHES,
-				FALSE
-			);
+			// if not explicitly specified, attributes are returned lower case
+
+			if(!$config->keep_key_case) {
+				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+			}
+			
+			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
 	
 			// set emulated prepares for MySQL servers < 5.1.17
 	
-			$connection->setAttribute(
+			$this->connection->setAttribute(
 				\PDO::ATTR_EMULATE_PREPARES,
 				version_compare($connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
 			);
-	
-			$this->connection = $connection;
 
 		}
 
