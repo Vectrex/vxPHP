@@ -17,7 +17,7 @@ namespace vxPHP\Database;
  *
  * @version 0.1.0, 2016-05-14
  */
-class MysqlPDOUtil {
+class Util {
 	
 	/**
 	 * Re-formats a date strings depending on a supplied input locale to yyyy-mm-dd
@@ -129,14 +129,14 @@ class MysqlPDOUtil {
 	 */
 	public static function getAlias(DatabaseInterface $connection, $aliasText, $tableName, $id = 0, $column = 'alias') {
 
-		$replace = array(
+		$replace = [
 			'~(ä|&auml;)~'	=> 'ae',
 			'~(ö|&ouml;)~'	=> 'oe',
 			'~(ü|&uuml;)~'	=> 'ue',
 			'~(ß|&szlig;)~'	=> 'ss',
 			'~\W+~'			=> '_',
 			'~(^_+|_+$)~'	=> ''
-		);
+		];
 		
 		$primaryKeyName = $connection->getPrimaryKey($tableName);
 
@@ -147,12 +147,13 @@ class MysqlPDOUtil {
 		);
 
 		$statement = $connection->getConnection()->prepare(
-			'SELECT ' . $column . ' FROM ' . $tableName .
-			' WHERE LOWER(' . $column . ') LIKE ? AND ' .
-			$primaryKeyName . ' != ?'
+			sprintf(
+				'SELECT %1$s FROM %2$s WHERE LOWER(%1$s) LIKE ? AND %3$s != ?',
+				$column, $tableName, $primaryKeyName
+			)
 		);
 
-		$statement->execute(array($alias . '%', $id));
+		$statement->execute([$alias . '%', $id]);
 		$aliasValues = $statement->fetchAll(\PDO::FETCH_COLUMN, 0);
 
 		if(count($aliasValues) === 0) {

@@ -194,27 +194,30 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 		if(!in_array($tableName, array_keys($this->tableStructureCache))) {
 			return;
 		}
-		
+
+		// use native pgsql tables instead of information_schema for improved speed, and less privilege restrictions(?)
+
 		$statement = $this->connection->prepare('
 			SELECT
-				c.column_name,
-				c.column_default,
-				c.data_type,
-				c.is_nullable,
-				tc.constraint_type
+				a.attnum AS column_number,
+				a.attname AS column_name,
+				a.attnotnull AS not_null,
+				d.adsrc AS column_default,
+				i.relname AS constraint_type,
+				format_type(a.atttypid, a.atttypmod) AS data_type
 			FROM
-				information_schema.columns c
-				LEFT JOIN information_schema.constraint_column_usage ccu ON ccu.table_schema = c.table_schema AND ccu.table_name = c.table_name AND ccu.column_name = c.column_name
-				LEFT JOIN information_schema.table_constraints tc ON tc.constraint_schema = ccu.constraint_schema AND ccu.constraint_name = tc.constraint_name
+				pg_class t
+				INNER JOIN pg_attribute a ON a.attrelid = t.oid
+				LEFT JOIN pg_attrdef d ON d.adrelid = t.oid AND d.adnum = a.attnum
+				LEFT JOIN pg_index ix ON ix.indrelid = t.oid AND a.attnum = ANY(ix.indkey)
+				LEFT JOIN pg_class i ON i.oid = ix.indexrelid
 			WHERE
-				c.table_schema = ? AND
-				c.table_name = ?
+				t.relname = ?
+				AND a.attnum > 0
+				AND NOT a.attisdropped
 		');
 
-		$statement->execute([
-			'public',
-			$tableName
-		]);
+		$statement->execute([$tableName]);
 
 		$columns			= [];
 		$primaryKeyColumns	= [];
@@ -224,23 +227,23 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 			// get standard information for column
 				
 			$name = strtolower($column['column_name']);
-		
+				
 			$columns[$name] = [
 				'columnName'	=> $column['column_name'],
 				'columnKey'		=> $column['constraint_type'],
 				'columnDefault'	=> $column['column_default'],
 				'dataType'		=> $column['data_type'],
-				'isNullable'	=> $column['is_nullable'] === 'YES',
+				'isNullable'	=> !$column['not_null'],
 			];
-		
-			if($column['constraint_type'] === 'PRIMARY KEY') {
+
+			if(substr($column['constraint_type'], -4) === 'pkey') {
 				$primaryKeyColumns[] = $column['column_name'];
 			}
 		}
 
 		$this->tableStructureCache[$tableName] = $columns;
 		$this->tableStructureCache[$tableName]['_primaryKeyColumns'] = $primaryKeyColumns;
-		
+
 	}
 
 }
