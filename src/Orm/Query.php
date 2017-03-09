@@ -18,34 +18,47 @@ use vxPHP\Database\DatabaseInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.3.0 2016-05-14
+ * @version 0.4.0 2017-03-09
  */
 abstract class Query implements QueryInterface {
 
 	/**
 	 * @var DatabaseInterface
 	 */
-	protected	$dbConnection;
+	protected $dbConnection;
+	
+	/**
+	 * character for quoting identifiers
+	 * 
+	 * @var string
+	 */
+	protected $quoteChar;
 
-	protected	$columns		= [],
-				$table,
-				$alias,
-				$innerJoins		= [],
-				$whereClauses	= [],
-				$columnSorts	= [],
-				$valuesToBind	= [],
-				$sql,
-				$lastQuerySql;
+	protected $columns = [];
+	protected $table;
+	protected $alias;
+	protected $innerJoins = [];
+	protected $whereClauses = [];
+	protected $columnSorts = [];
+	protected $valuesToBind = [];
+	protected $sql;
+	protected $lastQuerySql;
 
 	/**
 	 * provide initial database connection
-	 * currently only allows a Mysqli backend
 	 *
 	 * @param DatabaseInterface $dbConnection
 	 */
 	public function __construct(DatabaseInterface $dbConnection) {
 
 		$this->dbConnection = $dbConnection;
+
+		if(defined(get_class($dbConnection) . '::QUOTE_CHAR')) {
+			$this->quoteChar = $dbConnection::QUOTE_CHAR;
+		}
+		else {
+			$this->quoteChar = ' ';
+		}
 
 	}
 
@@ -214,6 +227,8 @@ abstract class Query implements QueryInterface {
 		$w = [];
 		$s = [];
 
+		$qc = $this->quoteChar;
+
 		// start SQL statement
 
 		$this->sql = 'SELECT ';
@@ -224,23 +239,25 @@ abstract class Query implements QueryInterface {
 			$this->sql .= '*';
 		}
 		else {
-			$this->sql .= sprintf('`%s`', str_replace('.', '`.`', implode('`,`', $this->columns)));
+			
+			$this->sql .= $qc . str_replace('.', $qc . '.' . $qc, implode($qc . ',' . $qc, $this->columns)) . $qc;
+				
 		}
 
 		// add table
 
-		$this->sql .= sprintf(' FROM `%s`', preg_replace('/\s+/', '` `', $this->table));
+		$this->sql .= ' FROM ' . $qc . preg_replace('/\s+/', $qc . ' ' . $qc, $this->table) . $qc;
 
 		// add alias
 
 		if($this->alias) {
-			$this->sql .= sprintf(' `%s`', $this->alias);
+			$this->sql .= ' ' . $qc . $this->alias . $qc;
 		}
 
 		// add INNER JOINs
 
 		foreach($this->innerJoins as $join) {
-			$this->sql .= sprintf(' INNER JOIN `%s` ON %s', preg_replace('/\s+/', '` `', trim($join->table)), $join->on);
+			$this->sql .= sprintf(' INNER JOIN %1$s%2$s%1$s ON %3$s', $qc, preg_replace('/\s+/', $qc . ' ' . $qc, trim($join->table)), $join->on);
 		}
 
 		// build WHERE clause
@@ -258,15 +275,17 @@ abstract class Query implements QueryInterface {
 			else {
 				if($where->operator === 'IN') {
 					$w[] = sprintf(
-						'`%s` IN (%s)',
-						str_replace('.', '`.`', $where->conditionOrColumn),
+						'%1$s%2$s%1$s IN (%3$s)',
+						$qc,
+						str_replace('.', $qc . '.' . $qc, $where->conditionOrColumn),
 						implode(', ', array_fill(0, count($where->value), '?'))
 					);
 				}
 				else {
 					$w[] = sprintf(
-						'`%s` %s ?',
-						str_replace('.', '`.`', $where->conditionOrColumn),
+						'%1$s%2$s%1$s %3$s ?',
+						$qc,
+						str_replace('.', $qc . '.' . $qc, $where->conditionOrColumn),
 						$where->operator
 					);
 				}
