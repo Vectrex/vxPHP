@@ -725,7 +725,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	
 		$this->primeQuery($statementString, $parameters);
 		$this->statement->execute();
-	
 		return $this->statement->fetchAll(\PDO::FETCH_ASSOC);
 	
 	}

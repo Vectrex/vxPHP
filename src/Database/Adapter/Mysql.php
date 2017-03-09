@@ -134,7 +134,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			
 			// if not explicitly specified, attributes are returned lower case
 
-			if(!$config->keep_key_case) {
+			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
 				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
 			}
 			
@@ -144,7 +144,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	
 			$this->connection->setAttribute(
 				\PDO::ATTR_EMULATE_PREPARES,
-				version_compare($connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
+				version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
 			);
 
 		}
@@ -307,12 +307,12 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 		$statement = $this->connection->prepare('
 			SELECT
-				COLUMN_NAME,
-				COLUMN_KEY,
-				COLUMN_DEFAULT,
-				DATA_TYPE,
-				IS_NULLABLE,
-				COLUMN_TYPE
+				column_name,
+				column_key,
+				column_default,
+				data_type,
+				is_nullable,
+				column_type
 
 			FROM
 				information_schema.COLUMNS
@@ -334,22 +334,20 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			// get standard information for column
 			
-			$name = strtolower($column['COLUMN_NAME']);
-
-			$columns[$name] = [
-				'columnName'	=> $column['COLUMN_NAME'],
-				'columnKey'		=> $column['COLUMN_KEY'],
-				'columnDefault'	=> $column['COLUMN_DEFAULT'],
-				'dataType'		=> $column['DATA_TYPE'],
-				'isNullable'	=> $column['IS_NULLABLE'],
+			$columns[strtolower($column['column_name'])] = [
+				'columnName'	=> $column['column_name'],
+				'columnKey'		=> $column['column_key'],
+				'columnDefault'	=> $column['column_default'],
+				'dataType'		=> $column['data_type'],
+				'isNullable'	=> $column['is_nullable'],
 					
 				// required to retrieve options for enum and set data types
 					
-				'columnType'	=> $column['COLUMN_TYPE']
+				'columnType'	=> $column['column_type']
 			];
 
-			if($column['COLUMN_KEY'] === 'PRI') {
-				$primaryKeyColumns[] = $column['COLUMN_NAME']; 
+			if($column['column_name'] === 'PRI') {
+				$primaryKeyColumns[] = $column['column_name']; 
 			}
 		}
 

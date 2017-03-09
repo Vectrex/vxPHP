@@ -104,7 +104,7 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			// if not explicitly specified, attributes are returned lower case
 			
-			if(!$config->keep_key_case) {
+			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
 				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
 			}
 
