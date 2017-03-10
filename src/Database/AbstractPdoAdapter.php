@@ -358,7 +358,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @throws \InvalidArgumentException
 	 */
 	public function insertRecords($tableName, array $rowsData) {
-		
+
 		// empty array, nothing to do, no rows inserted
 
 		if(!count($rowsData)) {
@@ -385,8 +385,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		
 		// match keys with table attributes
 
-		$attributes = array_keys($this->tableStructureCache[$tableName]);
 		$columns = $this->tableStructureCache[$tableName];
+		$attributes = array_keys($columns);
 
 		$names = [];
 
@@ -400,9 +400,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		
 		ksort($firstRow);
 
-		foreach($attributes as $attribute) {
+		foreach(array_keys($firstRow) as $attribute) {
 		
-			if (array_key_exists($attribute, $firstRow)) {
+			if (in_array($attribute, $attributes)) {
 				$names[] = $columns[$attribute]['columnName'];
 			}
 			
@@ -570,7 +570,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			else {
 				throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
 			}
-		
+
 		}
 		
 		else {
