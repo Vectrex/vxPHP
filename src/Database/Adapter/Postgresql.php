@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.0.5, 2017-03-09
+ * @version 0.2.0, 2017-03-10
  */
 class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 

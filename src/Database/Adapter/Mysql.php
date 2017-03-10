@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.8.0, 2017-03-09
+ * @version 1.9.0, 2017-03-10
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 

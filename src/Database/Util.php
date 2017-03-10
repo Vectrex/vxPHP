@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.1.0, 2016-05-14
+ * @version 0.2.0, 2017-03-10
  */
 class Util {
 	

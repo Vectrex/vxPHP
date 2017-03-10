@@ -17,7 +17,7 @@ use vxPHP\Database\DatabaseInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.4.0, 2017-03-08
+ * @version 0.5.0, 2017-03-10
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
