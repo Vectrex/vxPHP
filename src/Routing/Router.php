@@ -24,7 +24,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.7.0 2017-02-27
+ * @version 0.8.0 2017-03-20
  *
  */
 class Router {
@@ -49,10 +49,10 @@ class Router {
 		$script			= basename($request->getScriptName());
 
 		if(!($path = trim($request->getPathInfo(), '/'))) {
-			$pathSegments = array();
+			$pathSegments = [];
 		}
 		else {
-			$pathSegments	= explode('/' , $path);
+			$pathSegments = explode('/' , $path);
 		}
 
 		// skip if pathinfo matches script name
@@ -70,7 +70,7 @@ class Router {
 
 		// get page
 
-		if(count($pathSegments) && !empty($pathSegments[0])) {
+		if(count($pathSegments)) {
 			$route = self::getRouteFromConfig($script, $pathSegments);
 		}
 
@@ -136,7 +136,7 @@ class Router {
 	private static function getRouteFromConfig($scriptName, array $pathSegments = NULL) {
 
 		$routes = Application::getInstance()->getConfig()->routes;
-
+		
 		// if no page given try to get the first from list
 
 		if(is_null($pathSegments) && isset($routes[$scriptName])) {
@@ -161,7 +161,7 @@ class Router {
 			// pick route only when request method requirement is met
 
 			if(
-				preg_match('~(?:/|^)' . $route->getMatchExpression() .'(?:/|$)~', $pathToCheck) &&
+				preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck) &&
 				$route->allowsRequestMethod($requestMethod)
 			) {
 
@@ -174,7 +174,6 @@ class Router {
 				else {
 					
 					// if a route has been found previously, choose the more "precise" and/or later one
-
 					// choose the route with more satisfied placeholders
 					// @todo could be optimized
 
