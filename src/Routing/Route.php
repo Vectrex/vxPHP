@@ -22,7 +22,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.12.0 2017-02-12
+ * @version 1.0.0 2017-04-15
  *
  */
 class Route {
@@ -361,37 +361,44 @@ class Route {
 	 */
 	public function getUrl(array $pathParameters = NULL) {
 
+		// avoid building URL in subsequent calls
+
 		if(!$this->url) {
-
+			
 			$application = Application::getInstance();
-
+			
 			$urlSegments = [];
-
+			
 			if($application->hasNiceUris()) {
-
+				
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
 					$urlSegments[] = $scriptName;
 				}
 			}
-
+			
 			else {
-
+				
 				if($application->getRelativeAssetsPath()) {
 					$urlSegments[] = trim($application->getRelativeAssetsPath(), '/');
 				}
-
+				
 				$urlSegments[] = $this->scriptName;
 			}
 			
-			$urlSegments[] = $this->getPath($pathParameters);
-
-			// remove trailing slashes
-
 			$this->url = rtrim('/' . implode('/', $urlSegments), '/');
+			
 		}
 
-		return $this->url;
+		// add path and path parameters
 
+		$path = $this->getPath($pathParameters);
+		
+		if($path) {
+			return $this->url . '/' . $path;
+		}
+		
+		return $this->url;
+		
 	}
 
 	/**
