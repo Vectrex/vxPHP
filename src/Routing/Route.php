@@ -22,7 +22,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.0.0 2017-04-15
+ * @version 1.0.2 2017-04-17
  *
  */
 class Route {
@@ -184,7 +184,7 @@ class Route {
 	 */
 	public function __destruct() {
 
-		unset ($this->pathParameters);
+		$this->clearPathParameters();
 
 	}
 
@@ -299,10 +299,14 @@ class Route {
 	 */
 	public function getPath(array $pathParameters = NULL, $allowEmptyParameters = FALSE) {
 
+		// clear all previously set path parameters
+
+		$this->clearPathParameters();
+		
 		// set optional path parameters
 		
 		if($pathParameters) {
-		
+			
 			foreach($pathParameters as $name => $value) {
 				$this->setPathParameter($name, $value);
 			}
@@ -346,7 +350,7 @@ class Route {
 			}
 		}
 		
-		return $path;
+		return rtrim($path, '/');
 
 	}
 
@@ -518,7 +522,7 @@ class Route {
 
 		// lazy initialization of parameters
 
-		if(is_null($this->pathParameters) && !is_null($this->placeholders)) {
+		if(empty($this->pathParameters) && !is_null($this->placeholders)) {
 
 			// collect all placeholder names
 
@@ -571,6 +575,18 @@ class Route {
 	}
 	
 	/**
+	 * clear all path parameters
+	 *
+	 * @return \vxPHP\Routing\Route
+	 */
+	public function clearPathParameters() {
+		
+		$this->pathParameters = [];
+		return $this;
+		
+	}
+
+	/**
 	 * set path parameter $name
 	 * will only accept parameter names which have been previously defined
 	 * 
@@ -600,15 +616,7 @@ class Route {
 			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
-		if($this->pathParameters[$name] != $value) {
-
-			$this->pathParameters[$name] = $value;
-		
-			// unset Route::url to trigger re-evaluation when retrieving url with Route::getUrl()
-
-			$this->url = NULL;
-
-		}
+		$this->pathParameters[$name] = $value;
 
 		return $this;
 	}
