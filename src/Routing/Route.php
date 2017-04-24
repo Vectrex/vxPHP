@@ -22,7 +22,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.0.2 2017-04-17
+ * @version 1.1.0 2017-04-24
  *
  */
 class Route {
@@ -271,18 +271,13 @@ class Route {
 
 	}
 
+
 	/**
-	 * returns controller instance assigned to route
-	 * path to controllers is retrieved from Config instance
-	 *
-	 * @return Controller $controller
+	 * get name of method which is invoked after instancing the
+	 * controller
+	 * 
+	 * @return string
 	 */
-	public function getController() {
-
-		return Controller::createControllerFromRoute($this);
-
-	}
-
 	public function getMethodName() {
 
 		return $this->methodName;

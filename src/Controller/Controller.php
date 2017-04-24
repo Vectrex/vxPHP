@@ -25,7 +25,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.4.0 2016-11-01
+ * @version 0.6.0 2017-04-24
  *
  */
 abstract class Controller {
@@ -36,15 +36,14 @@ abstract class Controller {
 	protected $request;
 
 	/**
-	 * @var string
-	 * the current script name (e.g. index.php, admin.php, ...)
-	 */
-	protected $currentDocument = NULL;
-
-	/**
 	 * @var \vxPHP\Routing\Route
 	 */
 	protected $route;
+	
+	/**
+	 * @var array
+	 */
+	protected $parameters;
 
 	/**
 	 * @var array
@@ -73,32 +72,51 @@ abstract class Controller {
 	protected $xhrBag;
 
 	/**
-	 *
-	 *
+	 * create a controller instance
+	 * if a route is passed on to constructor this route will be made
+	 * available to the controller
+	 * if no route is passed on the route falls back to the applications
+	 * set current route or it will determined by the router
+	 * a second argument can hold an array with arbitrary data used by
+	 * the controller
+	 *  
+	 * @param Route $route
+	 * @param array $parameters
 	 */
-	public function __construct() {
+	public function __construct(Route $route = NULL, array $parameters = NULL) {
+
+		$this->parameters = $parameters;
 
 		// set up references required in controllers
 
-		$application			= Application::getInstance();
+		$application = Application::getInstance();
+		$this->config = $application->getConfig();
 
-		$this->request			= Request::createFromGlobals();
-		$this->currentDocument	= basename($this->request->getScriptName());
+		$this->request = Request::createFromGlobals();
+
+		// if a route was passed as argument assign this route to controller 
+
+		if($route) {
+			$this->route = $route;
+		}
+
+		// otherwise fall back to applications current route or let router parse the path
+
+		else {
+			$this->route = $application->getCurrentRoute();
+	
+			if(is_null($this->route)) {
+				$this->route = Router::getRouteFromPathInfo();
+			}
+		}
 
 		if($path = trim($this->request->getPathInfo(), '/')) {
-			$this->pathSegments		= explode('/', $path);
+			$this->pathSegments = explode('/', $path);
 		}
-
-		$this->config			= $application->getConfig();
-		$this->route			= $application->getCurrentRoute();
-
-		if(is_null($this->route)) {
-			$this->route = Router::getRouteFromPathInfo();
-		}
-
+		
 		// skip script name
 
-		if($application->hasNiceUris() && $this->currentDocument != 'index.php') {
+		if($application->hasNiceUris() && 'index.php' !== basename($this->request->getScriptName())) {
 			array_shift($this->pathSegments);
 		}
 
@@ -144,9 +162,9 @@ abstract class Controller {
 	}
 
 	/**
-	 * define which method will be called by Controller::render() or Controller::renderResponse()
-	 * when more than one method is defined in controller
-	 * returns $this to allow chaining
+	 * define which method will be called by Controller::render() or
+	 * Controller::renderResponse() when more than one method is defined
+	 * in this controller
 	 * 
 	 * @param string $methodName
 	 * @return \vxPHP\Controller\Controller
@@ -159,31 +177,22 @@ abstract class Controller {
 	}
 
 	/**
-	 * convenience function to allow instantiation and output by chaining
-	 *
-	 * @return \vxPHP\Controller\Controller
-	 */
-	public static function create() {
-
-		return new static();
-
-	}
-
-	/**
-	 * determines controller class name from a routes controllerString property
-	 * and returns a controller instance
+	 * determines controller class name from a routes controllerString
+	 * property and returns a controller instance
+     * an additional parameters array will be passed on to the constructor
 	 *
 	 * @param Route $controllerPath
-	 * @return Controller
+	 * @param array $parameters
+	 * @return \vxPHP\Controller\Controller
 	 */
-	public static function createControllerFromRoute(Route $route) {
+	public static function createControllerFromRoute(Route $route, array $parameters = NULL) {
 
 		$controllerClass = Application::getInstance()->getApplicationNamespace() . $route->getControllerClassName();
 
 		/**
 		 * @var Controller
 		 */
-		$instance = new $controllerClass(); 
+		$instance = new $controllerClass($route, $parameters); 
 		
 		if($method = $instance->route->getMethodName()) {
 			$instance->setExecutedMethod($method);
