@@ -28,7 +28,7 @@ use vxPHP\Application\Exception\ConfigException;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.6.1 2016-11-01
+ * @version 1.6.2 2017-04-24
  *
  */
 
@@ -143,13 +143,16 @@ class SimpleTemplate {
 	}
 	
 	/**
-	 * check whether template file contains any PHP escape characters
+	 * check whether template file contains PHP code
+	 * does this by searching for opening PHP tags:
+	 * <? <?= <?php
+	 * no checks for ASP notation are applied 
 	 *
 	 * @return boolean
 	 */
 	public function containsPHP() {
 
-		return 1 === preg_match('~<\\?(php)?.*?\\?>~', $this->rawContents);
+		return 1 === preg_match('~\<\?(?:=|php\s|\s)~', $this->rawContents);
 
 	}
 
@@ -159,7 +162,9 @@ class SimpleTemplate {
 	 * @return string
 	 */
 	public function getrawContents() {
- 		return $this->rawContents;
+
+		return $this->rawContents;
+
 	}
 
 	
