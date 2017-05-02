@@ -32,7 +32,7 @@ if(!function_exists('hash_equals')) {
  * simple wrapper for CSRF token management
  *  
  * @author Gregor Kofler
- * @version 0.2.0 2016-04-10
+ * @version 0.3.0 2017-05-02
  */
 class CsrfTokenManager {
 
@@ -158,15 +158,15 @@ class CsrfTokenManager {
 			$randomBytes = random_bytes($length);
 		}
 	
-		if (function_exists('mcrypt_create_iv')) {
+		else if (function_exists('mcrypt_create_iv')) {
 			$randomBytes = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
 		}
 
-		if (function_exists('openssl_random_pseudo_bytes')) {
+		else if (function_exists('openssl_random_pseudo_bytes')) {
 			$randomBytes = openssl_random_pseudo_bytes($length);
 		}
 
-		if(isset($randomBytes)) {
+		else {
 			return rtrim(strtr(base64_encode($randomBytes), '+/', '-_'), '=');
 		}
 
