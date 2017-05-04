@@ -19,7 +19,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.4.0 2017-02-12
+ * @version 0.4.1 2017-05-04
  */
 class MenuEntry {
 	
@@ -84,7 +84,7 @@ class MenuEntry {
 	 */
 	protected $href;
 
-	public function __construct($path, $attributes, $localPage = TRUE) {
+	public function __construct($path, array $attributes, $localPage = TRUE) {
 
 		$this->ndx			= self::$count++;
 		$this->path			= trim($path, '/');
