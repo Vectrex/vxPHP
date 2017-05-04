@@ -32,7 +32,7 @@ if(!function_exists('hash_equals')) {
  * simple wrapper for CSRF token management
  *  
  * @author Gregor Kofler
- * @version 0.3.0 2017-05-02
+ * @version 0.3.1 2017-05-04
  */
 class CsrfTokenManager {
 
@@ -167,10 +167,10 @@ class CsrfTokenManager {
 		}
 
 		else {
-			return rtrim(strtr(base64_encode($randomBytes), '+/', '-_'), '=');
+			throw new \Exception('No suitable function for generating a CSRF token available.');
 		}
 
-		throw new \Exception('No suitable function for generating a CSRF token available.');
+		return rtrim(strtr(base64_encode($randomBytes), '+/', '-_'), '=');
 
 	}
 
