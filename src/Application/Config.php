@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.1 2017-05-05
+ * @version 2.0.2 2017-05-05
  */
 class Config {
 
@@ -211,7 +211,7 @@ class Config {
 
 				if(!$include->load($path . $node->nodeValue, LIBXML_NOCDATA)) {
 
-					$this->dumpXmlErrors($include);
+					$this->dumpXmlErrors($path . $node->nodeValue);
 					exit();
 
 				}
