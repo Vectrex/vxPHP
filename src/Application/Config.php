@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.2 2017-05-05
+ * @version 2.0.3 2017-05-05
  */
 class Config {
 
@@ -810,7 +810,7 @@ class Config {
 	 */
 	private function parseMenusSettings(\DOMNode $menus) {
 
-		foreach ($menus->getElementsByTagName('menu') as $menu) {
+		foreach ((new \DOMXPath($menus->ownerDocument))->query('menu', $menus) as $menu) {
 
 			$menuInstance = $this->parseMenu($menu);
 			$this->menus[$menuInstance->getId()] = $menuInstance;
@@ -978,7 +978,7 @@ class Config {
 
 		foreach($menu->childNodes as $entry) {
 
-			if($entry->nodeType !== XML_ELEMENT_NODE) {
+			if($entry->nodeType !== XML_ELEMENT_NODE || $entry->nodeName !== 'menuentry') {
 				continue;
 			}
 
@@ -1057,8 +1057,10 @@ class Config {
 
 				$m->appendEntry($e);
 
-				if(isset($entry->menu)) {
-					$e->appendMenu($this->parseMenu($entry->menu));
+				$submenu = (new \DOMXPath($entry->ownerDocument))->query('menu', $entry); 
+
+				if($submenu->length) {
+					$e->appendMenu($this->parseMenu($submenu->item(0)));
 				}
 
 			}

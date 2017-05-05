@@ -74,7 +74,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$matchSegments = explode('/', $matches[3]);
 		$pathToFind = array_shift($matchSegments);
-
+		
 		$recursiveFind = function(Menu $m) use (&$recursiveFind, $pathToFind) {
 
 			foreach($m->getEntries() as $e) {
@@ -83,7 +83,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 					return $e;
 				}
 
-				if(($sm = $e->getSubMenu()) && $sm->getType() != 'dynamic') {
+				if(($sm = $e->getSubMenu()) && $sm->getType() !== 'dynamic') {
 					if($e = $recursiveFind($sm)) {
 						return $e;
 					}
@@ -94,14 +94,15 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		foreach($config->menus as $menu) {
 			if($menu->getScript() === $script) {
-				$e = $recursiveFind($menu);
-				break;
+				if(($e = $recursiveFind($menu))) {
+					break;
+				}
 			}
 		}
 
 		if(isset($e)) {
 
-			$pathSegments = array($e->getPath());
+			$pathSegments = [$e->getPath()];
 
 			while($e = $e->getMenu()->getParentEntry()) {
 				$pathSegments[] = $e->getPath();
@@ -158,7 +159,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$matches[4] = html_entity_decode($matches[4]);
 
-		$uriParts = array();
+		$uriParts = [];
 
 		if($niceUri) {
 			if($script !== 'index.php') {
