@@ -29,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.2 2017-02-21
+ * @version 1.8.3 2017-05-05
  */
 class Application {
 
@@ -279,16 +279,28 @@ class Application {
 	}
 
 	/**
-	 * get default database object reference
+	 * get default vxPDO instance
+	 * 
+	 * this method exists for backwards compatibility
+	 * if no 'db' configuration is found, it tries to return a
+	 * configured default vxpdo datasource 
 	 *
-	 * @return DatabaseInterface
+	 * @return \vxPHP\Database\DatabaseInterface
 	 */
 	public function getDb() {
 
 		if(empty($this->db)) {
 
 			if(empty($this->config->db)) {
-				return NULL;
+				
+				try {
+					return $this->getVxPDO();
+				}
+				
+				catch(ApplicationException $e) {
+					return NULL;
+				}
+				
 			}
 
 			$config = $this->config->db;
@@ -309,7 +321,8 @@ class Application {
 	}
 
 	/**
-	 * get configured vxPDO instance
+	 * get a configured vxPDO instance identified by its datasource
+	 * name
 	 * 
 	 * @param string $name
 	 * @throws ApplicationException
