@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.0 2017-05-04
+ * @version 2.0.1 2017-05-05
  */
 class Config {
 
@@ -332,12 +332,12 @@ class Config {
 		$xpath = new \DOMXPath($db->ownerDocument);
 
 		$d = $xpath->query("db_connection[@context='$context']", $db);
-
-		if(!count($d)) {
-			$d = $xpath->query('db_connection');
+		
+		if(!$d->length) {
+			$d = $db->getElementsByTagName('db_connection');
 		}
 
-		if(count($d)) {
+		if($d->length) {
 			$this->db = new \stdClass();
 
 			foreach($d->item(0)->childNodes as $node) {
@@ -472,11 +472,11 @@ class Config {
 
 		$e = $xpath->query("db_connection[@context='$context']", $binaries);
 
-		if(!count($e)) {
+		if(!$e->length) {
 			$e = $xpath->query('executables');
 		}
 
-		if(count($e)) {
+		if($e->length) {
 
 			$p = $e->item(0)->getElementsByTagName('path');
 
