@@ -29,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.3 2017-05-05
+ * @version 1.8.4 2017-05-19
  */
 class Application {
 
@@ -333,7 +333,7 @@ class Application {
 		
 		if(!array_key_exists($name, $this->vxPDOInstances)) {
 
-			if(!array_key_exists($name, $this->config->vxpdo)) {
+			if(empty($this->config->vxpdo) || !array_key_exists($name, $this->config->vxpdo)) {
 				throw new ApplicationException(sprintf("vxPDO configuration for '%s' not found.", $name));
 			}
 			
