@@ -17,7 +17,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.3.1 2016-02-03
+ * @version 0.4.0 2017-05-20
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -48,12 +48,12 @@ class SmtpMailer implements MailerInterface {
 	 * mb_encode_mimeheader()
 	 * @var array
 	 */
-	private	$mimeEncodingPreferences = array(
-				'scheme'			=> 'Q',
-				'input-charset'		=> 'UTF-8',
-				'output-charset'	=> 'UTF-8',
-				'line-break-chars'	=> self::CRLF
-			);
+	private	$mimeEncodingPreferences = [
+		'scheme'			=> 'Q',
+		'input-charset'		=> 'UTF-8',
+		'output-charset'	=> 'UTF-8',
+		'line-break-chars'	=> self::CRLF
+	];
 
 	/**
 	 * host address of SMTP server
@@ -89,7 +89,7 @@ class SmtpMailer implements MailerInterface {
 	 * supported auth methods
 	 * @var array
 	 */
-	private	$authTypes = array('NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5');
+	private	$authTypes = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
 
 
 	/**
@@ -102,7 +102,7 @@ class SmtpMailer implements MailerInterface {
 	 * supported encryption methods
 	 * @var array
 	 */
-	private	$smtpEncryptions = array('SSL', 'TLS');
+	private	$smtpEncryptions = ['SSL', 'TLS'];
 
 
 	/**
@@ -110,7 +110,7 @@ class SmtpMailer implements MailerInterface {
 	 * 
 	 * @var array
 	 */
-	private $extensions = array();
+	private $extensions = [];
 
 	/**
 	 * connection timeout
@@ -146,7 +146,7 @@ class SmtpMailer implements MailerInterface {
 	 * header rows
 	 * @var array
 	 */
-	private	$headers = array();
+	private	$headers = [];
 
 	/**
 	 * the mail message
@@ -164,7 +164,7 @@ class SmtpMailer implements MailerInterface {
 	 * server communication log
 	 * @var log
 	 */
-	private	$log = array();
+	private	$log = [];
 
 	/**
 	 * constructor
@@ -661,17 +661,23 @@ class SmtpMailer implements MailerInterface {
 	 */
 	private function startTLS() {
 
-	$this->put('STARTTLS' . self::CRLF);
-
+		$this->put('STARTTLS' . self::CRLF);
+		
 		if (!$this->check(self::RFC_SERVICE_READY)) {
 			throw new SmtpMailerException('Failed to establish TLS.', SmtpMailerException::TLS_FAILED);
 		}
 		
+		$crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+		
+		if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+			$crypto |= (STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT);
+		}
+
 		if(
 			!stream_socket_enable_crypto(
 				$this->socket,
 				TRUE,
-				STREAM_CRYPTO_METHOD_TLS_CLIENT
+				$crypto
 			)
 		) {
 			throw new SmtpMailerException('TLS encryption of stream failed.', SmtpMailerException::TLS_FAILED);
