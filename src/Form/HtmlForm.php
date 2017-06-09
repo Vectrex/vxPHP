@@ -28,7 +28,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.7.1 2016-11-27
+ * @version 1.7.2 2017-06-09
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -482,7 +482,9 @@ class HtmlForm {
 	public function getValidFormValues($getSubmits = FALSE) {
 
 		if(is_null($this->requestValues)) {
+
 			throw new HtmlFormException('Values can not be evaluated. No request bound.', HtmlFormException::NO_REQUEST_BOUND);
+
 		}
 
 		$tmp = new ValuesBag();
@@ -494,21 +496,30 @@ class HtmlForm {
 				$vals = [];
 
 				foreach($e as $ndx => $elem) {
-					if(
-							$elem->canSubmit() && !$getSubmits ||
-							!$elem->isValid() ||
-							$elem instanceof \vxPHP\Form\FormElement\CheckboxElement && (!($arr = $this->requestValues->get($name)) || !isset($arr[$ndx]))
-					) {
+
+					if(!$elem->isValid()) {
+						continue;
+					}
+
+					// @todo since elements in an array are all of same type they don't need to be checked individually
+					
+					if($elem->canSubmit() && !$getSubmits) {
+						continue;
+					}
+
+					if($elem instanceof \vxPHP\Form\FormElement\CheckboxElement && !in_array($elem->getValue(), $this->requestValues->get($name, []))) {
 						continue;
 					}
 
 					$vals[$ndx] = $elem->getModifiedValue();
 				}
+
 				$tmp->set($name, $vals);
 
 			}
 
 			else {
+
 				if(
 					$e->canSubmit() && !$getSubmits ||
 					!$e->isValid() ||
@@ -516,12 +527,14 @@ class HtmlForm {
 				) {
 					continue;
 				}
+
 				$tmp->set($name, $e->getModifiedValue());
 
 			}
 		}
 
 		return $tmp;
+
 	}
 
 	/**
@@ -725,13 +738,19 @@ class HtmlForm {
 	/**
 	 * add form element to form
 	 *
-	 * @param FormElement $e
-	 * @return HtmlForm
-	 *
+	 * @param FormElement $element
+	 * @throws HtmlFormException
+	 * @return \vxPHP\Form\HtmlForm
 	 */
-	public function addElement(FormElement $e) {
+	public function addElement(FormElement $element) {
 
-		$this->elements[$e->getName()] = $e;
+		if(!empty($this->elements[$element->getName()])) {
+			
+			throw new HtmlFormException(sprintf("Element '%s' already assigned.", $element->getName()));
+			
+		}
+
+		$this->elements[$element->getName()] = $element;
 
 		return $this;
 
@@ -739,18 +758,55 @@ class HtmlForm {
 
 	/**
 	 * add several form elements stored in array to form
+	 * 
+	 * the elements have to be of same type and have to have the same
+	 * name or an empty name
 	 *
-	 * @param array $e
-	 * @return HtmlForm
+	 * @param array FormElement[]
+	 * @throws HtmlFormException
+	 * @return \vxPHP\Form\HtmlForm
 	 *
 	 */
-	public function addElementArray(array $e) {
+	public function addElementArray(array $elements) {
 
-		if(count($e)) {
-			$elems = array_values($e);
-			$name = $elems[0]->getName();
-			$name = preg_replace('~\[\w+\]$~i', '', $name);
-			$this->elements[$name] = $e;
+		if(count($elements)) {
+			
+			$firstElement = array_shift($elements);
+			$name = $firstElement->getName();
+
+			// remove any array indexes from name
+
+			$name = preg_replace('~\[\w*\]$~i', '', $name);
+
+			if(!empty($this->elements[$name])) {
+
+				throw new HtmlFormException(sprintf("Element '%s' already assigned.", $name));
+
+			}
+
+			$arrayName = $name . '[]';
+			$firstElement->setName($arrayName);
+
+			$this->elements[$name] = [$firstElement];
+
+			foreach($elements as $e) {
+				
+				if(get_class($e) !== get_class($firstElement)) {
+
+					throw new HtmlFormException(sprintf("Class mismatch of form elements array. Expected '%s', found '%s'.", get_class($firstElement), get_class($e)));
+
+				}
+				
+				if($e->getName() && ($e->getName() !== $name)) {
+					
+					throw new HtmlFormException(sprintf("Name mismatch of form elements array. Expected '%s' or empty name, found '%s'.", $name, $e->getName()));
+
+				}
+
+				$e->setName($arrayName);
+				$this->elements[$name][] = $e;
+			}
+
 		}
 
 		return $this;
@@ -807,13 +863,14 @@ class HtmlForm {
 
 	private function setElementArrayRequestValue($name) {
 
-		$values = $this->requestValues->get($name, $this->requestValues->get($name, NULL, TRUE));
+		$values = $this->requestValues->get($name, []);
 
 		foreach($this->elements[$name] as $k => $e) {
 
 			if($e instanceof \vxPHP\Form\FormElement\CheckboxElement) {
-				$e->setChecked(!is_null($values) && isset($values[$k]));
+				$e->setChecked(in_array($e->getValue(), $values));
 			}
+
 			else {
 				if(isset($values[$k])) {
 					$e->setValue($values[$k]);
@@ -1393,7 +1450,7 @@ class HtmlForm {
 					if(is_array($this->elements[$matches[2]])) {
 	
 						$e = array_shift($this->elements[$matches[2]]);
-	
+
 						if(isset($attributes)) {
 							$e->setAttributes($attributes);
 						}
