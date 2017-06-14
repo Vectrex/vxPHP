@@ -22,14 +22,35 @@ use vxPHP\Application\Application;
  * submenus are nested
  * every menu entry wrapped in tags when a parameter 'wrappingTags', defining these tags, is set
  *
+ * @version 0.1.1, 2017-06-14
+ *
  * @author Gregor Kofler
  */
 
 class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
-	private $openingTags,
-			$closingTags;
+	/**
+	 * stringified opening tags of the wrappingTags parameter
+	 *
+	 * @var string
+	 *
+	 */
+	private $openingTags;
 
+	/**
+	 * stringified closing tags of the wrappingTags parameter  
+	 * 
+	 * @var string
+	 *
+	 */
+	private $closingTags;
+
+	public function __construct(Menu $menu) {
+		
+		parent::__construct($menu);
+
+	}
+			
 	public function render() {
 
 		// create seqeunce of opening tags and closing tags
@@ -40,8 +61,8 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 				$tags = preg_split('/\s*,\s*/', $tags);
 			}
 
-			$this->openingTags	= strtolower('<'.implode('><', $tags).'>');
-			$this->closingTags	= strtolower('</'.implode('></', array_reverse($tags)).'>');
+			$this->openingTags = strtolower('<'.implode('><', $tags).'>');
+			$this->closingTags = strtolower('</'.implode('></', array_reverse($tags)).'>');
 		}
 
 		$markup = '';
@@ -99,13 +120,15 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 					// ensure rendering of submenus, when a parameter "unfoldAll" is set
 
 					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
+
 						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
+
 					}
 				}
 
 				else {
 
-					// render a selected menu entry
+					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
 
 					if((!$entry->getSubMenu() || is_null($entry->getSubMenu()->getSelectedEntry())) && !$this->menu->getForceActive()) {
 
@@ -132,8 +155,12 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 					}
 
-					if($this->menu->getShowSubmenus() && ($subMenu = $entry->getSubMenu())) {
+					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
+
+					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
+
 						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
+
 					}
 				}
 

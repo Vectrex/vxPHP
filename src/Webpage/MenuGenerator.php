@@ -25,7 +25,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0, 2017-02-16
+ * @version 0.6.1, 2017-06-14
  *
  * @throws MenuGeneratorException
  */
@@ -378,15 +378,17 @@ class MenuGenerator {
 
 		// get current page id to evaluate active menu entry
 		
-		$pathToMatch = implode('/', $pathSegments);
+		$pathToMatch = urldecode(implode('/', $pathSegments));
 		
 		foreach($m->getEntries() as $e) {
 
+			$path = urldecode($e->getPath());
+
 			// path segment doesn't match menu entry - finish walk
 
-			if(0 === strpos($pathToMatch, $e->getPath())) {
+			if(0 === strpos($pathToMatch, $path)) {
 
-				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($e->getPath())), '/'));
+				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($path)), '/'));
 				
 				$e->getMenu()->setSelectedEntry($e);
 				$sm = $e->getSubMenu();
