@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.3 2017-05-05
+ * @version 2.0.4 2017-06-30
  */
 class Config {
 
@@ -1035,7 +1035,7 @@ class Config {
 
 					}
 
-					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(NULL, TRUE), $attributes, TRUE);
+					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(), $attributes, TRUE);
 
 				}
 

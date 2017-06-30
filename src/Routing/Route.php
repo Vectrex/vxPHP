@@ -22,7 +22,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.1.0 2017-04-24
+ * @version 1.2.0 2017-06-30
  *
  */
 class Route {
@@ -271,7 +271,6 @@ class Route {
 
 	}
 
-
 	/**
 	 * get name of method which is invoked after instancing the
 	 * controller
@@ -285,66 +284,62 @@ class Route {
 	}
 
 	/**
-	 * get path of this route
+	 * get path of route
+	 * 
+	 * When path parameters are passed on to method a path using these
+	 * parameter values is generated, but path parameters are not
+	 * stored and do not overwrite previously set path parameters.
+	 * 
+	 * When no (or only some) path parameters are passed on previously
+	 * set path parameters are considered when generating the path.
+	 * 
 	 * expects path parameters when required by route
 	 * 
 	 * @param array $pathParameters
 	 * @throws \RuntimeException
 	 * @return string
 	 */
-	public function getPath(array $pathParameters = NULL, $allowEmptyParameters = FALSE) {
+	public function getPath(array $pathParameters = NULL) {
 
-		// clear all previously set path parameters
-
-		$this->clearPathParameters();
-		
-		// set optional path parameters
-		
-		if($pathParameters) {
-			
-			foreach($pathParameters as $name => $value) {
-				$this->setPathParameter($name, $value);
-			}
-		
-		}
-		
 		$path = $this->path;
 		
 		//insert path parameters
 			
 		if(!empty($this->placeholders)) {
-
+			
 			foreach ($this->placeholders as $placeholder) {
-		
-				if(empty($this->pathParameters[$placeholder['name']])) {
 
-					if(!isset($placeholder['default'])) {
+				// use path parameter if it was passed on
 
-						if(!$allowEmptyParameters) {
-							throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
-						}
-
-						// no default but override allowed
-
-						$path = preg_replace('~\/?\{' . $placeholder['name'] . '\}~', '', $path);
-
-					}
-		
-					// no path parameter value, but default defined
-		
-					else {
-						$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $placeholder['default'], $path);
-					}
+				$regExp = '~\{' . $placeholder['name'] . '(=.*?)?\}~';
+				
+				if($pathParameters && array_key_exists($placeholder['name'], $pathParameters)) {
+					
+					$path = preg_replace($regExp, $pathParameters[$placeholder['name']], $path);
+					
 				}
-		
-				// path parameter value was previously parsed or set
-		
+
+				// try to use previously set path parameter
+				
+				else if($this->pathParameters && array_key_exists($placeholder['name'], $this->pathParameters)) {
+					$path = preg_replace($regExp, $this->pathParameters[$placeholder['name']], $path);
+				}
+
+				// no path parameter value passed on, but default defined
+				
+				else if(isset($placeholder['default'])){
+					$path = preg_replace($regExp, $placeholder['default'], $path);
+				}
+
 				else {
-					$path = preg_replace('~\{' . $placeholder['name'] . '(=.*?)?\}~', $this->pathParameters[$placeholder['name']], $path);
+					throw new \RuntimeException(sprintf("Path parameter '%s' not set.", $placeholder['name']));
 				}
+
 			}
 		}
-		
+
+		// remove trailing slashes which might stem from one or more empty path parameters
+
 		return rtrim($path, '/');
 
 	}
@@ -352,7 +347,13 @@ class Route {
 	/**
 	 * get URL of this route
 	 * considers mod_rewrite settings (nice_uri)
-	 * and inserts path parameters when required
+	 * 
+	 * When path parameters are passed on to method an URL using these
+	 * parameter values is generated, but path parameters are not
+	 * stored and do not overwrite previously set path parameters.
+	 * 
+	 * When no (or only some) path parameters are passed on previously
+	 * set parameters are considered when generating the URL.
 	 * 
 	 * @param array $pathParameters
 	 * @throws \RuntimeException
