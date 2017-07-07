@@ -26,7 +26,7 @@ use vxPHP\Webpage\Menu\Menu;
  * is hidden by setting it's display property to none
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0, 2017-02-27
+ * @version 0.2.1, 2017-07-07
  * 
  */
 class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
@@ -52,7 +52,7 @@ class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
 			// role hierarchy defined? check roles and sub-roles
 				
 			if(($roleHierarchy = Application::getInstance()->getRoleHierarchy())) {
-				$userRoles = $user->getRolesAnSubRoles($roleHierarchy);
+				$userRoles = $user->getRolesAndSubRoles($roleHierarchy);
 			}
 		
 			// otherwise check only directly assigned roles

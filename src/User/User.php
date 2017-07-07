@@ -17,7 +17,7 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 2.1.0 2017-02-21 
+ * @version 2.1.1 2017-07-07 
  */
 class User implements UserInterface {
 	
@@ -254,7 +254,7 @@ class User implements UserInterface {
 	 * @param RoleHierarchy $roleHierarchy
 	 * @return Role[]
 	 */
-	public function getRolesAnSubRoles(RoleHierarchy $roleHierarchy) {
+	public function getRolesAndSubRoles(RoleHierarchy $roleHierarchy) {
 
 		$possibleRoles = [];
 		

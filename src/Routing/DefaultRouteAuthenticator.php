@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  * the auth attribute of the route
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0, 2017-02-26
+ * @version 0.1.1, 2017-07-07
  * 
  */
 class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
@@ -42,7 +42,7 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
 		// role hierarchy defined? check roles and sub-roles
 		
 		if(($roleHierarchy = Application::getInstance()->getRoleHierarchy())) {
-			$userRoles = $user->getRolesAnSubRoles($roleHierarchy);
+			$userRoles = $user->getRolesAndSubRoles($roleHierarchy);
 		}
 
 		// otherwise check only directly assigned roles
