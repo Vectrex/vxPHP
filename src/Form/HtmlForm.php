@@ -28,7 +28,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.7.2 2017-06-09
+ * @version 1.7.3 2017-07-08
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -797,7 +797,11 @@ class HtmlForm {
 
 				}
 				
-				if($e->getName() && ($e->getName() !== $name)) {
+				// check whether names of element arrays match
+
+				$nameToCheck = preg_replace('~\[\w*\]$~i', '', $e->getName());
+
+				if($nameToCheck && $nameToCheck !== $name) {
 					
 					throw new HtmlFormException(sprintf("Name mismatch of form elements array. Expected '%s' or empty name, found '%s'.", $name, $e->getName()));
 
