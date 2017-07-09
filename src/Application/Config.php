@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.4 2017-06-30
+ * @version 2.0.5 2017-06-30
  */
 class Config {
 
@@ -572,10 +572,7 @@ class Config {
 
 		$xpath = new \DOMXPath($templating->ownerDocument);
 
-		$context = $this->isLocalhost ? 'local' : 'remote';
-		$filters = $xpath->query("filters/filter[@context='$context']", $templating);
-
-		foreach($filters as $filter) {
+		foreach($xpath->query("filters/filter", $templating) as $filter) {
 
 			$id = $filter->getAttribute('id');
 			$class = $filter->getAttribute('class');
