@@ -11,14 +11,12 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragment;
-
 /**
  * a single option belonging to a group of <input type="option"> elements
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.4.1 2015-11-14
+ * @version 0.5.0 2017-08-11
  */
 class RadioOptionElement extends FormElementFragment {
 
@@ -44,11 +42,18 @@ class RadioOptionElement extends FormElementFragment {
 
 		if(empty($this->html) || $force) {
 
+			$formId = $this->parentElement->getForm()->getAttribute('id');
+			$name = $this->parentElement->getName();
+			$value = $this->getValue();
+			$id = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
+			
 			$this->html = sprintf(
-				'<input name="%s" type="radio" value="%s"%s><label>%s</label>',
-				$this->parentElement->getName(),
-				$this->getValue(),
+				'<input id="%s" name="%s" type="radio" value="%s"%s><label for="%s">%s</label>',
+				$id,
+				$name,
+				$value,
 				$this->selected ? " checked='checked'" : '',
+				$id,
 				$this->getLabel()
 			);
 		}

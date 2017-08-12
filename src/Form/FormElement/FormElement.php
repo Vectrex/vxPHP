@@ -11,14 +11,13 @@
 
 namespace vxPHP\Form\FormElement;
 
-use vxPHP\Form\FormElement\FormElementInterface;
-use vxPHP\Form\FormElement\InputElement;
 use vxPHP\Constraint\ConstraintInterface;
+use vxPHP\Form\HtmlForm;
 
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.7.1 2016-11-28
+ * @version 0.8.0 2017-08-11
  * @author Gregor Kofler
  * 
  */
@@ -80,6 +79,13 @@ abstract class FormElement implements FormElementInterface {
 	protected $valid;
 	
 	/**
+	 * stores reference to form once the element is assigned to
+	 * 
+	 * @var HtmlForm
+	 */
+	protected $form;
+	
+	/**
 	 * the cached markup of the element
 	 * 
 	 * @var string
@@ -105,7 +111,7 @@ abstract class FormElement implements FormElementInterface {
 	 * htmlspecialchars() is applied for appropriate form element type
 	 * 
 	 * @param mixed $value
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setValue($value) {
 
@@ -144,7 +150,7 @@ abstract class FormElement implements FormElementInterface {
 	 * set name of form element
 	 * 
 	 * @param string $name
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setName($name) {
 
@@ -170,7 +176,7 @@ abstract class FormElement implements FormElementInterface {
 	 *  
 	 * @param string $attr
 	 * @param mixed $value
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setAttribute($attr, $value) {
 
@@ -198,7 +204,7 @@ abstract class FormElement implements FormElementInterface {
 	 * sets several attributes with an associative array
 	 * 
 	 * @param array $attributes
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setAttributes(Array $attributes) {
 
@@ -214,7 +220,7 @@ abstract class FormElement implements FormElementInterface {
 	 * disallow empty values when $required is TRUE
 	 * 
 	 * @param @boolen $required
-	 * @return FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setRequired($required) {
 
@@ -242,12 +248,37 @@ abstract class FormElement implements FormElementInterface {
 	 * the FormElement::$valid flag is reset
 	 * 
 	 * @param mixed $validatingRule
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function addValidator($validatingRule) {
 
 		$this->validators[] = $validatingRule;
 		$this->valid = NULL;
+		return $this;
+
+	}
+
+	/**
+	 * get form the element is assigned to
+	 *
+	 * @return HtmlForm
+	 */
+	public function getForm() {
+		
+		return $this->form;
+		
+	}
+	
+	/**
+	 * set form to which an element is assigned
+	 * automatically called by HtmlForm::addElement()
+	 *
+	 * @param \vxPHP\Form\HtmlForm $form
+	 * @return \vxPHP\Form\FormElement\FormElement
+	 */
+	public function setForm(HtmlForm$form) {
+
+		$this->form = $form;
 		return $this;
 
 	}
@@ -261,7 +292,7 @@ abstract class FormElement implements FormElementInterface {
 	 * currently 'trim', 'uppercase', 'lowercase', 'strip_tags' are supported
 	 * 
 	 * @param mixed $modifier
-	 * @return vxPHP\Form\FormElement
+	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function addModifier($modifier) {
 

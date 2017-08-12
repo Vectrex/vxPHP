@@ -11,8 +11,6 @@
 
 namespace vxPHP\Form\FormElement;
 
-use vxPHP\Form\FormElement\FormElement;
-
 /**
  * textarea element
  *

@@ -11,8 +11,6 @@
 
 namespace vxPHP\Form\FormElement;
 
-use vxPHP\Form\FormElement\InputElement;
-
 /**
  * button element
  * overwrites setType(), adds setInnerHTML() method to input element

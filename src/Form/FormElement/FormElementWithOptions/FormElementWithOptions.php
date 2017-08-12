@@ -12,7 +12,6 @@
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 use vxPHP\Form\FormElement\FormElement;
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface;
 
 /**
  * abstract class for "complex" form elements,
@@ -20,8 +19,19 @@ use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterfac
  */
 abstract class FormElementWithOptions extends FormElement implements FormElementWithOptionsInterface {
 
-	protected	$options = array(),
-				$selectedOption;
+	/**
+	 * options of element
+	 * 
+	 * @var FormElementFragment[]
+	 */
+	protected $options = [];
+	
+	/**
+	 * the selected option of element
+	 * 
+	 * @var FormElementFragment
+	 */
+	protected $selectedOption;
 
 	/**
 	 * initalize element instance

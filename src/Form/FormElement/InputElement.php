@@ -11,8 +11,6 @@
 
 namespace vxPHP\Form\FormElement;
 
-use vxPHP\Form\FormElement\FormElement;
-
 /**
  * generic input element
  * 
@@ -49,7 +47,7 @@ class InputElement extends FormElement {
 	 * no validation of correct types is done ATM
 	 * 
 	 * @param string $type
-	 * @return vxPHP\Form\FormElement\InputElement
+	 * @return \vxPHP\Form\FormElement\InputElement
 	 */
 	public function setType($type) {
 

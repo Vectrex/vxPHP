@@ -15,8 +15,6 @@ use vxPHP\Form\Exception\HtmlFormException;
 
 use vxPHP\Form\FormElement\FormElement;
 use vxPHP\Form\FormElement\InputElement;
-use vxPHP\Form\FormElement\ImageElement;
-use vxPHP\Form\FormElement\CheckboxElement;
 
 use vxPHP\Http\Request;
 use vxPHP\Http\ParameterBag;
@@ -28,11 +26,11 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.7.3 2017-07-08
+ * @version 1.7.4 2017-08-11
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
- * @todo make addAntiSpam working with multiple forms
+ * @todo make disableAntiSpam working with multiple forms
  */
 
 class HtmlForm {
@@ -342,6 +340,20 @@ class HtmlForm {
 
 		return $this;
 
+	}
+	
+	/**
+	 * get an attribute, if the attribute was not set previously a
+	 * default value can be supplied
+	 * 
+	 * @param string $attr
+	 * @param string $default
+	 * @return string
+	 */
+	public function getAttribute($attr, $default = NULL) {
+		
+		return ($attr && array_key_exists($attr, $this->attributes)) ? $this->attributes[$attr] : $default;
+		
 	}
 
 	/**
@@ -751,6 +763,7 @@ class HtmlForm {
 		}
 
 		$this->elements[$element->getName()] = $element;
+		$element->setForm($this);
 
 		return $this;
 
@@ -785,7 +798,10 @@ class HtmlForm {
 			}
 
 			$arrayName = $name . '[]';
-			$firstElement->setName($arrayName);
+			$firstElement
+				->setName($arrayName)
+				->setForm($this)
+			;
 
 			$this->elements[$name] = [$firstElement];
 
@@ -807,7 +823,11 @@ class HtmlForm {
 
 				}
 
-				$e->setName($arrayName);
+				$e
+					->setName($arrayName)
+					->setForm($this)
+				;
+
 				$this->elements[$name][] = $e;
 			}
 

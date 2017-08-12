@@ -13,7 +13,6 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Form\Exception\FormElementFactoryException;
 
-use vxPHP\Form\FormElement\InputElement;
 use vxPHP\Form\FormElement\FormElementWithOptions\SelectElement;
 use vxPHP\Form\FormElement\FormElementWithOptions\MultipleSelectElement;
 use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;

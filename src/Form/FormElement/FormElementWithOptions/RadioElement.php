@@ -11,9 +11,6 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions;
-use vxPHP\Form\FormElement\FormElementWithOptions\RadioOptionElement;
-
 /**
  * input element type "radio"
  *
@@ -27,7 +24,7 @@ class RadioElement extends FormElementWithOptions {
 	 */
 	public function createOptions(Array $options) {
 
-		$this->options = array();
+		$this->options = [];
 		foreach($options as $k => $v) {
 			$this->appendOption(new RadioOptionElement($k, $v));
 		}
@@ -43,7 +40,7 @@ class RadioElement extends FormElementWithOptions {
 	public function render($force = FALSE) {
 
 		if(empty($this->html) || $force) {
-			$this->html = array();
+			$this->html = [];
 			foreach($this->options as $o) {
 				$this->html[] = $o->render();
 			}
