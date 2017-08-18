@@ -10,12 +10,11 @@
 
 namespace vxPHP\User;
 
-use vxPHP\User\User;
 use vxPHP\Session\Session;
 
 /**
- * this class extends the User class and store and retrieve a user
- * from a session
+ * this class extends the User class and stores its instance in the
+ * session
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * @version 0.2.0 2017-02-15
@@ -78,7 +77,7 @@ class SessionUser extends User {
 	/**
 	 * set or unset authentication flag without checking any credentials
 	 * 
-	 * @param unknown $authenticated
+	 * @param boolean $authenticated
 	 * @return \vxPHP\User\SessionUser
 	 */
 	public function setAuthenticated($authenticated) {
