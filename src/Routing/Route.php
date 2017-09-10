@@ -11,7 +11,6 @@
 namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
-use vxPHP\Controller\Controller;
 use vxPHP\Http\Request;
 use vxPHP\Http\RedirectResponse;
 
@@ -22,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.0 2017-06-30
+ * @version 1.2.1 2017-09-10
  *
  */
 class Route {
@@ -225,7 +224,7 @@ class Route {
 	 * return authentication attribute
 	 * parsed by router to evaluate route access
 	 * 
-	 * @return the $auth
+	 * @return string $auth
 	 */
 	public function getAuth() {
 
@@ -315,7 +314,7 @@ class Route {
 				
 				if($pathParameters && array_key_exists($placeholder['name'], $pathParameters)) {
 					
-					$path = preg_replace($regExp, $pathParameters[$placeholder['name']], $path);
+					$path = preg_replace($regExp, rawurlencode($pathParameters[$placeholder['name']]), $path);
 					
 				}
 
