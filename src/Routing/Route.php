@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.1 2017-09-10
+ * @version 1.2.0 2017-06-30
  *
  */
 class Route {
@@ -314,7 +314,7 @@ class Route {
 				
 				if($pathParameters && array_key_exists($placeholder['name'], $pathParameters)) {
 					
-					$path = preg_replace($regExp, rawurlencode($pathParameters[$placeholder['name']]), $path);
+					$path = preg_replace($regExp, $pathParameters[$placeholder['name']], $path);
 					
 				}
 
