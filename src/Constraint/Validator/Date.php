@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  * in addition allowing only future dates can be configured
  * handles currently dates in german, us and iso style
  * 
- * @version 0.3.0 2016-11-28
+ * @version 0.3.1 2017-10-04
  * @author Gregor Kofler
  */
 class Date extends AbstractConstraint implements ConstraintInterface {
@@ -164,7 +164,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 
 				// explode along separating character
 
-				$tmp = explode($matches[2], $value);
+				$tmp = explode($matches[1], $value);
 
 				// expand to 4 digit year
 
