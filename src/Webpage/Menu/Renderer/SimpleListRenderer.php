@@ -11,18 +11,15 @@
 
 namespace vxPHP\Webpage\Menu\Renderer;
 
-use vxPHP\Webpage\Menu\Renderer\MenuRendererInterface;
-use vxPHP\Webpage\Menu\Renderer\MenuRenderer;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
-use vxPHP\Application\Application;
 
 /**
  * renderer renders menu in a ul-li markup structure
  * submenus are nested
  * every menu entry wrapped in tags when a parameter 'wrappingTags', defining these tags, is set
  *
- * @version 0.1.1, 2017-06-14
+ * @version 0.2.0, 2017-10-18
  *
  * @author Gregor Kofler
  */
@@ -71,7 +68,11 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 			$markup .= $this->renderEntry($e);
 		}
 
-		return sprintf('<ul>%s</ul>', $markup);
+		return sprintf(
+			'<ul%s>%s</ul>',
+			isset($this->parameters['ulClass']) ? (' class="' . $this->parameters['ulClass'] . '"') : '',
+			$markup
+		);
 
 	}
 
@@ -108,9 +109,10 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 				// render a not selected menu entry
 
 				if(!isset($sel) || $sel !== $entry) {
+
 					$markup = sprintf(
 						'<li class="%s">%s<a href="%s">%s</a>%s',
-						preg_replace('~[^\w]~', '_', $entry->getPath()),
+						preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 						$this->openingTags,
 						$entry->getHref(),
 						empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
@@ -134,7 +136,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 						$markup = sprintf(
 							'<li class="active %s">%s<span>%s</span>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPath()),
+							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 							$this->openingTags,
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
@@ -146,7 +148,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 						$markup = sprintf(
 							'<li class="active %s">%s<a href="%s">%s</a>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPath()),
+							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 							$this->openingTags,
 							$entry->getHref(),
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
