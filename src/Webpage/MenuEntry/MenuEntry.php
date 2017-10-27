@@ -19,7 +19,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.4.1 2017-05-04
+ * @version 0.4.2 2017-10-27
  */
 class MenuEntry {
 	
@@ -197,7 +197,7 @@ class MenuEntry {
 					$script = '/' . $this->menu->getScript() . '/';
 				}
 
-				$this->href = $script . implode('/', array_reverse($pathSegments));
+				$this->href = $script . implode('/', array_reverse(array_map('rawurlencode', $pathSegments)));
 
 			}
 
@@ -213,7 +213,7 @@ class MenuEntry {
 
 	/**
 	 * get all attributes
-	 * @return stdClass
+	 * @return \stdClass
 	 */
 	public function getAttributes() {
 
