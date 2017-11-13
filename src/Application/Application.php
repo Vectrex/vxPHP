@@ -10,7 +10,6 @@
 
 namespace vxPHP\Application;
 
-use vxPHP\Application\Config;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
@@ -29,7 +28,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.4 2017-05-19
+ * @version 1.8.5 2017-11-13
  */
 class Application {
 
@@ -146,7 +145,7 @@ class Application {
 	/**
 	 * the user instancing instance
 	 * 
-	 * @var User
+	 * @var UserInterface
 	 */
 	private $currentUser;
 
@@ -186,8 +185,6 @@ class Application {
 				$this->locales = array_fill_keys($this->config->site->locales, NULL);
 			}
 
-			$this->useNiceUris = !!$this->config->site->use_nice_uris;
-			
 			// set a relative assets path when configured
 			
 			if(isset($this->config->site->assets_path)) {
@@ -197,14 +194,33 @@ class Application {
 			else {
 				$this->setRelativeAssetsPath('');
 			}
+			
+			// indicate URL rewriting when configured and web server environment assumed
+
+			if(
+				substr(php_sapi_name(), 0, 3) === 'cli' &&
+				isset($this->config->site->use_nice_uris)
+			) {
+				$this->useNiceUris = !!$this->config->site->use_nice_uris;
+			}
 
 		}
 
 		catch (\Exception $e) {
-			printf(
-				'<div style="border: solid 2px; color: #c00; font-weight: bold; padding: 1em; width: 40em; margin: auto; ">Application Error!<br>Message: %s</div>',
-				$e->getMessage()
-			);
+
+			if (substr(php_sapi_name(), 0, 3) === 'cli') {
+				printf(
+					"Application error!\r\nMessage: %s",
+					$e->getMessage()
+				);
+			}
+			else {
+				printf(
+					'<div style="border: solid 2px; color: #c00; font-weight: bold; padding: 1em; width: 40em; margin: auto; ">Application Error!<br>Message: %s</div>',
+					$e->getMessage()
+				);
+			}
+
 			exit();
 		}
 
@@ -781,7 +797,7 @@ class Application {
 	 * 
 	 * @param string $pluginId
 	 * @throws ApplicationException
-	 * @return ListenerInterface
+	 * @return SubscriberInterface
 	 */
 	private function initializePlugin($pluginId) {
 
