@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0, 2017-03-08
+ * @version 0.1.1, 2017-12-15
  *
  */
 interface DatabaseInterface {
@@ -50,7 +50,7 @@ interface DatabaseInterface {
 	 * 
 	 * returns the number of inserted rows
 	 * 
-	 * @param unknown $tableName
+	 * @param string $tableName
 	 * @param array $rowsData
 	 * @throws \InvalidArgumentException
 	 * 
