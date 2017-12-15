@@ -28,7 +28,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.5 2017-11-13
+ * @version 1.8.6 2017-12-15
  */
 class Application {
 
@@ -198,7 +198,7 @@ class Application {
 			// indicate URL rewriting when configured and web server environment assumed
 
 			if(
-				substr(php_sapi_name(), 0, 3) === 'cli' &&
+				substr(php_sapi_name(), 0, 3) !== 'cli' &&
 				isset($this->config->site->use_nice_uris)
 			) {
 				$this->useNiceUris = !!$this->config->site->use_nice_uris;
