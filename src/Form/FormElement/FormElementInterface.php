@@ -11,6 +11,8 @@
 
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\Form\HtmlForm;
+
 interface FormElementInterface {
 
 	public function setValue($value);
@@ -18,5 +20,11 @@ interface FormElementInterface {
 	public function setName($name);
 	public function getName();
 	public function setAttribute($attributeName, $attributeValue);
-
+/*
+	public function getAttribute($attributeName);
+	public function setRequired($required);
+	public function getRequired();
+	public function setForm(HtmlForm $form);
+	public function getForm();
+*/
 }

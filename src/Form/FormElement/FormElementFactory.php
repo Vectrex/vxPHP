@@ -24,29 +24,32 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is an array, the factory returns a collection of elements
  *
  * @author Gregor Kofler
- * @version 0.4.1 2016-11-27
+ * @version 0.5.0 2018-01-20
  */
 class FormElementFactory {
 
-/**
- * create either single FormElement or array of FormElements
- *
- * @param string $type, type of element
- * @param string $name, name of element
- * @param mixed $value
- * @param array $attributes
- * @param array $options, array for initializing SelectOptionElements or RadioOptionElements
- * @param boolean $required
- * @param array $modifiers
- * @param array $validators
- * 
- */
-public static function create($type, $name, $value = NULL, array $attributes = [], array $options = [], $required = FALSE, array $modifiers = [], array $validators = []) {
+    /**
+     * create either single FormElement or array of FormElements
+     *
+     * @param string $type , type of element
+     * @param string $name , name of element
+     * @param mixed $value
+     * @param array $attributes
+     * @param array $options , array for initializing SelectOptionElements or RadioOptionElements
+     * @param boolean $required
+     * @param array $modifiers
+     * @param array $validators
+     * @param string $validationErrorMessage
+     *
+     * @return FormElement | FormElement[]
+     * @throws FormElementFactoryException
+     */
+public static function create($type, $name, $value = null, array $attributes = [], array $options = [], $required = false, array $modifiers = [], array $validators = [], $validationErrorMessage = null) {
 
 		$type = strtolower($type);
 
-		if(is_array($value) && $type != 'multipleselect') {
-			$elem = self::createSingleElement($type, $name, NULL, $attributes, $options, $required, $modifiers, $validators);
+		if(is_array($value) && $type !== 'multipleselect') {
+			$elem = self::createSingleElement($type, $name, NULL, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
 
 			$elements = [];
 
@@ -63,11 +66,27 @@ public static function create($type, $name, $value = NULL, array $attributes = [
 		}
 
 		else {
-			return self::createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators);
+			return self::createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
 		}
 	}
 
-	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators) {
+    /**
+     * generate a single form element
+     *
+     * @param $type
+     * @param $name
+     * @param $value
+     * @param $attributes
+     * @param $options
+     * @param $required
+     * @param $modifiers
+     * @param $validators
+     * @param $validationErrorMessage
+     * @return ButtonElement|CheckboxElement|ImageElement|InputElement|PasswordInputElement|SubmitInputElement|TextareaElement
+     *
+     * @throws FormElementFactoryException
+     */
+	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage) {
 
 		switch($type) {
 			case 'input':
@@ -122,7 +141,9 @@ public static function create($type, $name, $value = NULL, array $attributes = [
 
 		$elem
 			->setAttributes($attributes)
-			->setRequired($required);
+			->setRequired($required)
+            ->setValidationErrorMessage($validationErrorMessage)
+        ;
 
 		foreach($modifiers as $modifier) {
 			$elem->addModifier($modifier);

@@ -17,7 +17,7 @@ use vxPHP\Form\HtmlForm;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.8.0 2017-08-11
+ * @version 0.9.0 2018-01-20
  * @author Gregor Kofler
  * 
  */
@@ -31,7 +31,14 @@ abstract class FormElement implements FormElementInterface {
 	 * @var array
 	 */
 	protected $validators = [];
-	
+
+    /**
+     * an error message when the form element fails to validate
+     *
+     * @var string
+     */
+    protected $validationErrorMessage;
+
 	/**
 	 * all modifiers (callbacks, predefined function names, regular expressions)
 	 * that are applied before a form element is validated
@@ -127,7 +134,7 @@ abstract class FormElement implements FormElementInterface {
 	/**
 	 * returns raw form element value
 	 * 
-	 * @return $raw_value
+	 * @return string
 	 */
 	public function getValue() {
 
@@ -138,7 +145,7 @@ abstract class FormElement implements FormElementInterface {
 	/**
 	 * returns modified form element value
 	 * 
-	 * @return $modified_value
+	 * @return string
 	 */
 	public function getModifiedValue() {
 
@@ -263,10 +270,9 @@ abstract class FormElement implements FormElementInterface {
 	 *
 	 * @return HtmlForm
 	 */
-	public function getForm() {
-		
+	public function getForm()
+    {
 		return $this->form;
-		
 	}
 	
 	/**
@@ -276,14 +282,33 @@ abstract class FormElement implements FormElementInterface {
 	 * @param \vxPHP\Form\HtmlForm $form
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setForm(HtmlForm$form) {
-
+	public function setForm(HtmlForm$form)
+    {
 		$this->form = $form;
 		return $this;
-
 	}
-	
-	/**
+
+    /**
+     * @return string
+     */
+    public function getValidationErrorMessage()
+    {
+        return $this->validationErrorMessage;
+    }
+
+    /**
+     * get validation error message
+     *
+     * @param string $validationErrorMessage
+     * @return FormElement
+     */
+    public function setValidationErrorMessage($validationErrorMessage)
+    {
+        $this->validationErrorMessage = $validationErrorMessage;
+        return $this;
+    }
+
+    /**
 	 * add a modifier
 	 * 
 	 * modifiers can be an anonymous function or a string
