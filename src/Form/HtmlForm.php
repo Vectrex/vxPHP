@@ -28,7 +28,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.8.0 2018-01-20
+ * @version 1.8.1 2018-02-03
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -651,10 +651,12 @@ class HtmlForm {
 			
 			if(is_array($e)) {
 				foreach($e as $ndx => $elem) {
-					if(!isset($this->formErrors[$name])) {
-						$this->formErrors[$name] = [];
-					}
-					$this->formErrors[$name][$ndx] = new FormError($elem->getValidationErrorMessage());
+				    if(!$elem->isValid()) {
+                        if (!isset($this->formErrors[$name])) {
+                            $this->formErrors[$name] = [];
+                        }
+                        $this->formErrors[$name][$ndx] = new FormError($elem->getValidationErrorMessage());
+                    }
 				}
 			}
 
