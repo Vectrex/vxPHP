@@ -17,7 +17,7 @@ use vxPHP\Application\Exception\ConfigException;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.4.0, 2018-02-22
+ * @version 0.4.1, 2018-02-22
  */
 class DatabaseInterfaceFactory {
 	
@@ -41,12 +41,17 @@ class DatabaseInterfaceFactory {
 	public static function create($type = null, array $config = []) {
 
 	    if(!$type) {
-	        if(!isset($config['dns'])) {
+	        if(!isset($config['dsn'])) {
 	            throw new \Exception('No database type defined.');
             }
 
-            preg_match('/^([a-z0-9]):/i', trim($config['dns']), $matches);
-	        $type = $matches[1];
+            if(preg_match('/^([a-z0-9]+):/i', trim($config['dsn']), $matches)) {
+                $type = $matches[1];
+            }
+            else {
+                throw new \Exception('No driver found in DSN.');
+            }
+
         }
 
 		$type = strtolower($type);
