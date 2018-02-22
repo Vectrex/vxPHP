@@ -244,7 +244,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * might be required after extensive alterations to several
 	 * table structures
 	 *
-	 * @return \vxPHP\Database\Adapter\Postgresql
+	 * @return self
 	 */
 	public function clearTableStructureCache() {
 	
@@ -258,7 +258,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * required after changes to a tables structure
 	 *
 	 * @param string $tableName
-	 * @return \vxPHP\Database\Adapter\Postgresql
+	 * @return self
 	 */
 	public function refreshTableStructureCache($tableName) {
 	

@@ -17,7 +17,7 @@ use vxPHP\Application\Exception\ConfigException;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.2, 2017-01-30
+ * @version 0.4.0, 2018-02-22
  */
 class DatabaseInterfaceFactory {
 	
@@ -29,14 +29,26 @@ class DatabaseInterfaceFactory {
 
 	/**
 	 * get a PDO wrapper/extension class depending on $type
+     * if no type is provided DSN string in the configuration
+     * is searched for a type definition
 	 * 
 	 * @param string $type
+     * @param array $config
 	 * @return DatabaseInterface
 	 * 
 	 * @throws \Exception
 	 */
-	public static function create($type, array $config = []) {
-		
+	public static function create($type = null, array $config = []) {
+
+	    if(!$type) {
+	        if(!isset($config['dns'])) {
+	            throw new \Exception('No database type defined.');
+            }
+
+            preg_match('/^([a-z0-9]):/i', trim($config['dns']), $matches);
+	        $type = $matches[1];
+        }
+
 		$type = strtolower($type);
 
 		if($type === 'propel') {

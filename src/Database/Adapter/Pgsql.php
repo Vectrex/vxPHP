@@ -19,9 +19,9 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.0, 2017-03-10
+ * @version 1.0.0, 2018-02-22
  */
-class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
+class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
 	 * attribute which stores the timestamp of the last update of the
