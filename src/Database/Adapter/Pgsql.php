@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.0.0, 2018-02-22
+ * @version 1.0.1, 2018-02-23
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -47,26 +47,55 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @var string
 	 */
 	const QUOTE_CHAR = '"';
-	
-	/**
+
+    /**
+     * map translating encoding names
+     *
+     * @var array
+     */
+    protected $charsetMap = [
+        'utf-8' => 'UTF8',
+        'iso-8859-15' => 'LATIN1'
+    ];
+
+    /**
  	 * store column details of tables
 	 * 
 	 * @var array
 	 */
-	protected $tableStructureCache;
+	protected $tableStructureCache = [];
 	
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
-	 */
-	public function __construct(array $config = NULL) {
+     *
+     * @todo parse unix_socket settings
+     */
+	public function __construct(array $config = null) {
 
 		if($config) {
 
 			parent::__construct($config);
-			
+
+            if(defined('DEFAULT_ENCODING')) {
+
+                if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
+                    $charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+                }
+                else {
+                    throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
+                }
+
+            }
+
+            else {
+
+                $charset = 'UTF8';
+
+            }
+
 			if(!$this->dsn) {
 			
 				if(!$this->host) {
@@ -85,12 +114,13 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 				if($this->port) {
 					$this->dsn .= ';port=' . $this->port;
 				}
+
 			}
-	
+
 			$options = [
 				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
+				\PDO::ATTR_STRINGIFY_FETCHES	=> false
 			];
 
 			// if not explicitly specified, attributes are returned lower case
@@ -100,6 +130,7 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 			}
 
 			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+			$this->connection->exec(sprintf("SET NAMES '%s'", strtoupper($charset)));
 
 		}
 

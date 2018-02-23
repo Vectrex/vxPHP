@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.9.0, 2017-03-10
+ * @version 1.9.1, 2018-02-23
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -53,8 +53,8 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @var array
 	 */
 	protected $charsetMap = [
-		'utf-8'			=> 'utf8',
-		'iso-8859-15'	=> 'latin1'
+		'utf-8' => 'utf8',
+		'iso-8859-15' => 'latin1'
 	];
 				
 	/**
@@ -62,7 +62,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * 
 	 * @var array
 	 */
-	protected	$tableStructureCache = [];
+	protected $tableStructureCache = [];
 
 	/**
 	 * initiate connection
@@ -72,7 +72,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @param array $config
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config = NULL) {
+	public function __construct(array $config = null) {
 
 		if($config) {
 
@@ -116,11 +116,26 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 				}
 	
 			}
+
+			// check whether charset encoding matches
+
+			else {
+
+			    if(preg_match('/charset=([0-9a-z]+)(?:;|$)/i', $this->dsn, $matches)) {
+			        if(strtolower($matches[1]) !== $charset) {
+			            throw new \PDOException(sprintf("Charset mismatch; site configuration says '%s', DSN says '%s'.", $charset, $matches[1]));
+                    }
+                }
+                else {
+			        $this->dsn .= ';charset=' . $charset;
+                }
+
+            }
 	
 			$options = [
 				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
+				\PDO::ATTR_STRINGIFY_FETCHES	=> false
 			];
 			
 			// if not explicitly specified, attributes are returned lower case

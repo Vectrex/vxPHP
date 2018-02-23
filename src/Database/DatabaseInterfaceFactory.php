@@ -41,6 +41,7 @@ class DatabaseInterfaceFactory {
 	public static function create($type = null, array $config = []) {
 
 	    if(!$type) {
+
 	        if(!isset($config['dsn'])) {
 	            throw new \Exception('No database type defined.');
             }
