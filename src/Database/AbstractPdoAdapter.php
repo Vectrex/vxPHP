@@ -17,7 +17,7 @@ use vxPHP\Database\DatabaseInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.0, 2017-03-10
+ * @version 0.5.1, 2018-02-25
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -84,7 +84,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @var boolean
 	 */
-	protected	$touchLastUpdated = TRUE;
+	protected	$touchLastUpdated = true;
 
 	/**
 	 *
@@ -96,18 +96,52 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		
 		$config = array_change_key_case($config, CASE_LOWER);
 		
-		$this->host		= $config['host'];
-		$this->dbname	= $config['dbname'];
-		$this->user		= $config['user'];
+		$this->host = $config['host'];
+		$this->dbname = $config['dbname'];
+		$this->user = $config['user'];
 		$this->password	= $config['password'];
-		
-		if(isset($config['dsn'])) {
-			$this->dsn = $config['dsn'];
-		}
 
-		if(isset($config['port'])) {
-			$this->port = (int) $config['port'];
-		}
+        if(isset($config['port'])) {
+            $this->port = (int) $config['port'];
+        }
+
+		if(isset($config['dsn'])) {
+
+			$this->dsn = $config['dsn'];
+
+			// set dbname
+
+            if(!preg_match('/dbname=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                throw new \PDOException('Database name missing in DSN string.');
+            };
+            if($this->dbname && $matches[1] !== $this->dbname) {
+                throw new \PDOException(sprintf("Mismatch of database name: DSN states '%s', dbname element states '%s'.", $matches[1], $this->dbname));
+            } else {
+                $this->dbname = $matches[1];
+            }
+
+            // set host
+
+            if(!preg_match('/host=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                throw new \PDOException('Host missing in DSN string.');
+            };
+            if($this->host && $matches[1] !== $this->host) {
+                throw new \PDOException(sprintf("Mismatch of host: DSN states '%s', host element states '%s'.", $matches[1], $this->host));
+            } else {
+                $this->host = $matches[1];
+            }
+
+            // set port
+
+            if(preg_match('/port=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                if ($this->port && (int)$matches[1] !== $this->port) {
+                    throw new \PDOException(sprintf("Mismatch of port: DSN states '%s', host element states '%s'.", $matches[1], $this->port));
+                } else {
+                    $this->port = (int)$matches[1];
+                }
+            }
+
+        }
 
 	}
 	
