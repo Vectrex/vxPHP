@@ -28,7 +28,7 @@ use vxPHP\Application\Exception\ConfigException;
  * A simple template system
  *
  * @author Gregor Kofler
- * @version 1.6.2 2017-04-24
+ * @version 1.6.3 2018-04-08
  *
  */
 
@@ -49,7 +49,7 @@ class SimpleTemplate {
 	private		$rawContents;
 	
 				/**
-				 * @var unknown
+				 * @var string
 				 * 
 				 * the processed template string
 				 */
@@ -65,7 +65,7 @@ class SimpleTemplate {
 				 * 
 				 * @var array
 				 */
-	private		$filters = array();
+	private		$filters = [];
 	
 				/**
 				 * keeps instances of pre-configured filters
@@ -94,13 +94,14 @@ class SimpleTemplate {
 				 */
 	private		$extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
-	/**
-	 * initialize template based on $file
-	 * if $file is omitted the content can be set with setRawContents() later
-	 *
-	 * @param string $file
-	 */
-	public function __construct($file = NULL) {
+    /**
+     * initialize template based on $file
+     * if $file is omitted the content can be set with setRawContents() later
+     *
+     * @param string $file
+     * @throws SimpleTemplateException
+     */
+	public function __construct($file = null) {
 
 		$application = Application::getInstance();
 
@@ -108,7 +109,7 @@ class SimpleTemplate {
 			$this->path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
 			if (!file_exists($this->path . $file)) {
-				throw new SimpleTemplateException("Template file '" . $this->path . $file . "' does not exist.", SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+				throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $this->path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
 			}
 
 			$this->setRawContents(file_get_contents($this->path . $file));
@@ -118,12 +119,13 @@ class SimpleTemplate {
 		$this->locale = $application->getCurrentLocale();
 	}
 
-	/**
-	 * static method to allow method chaining
-	 *
-	 * @param string $file
-	 */
-	public static function create($file = NULL) {
+    /**
+     * static method to allow method chaining
+     *
+     * @param string $file
+     * @return SimpleTemplate
+     */
+	public static function create($file = null) {
 
 		return new static($file);
 
@@ -183,13 +185,14 @@ class SimpleTemplate {
 		
 	}
 
-	/**
-	 * explicitly insert template at $blockName position
-	 *
-	 * @param SimpleTemplate $childTemplate
-	 * @param string $blockName
-	 * @return SimpleTemplate
-	 */
+    /**
+     * explicitly insert template at $blockName position
+     *
+     * @param SimpleTemplate $childTemplate
+     * @param string $blockName
+     * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     */
 	public function insertTemplateAt(SimpleTemplate $childTemplate, $blockName) {
 
 		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
@@ -201,14 +204,14 @@ class SimpleTemplate {
 		}
 
 		else {
-			throw new SimpleTemplateException("Could not insert child template at '$blockName'.", SimpleTemplateException::TEMPLATE_INVALID_NESTING);
+			throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
 		}
 
 		return $this;
 	}
 
 	/**
-	 * assign value to variable, which is the available within template
+	 * assign value to variable, which is then available within template
 	 *
 	 * @param string $var
 	 * @param mixed $value
@@ -219,8 +222,9 @@ class SimpleTemplate {
 		if(is_array($var)) {
 			foreach($var as $k => $v) {
 				$this->$k = $v;
-				return;
 			}
+
+			return $this;
 		}
 
 		$this->$var = $value;
@@ -242,11 +246,12 @@ class SimpleTemplate {
 
 	}
 
-	/**
-	 * output parsed template
-	 *
-	 * @return string
-	 */
+    /**
+     * output parsed template
+     *
+     * @return string
+     * @throws SimpleTemplateException
+     */
 	public function display() {
 
 		$this->extend();
@@ -310,18 +315,19 @@ class SimpleTemplate {
 
 	}
 
-	/**
-	 * include controller output
-	 * $controllerPath is [path/to/controller/]name_of_controller
-	 * additional arguments can be passed on to the controller constructor
-	 *
-	 * @param string $controllerPath
-	 * @param string $methodName
-	 * @param array $constructorArguments 
-	 * 
-	 * @return string
-	 */
-	private function includeControllerResponse($controllerPath, $methodName = NULL, array $constructorArguments = NULL) {
+    /**
+     * include controller output
+     * $controllerPath is [path/to/controller/]name_of_controller
+     * additional arguments can be passed on to the controller constructor
+     *
+     * @param string $controllerPath
+     * @param string $methodName
+     * @param array $constructorArguments
+     *
+     * @return string
+     * @throws ConfigException
+     */
+	private function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null) {
 
 		$namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 		
@@ -438,16 +444,17 @@ class SimpleTemplate {
 		ob_end_clean();
 	}
 
-	/**
-	 * crate image tag
-	 *
-	 * @param string src source file
-	 * @param string alt alt text
-	 * @param string title title text
-	 * @param string class css class
-	 * @param boolean timestamp add source "parameter" to force refresh
-	 */
-	public static function img($src, $alt = NULL, $title = NULL, $class = NULL, $timestamp = FALSE) {
+    /**
+     * crate image tag
+     *
+     * @param string src source file
+     * @param string alt alt text
+     * @param string title title text
+     * @param string class css class
+     * @param boolean timestamp add source "parameter" to force refresh
+     * @return string
+     */
+	public static function img($src, $alt = null, $title = null, $class = null, $timestamp = false) {
 		if(empty($alt)) {
 			$alt = explode('.', basename($alt));
 			array_pop($alt);
@@ -459,24 +466,24 @@ class SimpleTemplate {
 		return $html;
 	}
 
-	/**
-	 * create anchor tag
-	 *
-	 * @param string link URI or relative link
-	 * @param string text link test
-	 * @param string img image name used within link
-	 * @param string class css class
-	 * @param string miscstr additional string with attributes or handlers
-	 * @param string $counted add code for counting clicks on link
-	 */
-	public static function a($link, $text = '', $img = '', $class = FALSE, $miscstr = FALSE) {
+    /**
+     * create anchor tag
+     *
+     * @param string link URI or relative link
+     * @param string text link test
+     * @param string img image name used within link
+     * @param string|bool class css class
+     * @param string|bool miscstr additional string with attributes or handlers
+     * @return bool|string
+     */
+	public static function a($link, $text = '', $img = '', $class = false, $miscstr = false) {
 
 		if (empty($link)) {
-			return FALSE;
+			return false;
 		}
 
 		$mail	= self::checkMail($link);
-		$ext	= !$mail ? self::checkExternal($link) : TRUE;
+		$ext	= !$mail ? self::checkExternal($link) : true;
 
 		if($mail) {
 			$enc = 'mailto:';
@@ -497,19 +504,19 @@ class SimpleTemplate {
 
 		$text = ($text == '' && $img == '') ? preg_replace('~^\s*[a-z]+:(//)?~i', '', $link) : $text;
 
-		$class = $class ? array($class) : array();
+		$class = $class ? [$class] : [];
 		if(self::checkExternal($link)) {
 			$class[] = 'external';
 		}
 
-		$html = array(
+		$html = [
 			'<a',
 			!empty($class) ? ' class="'.implode(' ', $class).'"' : '',
 			" href='$link'",
 			$miscstr ? " $miscstr>" : '>',
 			$img != '' ? "<img src='$img' alt='$text'>" : $text,
 			'</a>'
-		);
+		];
 		return implode('', $html);
 	}
 
