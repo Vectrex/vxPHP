@@ -77,7 +77,14 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	protected $statement;
 
-	/**
+    /**
+     * column details of tables
+     *
+     * @var array
+     */
+    protected $tableStructureCache = [];
+
+    /**
 	 * automatically touch a lastUpdated column whenever
 	 * a record is updated
 	 * any internal db mechanism is notoverwritten

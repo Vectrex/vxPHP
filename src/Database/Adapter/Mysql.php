@@ -58,13 +58,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	];
 				
 	/**
-	 * column details of tables
-	 * 
-	 * @var array
-	 */
-	protected $tableStructureCache = [];
-
-	/**
 	 * initiate connection
 	 * 
 	 * @todo parse unix_socket settings

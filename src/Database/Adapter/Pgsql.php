@@ -58,13 +58,6 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
         'iso-8859-15' => 'LATIN1'
     ];
 
-    /**
- 	 * store column details of tables
-	 * 
-	 * @var array
-	 */
-	protected $tableStructureCache = [];
-	
 	/**
 	 *
 	 * {@inheritdoc}
