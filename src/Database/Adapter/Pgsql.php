@@ -19,7 +19,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.0.1, 2018-02-23
+ * @version 1.1.0, 2018-04-12
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -155,7 +155,20 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 	
 	}
 
-	/**
+    /**
+     *
+     * {@inheritDoc}
+     * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
+     */
+    public function doPreparedQuery($statementString, array $parameters = []) {
+
+        $this->primeQuery($statementString, $parameters);
+        $this->statement->execute();
+        return new PgsqlRecordsetIterator($this->statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()

@@ -18,7 +18,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.9.1, 2018-02-23
+ * @version 1.10.0, 2018-04-12
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -257,7 +257,20 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	}
 
-	/**
+    /**
+     *
+     * {@inheritDoc}
+     * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
+     */
+    public function doPreparedQuery($statementString, array $parameters = []) {
+
+        $this->primeQuery($statementString, $parameters);
+        $this->statement->execute();
+        return new MysqlRecordsetIterator($this->statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()

@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.1, 2017-12-15
+ * @version 0.2.1, 2018-04-12
  *
  */
 interface DatabaseInterface {
@@ -99,7 +99,7 @@ interface DatabaseInterface {
 	 * @param string $statementString
 	 * @param array $parameters
 	 * 
-	 * @return array
+	 * @return RecordsetIteratorInterface
 	 */
 	public function doPreparedQuery($statementString, array $parameters);
 

@@ -10,14 +10,12 @@
 
 namespace vxPHP\Database;
 
-use vxPHP\Database\DatabaseInterface;
-
 /**
  * abstract class pooling all shared methods of PDO adapters
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.1, 2018-02-25
+ * @version 0.6.1, 2018-04-12
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -771,13 +769,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
 	 */
-	public function doPreparedQuery($statementString, array $parameters = []) {
-	
-		$this->primeQuery($statementString, $parameters);
-		$this->statement->execute();
-		return $this->statement->fetchAll(\PDO::FETCH_ASSOC);
-	
-	}
+	public abstract function doPreparedQuery($statementString, array $parameters = []);
 
 	/**
 	 * 
