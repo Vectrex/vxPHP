@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.6.1, 2018-04-12
+ * @version 0.7.0, 2018-04-14
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -841,7 +841,19 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	
 		}
 	}
-	
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \vxPHP\Database\DatabaseInterface::quoteIdentifier()
+     */
+    public function quoteIdentifier($identifier) {
+
+	    return static::QUOTE_CHAR . $identifier . static::QUOTE_CHAR;
+
+    }
+
 	/**
 	 *
 	 * {@inheritdoc}

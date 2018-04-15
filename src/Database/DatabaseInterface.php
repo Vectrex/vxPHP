@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.1, 2018-04-12
+ * @version 0.3.0, 2018-04-14
  *
  */
 interface DatabaseInterface {
@@ -212,4 +212,11 @@ interface DatabaseInterface {
 	 */
 	public function commit();
 
+    /**
+     * wrap identifier with database specific quote char
+     *
+     * @param string $identifier
+     * @return DatabaseInterface
+     */
+	public function quoteIdentifier($identifier);
 }
