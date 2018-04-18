@@ -12,13 +12,14 @@ namespace vxPHP\Database\Adapter;
 
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
+use vxPHP\Database\PDOConnection;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.10.0, 2018-04-12
+ * @version 1.11.0, 2018-04-18
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -137,7 +138,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
 			}
 			
-			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $options);
 	
 			// set emulated prepares for MySQL servers < 5.1.17
 	
@@ -154,7 +155,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(\PDO $connection) {
+	public function setConnection(PDOConnection $connection) {
 
 		// redeclaring a connection is not possible
 

@@ -28,7 +28,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.6 2017-12-15
+ * @version 1.8.7 2018-04-16
  */
 class Application {
 
@@ -384,15 +384,15 @@ class Application {
 
 	}
 
-	/**
-	 * return a service instance
-	 * service instances are lazily initialized upon first request
-	 * 
-	 * any extra argument is passed on to the constructor method of the service 
-	 * 
-	 * @param string $serviceId
-	 * @return \vxPHP\Application\multitype:ServiceInterface
-	 */
+    /**
+     * return a service instance
+     * service instances are lazily initialized upon first request
+     *
+     * any extra argument is passed on to the constructor method of the service
+     *
+     * @param string $serviceId
+     * @return ServiceInterface :ServiceInterface
+     */
 	public function getService($serviceId) {
 
 		$args = func_get_args();
@@ -402,6 +402,19 @@ class Application {
 		return $service;
 
 	}
+
+    /**
+     * checks whether a service identified by service id is configured
+     * no further checks whether service can be invoked are conducted
+     *
+     * @param $serviceId
+     * @return bool
+     */
+	public function hasService($serviceId) {
+
+	    return !empty($this->config->services) && array_key_exists($serviceId, $this->config->services);
+
+    }
 
 	/**
 	 * returns event dispatcher instance reference
