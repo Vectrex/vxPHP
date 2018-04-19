@@ -59,51 +59,42 @@ class DatabaseInterfaceFactory {
 
 		if($type === 'propel') {
 
-			// check whether Propel is available
+			// check whether Propel is available (assume Propel2)
+
+            if(!class_exists('\\Propel\\Runtime\\Propel')) {
+                throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
+            }
+
+            $serviceContainer = \Propel\Runtime\Propel::getServiceContainer();
+
+            // retrieve adapter information
+
+            $adapterName = $serviceContainer->getAdapterClass();
+            $dsnName = $serviceContainer->getDefaultDatasource();
+
+            /* @var $connection \Propel\Runtime\Connection\ConnectionInterface */
+
+            $connection = \Propel\Runtime\Propel::getConnection();
+
+            if(!in_array($adapterName, ['mysql', 'pgsql'])) {
+
+                throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $dsnName, $adapterName));
+
+			}
 			
-			if(!class_exists('\\Propel')) {
-				throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
-			}
+			$pdoConnection = new Propel2ConnectionWrapper($connection);
 
-			if(!\Propel::isInit()) {
+            $className =
+                __NAMESPACE__ .
+                '\\Adapter\\' .
+                ucfirst($adapterName);
 
-				throw new \Exception('Propel is not initialized.');
-				
-//				\Propel::setConfiguration(self::builtPropelConfiguration($config));
-//				\Propel::initialize();
-			}
-			
-			else {
-				
-				// retrieve adapter information
-				
-				$propelConfig = \Propel::getConfiguration(\PropelConfiguration::TYPE_OBJECT);
-				
-				$adapter = $propelConfig->getParameter('datasources.' . $config['name'] . '.adapter');
-				
-				if(is_null($adapter)) {
-						
-					throw new \Exception(sprintf("Propel for datasource '%s' not configured.", $config['name']));
-				
-				}
-				
-				if(!in_array($adapter, ['mysql', 'pgsql'])) {
-						
-					throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $config['name'], $adapter));
-						
-				}
-				
-				$className =
-					__NAMESPACE__ .
-					'\\Adapter\\' .
-					ucfirst($adapter);
-				
-				$vxPDO = new $className();
-				$vxPDO->setConnection(\Propel::getConnection($config['name']));
-					
-				return $vxPDO;
+            /* @var $vxPDO DatabaseInterface */
 
-			}
+            $vxPDO = new $className();
+            $vxPDO->setConnection($pdoConnection);
+
+            return $vxPDO;
 
 		}
 
