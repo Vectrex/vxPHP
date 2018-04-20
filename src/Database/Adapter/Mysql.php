@@ -10,6 +10,8 @@
 
 namespace vxPHP\Database\Adapter;
 
+use vxPHP\Application\Application;
+use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
 use vxPHP\Database\PDOConnection;
@@ -19,7 +21,7 @@ use vxPHP\Database\PDOConnection;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.11.0, 2018-04-18
+ * @version 1.11.1, 2018-04-20
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -125,29 +127,11 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
                 }
 
             }
-	
-			$options = [
-				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> false
-			];
-			
-			// if not explicitly specified, attributes are returned lower case
 
-			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
-				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
-			}
-			
-			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $options);
-	
-			// set emulated prepares for MySQL servers < 5.1.17
-	
-			$this->connection->setAttribute(
-				\PDO::ATTR_EMULATE_PREPARES,
-				version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
-			);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
+            $this->setDefaultConnectionAttributes();
 
-		}
+        }
 
 	}
 
@@ -155,7 +139,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(PDOConnection $connection) {
+	public function setConnection(ConnectionInterface $connection) {
 
 		// redeclaring a connection is not possible
 
@@ -172,6 +156,8 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 
 		$this->connection = $connection;
+
+		$this->setDefaultConnectionAttributes();
 
 	}
 	
@@ -268,6 +254,35 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
         $this->primeQuery($statementString, $parameters);
         $this->statement->execute();
         return new MysqlRecordsetIterator($this->statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
+     * set initial attributes for database connection
+     */
+    protected function setDefaultConnectionAttributes() {
+
+        $config = Application::getInstance()->getConfig();
+
+        $options = [
+            \PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES	=> false,
+
+            // set emulated prepares for MySQL servers < 5.1.17
+
+            \PDO::ATTR_EMULATE_PREPARES     => version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<')
+        ];
+
+        // if not explicitly specified, attributes are returned lower case
+
+        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+            $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+        }
+
+        foreach($options as $key => $value) {
+            $this->connection->setAttribute($key, $value);
+        }
 
     }
 

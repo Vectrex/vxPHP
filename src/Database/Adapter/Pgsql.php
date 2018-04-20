@@ -10,17 +10,17 @@
 
 namespace vxPHP\Database\Adapter;
 
+use vxPHP\Application\Application;
+use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
-use vxPHP\Database\PDOConnection;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
- * currently a stub
- * 
+ *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.0, 2018-04-18
+ * @version 1.2.1, 2018-04-20
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -111,20 +111,10 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			}
 
-			$options = [
-				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> false
-			];
-
-			// if not explicitly specified, attributes are returned lower case
-			
-			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
-				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
-			}
-
-			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $options);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
 			$this->connection->exec(sprintf("SET NAMES '%s'", strtoupper($charset)));
+
+            $this->setDefaultConnectionAttributes();
 
 		}
 
@@ -136,7 +126,7 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(PDOConnection $connection) {
+	public function setConnection(ConnectionInterface $connection) {
 	
 		// redeclaring a connection is not possible
 	
@@ -166,6 +156,31 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
         $this->primeQuery($statementString, $parameters);
         $this->statement->execute();
         return new PgsqlRecordsetIterator($this->statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
+     * set initial attributes for database connection
+     */
+    protected function setDefaultConnectionAttributes() {
+
+        $config = Application::getInstance()->getConfig();
+
+        $options = [
+            \PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES	=> false
+        ];
+
+        // if not explicitly specified, attributes are returned lower case
+
+        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+            $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+        }
+
+        foreach($options as $key => $value) {
+            $this->connection->setAttribute($key, $value);
+        }
 
     }
 

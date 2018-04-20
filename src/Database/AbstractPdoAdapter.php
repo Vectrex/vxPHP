@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.8.0, 2018-04-18
+ * @version 0.8.1, 2018-04-20
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -860,7 +860,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public abstract function setConnection(PDOConnection $connection);
+	public abstract function setConnection(ConnectionInterface $connection);
 
 	/**
 	 * analyze column metadata of table $tableName

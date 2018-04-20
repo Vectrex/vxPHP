@@ -11,13 +11,14 @@
 namespace vxPHP\Database;
 
 use vxPHP\Application\Exception\ConfigException;
+use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
 
 /**
  * Simple factory for DatabaseInterface classes
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.4.1, 2018-02-22
+ * @version 0.5.0, 2018-04-19
  */
 class DatabaseInterfaceFactory {
 	

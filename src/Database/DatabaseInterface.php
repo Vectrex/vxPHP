@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.4.0, 2018-04-18
+ * @version 0.4.1, 2018-04-20
  *
  */
 interface DatabaseInterface {
@@ -174,22 +174,21 @@ interface DatabaseInterface {
 	 */
 	public function getColumnDefaultValue($tableName, $columnName);
 
-	/**
-	 * set connection of database class
-	 * the connection is normally set in the constructor, but when a
-	 * connection already in use should be augmented with methods of
-	 * this interface setConnection() allows the injection
-	 *
-	 * if a connection is already set either by constructor or a
-	 * previous setConnection() call, a PDOException is raised
-	 *
-	 * setConnection checks whether the connection type matches the
-	 * adapter's type; if not a PDOException is raised
-	 *
-	 * @param PDOConnection
-	 * @throws \PDOException
-	 */
-	public function setConnection(PDOConnection $connection);
+    /**
+     * set connection of database class
+     * the connection is normally set in the constructor, but when a
+     * connection already in use should be augmented with methods of
+     * this interface setConnection() allows the injection
+     *
+     * if a connection is already set either by constructor or a
+     * previous setConnection() call, a PDOException is raised
+     *
+     * setConnection checks whether the connection type matches the
+     * adapter's type; if not a PDOException is raised
+     *
+     * @param ConnectionInterface $connection
+     */
+	public function setConnection(ConnectionInterface $connection);
 	
 	/**
 	 * get current connection
