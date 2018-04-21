@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.11.1, 2018-04-20
+ * @version 1.12.1, 2018-04-21
  */
 class PDOConnection extends \PDO implements ConnectionInterface
 {
@@ -26,6 +26,14 @@ class PDOConnection extends \PDO implements ConnectionInterface
      * @var string
      */
     protected $name;
+
+    /**
+     * since \PDO doesn't provide a simple way to determine the name
+     * of the current database, it must be set explicitly
+     *
+     * @var string
+     */
+    protected $dbName;
 
     /**
      * PDOConnection constructor.
@@ -64,6 +72,26 @@ class PDOConnection extends \PDO implements ConnectionInterface
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * get name of database of the wrapped connection
+     *
+     * @return string
+     */
+    public function getDbName(): string
+    {
+        return $this->dbName;
+    }
+
+    /**
+     * set name of database of the wrapped connection
+     *
+     * @param string $dbName
+     */
+    public function setDbName($dbName): void
+    {
+        $this->dbName = $dbName;
     }
 
 }

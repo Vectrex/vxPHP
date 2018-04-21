@@ -161,7 +161,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		$this->setDefaultConnectionAttributes();
 
 	}
-	
+
 	/**
 	 * return all possible options of an enum or set attribute
 	 * 
