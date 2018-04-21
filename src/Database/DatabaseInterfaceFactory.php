@@ -18,7 +18,7 @@ use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.0, 2018-04-19
+ * @version 0.5.1, 2018-04-21
  */
 class DatabaseInterfaceFactory {
 	
@@ -82,8 +82,15 @@ class DatabaseInterfaceFactory {
                 throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $dsnName, $adapterName));
 
 			}
-			
-			$pdoConnection = new Propel2ConnectionWrapper($connection);
+
+			// @todo fugly like hell - perhaps some more concise solution exists
+
+            preg_match('/dbname=([^;]+)/i', \Propel\Runtime\Propel::getConnectionManager($dsnName)->getConfiguration()['dsn'], $matches);
+            $dbName = $matches[1] ?? '';
+
+            $pdoConnection = new Propel2ConnectionWrapper($connection);
+            $pdoConnection->setName($dsnName);
+            $pdoConnection->setDbName($dbName);
 
             $className =
                 __NAMESPACE__ .

@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.4.1, 2018-04-20
+ * @version 0.5.1, 2018-04-21
  *
  */
 interface DatabaseInterface {
@@ -187,6 +187,7 @@ interface DatabaseInterface {
      * adapter's type; if not a PDOException is raised
      *
      * @param ConnectionInterface $connection
+     * @param string $dbName
      */
 	public function setConnection(ConnectionInterface $connection);
 	

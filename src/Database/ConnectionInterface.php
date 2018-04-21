@@ -14,7 +14,7 @@ namespace vxPHP\Database;
  * Interface for PDO connection
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0, 2018-04-18
+ * @version 0.2.0, 2018-04-21
  *
  */
 interface ConnectionInterface
@@ -28,6 +28,16 @@ interface ConnectionInterface
      * @return string The datasource name associated to this connection
      */
     public function getName(): string;
+
+    /**
+     * @param string $dbName The database name of the connection
+     */
+    public function setDbName($dbName);
+
+    /**
+     * @return string The database name of the connection
+     */
+    public function getDbName(): string;
 
     /**
      * @see \PDO::beginTransaction()

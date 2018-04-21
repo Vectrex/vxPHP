@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.8.1, 2018-04-20
+ * @version 0.9.1, 2018-04-21
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 

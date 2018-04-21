@@ -20,7 +20,7 @@ use vxPHP\Database\AbstractPdoAdapter;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.1, 2018-04-20
+ * @version 1.2.2, 2018-04-21
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -143,8 +143,11 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 	
 		$this->connection = $connection;
-	
-	}
+        $this->dbname = $connection->getDbName();
+
+        $this->setDefaultConnectionAttributes();
+
+    }
 
     /**
      *

@@ -21,7 +21,7 @@ use vxPHP\Database\PDOConnection;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.11.1, 2018-04-20
+ * @version 1.11.2, 2018-04-21
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -156,6 +156,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 
 		$this->connection = $connection;
+		$this->dbname = $connection->getDbName();
 
 		$this->setDefaultConnectionAttributes();
 
