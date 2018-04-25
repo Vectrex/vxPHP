@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.9.1, 2018-04-21
+ * @version 0.9.2, 2018-04-25
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -474,7 +474,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $firstRow); 
 
 			if(count($matchedRow) !== count($firstRow)) {
-				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($names)), implode(', ', array_keys($matchedRow))));
+				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected ['%s'], but found ['%s'].", $i, implode("', '", $names), implode("', '", array_keys($matchedRow))));
 			}
 
 			// collect values (in consistent order) for statement execution
