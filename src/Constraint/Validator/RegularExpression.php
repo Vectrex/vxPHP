@@ -16,13 +16,13 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check against an arbitrary regular expression
  * 
- * @version 0.1.1 2016-11-30
+ * @version 0.1.2 2018-04-25
  * @author Gregor Kofler
  */
 class RegularExpression extends AbstractConstraint implements ConstraintInterface {
 	
 	/**
-	 * regular expressipn the value is matched against
+	 * regular expression the value is matched against
 	 * 
 	 * @var string
 	 */
@@ -54,7 +54,7 @@ class RegularExpression extends AbstractConstraint implements ConstraintInterfac
 	 */
 	public function validate($value) {
 
-		return preg_match($this->regExp, $value);
+		return (bool) preg_match($this->regExp, $value);
 
 	}
 	
