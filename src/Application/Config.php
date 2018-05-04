@@ -64,7 +64,7 @@ class Config {
 	public	$paths;
 
 	/**
-	 * @var Route[]
+	 * @var array
 	 */
 	public	$routes;
 

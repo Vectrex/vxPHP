@@ -12,6 +12,7 @@
 namespace vxPHP\Routing;
 
 use vxPHP\Application\Application;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
 use vxPHP\Session\Session;
 
@@ -24,7 +25,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.8.0 2017-03-20
+ * @version 0.9.0 2018-05-04
  *
  */
 class Router {
@@ -36,12 +37,13 @@ class Router {
 	 */
 	protected static $authenticator;
 
-	/**
-	 * analyse path and return route associated with it
-	 * the first path fragment can be a locale string, which is then skipped for determining the route
-	 *
-	 * @return \vxPHP\Routing\Route
-	 */
+    /**
+     * analyse path and return route associated with it
+     * the first path fragment can be a locale string, which is then skipped for determining the route
+     *
+     * @return \vxPHP\Routing\Route
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public static function getRouteFromPathInfo() {
 
 		$application	= Application::getInstance();
@@ -96,20 +98,26 @@ class Router {
 
 	}
 
-	/**
-	 *
-	 * @param string $routeId
-	 * @param string $scriptName
-	 *
-	 * @return \vxPHP\Routing\Route
-	 */
+    /**
+     *
+     * @param string $routeId
+     * @param string $scriptName
+     *
+     * @return \vxPHP\Routing\Route
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public static function getRoute($routeId, $scriptName = 'index.php') {
+
+	    /* @var Route $route */
 
 		foreach(Application::getInstance()->getConfig()->routes[$scriptName] as $route) {
 			if($route->getRouteId() === $routeId) {
 				return $route;
 			}
 		}
+
+		throw new ApplicationException(sprintf("No route with id '%s' configured.", $routeId));
+
 	}
 
 	/**
@@ -125,15 +133,16 @@ class Router {
 		
 	}
 
-	/**
-	 * get a configured route which matches the passed path segments
-	 *
-	 * @param string $scriptName (e.g. index.php, admin.php)
-	 * @param array $pathSegments
-	 *
-	 * @return \vxPHP\Routing\Route
-	 */
-	private static function getRouteFromConfig($scriptName, array $pathSegments = NULL) {
+    /**
+     * get a configured route which matches the passed path segments
+     *
+     * @param string $scriptName (e.g. index.php, admin.php)
+     * @param array $pathSegments
+     *
+     * @return \vxPHP\Routing\Route
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	private static function getRouteFromConfig($scriptName, array $pathSegments = null) {
 
 		$routes = Application::getInstance()->getConfig()->routes;
 		
@@ -145,10 +154,18 @@ class Router {
 
 		$pathToCheck	= implode('/', $pathSegments);
 		$requestMethod	= Request::createFromGlobals()->getMethod();
-		$foundRoute		= NULL;
-		$default		= NULL;
+
+		/* @var Route $foundRoute */
+
+		$foundRoute = null;
+
+        /* @var Route $default */
+
+		$default = null;
 
 		// iterate over routes and try to find the "best" match
+
+        /* @var Route $route */
 
 		foreach($routes[$scriptName] as $route) {
 
@@ -169,19 +186,23 @@ class Router {
 
 				if(!isset($foundRoute)) {
 					$foundRoute = $route;
+					continue;
 				}
 
-				else {
-					
-					// if a route has been found previously, choose the more "precise" and/or later one
-					// choose the route with more satisfied placeholders
-					// @todo could be optimized
+                // a route with less (or no) placeholders is preferred over one with placeholders
 
-					if(count(self::getSatisfiedPlaceholders($route, $pathToCheck)) >= count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck))) {
-						$foundRoute = $route;
-					}
+                if(count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())) {
+                    continue;
+                }
 
-				}
+                // if a route has been found previously, choose the more "precise" and/or later one
+                // choose the route with more satisfied placeholders
+                // @todo could be optimized
+
+                if (count(self::getSatisfiedPlaceholders($route, $pathToCheck)) >= count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck))) {
+                    $foundRoute = $route;
+                }
+
 			}
 
 		}
@@ -197,13 +218,14 @@ class Router {
 		return $default;
 	}
 
-	/**
-	 * check whether authentication level required by route is met by
-	 * currently active user
-	 *
-	 * @param Route $route
-	 * @return boolean
-	 */
+    /**
+     * check whether authentication level required by route is met by
+     * currently active user
+     *
+     * @param Route $route
+     * @return boolean
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	private static function authenticateRoute(Route $route) {
 
 		$auth = $route->getAuth();

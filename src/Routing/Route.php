@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.0 2017-06-30
+ * @version 1.2.1 2018-05-04
  *
  */
 class Route {
@@ -125,7 +125,7 @@ class Route {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $route id, the route identifier
+	 * @param string $routeId, the route identifier
 	 * @param string $scriptName, name of assigned script
 	 * @param array $parameters, collection of route parameters
 	 */
@@ -343,22 +343,22 @@ class Route {
 
 	}
 
-	/**
-	 * get URL of this route
-	 * considers mod_rewrite settings (nice_uri)
-	 * 
-	 * When path parameters are passed on to method an URL using these
-	 * parameter values is generated, but path parameters are not
-	 * stored and do not overwrite previously set path parameters.
-	 * 
-	 * When no (or only some) path parameters are passed on previously
-	 * set parameters are considered when generating the URL.
-	 * 
-	 * @param array $pathParameters
-	 * @throws \RuntimeException
-	 * @return string
-	 */
-	public function getUrl(array $pathParameters = NULL) {
+    /**
+     * get URL of this route
+     * considers mod_rewrite settings (nice_uri)
+     *
+     * When path parameters are passed on to method an URL using these
+     * parameter values is generated, but path parameters are not
+     * stored and do not overwrite previously set path parameters.
+     *
+     * When no (or only some) path parameters are passed on previously
+     * set parameters are considered when generating the URL.
+     *
+     * @param array $pathParameters
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public function getUrl(array $pathParameters = null) {
 
 		// avoid building URL in subsequent calls
 
@@ -616,13 +616,15 @@ class Route {
 		return $this;
 	}
 
-	/**
-	 * redirect using configured redirect information
-	 * if route has no redirect set, redirect will lead to "start page"
-	 *
-	 * @param array $queryParams
-	 * @param number $statusCode
-	 */
+    /**
+     * redirect using configured redirect information
+     * if route has no redirect set, redirect will lead to "start page"
+     *
+     * @param array $queryParams
+     * @param int $statusCode
+     * @return RedirectResponse
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function redirect($queryParams = [],  $statusCode = 302) {
 
 		$request		= Request::createFromGlobals();
@@ -649,7 +651,7 @@ class Route {
 			$query = '';
 		}
 
-		return new RedirectResponse(implode('/', $urlSegments) . '/' . $this->redirect . $query);
+		return new RedirectResponse(implode('/', $urlSegments) . '/' . $this->redirect . $query, $statusCode);
 
 	}
 }
