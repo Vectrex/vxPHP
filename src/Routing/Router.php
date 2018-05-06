@@ -25,7 +25,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.9.0 2018-05-04
+ * @version 0.10.2 2018-05-06
  *
  */
 class Router {
@@ -39,7 +39,22 @@ class Router {
 
     /**
      * analyse path and return route associated with it
-     * the first path fragment can be a locale string, which is then skipped for determining the route
+     * the first path fragment can be a locale string,
+     * which is then skipped for determining the route
+     *
+     * configured routes are first checked whether they fulfill the
+     * request method and whether they match the path
+     *
+     * if more than one route matches these requirements the one which
+     * is more specific about the request method is preferred
+     *
+     * if more than one route match the requirements and are equally
+     * specific about the request methods the one with less
+     * placeholders is preferred
+     *
+     * if more than one match the requirements, are equally specific
+     * about request methods and have the same number of placeholders
+     * the one with more satisfied placeholders is preferred
      *
      * @return \vxPHP\Routing\Route
      * @throws \vxPHP\Application\Exception\ApplicationException
@@ -185,9 +200,15 @@ class Router {
 				// if no route was found yet, pick this first match
 
 				if(!isset($foundRoute)) {
-					$foundRoute = $route;
-					continue;
-				}
+                    $foundRoute = $route;
+                    continue;
+                }
+
+                // prefer route which is more specific with request methods
+
+                if(count($route->getRequestMethods()) > count($foundRoute->getRequestMethods())) {
+                    continue;
+                }
 
                 // a route with less (or no) placeholders is preferred over one with placeholders
 
@@ -199,12 +220,24 @@ class Router {
                 // choose the route with more satisfied placeholders
                 // @todo could be optimized
 
-                if (count(self::getSatisfiedPlaceholders($route, $pathToCheck)) >= count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck))) {
-                    $foundRoute = $route;
+                $foundRouteSatisfiedPlaceholderCount = count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck));
+                $routeSatisfiedPlaceholderCount = count(self::getSatisfiedPlaceholders($route, $pathToCheck));
+
+                if (
+                    ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) < ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames()))
+                ) {
+                    continue;
+                }
+                if (
+                    ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) === ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames())) &&
+                    count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())
+                ) {
+                    continue;
                 }
 
-			}
+                $foundRoute = $route;
 
+			}
 		}
 
 		// return "normal" route, if found

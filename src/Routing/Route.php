@@ -456,7 +456,7 @@ class Route {
 	 */
 	public function getRequestMethods() {
 
-		return $this->requestMethods;
+		return $this->requestMethods ?: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
 	}
 
@@ -468,12 +468,16 @@ class Route {
 	 */
 	public function setRequestMethods(array $requestMethods) {
 
-		foreach($requestMethods as $requestMethod) {
-			if(strpos('GET POST PUT DELETE', strtoupper($requestMethod) === -1)) {
-				throw new \InvalidArgumentException(sprintf("Invalid request method '%s'.", strtoupper($requestMethod)));
+	    $requestMethods = array_map('strtoupper', $requestMethods);
+
+        $allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+
+        foreach($requestMethods as $requestMethod) {
+			if(!in_array($requestMethod, $allowedMethods)) {
+				throw new \InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
 			}
 		}
-		$this->requestMethods = array_map('strtoupper', $requestMethods);
+		$this->requestMethods = $requestMethods;
 		return $this;
 	}
 
