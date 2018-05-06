@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.7 2018-02-23
+ * @version 2.0.8 2018-05-05
  */
 class Config {
 
@@ -700,11 +700,11 @@ class Config {
 			// read optional allowed request methods
 
 			if(($requestMethods = $page->getAttribute('request_methods'))) {
-				$allowedMethods	= 'GET POST PUT DELETE PATCH';
+				$allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 				$requestMethods	= preg_split('~\s*,\s*~', strtoupper($requestMethods));
 
 				foreach($requestMethods as $requestMethod) {
-					if(strpos($allowedMethods, $requestMethod) === -1) {
+					if(!in_array($requestMethod, $allowedMethods)) {
 						throw new ConfigException(sprintf("Invalid request method '%s' for route '%s'.", $requestMethod, $pageId));
 					}
 				}
