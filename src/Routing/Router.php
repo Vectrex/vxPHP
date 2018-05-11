@@ -24,7 +24,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.0.0 2018-05-11
+ * @version 1.0.1 2018-05-11
  *
  */
 class Router {
@@ -213,7 +213,7 @@ class Router {
 
 		// if no page given try to get the first from list
 
-		if(is_null($pathSegments)) {
+		if(empty($pathSegments)) {
 
 			return reset($this->routes);
 		}
