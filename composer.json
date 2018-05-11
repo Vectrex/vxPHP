@@ -1,28 +1,29 @@
 {
-	"name" : "vectrex/vxphp",
-	"type" : "framework",
-	"description" : "lean PHP framework for web applications",
-	"homepage" : "https://github.com/Vectrex/vxPHP",
-	"license" : "MIT",
-	"keywords" : [
-		"framework",
-		"PHP",
-		"web application"
-	],
-	"authors" : [{
-			"name" : "Gregor Kofler",
-			"email" : "info@gregorkofler.com",
-			"homepage" : "http://gregorkofler.com",
-			"role" : "Developer"
-		}
-	],
-	"require" : {
-		"php" : ">5.6.0",
-		"ext-pdo" : "*"
-	},
-	"autoload" : {
-		"psr-4" : {
-			"vxPHP\\" : "src/"
-		}
-	}
+  "name": "vectrex/vxphp",
+  "type": "framework",
+  "description": "lean PHP framework for web applications",
+  "homepage": "https://github.com/Vectrex/vxPHP",
+  "license": "MIT",
+  "keywords": [
+    "framework",
+    "PHP",
+    "web application"
+  ],
+  "authors": [
+    {
+      "name": "Gregor Kofler",
+      "email": "info@gregorkofler.com",
+      "homepage": "http://gregorkofler.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.0.0",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "vxPHP\\": "src/"
+    }
+  }
 }
