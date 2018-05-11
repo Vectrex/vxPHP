@@ -11,6 +11,9 @@
 
 namespace vxPHP\Routing;
 
+use vxPHP\Application\Exception\ApplicationException;
+use vxPHP\Http\Request;
+use vxPHP\Session\Session;
 use vxPHP\User\UserInterface;
 use vxPHP\Application\Application;
 
@@ -20,28 +23,38 @@ use vxPHP\Application\Application;
  * the auth attribute of the route
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.1, 2017-07-07
+ * @version 0.2.0, 2018-05-11
  * 
  */
 class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
-	
+
+    /**
+     * @var Route[]
+     */
+    private $violatingRoutes = [];
+
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
 	 * @see \vxPHP\Routing\RouteAuthenticatorInterface::authenticate()
 	 */
-	public function authenticate(Route $route, UserInterface $user = NULL) {
+	public function authenticate(Route $route, UserInterface $user = null) {
 
 		// no user or no authenticated user?
 
 		if(is_null($user) || !$user->isAuthenticated()) {
-			return FALSE;
+
+			return false;
+
 		}
 		
 		// role hierarchy defined? check roles and sub-roles
 		
 		if(($roleHierarchy = Application::getInstance()->getRoleHierarchy())) {
+
+		    /* @var \vxPHP\User\User $user */
+
 			$userRoles = $user->getRolesAndSubRoles($roleHierarchy);
 		}
 
@@ -58,13 +71,50 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
 			foreach($userRoles as $role) {
 		
 				if($role->getRoleName() === $route->getAuth()) {
-					return TRUE;
-				}
+
+                    // clear redirects
+
+                    $this->violatingRoutes = [];
+
+					return true;
+
+                }
 		
 			}
 		}
-			
-		return FALSE;
+
+        return false;
 		
 	}
+
+    /**
+     * handle authentication violation by trying to find a redirecting route
+     *
+     * @param Route $route
+     * @return mixed|Route
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+    public function handleViolation(Route $route)
+    {
+
+        if(in_array($route, $this->violatingRoutes)) {
+            throw new ApplicationException('Circular redirects detected; aborting.');
+        }
+
+        // to avoid circular references all redirects are logged
+
+        $this->violatingRoutes[] = $route;
+
+        Session::getSessionDataBag()->set('authViolatingRequest', Request::createFromGlobals());
+
+        if($redirect = $route->getRedirect()) {
+            return Application::getInstance()->getRouter()->getRoute($redirect);
+        }
+
+        else {
+            throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
+        }
+
+    }
+
 }

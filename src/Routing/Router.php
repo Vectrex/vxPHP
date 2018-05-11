@@ -14,7 +14,6 @@ namespace vxPHP\Routing;
 use vxPHP\Application\Application;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
-use vxPHP\Session\Session;
 
 /**
  * The router analyzes the current request and checks whether a route
@@ -25,7 +24,7 @@ use vxPHP\Session\Session;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.10.2 2018-05-06
+ * @version 1.0.0 2018-05-11
  *
  */
 class Router {
@@ -35,7 +34,73 @@ class Router {
 	 * 
 	 * @var RouteAuthenticatorInterface
 	 */
-	protected static $authenticator;
+	protected $authenticator;
+
+    /**
+     * @var Route[]
+     */
+	protected $routes = [];
+
+    /**
+     * Router constructor.
+     *
+     * @param Route[]|null $routes
+     * @param RouteAuthenticatorInterface|null $authenticator
+     */
+	public function __construct(array $routes = null, RouteAuthenticatorInterface $authenticator = null)
+    {
+        if($routes) {
+            $this->setRoutes($routes);
+        }
+
+        if($authenticator) {
+            $this->authenticator = $authenticator;
+        }
+    }
+
+
+    /**
+     * @param array $routes
+     */
+	public function setRoutes(array $routes) {
+
+	    foreach($routes as $route) {
+
+	        if(!$route instanceof Route) {
+	            throw new \InvalidArgumentException(sprintf("'%s' is not a Route instance.", $route));
+            }
+
+            $this->addRoute($route);
+
+        }
+
+    }
+
+    /**
+     * @param Route $route
+     */
+    public function addRoute(Route $route) {
+
+	    $id = $route->getRouteId();
+
+	    if(array_key_exists($id, $this->routes)) {
+
+	        throw new \InvalidArgumentException(sprintf("Route with id '%s' already exists.", $id));
+        }
+
+        $this->routes[$id] = $route;
+
+    }
+
+    /**
+     * @param string $routeId
+     */
+    public function removeRoute($routeId) {
+
+	    unset($this->routes[$routeId]);
+
+    }
+
 
     /**
      * analyse path and return route associated with it
@@ -59,11 +124,10 @@ class Router {
      * @return \vxPHP\Routing\Route
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public static function getRouteFromPathInfo() {
+	public function getRouteFromPathInfo(Request $request) {
 
-		$application	= Application::getInstance();
-		$request		= Request::createFromGlobals();
-		$script			= basename($request->getScriptName());
+		$application = Application::getInstance();
+		$script = basename($request->getScriptName());
 
 		if(!($path = trim($request->getPathInfo(), '/'))) {
 			$pathSegments = [];
@@ -85,29 +149,19 @@ class Router {
 			array_shift($pathSegments);
 		}
 
-		// get page
+		// find route
 
-		if(count($pathSegments)) {
-			$route = self::getRouteFromConfig($script, $pathSegments);
-		}
+        $route = $this->findRoute($pathSegments);
 
-		else {
-			$route = self::getRouteFromConfig($script);
-		}
+		// no route found
 
-		if(!self::authenticateRoute($route)) {
+        if(!$route) {
+            throw new ApplicationException(sprintf("No route found for path '%s'.", implode('/', $pathSegments)));
+        }
 
-			Session::getSessionDataBag()->set('authViolatingRequest', Request::createFromGlobals());
-
-			if($redirect = $route->getRedirect()) {
-				return self::getRoute($redirect, $route->getScriptName());
-			}
-			
-			else {
-				throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
-			}
-
-		}
+		while(!$this->authenticateRoute($route)) {
+            $route = $this->authenticator->handleViolation($route);
+        }
 
 		return $route;
 
@@ -116,22 +170,17 @@ class Router {
     /**
      *
      * @param string $routeId
-     * @param string $scriptName
      *
      * @return \vxPHP\Routing\Route
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public static function getRoute($routeId, $scriptName = 'index.php') {
+	public function getRoute($routeId) {
 
-	    /* @var Route $route */
+	    if(!array_key_exists($routeId, $this->routes)) {
+            throw new ApplicationException(sprintf("No route with id '%s' configured.", $routeId));
+        }
 
-		foreach(Application::getInstance()->getConfig()->routes[$scriptName] as $route) {
-			if($route->getRouteId() === $routeId) {
-				return $route;
-			}
-		}
-
-		throw new ApplicationException(sprintf("No route with id '%s' configured.", $routeId));
+        return $this->routes[$routeId];
 
 	}
 
@@ -142,29 +191,31 @@ class Router {
 	 * 
 	 * @param RouteAuthenticatorInterface $authenticator
 	 */
-	public static function setAuthenticator(RouteAuthenticatorInterface $authenticator) {
+	public function setAuthenticator(RouteAuthenticatorInterface $authenticator) {
 		
-		self::$authenticator = $authenticator;
+		$this->authenticator = $authenticator;
 		
 	}
 
     /**
-     * get a configured route which matches the passed path segments
+     * find route which best matches the passed path segments
      *
-     * @param string $scriptName (e.g. index.php, admin.php)
      * @param array $pathSegments
      *
      * @return \vxPHP\Routing\Route
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private static function getRouteFromConfig($scriptName, array $pathSegments = null) {
+	private function findRoute(array $pathSegments = null) {
 
-		$routes = Application::getInstance()->getConfig()->routes;
-		
+	    if(!count($this->routes)) {
+	        throw new ApplicationException('Routing aborted: No routes defined.');
+        }
+
 		// if no page given try to get the first from list
 
-		if(is_null($pathSegments) && isset($routes[$scriptName])) {
-			return array_shift($routes[$scriptName]);
+		if(is_null($pathSegments)) {
+
+			return reset($this->routes);
 		}
 
 		$pathToCheck	= implode('/', $pathSegments);
@@ -182,7 +233,7 @@ class Router {
 
         /* @var Route $route */
 
-		foreach($routes[$scriptName] as $route) {
+		foreach($this->routes as $route) {
 
 			// keep default route as fallback, when no match is found
 
@@ -220,8 +271,8 @@ class Router {
                 // choose the route with more satisfied placeholders
                 // @todo could be optimized
 
-                $foundRouteSatisfiedPlaceholderCount = count(self::getSatisfiedPlaceholders($foundRoute, $pathToCheck));
-                $routeSatisfiedPlaceholderCount = count(self::getSatisfiedPlaceholders($route, $pathToCheck));
+                $foundRouteSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($foundRoute, $pathToCheck));
+                $routeSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($route, $pathToCheck));
 
                 if (
                     ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) < ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames()))
@@ -259,7 +310,7 @@ class Router {
      * @return boolean
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private static function authenticateRoute(Route $route) {
+	private function authenticateRoute(Route $route) {
 
 		$auth = $route->getAuth();
 
@@ -267,17 +318,17 @@ class Router {
 
 		if(is_null($auth)) {
 
-			return TRUE;
+			return true;
 
 		}
 
-		if(!self::$authenticator) {
+		if(!$this->authenticator) {
 			
-			self::$authenticator = new DefaultRouteAuthenticator();
+			$this->authenticator = new DefaultRouteAuthenticator();
 
 		}
 
-		return self::$authenticator->authenticate($route, Application::getInstance()->getCurrentUser());
+		return $this->authenticator->authenticate($route, Application::getInstance()->getCurrentUser());
 
 	}
 
@@ -289,7 +340,7 @@ class Router {
 	 * @param string $path
 	 * @return array
 	 */
-	private static function getSatisfiedPlaceholders($route, $path) {
+	private function getSatisfiedPlaceholders($route, $path) {
 
 		$placeholderNames = $route->getPlaceholderNames();
 		
