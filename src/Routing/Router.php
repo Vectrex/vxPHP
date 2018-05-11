@@ -213,7 +213,7 @@ class Router {
 
 		// if no page given try to get the first from list
 
-		if(is_null($pathSegments)) {
+		if(empty($pathSegments)) {
 
 			return reset($this->routes);
 		}
