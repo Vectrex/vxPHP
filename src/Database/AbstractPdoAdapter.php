@@ -25,16 +25,23 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
      */
     const QUOTE_CHAR = '´';
 
-
     /**
-     * field name holding a creation timestamp
-     */
-    const CREATE_FIELD = 'firstcreated';
-
-    /**
-     * field name holding an update timestamp
+     * attribute which stores the timestamp of the last update of the
+     * record; must be an all lowercase string, though the attribute in
+     * the database might be not
+     *
+     * @var string
      */
     const UPDATE_FIELD = 'lastupdated';
+
+    /**
+     * attribute which stores the timestamp of the creation timestamp of
+     * a record; must be an all lowercase string, though the attribute
+     * in the database might be not
+     *
+     * @var string
+     */
+    const CREATE_FIELD = 'firstcreated';
 
     /**
 	 * host address of connection
