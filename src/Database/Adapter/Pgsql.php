@@ -20,27 +20,9 @@ use vxPHP\Database\AbstractPdoAdapter;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.2, 2018-04-21
+ * @version 1.2.3, 2018-06-05
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
-
-	/**
-	 * attribute which stores the timestamp of the last update of the
-	 * record; must be an all lowercase string, though the attribute in
-	 * the database might be not
-	 *
-	 * @var string
-	 */
-	const UPDATE_FIELD = 'lastupdated';
-	
-	/**
-	 * attribute which stores the timestamp of the creation timestamp of
-	 * a record; must be an all lowercase string, though the attribute
-	 * in the database might be not
-	 *
-	 * @var string
-	 */
-	const CREATE_FIELD = 'firstcreated';
 
 	/**
 	 * the identifier quote character
@@ -156,9 +138,9 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
      */
     public function doPreparedQuery($statementString, array $parameters = []) {
 
-        $this->primeQuery($statementString, $parameters);
-        $this->statement->execute();
-        return new PgsqlRecordsetIterator($this->statement->fetchAll(\PDO::FETCH_ASSOC));
+        $statement = $this->primeQuery($statementString, $parameters);
+        $statement->execute();
+        return new PgsqlRecordsetIterator($statement->fetchAll(\PDO::FETCH_ASSOC));
 
     }
 
