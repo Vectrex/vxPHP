@@ -17,7 +17,7 @@ use vxPHP\Form\HtmlForm;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.9.0 2018-01-20
+ * @version 0.9.1 2018-06-08
  * @author Gregor Kofler
  * 
  */
@@ -115,18 +115,13 @@ abstract class FormElement implements FormElementInterface {
 
 	/**
 	 * set value of form element
-	 * htmlspecialchars() is applied for appropriate form element type
-	 * 
+	 *
 	 * @param mixed $value
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setValue($value) {
 
-		if($this instanceof InputElement && !is_null($value) && (!isset($this->attributes['type']) || $this->attributes['type'] != 'submit')) {
-			$value = htmlspecialchars($value, ENT_QUOTES);
-		}
 		$this->value = $value;
-
 		return $this;
 
 	}
