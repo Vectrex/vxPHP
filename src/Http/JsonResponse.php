@@ -28,14 +28,15 @@ class JsonResponse extends Response {
 	protected $callback;
 	protected $encodingOptions;
 
-	/**
-	 * constructor
-	 *
-	 * @param mixed $data
-	 * @param integer $statusCode
-	 * @param array   $headers
-	 */
-	public function __construct($responseData = NULL, $statusCode = 200, $headers = []) {
+    /**
+     * constructor
+     *
+     * @param mixed $responseData
+     * @param integer $statusCode
+     * @param array $headers
+     * @throws \Exception
+     */
+	public function __construct($responseData = null, $statusCode = 200, $headers = []) {
 
 		parent::__construct('', $statusCode, $headers);
 
@@ -87,14 +88,15 @@ class JsonResponse extends Response {
 		return $this->update();
 
 	}
-	
-	/**
-	 * Set payload
-	 *
-	 * @param mixed $responseData
-	 *
-	 * @return JsonResponse
-	 */
+
+    /**
+     * Set payload
+     *
+     * @param mixed $responseData
+     *
+     * @return JsonResponse
+     * @throws \Exception
+     */
 	public function setPayload($responseData) {
 
 		try {
@@ -130,14 +132,15 @@ class JsonResponse extends Response {
 
 	}
 
-	/**
-	 * set options used while encoding data to JSON
-	 * re-encodes payload with new encoding setting
-	 * 
-	 * @param int $encodingOptions
-	 * 
-	 * @return JsonResponse
-	 */
+    /**
+     * set options used while encoding data to JSON
+     * re-encodes payload with new encoding setting
+     *
+     * @param int $encodingOptions
+     *
+     * @return JsonResponse
+     * @throws \Exception
+     */
 	public function setEncodingOptions($encodingOptions) {
 
 		$this->encodingOptions = (int) $encodingOptions;

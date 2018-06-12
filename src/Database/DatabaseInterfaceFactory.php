@@ -11,13 +11,14 @@
 namespace vxPHP\Database;
 
 use vxPHP\Application\Exception\ConfigException;
+use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
 
 /**
  * Simple factory for DatabaseInterface classes
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.2, 2017-01-30
+ * @version 0.5.1, 2018-04-21
  */
 class DatabaseInterfaceFactory {
 	
@@ -29,63 +30,79 @@ class DatabaseInterfaceFactory {
 
 	/**
 	 * get a PDO wrapper/extension class depending on $type
+     * if no type is provided DSN string in the configuration
+     * is searched for a type definition
 	 * 
 	 * @param string $type
+     * @param array $config
 	 * @return DatabaseInterface
 	 * 
 	 * @throws \Exception
 	 */
-	public static function create($type, array $config = []) {
-		
+	public static function create($type = null, array $config = []) {
+
+	    if(!$type) {
+
+	        if(!isset($config['dsn'])) {
+	            throw new \Exception('No database type defined.');
+            }
+
+            if(preg_match('/^([a-z0-9]+):/i', trim($config['dsn']), $matches)) {
+                $type = $matches[1];
+            }
+            else {
+                throw new \Exception('No driver found in DSN.');
+            }
+
+        }
+
 		$type = strtolower($type);
 
 		if($type === 'propel') {
 
-			// check whether Propel is available
-			
-			if(!class_exists('\\Propel')) {
-				throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
-			}
+			// check whether Propel is available (assume Propel2)
 
-			if(!\Propel::isInit()) {
+            if(!class_exists('\\Propel\\Runtime\\Propel')) {
+                throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
+            }
 
-				throw new \Exception('Propel is not initialized.');
-				
-//				\Propel::setConfiguration(self::builtPropelConfiguration($config));
-//				\Propel::initialize();
-			}
-			
-			else {
-				
-				// retrieve adapter information
-				
-				$propelConfig = \Propel::getConfiguration(\PropelConfiguration::TYPE_OBJECT);
-				
-				$adapter = $propelConfig->getParameter('datasources.' . $config['name'] . '.adapter');
-				
-				if(is_null($adapter)) {
-						
-					throw new \Exception(sprintf("Propel for datasource '%s' not configured.", $config['name']));
-				
-				}
-				
-				if(!in_array($adapter, ['mysql', 'pgsql'])) {
-						
-					throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $config['name'], $adapter));
-						
-				}
-				
-				$className =
-					__NAMESPACE__ .
-					'\\Adapter\\' .
-					ucfirst($adapter);
-				
-				$vxPDO = new $className();
-				$vxPDO->setConnection(\Propel::getConnection($config['name']));
-					
-				return $vxPDO;
+            $serviceContainer = \Propel\Runtime\Propel::getServiceContainer();
+
+            // retrieve adapter information
+
+            $adapterName = $serviceContainer->getAdapterClass();
+            $dsnName = $serviceContainer->getDefaultDatasource();
+
+            /* @var $connection \Propel\Runtime\Connection\ConnectionInterface */
+
+            $connection = \Propel\Runtime\Propel::getConnection();
+
+            if(!in_array($adapterName, ['mysql', 'pgsql'])) {
+
+                throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $dsnName, $adapterName));
 
 			}
+
+			// @todo fugly like hell - perhaps some more concise solution exists
+
+            preg_match('/dbname=([^;]+)/i', \Propel\Runtime\Propel::getConnectionManager($dsnName)->getConfiguration()['dsn'], $matches);
+            $dbName = $matches[1] ?? '';
+
+            $pdoConnection = new Propel2ConnectionWrapper($connection);
+            $pdoConnection->setName($dsnName);
+            $pdoConnection->setDbName($dbName);
+
+            $className =
+                __NAMESPACE__ .
+                '\\Adapter\\' .
+                ucfirst($adapterName);
+
+            /* @var $vxPDO DatabaseInterface */
+
+            $vxPDO = new $className();
+            $vxPDO->setConnection($pdoConnection);
+
+            return $vxPDO;
 
 		}
 

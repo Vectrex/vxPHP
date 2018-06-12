@@ -47,13 +47,14 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 	 * @var \DateTime
 	 */
 	private $validUntil;
-	
-	/**
-	 * constructor, parses options
-	 * 
-	 * @param array $options
-	 * @throws \InvalidArgumentException
-	 */
+
+    /**
+     * constructor, parses options
+     *
+     * @param array $options
+     * @throws \InvalidArgumentException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function __construct(array $options = []) {
 		
 		$this->locale = isset($options['locale']) ? $options['locale'] : Application::getInstance()->getCurrentLocale();

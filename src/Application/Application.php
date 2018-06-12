@@ -14,6 +14,7 @@ use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Routing\Route;
+use vxPHP\Routing\Router;
 use vxPHP\Service\ServiceInterface;
 use vxPHP\Observer\SubscriberInterface;
 use vxPHP\Database\DatabaseInterface;
@@ -28,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.8.6 2017-12-15
+ * @version 1.9.0 2018-05-11
  */
 class Application {
 
@@ -155,7 +156,13 @@ class Application {
 	 * @var RoleHierarchy
 	 */
 	private $roleHierarchy;
-	
+
+    /**
+     * the currently used router
+     *
+     * @var Router
+     */
+	private $router;
 	/**
 	 * Constructor.
 	 *
@@ -182,7 +189,7 @@ class Application {
 			// initialize available locales
 
 			if(isset($this->config->site->locales)) {
-				$this->locales = array_fill_keys($this->config->site->locales, NULL);
+				$this->locales = array_fill_keys($this->config->site->locales, null);
 			}
 
 			// set a relative assets path when configured
@@ -231,13 +238,14 @@ class Application {
 	 */
 	private function __clone() {}
 
-	/**
-	 * Get Application instance.
-	 *
-	 * @param Config $config
-	 * @return Application
-	 */
-	public static function getInstance(Config $config = NULL) {
+    /**
+     * Get Application instance.
+     *
+     * @param Config $config
+     * @return Application
+     * @throws ApplicationException
+     */
+	public static function getInstance(Config $config = null) {
 
 		if(is_null(self::$instance)) {
 			if(is_null($config)) {
@@ -262,14 +270,15 @@ class Application {
 		
 	}
 
-	/**
-	 * Unregister all previously registered plugins.
-	 * 
-	 * read plugin configuration from Config
-	 * and register all configured plugins
-	 * 
-	 * @return Application
-	 */
+    /**
+     * Unregister all previously registered plugins.
+     *
+     * read plugin configuration from Config
+     * and register all configured plugins
+     *
+     * @return Application
+     * @throws ApplicationException
+     */
 	public function registerPlugins() {
 		
 		if($this->plugins) {
@@ -294,15 +303,16 @@ class Application {
 
 	}
 
-	/**
-	 * get default vxPDO instance
-	 * 
-	 * this method exists for backwards compatibility
-	 * if no 'db' configuration is found, it tries to return a
-	 * configured default vxpdo datasource 
-	 *
-	 * @return \vxPHP\Database\DatabaseInterface
-	 */
+    /**
+     * get default vxPDO instance
+     *
+     * this method exists for backwards compatibility
+     * if no 'db' configuration is found, it tries to return a
+     * configured default vxpdo datasource
+     *
+     * @return \vxPHP\Database\DatabaseInterface
+     * @throws \Exception
+     */
 	public function getDb() {
 
 		if(empty($this->db)) {
@@ -314,7 +324,7 @@ class Application {
 				}
 				
 				catch(ApplicationException $e) {
-					return NULL;
+					return null;
 				}
 				
 			}
@@ -384,15 +394,16 @@ class Application {
 
 	}
 
-	/**
-	 * return a service instance
-	 * service instances are lazily initialized upon first request
-	 * 
-	 * any extra argument is passed on to the constructor method of the service 
-	 * 
-	 * @param string $serviceId
-	 * @return \vxPHP\Application\multitype:ServiceInterface
-	 */
+    /**
+     * return a service instance
+     * service instances are lazily initialized upon first request
+     *
+     * any extra argument is passed on to the constructor method of the service
+     *
+     * @param string $serviceId
+     * @return ServiceInterface :ServiceInterface
+     * @throws ApplicationException
+     */
 	public function getService($serviceId) {
 
 		$args = func_get_args();
@@ -402,6 +413,19 @@ class Application {
 		return $service;
 
 	}
+
+    /**
+     * checks whether a service identified by service id is configured
+     * no further checks whether service can be invoked are conducted
+     *
+     * @param $serviceId
+     * @return bool
+     */
+	public function hasService($serviceId) {
+
+	    return !empty($this->config->services) && array_key_exists($serviceId, $this->config->services);
+
+    }
 
 	/**
 	 * returns event dispatcher instance reference
@@ -633,14 +657,15 @@ class Application {
 		return $this->roleHierarchy;
 	
 	}
-	
-	/**
-	 * tries to interpret $path as relative path within assets path
-	 * if $path is an absolute path (starting with "/" or "c:\") it is returned unchanged
-	 * otherwise $path is extended with Application::absoluteAssetsPath to the left
-	 *
-	 * @param string $path
-	 */
+
+    /**
+     * tries to interpret $path as relative path within assets path
+     * if $path is an absolute path (starting with "/" or "c:\") it is returned unchanged
+     * otherwise $path is extended with Application::absoluteAssetsPath to the left
+     *
+     * @param string $path
+     * @return string
+     */
 	public function extendToAbsoluteAssetsPath($path) {
 
 		if(strpos($path, DIRECTORY_SEPARATOR) === 0 || strpos($path, ':\\') === 1) {
@@ -693,16 +718,18 @@ class Application {
 
 	}
 
-	/**
-	 *
-	 * @param string $localeId
-	 */
+    /**
+     *
+     * @param string $localeId
+     * @return Locale
+     * @throws ApplicationException
+     */
 	public function getLocale($localeId) {
 
 		$localeId = strtolower($localeId);
 
 		if(!array_key_exists($localeId, $this->locales)) {
-			throw new ApplicationException("Locale '$localeId' does not exist.", ApplicationException::INVALID_LOCALE);
+			throw new ApplicationException(sprintf("Locale '%s' does not exist.", $localeId), ApplicationException::INVALID_LOCALE);
 		}
 
 		if(is_null($this->locales[$localeId])) {
@@ -735,6 +762,29 @@ class Application {
 		return $this;
 
 	}
+
+    /**
+     * get the currently configured router
+     *
+     * @return Router
+     */
+    public function getRouter(): Router
+    {
+        return $this->router;
+    }
+
+    /**
+     * set the router
+     *
+     * @param Router $router
+     * @return Application
+     */
+    public function setRouter(Router $router): Application
+    {
+        $this->router = $router;
+        return $this;
+    }
+
 
 	/**
 	 * set the current route, avoids re-parsing of path

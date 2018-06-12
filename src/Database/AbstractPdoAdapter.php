@@ -10,18 +10,40 @@
 
 namespace vxPHP\Database;
 
-use vxPHP\Database\DatabaseInterface;
-
 /**
  * abstract class pooling all shared methods of PDO adapters
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.0, 2017-03-10
+ * @version 0.10.0, 2018-06-05
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
-	/**
+    /**
+     * character for quoting identifiers
+     *
+     */
+    const QUOTE_CHAR = '´';
+
+    /**
+     * attribute which stores the timestamp of the last update of the
+     * record; must be an all lowercase string, though the attribute in
+     * the database might be not
+     *
+     * @var string
+     */
+    const UPDATE_FIELD = 'lastupdated';
+
+    /**
+     * attribute which stores the timestamp of the creation timestamp of
+     * a record; must be an all lowercase string, though the attribute
+     * in the database might be not
+     *
+     * @var string
+     */
+    const CREATE_FIELD = 'firstcreated';
+
+    /**
 	 * host address of connection
 	 * 
 	 * @var string
@@ -77,14 +99,21 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	protected $statement;
 
-	/**
+    /**
+     * column details of tables
+     *
+     * @var array
+     */
+    protected $tableStructureCache = [];
+
+    /**
 	 * automatically touch a lastUpdated column whenever
 	 * a record is updated
 	 * any internal db mechanism is notoverwritten
 	 *
 	 * @var boolean
 	 */
-	protected	$touchLastUpdated = TRUE;
+	protected	$touchLastUpdated = true;
 
 	/**
 	 *
@@ -96,18 +125,52 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		
 		$config = array_change_key_case($config, CASE_LOWER);
 		
-		$this->host		= $config['host'];
-		$this->dbname	= $config['dbname'];
-		$this->user		= $config['user'];
+		$this->host = $config['host'];
+		$this->dbname = $config['dbname'];
+		$this->user = $config['user'];
 		$this->password	= $config['password'];
-		
-		if(isset($config['dsn'])) {
-			$this->dsn = $config['dsn'];
-		}
 
-		if(isset($config['port'])) {
-			$this->port = (int) $config['port'];
-		}
+        if(isset($config['port'])) {
+            $this->port = (int) $config['port'];
+        }
+
+		if(isset($config['dsn'])) {
+
+			$this->dsn = $config['dsn'];
+
+			// set dbname
+
+            if(!preg_match('/dbname=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                throw new \PDOException('Database name missing in DSN string.');
+            };
+            if($this->dbname && $matches[1] !== $this->dbname) {
+                throw new \PDOException(sprintf("Mismatch of database name: DSN states '%s', dbname element states '%s'.", $matches[1], $this->dbname));
+            } else {
+                $this->dbname = $matches[1];
+            }
+
+            // set host
+
+            if(!preg_match('/host=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                throw new \PDOException('Host missing in DSN string.');
+            };
+            if($this->host && $matches[1] !== $this->host) {
+                throw new \PDOException(sprintf("Mismatch of host: DSN states '%s', host element states '%s'.", $matches[1], $this->host));
+            } else {
+                $this->host = $matches[1];
+            }
+
+            // set port
+
+            if(preg_match('/port=(.*?)(?:;|$)/', $this->dsn, $matches)) {
+                if ($this->port && (int)$matches[1] !== $this->port) {
+                    throw new \PDOException(sprintf("Mismatch of port: DSN states '%s', host element states '%s'.", $matches[1], $this->port));
+                } else {
+                    $this->port = (int)$matches[1];
+                }
+            }
+
+        }
 
 	}
 	
@@ -171,7 +234,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	
 		switch ($pkLength) {
 			case 0:
-				return NULL;
+				return null;
 	
 			case 1:
 				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0];
@@ -244,7 +307,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * might be required after extensive alterations to several
 	 * table structures
 	 *
-	 * @return \vxPHP\Database\Adapter\Postgresql
+	 * @return self
 	 */
 	public function clearTableStructureCache() {
 	
@@ -258,7 +321,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * required after changes to a tables structure
 	 *
 	 * @param string $tableName
-	 * @return \vxPHP\Database\Adapter\Postgresql
+	 * @return self
 	 */
 	public function refreshTableStructureCache($tableName) {
 	
@@ -305,7 +368,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		// nothing to do
 	
 		if(!count($names)) {
-			return NULL;
+			return null;
 		}
 	
 		$valuePlaceholders = implode(', ', array_fill(0, count($values), '?'));
@@ -435,7 +498,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $firstRow); 
 
 			if(count($matchedRow) !== count($firstRow)) {
-				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected [%s], but found [%s].", $i, implode(', ', array_keys($names)), implode(', ', array_keys($matchedRow))));
+				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected ['%s'], but found ['%s'].", $i, implode("', '", $names), implode("', '", array_keys($matchedRow))));
 			}
 
 			// collect values (in consistent order) for statement execution
@@ -718,11 +781,12 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @see \vxPHP\Database\DatabaseInterface::execute()
 	 */
 	public function execute($statementString, array $parameters = []) {
-	
-		$this->primeQuery($statementString, $parameters);
-		$this->statement->execute();
-	
-		return $this->statement->rowCount();
+
+	    $statement = $this->primeQuery($statementString, $parameters);
+		$statement->execute();
+
+		return $statement->rowCount();
+
 	}
 	
 	/**
@@ -730,13 +794,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
 	 */
-	public function doPreparedQuery($statementString, array $parameters = []) {
-	
-		$this->primeQuery($statementString, $parameters);
-		$this->statement->execute();
-		return $this->statement->fetchAll(\PDO::FETCH_ASSOC);
-	
-	}
+	public abstract function doPreparedQuery($statementString, array $parameters = []);
 
 	/**
 	 * 
@@ -745,7 +803,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function ignoreLastUpdated() {
 	
-		$this->touchLastUpdated = FALSE;
+		$this->touchLastUpdated = false;
 		return $this;
 	
 	}
@@ -757,7 +815,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function updateLastUpdated() {
 	
-		$this->touchLastUpdated = TRUE;
+		$this->touchLastUpdated = true;
 		return $this;
 	
 	}
@@ -768,11 +826,11 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @param string $statementString
 	 * @param array $parameters
 	 *
-	 * @return void
+	 * @return \PDOStatement
 	 */
 	protected function primeQuery($statementString, array $parameters) {
 	
-		$this->statement = $this->connection->prepare($statementString);
+		$statement = $this->connection->prepare($statementString);
 	
 		foreach($parameters as $name => $value) {
 	
@@ -804,18 +862,34 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				$type = \PDO::PARAM_NULL;
 			}
 	
-			$this->statement->bindValue($name, $value, $type);
-	
+			$statement->bindValue($name, $value, $type);
+
 		}
-	}
-	
+
+        $this->statement = $statement;
+        return $statement;
+
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \vxPHP\Database\DatabaseInterface::quoteIdentifier()
+     */
+    public function quoteIdentifier($identifier) {
+
+	    return static::QUOTE_CHAR . $identifier . static::QUOTE_CHAR;
+
+    }
+
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public abstract function setConnection(\PDO $connection);
+	public abstract function setConnection(ConnectionInterface $connection);
 
 	/**
 	 * analyze column metadata of table $tableName

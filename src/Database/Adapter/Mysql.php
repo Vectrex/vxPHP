@@ -10,35 +10,20 @@
 
 namespace vxPHP\Database\Adapter;
 
+use vxPHP\Application\Application;
+use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
+use vxPHP\Database\PDOConnection;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.9.0, 2017-03-10
+ * @version 1.11.3, 2018-06-05
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
-
-	/**
-	 * attribute which stores the timestamp of the last update of the
-	 * record; must be an all lowercase string, though the attribute in
-	 * the database might be not
-	 * 
-	 * @var string
-	 */
-	const UPDATE_FIELD = 'lastupdated';
-
-	/**
-	 * attribute which stores the timestamp of the creation timestamp of
-	 * a record; must be an all lowercase string, though the attribute
-	 * in the database might be not
-	 *
-	 * @var string
-	 */
-	const CREATE_FIELD = 'firstcreated';
 
 	/**
 	 * the identifier quote character
@@ -53,17 +38,10 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @var array
 	 */
 	protected $charsetMap = [
-		'utf-8'			=> 'utf8',
-		'iso-8859-15'	=> 'latin1'
+		'utf-8' => 'utf8',
+		'iso-8859-15' => 'latin1'
 	];
 				
-	/**
-	 * column details of tables
-	 * 
-	 * @var array
-	 */
-	protected	$tableStructureCache = [];
-
 	/**
 	 * initiate connection
 	 * 
@@ -72,7 +50,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @param array $config
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config = NULL) {
+	public function __construct(array $config = null) {
 
 		if($config) {
 
@@ -116,29 +94,26 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 				}
 	
 			}
-	
-			$options = [
-				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
-			];
-			
-			// if not explicitly specified, attributes are returned lower case
 
-			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
-				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
-			}
-			
-			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
-	
-			// set emulated prepares for MySQL servers < 5.1.17
-	
-			$this->connection->setAttribute(
-				\PDO::ATTR_EMULATE_PREPARES,
-				version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<') 
-			);
+			// check whether charset encoding matches
 
-		}
+			else {
+
+			    if(preg_match('/charset=([0-9a-z]+)(?:;|$)/i', $this->dsn, $matches)) {
+			        if(strtolower($matches[1]) !== $charset) {
+			            throw new \PDOException(sprintf("Charset mismatch; site configuration says '%s', DSN says '%s'.", $charset, $matches[1]));
+                    }
+                }
+                else {
+			        $this->dsn .= ';charset=' . $charset;
+                }
+
+            }
+
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
+            $this->setDefaultConnectionAttributes();
+
+        }
 
 	}
 
@@ -146,7 +121,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(\PDO $connection) {
+	public function setConnection(ConnectionInterface $connection) {
 
 		// redeclaring a connection is not possible
 
@@ -163,9 +138,12 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 
 		$this->connection = $connection;
+		$this->dbname = $connection->getDbName();
+
+		$this->setDefaultConnectionAttributes();
 
 	}
-	
+
 	/**
 	 * return all possible options of an enum or set attribute
 	 * 
@@ -249,7 +227,49 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	}
 
-	/**
+    /**
+     *
+     * {@inheritDoc}
+     * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
+     */
+    public function doPreparedQuery($statementString, array $parameters = []) {
+
+        $statement = $this->primeQuery($statementString, $parameters);
+        $statement->execute();
+        return new MysqlRecordsetIterator($statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
+     * set initial attributes for database connection
+     */
+    protected function setDefaultConnectionAttributes() {
+
+        $config = Application::getInstance()->getConfig();
+
+        $options = [
+            \PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES	=> false,
+
+            // set emulated prepares for MySQL servers < 5.1.17
+
+            \PDO::ATTR_EMULATE_PREPARES     => version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<')
+        ];
+
+        // if not explicitly specified, attributes are returned lower case
+
+        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+            $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+        }
+
+        foreach($options as $key => $value) {
+            $this->connection->setAttribute($key, $value);
+        }
+
+    }
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()

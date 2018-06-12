@@ -10,36 +10,19 @@
 
 namespace vxPHP\Database\Adapter;
 
+use vxPHP\Application\Application;
+use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
- * currently a stub
- * 
+ *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.0, 2017-03-10
+ * @version 1.2.3, 2018-06-05
  */
-class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
-
-	/**
-	 * attribute which stores the timestamp of the last update of the
-	 * record; must be an all lowercase string, though the attribute in
-	 * the database might be not
-	 *
-	 * @var string
-	 */
-	const UPDATE_FIELD = 'lastupdated';
-	
-	/**
-	 * attribute which stores the timestamp of the creation timestamp of
-	 * a record; must be an all lowercase string, though the attribute
-	 * in the database might be not
-	 *
-	 * @var string
-	 */
-	const CREATE_FIELD = 'firstcreated';
+class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
 	/**
 	 * the identifier quote character
@@ -47,26 +30,48 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @var string
 	 */
 	const QUOTE_CHAR = '"';
-	
-	/**
- 	 * store column details of tables
-	 * 
-	 * @var array
-	 */
-	protected $tableStructureCache;
-	
+
+    /**
+     * map translating encoding names
+     *
+     * @var array
+     */
+    protected $charsetMap = [
+        'utf-8' => 'UTF8',
+        'iso-8859-15' => 'LATIN1'
+    ];
+
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
-	 */
-	public function __construct(array $config = NULL) {
+     *
+     * @todo parse unix_socket settings
+     */
+	public function __construct(array $config = null) {
 
 		if($config) {
 
 			parent::__construct($config);
-			
+
+            if(defined('DEFAULT_ENCODING')) {
+
+                if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
+                    $charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+                }
+                else {
+                    throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
+                }
+
+            }
+
+            else {
+
+                $charset = 'UTF8';
+
+            }
+
 			if(!$this->dsn) {
 			
 				if(!$this->host) {
@@ -85,21 +90,13 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 				if($this->port) {
 					$this->dsn .= ';port=' . $this->port;
 				}
-			}
-	
-			$options = [
-				\PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-				\PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-				\PDO::ATTR_STRINGIFY_FETCHES	=> FALSE
-			];
 
-			// if not explicitly specified, attributes are returned lower case
-			
-			if(!isset($config->keep_key_case) || !$config->keep_key_case) {
-				$options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
 			}
 
-			$this->connection = new \PDO($this->dsn, $this->user, $this->password, $options);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
+			$this->connection->exec(sprintf("SET NAMES '%s'", strtoupper($charset)));
+
+            $this->setDefaultConnectionAttributes();
 
 		}
 
@@ -111,7 +108,7 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(\PDO $connection) {
+	public function setConnection(ConnectionInterface $connection) {
 	
 		// redeclaring a connection is not possible
 	
@@ -128,10 +125,51 @@ class Postgresql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 	
 		$this->connection = $connection;
-	
-	}
+        $this->dbname = $connection->getDbName();
 
-	/**
+        $this->setDefaultConnectionAttributes();
+
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
+     */
+    public function doPreparedQuery($statementString, array $parameters = []) {
+
+        $statement = $this->primeQuery($statementString, $parameters);
+        $statement->execute();
+        return new PgsqlRecordsetIterator($statement->fetchAll(\PDO::FETCH_ASSOC));
+
+    }
+
+    /**
+     * set initial attributes for database connection
+     */
+    protected function setDefaultConnectionAttributes() {
+
+        $config = Application::getInstance()->getConfig();
+
+        $options = [
+            \PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES	=> false
+        ];
+
+        // if not explicitly specified, attributes are returned lower case
+
+        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+            $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
+        }
+
+        foreach($options as $key => $value) {
+            $this->connection->setAttribute($key, $value);
+        }
+
+    }
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()

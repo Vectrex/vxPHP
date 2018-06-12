@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.6 2017-10-23
+ * @version 2.0.8 2018-05-05
  */
 class Config {
 
@@ -64,7 +64,7 @@ class Config {
 	public	$paths;
 
 	/**
-	 * @var Route[]
+	 * @var array
 	 */
 	public	$routes;
 
@@ -377,13 +377,13 @@ class Config {
 			}
 
 			$config = [
-				'driver' => NULL,
-				'dsn' => NULL,
-				'host' => NULL,
-				'port' => NULL,
-				'user' => NULL,
-				'password' => NULL,
-				'dbname' => NULL,
+				'driver' => null,
+				'dsn' => null,
+				'host' => null,
+				'port' => null,
+				'user' => null,
+				'password' => null,
+				'dbname' => null,
 			];
 
 			foreach($datasource->childNodes as $node) {
@@ -395,10 +395,6 @@ class Config {
 				if(array_key_exists($node->nodeName, $config)) {
 					$config[$node->nodeName] = trim($node->nodeValue);
 				}
-			}
-
-			if(is_null($config['driver'])) {
-				throw new ConfigException(sprintf("No driver defined for datasource '%s'.", $name));
 			}
 
 			$this->vxpdo[$name] = (object) $config;
@@ -704,11 +700,11 @@ class Config {
 			// read optional allowed request methods
 
 			if(($requestMethods = $page->getAttribute('request_methods'))) {
-				$allowedMethods	= 'GET POST PUT DELETE PATCH';
+				$allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 				$requestMethods	= preg_split('~\s*,\s*~', strtoupper($requestMethods));
 
 				foreach($requestMethods as $requestMethod) {
-					if(strpos($allowedMethods, $requestMethod) === -1) {
+					if(!in_array($requestMethod, $allowedMethods)) {
 						throw new ConfigException(sprintf("Invalid request method '%s' for route '%s'.", $requestMethod, $pageId));
 					}
 				}

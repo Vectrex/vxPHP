@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.1, 2017-12-15
+ * @version 0.5.1, 2018-04-21
  *
  */
 interface DatabaseInterface {
@@ -99,7 +99,7 @@ interface DatabaseInterface {
 	 * @param string $statementString
 	 * @param array $parameters
 	 * 
-	 * @return array
+	 * @return RecordsetIteratorInterface
 	 */
 	public function doPreparedQuery($statementString, array $parameters);
 
@@ -173,28 +173,28 @@ interface DatabaseInterface {
 	 * @return mixed
 	 */
 	public function getColumnDefaultValue($tableName, $columnName);
-	
-	/**
-	 * set connection of database class
-	 * the connection is normally set in the constructor, but when a
-	 * connection already in use should be augmented with methods of
-	 * this interface setConnection() allows the injection 
-	 * 
-	 * if a connection is already set either by constructor or a
-	 * previous setConnection() call, a PDOException is raised
-	 * 
-	 * setConnection checks whether the connection type matches the
-	 * adapter's type; if not a PDOException is raised 
-	 * 
-	 * @param \PDO $connection
-	 * @throws \PDOException
-	 */
-	public function setConnection(\PDO $connection);
+
+    /**
+     * set connection of database class
+     * the connection is normally set in the constructor, but when a
+     * connection already in use should be augmented with methods of
+     * this interface setConnection() allows the injection
+     *
+     * if a connection is already set either by constructor or a
+     * previous setConnection() call, a PDOException is raised
+     *
+     * setConnection checks whether the connection type matches the
+     * adapter's type; if not a PDOException is raised
+     *
+     * @param ConnectionInterface $connection
+     * @param string $dbName
+     */
+	public function setConnection(ConnectionInterface $connection);
 	
 	/**
 	 * get current connection
 	 * 
-	 * @return \PDO
+	 * @return PDOConnection
 	 */
 	public function getConnection();
 	
@@ -212,4 +212,11 @@ interface DatabaseInterface {
 	 */
 	public function commit();
 
+    /**
+     * wrap identifier with database specific quote char
+     *
+     * @param string $identifier
+     * @return DatabaseInterface
+     */
+	public function quoteIdentifier($identifier);
 }

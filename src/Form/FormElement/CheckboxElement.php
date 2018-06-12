@@ -14,15 +14,21 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.8.0 2017-08-11
+ * @version 0.9.0 2018-02-03
  * @author Gregor Kofler
  *
  */
 class CheckboxElement extends InputElement {
 
-	private	$checked,
-			$label;
+    /**
+     * @var bool
+     */
+	private $checked;
 
+    /**
+     * @var string
+     */
+	private $label;
 
 	/**
 	 * inialize a <input type="checkbox"> element instance
@@ -66,7 +72,17 @@ class CheckboxElement extends InputElement {
 
 	}
 
-	/**
+    /**
+     * get label stored with checkbox
+     *
+     * @return string
+     */
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+    /**
 	 * get checked state of checkbox
 	 * 
 	 * @return boolean
