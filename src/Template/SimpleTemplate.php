@@ -100,6 +100,7 @@ class SimpleTemplate {
      *
      * @param string $file
      * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public function __construct($file = null) {
 
@@ -124,6 +125,8 @@ class SimpleTemplate {
      *
      * @param string $file
      * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public static function create($file = null) {
 
@@ -163,7 +166,7 @@ class SimpleTemplate {
 	 *
 	 * @return string
 	 */
-	public function getrawContents() {
+	public function getRawContents() {
 
 		return $this->rawContents;
 
@@ -251,6 +254,7 @@ class SimpleTemplate {
      *
      * @return string
      * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public function display() {
 
@@ -326,6 +330,7 @@ class SimpleTemplate {
      *
      * @return string
      * @throws ConfigException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	private function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null) {
 
@@ -469,12 +474,13 @@ class SimpleTemplate {
     /**
      * create anchor tag
      *
-     * @param string link URI or relative link
-     * @param string text link test
-     * @param string img image name used within link
-     * @param string|bool class css class
-     * @param string|bool miscstr additional string with attributes or handlers
+     * @param $link
+     * @param string $text
+     * @param string $img
+     * @param bool $class
+     * @param bool $miscstr
      * @return bool|string
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public static function a($link, $text = '', $img = '', $class = false, $miscstr = false) {
 
