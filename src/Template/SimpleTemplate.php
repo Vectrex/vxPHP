@@ -28,7 +28,7 @@ use vxPHP\Application\Exception\ConfigException;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 1.7.0 2018-06-22
+ * @version 1.8.0 2018-07-06
  *
  */
 
@@ -74,6 +74,14 @@ class SimpleTemplate {
      * @var SimpleTemplateFilterInterface []
      */
 	private $defaultFilters;
+
+    /**
+     * ids of blocked filters
+     * allows turning of configured filters temporarily
+     *
+     * @var array
+     */
+    private $blockedFilters = [];
 
     /**
      * @var boolean
@@ -254,6 +262,22 @@ class SimpleTemplate {
 	}
 
     /**
+     * block a pre-configured filter
+     *
+     * @param string $filterId
+     * @return $this
+     */
+	public function blockFilter($filterId) {
+
+	    if(!in_array($filterId, $this->blockedFilters)) {
+	        $this->blockedFilters[] = $filterId;
+        }
+
+        return $this;
+
+    }
+
+    /**
      * output parsed template
      *
      * @param SimpleTemplateFilterInterface []
@@ -317,18 +341,21 @@ class SimpleTemplate {
 
             foreach($templatingConfig->filters as $id => $filter) {
 
-                // load class file
+                if(!in_array($id, $this->blockedFilters)) {
 
-                $instance = new $filter['class']();
+                    // load class file
 
-                // check whether instance implements FilterInterface
+                    $instance = new $filter['class']();
 
-                if(!$instance instanceof SimpleTemplateFilterInterface) {
-                    throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $filter['class']));
+                    // check whether instance implements FilterInterface
+
+                    if (!$instance instanceof SimpleTemplateFilterInterface) {
+                        throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $filter['class']));
+                    }
+
+                    $this->defaultFilters[] = $instance;
+
                 }
-
-                $this->defaultFilters[] = $instance;
-
             }
         }
 
