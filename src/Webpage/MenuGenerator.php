@@ -25,7 +25,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.1, 2017-06-14
+ * @version 0.6.2, 2018-07-07
  *
  * @throws MenuGeneratorException
  */
@@ -109,42 +109,43 @@ class MenuGenerator {
 	 * @var MenuAuthenticatorInterface
 	 */
 	protected static $authenticator;
-	
-	/**
-	 * sets active menu entries, allows addition of dynamic entries and
-	 * prints level $level of a menu, identified by $id
-	 *
-	 * $decorator identifies a decorator class - MenuDecorator{$decorator}
-	 * $renderArgs are additional parameters passed to Menu::render()
-	 *
-	 * @param string $id
-	 * @param integer $level (if NULL, the full menu tree is printed)
-	 * @param boolean $forceActiveMenu
-	 * @param string $decorator
-	 * @param mixed $renderArgs
-	 *
-	 * @return string html markup
-	 */
-	public function __construct($id = NULL, $level = FALSE, $forceActiveMenu = NULL, $decorator = NULL, $renderArgs = NULL) {
+
+    /**
+     * sets active menu entries, allows addition of dynamic entries and
+     * prints level $level of a menu, identified by $id
+     *
+     * $decorator identifies a decorator class - MenuDecorator{$decorator}
+     * $renderArgs are additional parameters passed to Menu::render()
+     *
+     * @param string $id
+     * @param bool $level (if NULL, the full menu tree is printed)
+     * @param bool $forceActiveMenu
+     * @param string $decorator
+     * @param mixed $renderArgs
+     *
+     * @throws MenuGeneratorException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public function __construct($id = null, $level = false, $forceActiveMenu = null, $decorator = null, $renderArgs = null) {
 
 		$application = Application::getInstance();
 
 		$config = $application->getConfig();
 		$this->useNiceUris = $application->hasNiceUris();
 
-		if(empty($id) && !is_null($config->menus)) {
-			throw new MenuGeneratorException();
-		}
-
-		$this->route	= $application->getCurrentRoute();
+		$this->route = $application->getCurrentRoute();
 
 		if(is_null($this->route)) {
-			$this->route = Router::getRouteFromPathInfo();
+			$this->route = $application->getRouter()->getRouteFromPathInfo(Request::createFromGlobals());
 		}
 
 		if(empty($id)) {
-			$id = array_shift(array_keys($config->menus));
-		}
+            if (array_key_exists(Menu::DEFAULT_ID, $config->menus)) {
+                $id = Menu::DEFAULT_ID;
+            } else {
+                $id = array_shift(array_keys($config->menus));
+            }
+        }
 
 		if(
 			!isset($config->menus[$id]) ||
@@ -156,10 +157,10 @@ class MenuGenerator {
 
 		$this->menu = $config->menus[$id];
 
-		$this->id			= $id;
-		$this->level		= $level;
-		$this->decorator	= $decorator;
-		$this->renderArgs	= is_null($renderArgs) ? [] : $renderArgs;
+		$this->id = $id;
+		$this->level = $level;
+		$this->decorator = $decorator;
+		$this->renderArgs = $renderArgs ?? [];
 
 		// if $forceActiveMenu was initialized before, it will not be overwritten
 
@@ -169,11 +170,19 @@ class MenuGenerator {
 
 	}
 
-	/**
-	 * convenience method to allow chaining
-	 * @see __construct()
-	 */
-	public static function create($id = NULL, $level = FALSE, $forceActiveMenu = NULL, $decorator = NULL, $renderArgs = NULL) {
+    /**
+     * convenience method to allow chaining
+     *
+     * @param string $id
+     * @param bool $level (if NULL, the full menu tree is printed)
+     * @param bool $forceActiveMenu
+     * @param string $decorator
+     * @param mixed $renderArgs
+     * @return MenuGenerator
+     * @throws MenuGeneratorException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public static function create($id = null, $level = false, $forceActiveMenu = null, $decorator = null, $renderArgs = null) {
 
 		return new static($id, $level, $forceActiveMenu, $decorator, $renderArgs);
 
@@ -204,11 +213,12 @@ class MenuGenerator {
 
 	}
 
-	/**
-	 * render menu markup
-	 *
-	 * @return string
-	 */
+    /**
+     * render menu markup
+     *
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function render() {
 
 		// check authentication
@@ -301,7 +311,7 @@ class MenuGenerator {
 
 		// enable or disable display of submenus
 
-		$m->setShowSubmenus($this->level === FALSE);
+		$m->setShowSubmenus($this->level === false);
 
 		// enable or disable always active menu
 
@@ -328,13 +338,14 @@ class MenuGenerator {
 
 	}
 
-	
-	/**
-	 * walk the menu tree
-	 * and invoke service to append dynamic menu entries
-	 * 
-	 * @param Menu $m
-	 */
+
+    /**
+     * walk the menu tree
+     * and invoke service to append dynamic menu entries
+     *
+     * @param Menu $m
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	protected function completeMenu(Menu $m) {
 		
 		if($m->getType() === 'dynamic') {
@@ -422,14 +433,15 @@ class MenuGenerator {
 		}
 	}
 
-	/**
-	 * authenticates the complete menu
-	 * invokes a previously set authenticator class or falls back
-	 * to a default menu authenticator
-	 *
-	 * @param Menu $menu
-	 * @return boolean
-	 */
+    /**
+     * authenticates the complete menu
+     * invokes a previously set authenticator class or falls back
+     * to a default menu authenticator
+     *
+     * @param Menu $menu
+     * @return boolean
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	protected function authenticateMenu(Menu $menu) {
 
 		if(!self::$authenticator) {
