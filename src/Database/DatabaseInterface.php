@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.5.1, 2018-04-21
+ * @version 0.6.0, 2018-07-18
  *
  */
 interface DatabaseInterface {
@@ -24,8 +24,9 @@ interface DatabaseInterface {
 	 * initiate connection
 	 * 
 	 * @param array $config
+     * @param array $connectionAttributes
 	 */
-	public function __construct(array $config);
+	public function __construct(array $config, array $connectionAttributes);
 	
 	/**
 	 * insert a record in table $tableName
