@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.10.1, 2018-07-19
+ * @version 0.10.2, 2018-07-19
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -121,7 +121,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
 	 */
-	public function __construct(array $config, array $connectionAttributes) {
+	public function __construct(array $config, array $connectionAttributes = []) {
 		
 		$config = array_change_key_case($config, CASE_LOWER);
 		
