@@ -20,9 +20,14 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * manages a complete menu
  * 
  * @author Gregor Kofler
- * @version 0.9.0 2016-07-26
+ * @version 0.9.1 2018-07-07
  */
 class Menu {
+
+    /**
+     * the id of a menu which has no id explicitly set
+     */
+    const DEFAULT_ID = '__default__';
 
 	/**
 	 * @var string
@@ -293,7 +298,7 @@ class Menu {
 	 */
 	public function getId() {
 
-		return $this->id;
+		return $this->id ?: self::DEFAULT_ID;
 
 	}
 
