@@ -25,7 +25,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2017-04-24
+ * @version 0.6.1 2018-07-20
  *
  */
 abstract class Controller {
@@ -71,19 +71,20 @@ abstract class Controller {
 	 */
 	protected $xhrBag;
 
-	/**
-	 * create a controller instance
-	 * if a route is passed on to constructor this route will be made
-	 * available to the controller
-	 * if no route is passed on the route falls back to the applications
-	 * set current route or it will determined by the router
-	 * a second argument can hold an array with arbitrary data used by
-	 * the controller
-	 *  
-	 * @param Route $route
-	 * @param array $parameters
-	 */
-	public function __construct(Route $route = NULL, array $parameters = NULL) {
+    /**
+     * create a controller instance
+     * if a route is passed on to constructor this route will be made
+     * available to the controller
+     * if no route is passed on the route falls back to the applications
+     * set current route or it will determined by the router
+     * a second argument can hold an array with arbitrary data used by
+     * the controller
+     *
+     * @param Route $route
+     * @param array $parameters
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public function __construct(Route $route = null, array $parameters = null) {
 
 		$this->parameters = $parameters;
 
@@ -106,7 +107,7 @@ abstract class Controller {
 			$this->route = $application->getCurrentRoute();
 	
 			if(is_null($this->route)) {
-				$this->route = Router::getRouteFromPathInfo();
+				$this->route = $application->getRouter()->getRouteFromPathInfo($this->request);
 			}
 		}
 
@@ -176,16 +177,17 @@ abstract class Controller {
 
 	}
 
-	/**
-	 * determines controller class name from a routes controllerString
-	 * property and returns a controller instance
+    /**
+     * determines controller class name from a routes controllerString
+     * property and returns a controller instance
      * an additional parameters array will be passed on to the constructor
-	 *
-	 * @param Route $controllerPath
-	 * @param array $parameters
-	 * @return \vxPHP\Controller\Controller
-	 */
-	public static function createControllerFromRoute(Route $route, array $parameters = NULL) {
+     *
+     * @param Route $route
+     * @param array $parameters
+     * @return \vxPHP\Controller\Controller
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public static function createControllerFromRoute(Route $route, array $parameters = null) {
 
 		$controllerClass = Application::getInstance()->getApplicationNamespace() . $route->getControllerClassName();
 
@@ -205,23 +207,23 @@ abstract class Controller {
 
 	}
 
-	/**
-	 * prepares and executes a Route::redirect
-	 *
-	 * @param string destination page id
-	 * @param string $document
-	 * @param array query
-	 * @param int $statusCode
-	 *
-	 */
-	protected function redirect($url = NULL, $queryParams = [], $statusCode = 302) {
+    /**
+     * prepares and executes a Route::redirect
+     *
+     * @param string destination page id
+     * @param array $queryParams
+     * @param int $statusCode
+     * @return RedirectResponse
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	protected function redirect($url = null, $queryParams = [], $statusCode = 302) {
 
 		if(is_null($url)) {
 			return $this->route->redirect($queryParams, $statusCode);
 		}
 
 		if($queryParams) {
-			$query = (strpos($url, '?') === FALSE ? '?' : '&') . http_build_query($queryParams);
+			$query = (strpos($url, '?') === false ? '?' : '&') . http_build_query($queryParams);
 		}
 
 		else {
@@ -251,13 +253,14 @@ abstract class Controller {
 
 	}
 
-	/**
-	 * add an echo property to a JsonResponse, if request indicates that echo was requested
-	 * useful with vxJS.xhr based widgets
-	 *
-	 * @param JsonResponse $r
-	 * @return JsonResponse
-	 */
+    /**
+     * add an echo property to a JsonResponse, if request indicates that echo was requested
+     * useful with vxJS.xhr based widgets
+     *
+     * @param JsonResponse $r
+     * @return JsonResponse
+     * @throws \Exception
+     */
 	protected function addEchoToJsonResponse(JsonResponse $r) {
 
 		// handle JSON encoded request data
