@@ -25,7 +25,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.2, 2018-07-07
+ * @version 0.6.3, 2018-09-28
  *
  * @throws MenuGeneratorException
  */
@@ -259,7 +259,7 @@ class MenuGenerator {
 
 			// walk tree until an active entry is reached
 
-			$this->walkMenuTree($this->menu, $this->pathSegments[0] === '' ? explode('/', $this->route->getPath()) : $this->pathSegments);
+			$this->walkMenuTree($this->menu, (!count($this->pathSegments) || $this->pathSegments[0] === '') ? explode('/', $this->route->getPath()) : $this->pathSegments);
 
 			// cache menu for multiple renderings
 
