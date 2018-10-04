@@ -20,7 +20,7 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  * 
- * @version 1.2.1 2016-06-05
+ * @version 1.3.0 2018-10-04
  * @author Gregor Kofler
  * 
  * @todo parse inline url() style rule
@@ -32,9 +32,9 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	 *
 	 * markup possibilities to which the filter will be applied
 	 */
-	private	$markupToMatch = array(
+	private	$markupToMatch = [
 		'~<img\s+.*?src=(["\'])(.*?)\1.*?>~i'
-	);
+	];
 
 	/**
 	 * (non-PHPdoc)
@@ -46,25 +46,32 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$templateString = preg_replace_callback(
 			$this->markupToMatch,
-			array($this, 'filterCallBack'),
+			[$this, 'filterCallBack'],
 			$templateString
 		);
 
 	}
 
-	/**
-	 * replaces the matched string
-	 * uses regular expression for a faster processing where useful
-	 * $matches[0] contains complete image tag
-	 * $matches[2] the src attribute value
-	 *
-	 * @param array $matches
-	 * @throws SimpleTemplateException
-	 * @return string
-	 */
+    /**
+     * replaces the matched string
+     * uses regular expression for a faster processing where useful
+     * $matches[0] contains complete image tag
+     * $matches[2] the src attribute value
+     *
+     * @param array $matches
+     * @return string
+     * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	private function filterCallBack($matches) {
 
 		// narrow down the type of replacement, matches[2] contains src attribute value
+
+        // do not attempt any modification, if src attribute indicates image coming from cache folder
+
+        if(preg_match('~' . preg_quote(FilesystemFolder::CACHE_PATH) . '/[^/]+$~', $matches[2])) {
+            return $matches[0];
+        }
 
 		// <img src="...#{actions}">
 
@@ -138,16 +145,17 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		}
 */
 	}
-	
-	/**
-	 * retrieve cached image which matches src attribute $src and actions $actions
-	 * if no cached image is found, a cached image with $actions applied is created 
-	 * 
-	 * @param string $src
-	 * @param string $actions
-	 * @throws SimpleTemplateException
-	 * @return string
-	 */
+
+    /**
+     * retrieve cached image which matches src attribute $src and actions $actions
+     * if no cached image is found, a cached image with $actions applied is created
+     *
+     * @param string $src
+     * @param string $actions
+     * @return string
+     * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	private function getCachedImagePath($src, $actions) {
 		
 		$pathinfo	= pathinfo($src);
@@ -192,7 +200,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 				$method = array_shift($params);
 			
 				if(method_exists($imgEdit, $method)) {
-					call_user_func_array(array($imgEdit, $method), $params);
+					call_user_func_array([$imgEdit, $method], $params);
 				}
 			}
 			
