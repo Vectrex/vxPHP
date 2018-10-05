@@ -19,38 +19,38 @@ use vxPHP\Image\ImageModifierFactory;
 /**
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
- * 
+ *
  * @version 1.4.0 2018-10-04
  * @author Gregor Kofler
- * 
+ *
  * @todo parse inline url() style rule
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
 
-	/**
-	 * @var array
-	 *
-	 * markup possibilities to which the filter will be applied
-	 */
-	private	$markupToMatch = [
-		'~<img\s+.*?src=(["\'])(.*?)\1.*?>~i'
-	];
+    /**
+     * @var array
+     *
+     * markup possibilities to which the filter will be applied
+     */
+    private	$markupToMatch = [
+        '~<img\s+.*?src=(["\'])(.*?)\1.*?>~i'
+    ];
 
-	/**
-	 * (non-PHPdoc)
-	 *
-	 * @see vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-	 *
-	 */
-	public function apply(&$templateString) {
+    /**
+     * (non-PHPdoc)
+     *
+     * @see vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
+     *
+     */
+    public function apply(&$templateString) {
 
-		$templateString = preg_replace_callback(
-			$this->markupToMatch,
-			[$this, 'filterCallBack'],
-			$templateString
-		);
+        $templateString = preg_replace_callback(
+            $this->markupToMatch,
+            [$this, 'filterCallBack'],
+            $templateString
+        );
 
-	}
+    }
 
     /**
      * replaces the matched string
@@ -216,7 +216,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                 return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
             }
         */
-	}
+    }
 
     /**
      * retrieve cached image which matches src attribute $src and actions $actions
@@ -228,59 +228,59 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @throws SimpleTemplateException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function getCachedImagePath($src, array $actions) {
-		
-		$pathinfo	= pathinfo($src);
-		$extension	= isset($pathinfo['extension']) ? ('.' . $pathinfo['extension']) : '';
+    private function getCachedImagePath($src, array $actions) {
 
-		// destination file name
+        $pathinfo	= pathinfo($src);
+        $extension	= isset($pathinfo['extension']) ? ('.' . $pathinfo['extension']) : '';
 
-		$dest =
-			$pathinfo['dirname'] . '/' .
-			FilesystemFolder::CACHE_PATH . '/' .
-			$pathinfo['filename'] .
-			$extension .
-			'@' . $actions .
-			$extension;
+        // destination file name
 
-		// absolute path to cached file
+        $dest =
+            $pathinfo['dirname'] . '/' .
+            FilesystemFolder::CACHE_PATH . '/' .
+            $pathinfo['filename'] .
+            $extension .
+            '@' . implode('|', $actions) .
+            $extension;
 
-		$path = Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($dest, '/'));
+        // absolute path to cached file
 
-		// generate cache directory and file if necessary
+        $path = Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($dest, '/'));
 
-		if(!file_exists($path)) {
+        // generate cache directory and file if necessary
 
-			$cachePath = dirname($path);
+        if(!file_exists($path)) {
 
-			if(!file_exists($cachePath)) {
+            $cachePath = dirname($path);
 
-				if(!@mkdir($cachePath)) {
-					throw new SimpleTemplateException("Failed to create cache folder $cachePath");
-				}
-				chmod($cachePath, 0777);
-			}
+            if(!file_exists($cachePath)) {
 
-			// apply actions and create file
-			
-			$imgEdit = ImageModifierFactory::create(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pathinfo['dirname'], '/') . '/' . $pathinfo['basename']));
-		
-			foreach($actions as $a) {
+                if(!@mkdir($cachePath)) {
+                    throw new SimpleTemplateException("Failed to create cache folder $cachePath");
+                }
+                chmod($cachePath, 0777);
+            }
 
-				$params = preg_split('~\s+~', $a);
-				$method = array_shift($params);
-			
-				if(method_exists($imgEdit, $method)) {
-					call_user_func_array([$imgEdit, $method], $params);
-				}
-			}
-			
-			$imgEdit->export($path);
-	
-		}
-		
-		return $dest;
-	}
+            // apply actions and create file
+
+            $imgEdit = ImageModifierFactory::create(Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($pathinfo['dirname'], '/') . '/' . $pathinfo['basename']));
+
+            foreach($actions as $a) {
+
+                $params = preg_split('~\s+~', $a);
+                $method = array_shift($params);
+
+                if(method_exists($imgEdit, $method)) {
+                    call_user_func_array([$imgEdit, $method], $params);
+                }
+            }
+
+            $imgEdit->export($path);
+
+        }
+
+        return $dest;
+    }
 
     /**
      * turns actions string into array
@@ -289,20 +289,20 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @param string $actionsString
      * @return array
      */
-	private function sanitizeActions($actionsString) {
+    private function sanitizeActions($actionsString) {
 
-	    $actions = [];
-	    $actionsString = strtolower($actionsString);
+        $actions = [];
+        $actionsString = strtolower($actionsString);
 
-	    // with duplicate actions the latter ones overwrite previous ones
+        // with duplicate actions the latter ones overwrite previous ones
 
-	    foreach(explode('|', $actionsString) as $action) {
+        foreach(explode('|', $actionsString) as $action) {
 
-	        $action = trim($action);
-	        $actions[strstr($action, ' ', true)] = $action;
+            $action = trim($action);
+            $actions[strstr($action, ' ', true)] = $action;
 
         }
 
-	    return $actions;
+        return $actions;
     }
 }
