@@ -14,7 +14,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.9.0 2018-02-03
+ * @version 0.10.0 2018-12-14
  * @author Gregor Kofler
  *
  */
@@ -25,24 +25,22 @@ class CheckboxElement extends InputElement {
      */
 	private $checked;
 
-    /**
-     * @var string
-     */
-	private $label;
-
 	/**
 	 * inialize a <input type="checkbox"> element instance
 	 * 
 	 * @param string $name
 	 * @param string $value
 	 * @param boolean $checked
-	 * @param string $label
+	 * @param LabelElement $label
 	 */
-	public function __construct($name, $value = NULL, $checked = FALSE, $label = NULL) {
+	public function __construct($name, $value = null, $checked = false, LabelElement $label = null) {
 
 		parent::__construct($name, $value);
 		$this->setChecked($checked);
-		$this->setLabel($label);
+
+		if($label) {
+            $this->setLabel($label);
+        }
 
 	}
 
@@ -59,29 +57,6 @@ class CheckboxElement extends InputElement {
 
 	}
 
-	/**
-	 * set label displayed alongside checkbox
-	 * 
-	 * @param string $label
-	 * @return \vxPHP\Form\FormElement\CheckboxElement
-	 */
-	public function setLabel($label) {
-
-		$this->label = $label;
-		return $this;
-
-	}
-
-    /**
-     * get label stored with checkbox
-     *
-     * @return string
-     */
-    public function getLabel()
-    {
-        return $this->label;
-    }
-
     /**
 	 * get checked state of checkbox
 	 * 
@@ -97,7 +72,7 @@ class CheckboxElement extends InputElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
@@ -110,13 +85,11 @@ class CheckboxElement extends InputElement {
 			$this->attributes['type'] = 'checkbox';
 
 			if($this->label) {
-				$formId = $this->form->getAttribute('id');
-				$this->attributes['id'] = ($formId ? ($formId . '_')  : '') . $this->name . '_' . $this->value;
-				$this->html = parent::render(TRUE) . sprintf('<label for="%s">%s</label>', $this->attributes['id'], $this->label);
+				$this->html = parent::render(true) . $this->label->render();
 						
 			}
 			else {
-				$this->html = parent::render(TRUE);
+				$this->html = parent::render(true);
 			}
 
 		}

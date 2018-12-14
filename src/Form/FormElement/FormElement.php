@@ -17,7 +17,7 @@ use vxPHP\Form\HtmlForm;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.9.1 2018-06-08
+ * @version 0.10.0 2018-12-13
  * @author Gregor Kofler
  * 
  */
@@ -91,6 +91,13 @@ abstract class FormElement implements FormElementInterface {
 	 * @var HtmlForm
 	 */
 	protected $form;
+
+    /**
+     * label element of the form element
+     *
+     * @var LabelElement
+     */
+    protected $label;
 	
 	/**
 	 * the cached markup of the element
@@ -171,10 +178,43 @@ abstract class FormElement implements FormElementInterface {
 		return $this->name;
 
 	}
-	
-	/**
+
+    /**
+     * assign label element to this form element
+     * "for" attribute of label is set if form element has an "id" attribute
+     *
+     * @param LabelElement $label
+     * @return $this
+     */
+    public function setLabel(LabelElement $label)
+    {
+
+        $this->label = $label;
+
+        if(($for = $this->getAttribute('id'))) {
+            $label->setAttribute('for', $for);
+        }
+
+        return $this;
+
+    }
+
+    /**
+     * get label element
+     *
+     * @return LabelElement
+     */
+    public function getLabel()
+    {
+
+        return $this->label;
+
+    }
+
+    /**
 	 * sets miscellaneous attribute of form element
 	 * attributes 'value', 'name' are treated by calling the according setters
+     * setting 'id' will update 'for' when a label element is assigned
 	 *  
 	 * @param string $attr
 	 * @param mixed $value
@@ -191,6 +231,10 @@ abstract class FormElement implements FormElementInterface {
 		if($attr === 'name') {
 			return $this->setName($value);
 		}
+
+		if($attr === 'id' && $this->label) {
+		    $this->label->setAttribute('for', $value);
+        }
 
 		if(is_null($value)) {
 			unset($this->attributes[$attr]);
@@ -216,6 +260,36 @@ abstract class FormElement implements FormElementInterface {
 		return $this;
 
 	}
+
+    /**
+     * get a single attribute
+     * name and value attributes are redirected to
+     * the respective getter methods
+     *
+     * @param $name
+     * @return string|null
+     */
+	public function getAttribute($name) {
+
+	    $key = strtolower($name);
+
+	    if('value' === $key) {
+	        return $this->getValue();
+        }
+        if('name' === $key) {
+            return $this->getName();
+        }
+
+
+	    if(array_key_exists($key, $this->attributes)) {
+
+	        return $this->attributes[strtolower($name)];
+
+        }
+
+	    return null;
+
+    }
 
 	/**
 	 * mark element as required
@@ -461,5 +535,5 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return string
 	 */
-	protected abstract function render();
+	public abstract function render($force);
 }

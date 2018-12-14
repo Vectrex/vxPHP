@@ -367,7 +367,7 @@ class Route {
 			$application = Application::getInstance();
 			
 			$urlSegments = [];
-			
+
 			if($application->hasNiceUris()) {
 				
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
