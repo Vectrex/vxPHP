@@ -11,12 +11,14 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
+use vxPHP\Form\FormElement\LabelElement;
+
 /**
  * a single option belonging to a group of <input type="option"> elements
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.5.0 2017-08-11
+ * @version 0.6.0 2018-12-12
  */
 class RadioOptionElement extends FormElementFragment {
 
@@ -24,21 +26,21 @@ class RadioOptionElement extends FormElementFragment {
 	 * initialize option with value, label and parent RadioElement
 	 * 
 	 * @param string $value
-	 * @param string $label
+	 * @param LabelElement $label
 	 * @param RadioElement $formElement
 	 */
-	public function __construct($value, $label, RadioElement $formElement = NULL) {
+	public function __construct($value, LabelElement $label, RadioElement $formElement = null) {
 
-		parent::__construct($value, NULL, $label, $formElement);
+		parent::__construct($value, null, $label, $formElement);
 
 	}
 
 	/**
 	 * render element; when $force is FALSE a cached element rendering is re-used 
 	 * 
-	 * @param string $force
+	 * @param boolean $force
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
@@ -46,16 +48,19 @@ class RadioOptionElement extends FormElementFragment {
 			$name = $this->parentElement->getName();
 			$value = $this->getValue();
 			$id = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
-			
+
 			$this->html = sprintf(
-				'<input id="%s" name="%s" type="radio" value="%s"%s><label for="%s">%s</label>',
+				'<input id="%s" name="%s" type="radio" value="%s"%s>',
 				$id,
 				$name,
 				$value,
-				$this->selected ? " checked='checked'" : '',
-				$id,
-				$this->getLabel()
+				$this->selected ? " checked='checked'" : ''
 			);
+
+			if($this->label) {
+			    $this->html .= $this->label->setAttribute('id', $id)->render();
+            }
+
 		}
 
 		return $this->html;

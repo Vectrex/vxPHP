@@ -11,8 +11,6 @@
 
 namespace vxPHP\Form\FormElement;
 
-use vxPHP\Form\FormElement\InputElement;
-
 /**
  * input element of type "image"
  * 
@@ -24,12 +22,11 @@ class ImageElement extends InputElement {
 	 * inialize a <input type="image"> element instance
 	 * 
 	 * @param string $name
-	 * @param string $value
 	 * @param string $src
 	 */
-	public function __construct($name, $value = NULL, $src) {
+	public function __construct($name, $src = null) {
 
-		parent::__construct($name, $value);
+		parent::__construct($name, $src);
 		$this->setAttribute('alt', pathinfo($src, PATHINFO_FILENAME));
 
 	}
@@ -38,10 +35,32 @@ class ImageElement extends InputElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
-		$this->attributes['type'] = 'image';
-		return parent::render($force);
+        if(empty($this->html) || $force) {
+
+            $attr = [
+                sprintf('src="%s"', $this->getValue()),
+                'type="image"'
+            ];
+
+            foreach($this->attributes as $k => $v) {
+
+                if(in_array(strtolower($k), ['src', 'value', 'type'])) {
+                    continue;
+                }
+                $attr[] = sprintf('%s="%s"', $k, $v);
+
+            }
+
+            $this->html = sprintf('<input name="%s" %s>',
+                $this->getName(),
+                implode(' ', $attr)
+            );
+
+        }
+
+        return $this->html;
 
 	}
 }

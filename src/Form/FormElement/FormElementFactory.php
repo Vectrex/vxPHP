@@ -49,7 +49,7 @@ public static function create($type, $name, $value = null, array $attributes = [
 		$type = strtolower($type);
 
 		if(is_array($value) && $type !== 'multipleselect') {
-			$elem = self::createSingleElement($type, $name, NULL, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
+			$elem = self::createSingleElement($type, $name, null, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
 
 			$elements = [];
 
@@ -136,7 +136,7 @@ public static function create($type, $name, $value = null, array $attributes = [
 				break;
 
 			default:
-				throw new FormElementFactoryException("Unknown form element $type");
+				throw new FormElementFactoryException(sprintf("Unknown form element '%s''", $type));
 		}
 
 		$elem

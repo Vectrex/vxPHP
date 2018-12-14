@@ -11,36 +11,59 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface;
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface;
+use vxPHP\Form\FormElement\LabelElement;
 
 /**
  * abstract base class for form element fragments,
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24 
+ * @version 0.5.0 2018-12-12
  *
  */
 
 abstract class FormElementFragment implements FormElementFragmentInterface {
 
-	protected	$name,
-				$value,
-				$label,
-				$html,
-				$parentElement,
-				$selected = FALSE;
+    /**
+     * @var string
+     */
+	protected	$name;
+
+    /**
+     * @var string
+     */
+	protected $value;
+
+	/**
+     * @var LabelElement
+     */
+	protected $label;
+
+	/**
+     * @var string
+     */
+    protected $html;
+
+    /**
+     * @var FormElementWithOptionsInterface
+     */
+    protected $parentElement;
+
+    /**
+     * @var boolean
+     */
+    protected $selected = false;
 
 	/**
 	 * creates a "fragment" for a form element with options and appends it to $formElement
 	 *
 	 * @param string $value
 	 * @param string $name
-	 * @param string $label
+	 * @param LabelElement $label
 	 * @param FormElementWithOptionsInterface $formElement
 	 */
-	public function __construct($value, $name, $label, FormElementWithOptionsInterface $formElement = NULL) {
+	public function __construct($value, $name, LabelElement $label, FormElementWithOptionsInterface $formElement = null) {
+
 		$this->setValue($value);
 		$this->setName($name);
 		$this->setLabel($label);
@@ -96,10 +119,10 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setLabel()
 	 */
-	public function setLabel($label) {
+	public function setLabel(LabelElement $label) {
 
 		$this->label = $label;
-		return $this;
+        return $this;
 
 	}
 

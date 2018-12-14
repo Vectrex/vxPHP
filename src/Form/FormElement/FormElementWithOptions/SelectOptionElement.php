@@ -12,6 +12,7 @@
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 use vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragment;
+use vxPHP\Form\FormElement\LabelElement;
 
 /**
  * a single option of a select element
@@ -30,7 +31,7 @@ class SelectOptionElement extends FormElementFragment {
 	 */
 	public function __construct($value, $label, SelectElement $formElement = NULL) {
 
-		parent::__construct($value, NULL, $label, $formElement);
+		parent::__construct($value, NULL, new LabelElement($label), $formElement);
 
 	}
 

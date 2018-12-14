@@ -11,11 +11,11 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface;
+use vxPHP\Form\FormElement\LabelElement;
 
 /**
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24 
+ * @version 0.5.0 2018-12-14
  * 
  * @todo check whether setName() or getName() is required
  */
@@ -25,7 +25,7 @@ interface FormElementFragmentInterface {
 	 * set value of form element fragment
 	 * 
 	 * @param string $value
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @return FormElementFragmentInterface
 	 */
 	public function setValue($value);
 	
@@ -40,7 +40,7 @@ interface FormElementFragmentInterface {
 	 * set name of fragment
 	 * 
 	 * @param string $name
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @return FormElementFragmentInterface
 	 */
 	public function setName($name);
 
@@ -52,29 +52,29 @@ interface FormElementFragmentInterface {
 	/**
 	 * set label of fragment
 	 * 
-	 * @param string $label
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @param LabelElement $label
+	 * @return FormElementFragmentInterface
 	 */
-	public function setLabel($label);
+	public function setLabel(LabelElement $label);
 
 	/**
 	 * get label of fragment
 	 * 
-	 * @return string
+	 * @return LabelElement
 	 */
 	public function getLabel();
 
 	/**
 	 * select a fragment
 	 * 
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @return FormElementFragmentInterface
 	 */
 	public function select();
 	
 	/**
 	 * unselect a fragment
 	 * 
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @return FormElementFragmentInterface
 	 */
 	public function unselect();
 
@@ -82,7 +82,7 @@ interface FormElementFragmentInterface {
 	 * link fragment to a form element (e.g. options to a <select> element)
 	 * 
 	 * @param FormElementWithOptionsInterface $element
-	 * @return vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface
+	 * @return FormElementFragmentInterface
 	 */
 	public function setParentElement(FormElementWithOptionsInterface $element);
 }
