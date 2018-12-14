@@ -11,9 +11,6 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions;
-use vxPHP\Form\FormElement\FormElementWithOptions\SelectOptionElement;
-
 /**
  * a select element
  *
@@ -39,10 +36,12 @@ class SelectElement extends FormElementWithOptions {
 	 */
 	public function createOptions(Array $options) {
 
-		$this->options = array();
+		$this->options = [];
+
 		foreach($options as $k => $v) {
 			$this->appendOption(new SelectOptionElement($k, $v, $this));
 		}
+
 		$this->setValue();
 
 		return $this;
@@ -53,16 +52,16 @@ class SelectElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
-			$attr = array();
+			$attr = [];
 			foreach($this->attributes as $k => $v) {
 				$attr[] = sprintf('%s="%s"', $k, $v);
 			}
 
-			$options = array();
+			$options = [];
 			foreach($this->options as $o) {
 				$options[] = $o->render();
 			}
