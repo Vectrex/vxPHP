@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.8 2018-05-05
+ * @version 2.0.9 2018-07-07
  */
 class Config {
 
@@ -796,17 +796,27 @@ class Config {
 
 	}
 
-	/**
-	 * parse menu tree
-	 *
-	 * @param \DOMNode $menus
-	 */
+    /**
+     * parse menu tree
+     * if menus share the same id entries of later menus are appended
+     * to the first; other menu attributes are left unchanged
+     *
+     *
+     * @param \DOMNode $menus
+     * @throws ConfigException
+     */
 	private function parseMenusSettings(\DOMNode $menus) {
 
 		foreach ((new \DOMXPath($menus->ownerDocument))->query('menu', $menus) as $menu) {
 
-			$menuInstance = $this->parseMenu($menu);
-			$this->menus[$menuInstance->getId()] = $menuInstance;
+			$id = $menu->getAttribute('id') ?: Menu::DEFAULT_ID;
+
+			if(isset($this->menus[$id])) {
+				$this->appendMenuEntries($menu->childNodes, $this->menus[$id]);
+			}
+			else {
+				$this->menus[$id] = $this->parseMenu($menu);
+			}
 
 		}
 
@@ -868,13 +878,14 @@ class Config {
 
 	}
 
-	/**
-	 * parses settings for plugins
-	 * plugin id, class, events and parameters are parsed
-	 * initialization (not lazy) is handled by Application instance
-	 *
-	 * @param \DOMNode $plugins
-	 */
+    /**
+     * parses settings for plugins
+     * plugin id, class, events and parameters are parsed
+     * initialization (not lazy) is handled by Application instance
+     *
+     * @param \DOMNode $plugins
+     * @throws ConfigException
+     */
 	private function parsePluginsSettings(\DOMNode $plugins) {
 
 		if(is_null($this->services)) {
@@ -923,12 +934,13 @@ class Config {
 
 	}
 
-	/**
-	 * Parse XML menu entries and creates menu instance
-	 *
-	 * @param \DOMNode $menu
-	 * @return Menu
-	 */
+    /**
+     * Parse XML menu entries and creates menu instance
+     *
+     * @param \DOMNode $menu
+     * @return Menu
+     * @throws ConfigException
+     */
 	private function parseMenu(\DOMNode $menu) {
 
 		$root = $menu->getAttribute('script');
@@ -969,30 +981,43 @@ class Config {
 
 		}
 
-		foreach($menu->childNodes as $entry) {
+		$this->appendMenuEntries($menu->childNodes, $m);
 
-			if($entry->nodeType !== XML_ELEMENT_NODE || $entry->nodeName !== 'menuentry') {
+		return $m;
+
+	}
+
+    /**
+     * append menu entries of configuration to a
+     * previously created Menu instance
+     *
+     * @param \DOMNodeList $entries
+     * @param Menu $menu
+     * @throws ConfigException
+     */
+	private function appendMenuEntries(\DOMNodeList $entries, Menu $menu) {
+
+		foreach($entries as $entry) {
+
+			if($entry->nodeType !== XML_ELEMENT_NODE || 'menuentry' !== $entry->nodeName) {
 				continue;
 			}
 
 			// read additional attributes which are passed to menu entry constructor
 
 			$attributes = [];
+
 			foreach($entry->attributes as $attr) {
 
 				$nodeName = $attr->nodeName;
 
-				if(
-					$nodeName !== 'page' &&
-					$nodeName !== 'path' &&
-					$nodeName !== 'auth' &&
-					$nodeName !== 'auth_parameters'
-				) {
+				if(!in_array($nodeName, ['page', 'path', 'auth', 'auth_parameters'])) {
 					$attributes[$attr->nodeName] = $attr->nodeValue;
 				}
+
 			}
 
-			if($entry->nodeName === 'menuentry') {
+			if('menuentry' === $entry->nodeName) {
 
 				$page = $entry->getAttribute('page');
 				$path = $entry->getAttribute('path');
@@ -1017,18 +1042,18 @@ class Config {
 
 				else if($page) {
 
-					if(!isset($this->routes[$m->getScript()][$page])) {
+					if(!isset($this->routes[$menu->getScript()][$page])) {
 
 						throw new ConfigException(sprintf(
 							"No route for menu entry ('%s') found. Available routes for script '%s' are '%s'.",
 							$page,
-							$m->getScript(),
-							empty($this->routes[$m->getScript()]) ? 'none' : implode("', '", array_keys($this->routes[$m->getScript()]))
+							$menu->getScript(),
+							empty($this->routes[$menu->getScript()]) ? 'none' : implode("', '", array_keys($this->routes[$menu->getScript()]))
 						));
 
 					}
 
-					$e = new MenuEntry((string) $this->routes[$m->getScript()][$page]->getPath(), $attributes, TRUE);
+					$e = new MenuEntry((string) $this->routes[$menu->getScript()][$page]->getPath(), $attributes, true);
 
 				}
 
@@ -1048,7 +1073,7 @@ class Config {
 
 				}
 
-				$m->appendEntry($e);
+				$menu->appendEntry($e);
 
 				$submenu = (new \DOMXPath($entry->ownerDocument))->query('menu', $entry); 
 
@@ -1060,15 +1085,13 @@ class Config {
 
 			else if($entry->nodeName === 'menuentry_placeholder') {
 
-				$e = new DynamicMenuEntry(NULL, $attributes);
-				$m->appendEntry($e);
+				$e = new DynamicMenuEntry(null, $attributes);
+				$menu->appendEntry($e);
 
 			}
 		}
-
-		return $m;
-
 	}
+
 
 	/**
 	 * create constants for simple access to certain configuration settings

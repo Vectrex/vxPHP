@@ -19,7 +19,7 @@
   ],
   "require": {
     "php": ">=7.0.0",
-    "ext-pdo": "*"
+    "ext-xml": "*"
   },
   "autoload": {
     "psr-4": {

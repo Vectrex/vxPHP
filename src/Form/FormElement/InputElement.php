@@ -65,21 +65,22 @@ class InputElement extends FormElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
 			if(!isset($this->attributes['type'])) {
 				$this->attributes['type'] = 'text'; 
 			}
-			$attr = array();
+			$attr = [];
+
 			foreach($this->attributes as $k => $v) {
-				$attr[] = "$k='$v'";
+				$attr[] = sprintf('%s="%s"', $k, $v);
 			}
 
 			$this->html = sprintf('<input name="%s" value="%s" %s>',
 				$this->getName(),
-				$this->getModifiedValue(),
+				htmlspecialchars($this->getModifiedValue()),
 				implode(' ', $attr)
 			);
 

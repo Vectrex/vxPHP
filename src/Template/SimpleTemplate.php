@@ -25,74 +25,82 @@ use vxPHP\Controller\Controller;
 use vxPHP\Application\Exception\ConfigException;
 
 /**
- * A simple template system
+ * A simple templating system
  *
  * @author Gregor Kofler
- * @version 1.6.3 2018-04-08
+ * @version 1.8.0 2018-07-06
  *
  */
 
 class SimpleTemplate {
 
-				/**
-				 * @var string
-				 * 
-				 * absolute path to template file
-				 */
-	private		$path;
+    /**
+     * @var string
+     *
+     * absolute path to template file
+     */
+	private $path;
 
-				/**
-				 * @var string
-				 * 
-				 * the unprocessed template string
-				 */
-	private		$rawContents;
+    /**
+     * @var string
+     *
+     * the unprocessed template string
+     */
+	private $rawContents;
 	
-				/**
-				 * @var string
-				 * 
-				 * the processed template string
-				 */
-	private		$contents;
+    /**
+     * @var string
+     *
+     * the processed template string
+     */
+	private $contents;
 
-				/**
-				 * @var Locale
-				 */
-	private		$locale;
+    /**
+     * @var Locale
+     */
+	private $locale;
 	
-				/**
-				 * store for added custom filters with addFilter()
-				 * 
-				 * @var array
-				 */
-	private		$filters = [];
+    /**
+     * store for added custom filters with addFilter()
+     *
+     * @var SimpleTemplateFilterInterface []
+     */
+	private $filters = [];
 	
-				/**
-				 * keeps instances of pre-configured filters
-				 * will be applied before any added custom filters
-				 * 
-				 * @var array $configuredFilters
-				 */
-	private static $configuredFilters;
+    /**
+     * keeps instances of pre-configured filters
+     * will be applied before any added custom filters
+     *
+     * @var SimpleTemplateFilterInterface []
+     */
+	private $defaultFilters;
 
-				/**
-				 * @var boolean
-				 */
-	private		$ignoreLocales;
+    /**
+     * ids of blocked filters
+     * allows turning of configured filters temporarily
+     *
+     * @var array
+     */
+    private $blockedFilters = [];
 
-				/**
-				 * name of a parent template found in <!-- extend: ... -->
-				 * 
-				 * @var string
-				 */
-	private		$parentTemplateFilename;
+    /**
+     * @var boolean
+     */
+	private $ignoreLocales;
 
-				/**
-				 * the regular expression employed to search for an "extend@..." directive
-				 * 
-				 * @var string
-				 */
-	private		$extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
+    /**
+     * name of a parent template found in <!-- extend: ... -->
+     *
+     * @var string
+     */
+	private $parentTemplateFilename;
+
+    /**
+     * the regular expression employed to search for an "extend@..." directive
+     *
+     * @var string
+     */
+	private $extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
 
     /**
      * initialize template based on $file
@@ -100,6 +108,7 @@ class SimpleTemplate {
      *
      * @param string $file
      * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public function __construct($file = null) {
 
@@ -124,6 +133,8 @@ class SimpleTemplate {
      *
      * @param string $file
      * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	public static function create($file = null) {
 
@@ -163,13 +174,17 @@ class SimpleTemplate {
 	 *
 	 * @return string
 	 */
-	public function getrawContents() {
+	public function getRawContents() {
 
 		return $this->rawContents;
 
 	}
 
-	
+    /**
+     * get filename of parent template
+     *
+     * @return string
+     */
 	public function getParentTemplateFilename() {
 
 		if(empty($this->parentTemplateFilename)) {
@@ -247,12 +262,30 @@ class SimpleTemplate {
 	}
 
     /**
+     * block a pre-configured filter
+     *
+     * @param string $filterId
+     * @return $this
+     */
+	public function blockFilter($filterId) {
+
+	    if(!in_array($filterId, $this->blockedFilters)) {
+	        $this->blockedFilters[] = $filterId;
+        }
+
+        return $this;
+
+    }
+
+    /**
      * output parsed template
      *
+     * @param SimpleTemplateFilterInterface []
      * @return string
      * @throws SimpleTemplateException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public function display() {
+	public function display($defaultFilters = null) {
 
 		$this->extend();
 
@@ -260,44 +293,73 @@ class SimpleTemplate {
 
 		// check whether pre-configured filters are already in place
 		
-		if(is_null(self::$configuredFilters)) {
+		if(is_null($defaultFilters)) {
 
 			// add default filters
 
-			self::$configuredFilters = array(
+			$this->defaultFilters = [
 				new AnchorHref(),
 				new ImageCache(),
 				new AssetsPath()
-			);
+			];
 
 			if(!$this->ignoreLocales) {
-				self::$configuredFilters[] = new LocalizedPhrases();
+                $this->defaultFilters[] = new LocalizedPhrases();
 			}
 
-			// add configured filters
-
-			if($templatingConfig = Application::getInstance()->getConfig()->templating) {
-
-				foreach($templatingConfig->filters as $id => $filter) {
-
-					// load class file
-
-					$instance = new $filter['class']();
-
-					// check whether instance implements FilterInterface
-
-					if(!$instance instanceof SimpleTemplateFilterInterface) {
-						throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $filter['class']));
-					}
-
-					self::$configuredFilters[] = $instance;
-
-				}
-			}
 		}
 
+		else {
 
-		$this->applyFilters();
+		    $this->defaultFilters = $defaultFilters;
+
+            if(!$this->ignoreLocales) {
+
+                // check whether adding a localization filter is necessary
+
+                $found = false;
+
+                foreach($this->defaultFilters as $filter) {
+
+                    if($filter instanceof LocalizedPhrases) {
+                        $found = true;
+                        break;
+                    }
+
+                }
+
+                if(!$found) {
+                    $this->defaultFilters[] = new LocalizedPhrases();
+                }
+            }
+
+        }
+
+        // add configured filters
+
+        if($templatingConfig = Application::getInstance()->getConfig()->templating) {
+
+            foreach($templatingConfig->filters as $id => $filter) {
+
+                if(!in_array($id, $this->blockedFilters)) {
+
+                    // load class file
+
+                    $instance = new $filter['class']();
+
+                    // check whether instance implements FilterInterface
+
+                    if (!$instance instanceof SimpleTemplateFilterInterface) {
+                        throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, $filter['class']));
+                    }
+
+                    $this->defaultFilters[] = $instance;
+
+                }
+            }
+        }
+
+        $this->applyFilters();
 
 		return $this->contents;
 	}
@@ -326,6 +388,7 @@ class SimpleTemplate {
      *
      * @return string
      * @throws ConfigException
+     * @throws \vxPHP\Application\Exception\ApplicationException
      */
 	private function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null) {
 
@@ -419,7 +482,7 @@ class SimpleTemplate {
 
 		// handle default and pre-configured filters first
 
-		foreach(self::$configuredFilters as $f) {
+		foreach($this->defaultFilters as $f) {
 			$f->apply($this->contents);
 		}
 
@@ -444,102 +507,4 @@ class SimpleTemplate {
 		ob_end_clean();
 	}
 
-    /**
-     * crate image tag
-     *
-     * @param string src source file
-     * @param string alt alt text
-     * @param string title title text
-     * @param string class css class
-     * @param boolean timestamp add source "parameter" to force refresh
-     * @return string
-     */
-	public static function img($src, $alt = null, $title = null, $class = null, $timestamp = false) {
-		if(empty($alt)) {
-			$alt = explode('.', basename($alt));
-			array_pop($alt);
-			$alt = implode('.', $alt);
-		}
-		$html = '<img src="'.$src.($timestamp ? '?'.filemtime($src) : '').'" alt="'.$alt.'"';
-		$html .= empty($title) ? '' : ' title="'.$title.'"';
-		$html .= empty($class) ? '>' : ' class="'.$class.'">';
-		return $html;
-	}
-
-    /**
-     * create anchor tag
-     *
-     * @param string link URI or relative link
-     * @param string text link test
-     * @param string img image name used within link
-     * @param string|bool class css class
-     * @param string|bool miscstr additional string with attributes or handlers
-     * @return bool|string
-     */
-	public static function a($link, $text = '', $img = '', $class = false, $miscstr = false) {
-
-		if (empty($link)) {
-			return false;
-		}
-
-		$mail	= self::checkMail($link);
-		$ext	= !$mail ? self::checkExternal($link) : true;
-
-		if($mail) {
-			$enc = 'mailto:';
-			$len = strlen($link);
-			for($i = 0; $i < $len; $i++) {
-				$enc .= rand(0,1) ? '&#x'.dechex(ord($link[$i])).';' : '&#'.ord($link[$i]).';';
-			}
-			$link = $enc;
-		}
-
-		else {
-			if(!$ext && Application::getInstance()->hasNiceUris()) {
-				$link = NiceURI::toNice($link);
-			}
-
-			$link = htmlspecialchars($link);
-		}
-
-		$text = ($text == '' && $img == '') ? preg_replace('~^\s*[a-z]+:(//)?~i', '', $link) : $text;
-
-		$class = $class ? [$class] : [];
-		if(self::checkExternal($link)) {
-			$class[] = 'external';
-		}
-
-		$html = [
-			'<a',
-			!empty($class) ? ' class="'.implode(' ', $class).'"' : '',
-			" href='$link'",
-			$miscstr ? " $miscstr>" : '>',
-			$img != '' ? "<img src='$img' alt='$text'>" : $text,
-			'</a>'
-		];
-		return implode('', $html);
-	}
-
-	public static function checkExternal($link) {
-		return preg_match('/^(\s*(ftp:\/\/|http(s?):\/\/))/i', $link);
-	}
-
-	public static function checkMail($link) {
-		return preg_match('!^'.Rex::EMAIL.'$!', $link);
-	}
-
-	public static function checkUri($link) {
-		return preg_match('!^'.Rex::URI.'$!', $link);
-	}
-
-	public static function highlightText($text, $keyword) {
-		return str_replace($keyword, "<span class='highlight'>$keyword</span>", $text);
-	}
-
-	public static function shortenText($text, $len) {
-		$src = strip_tags($text);
-		if(strlen($src) <= $len) { return $text; }
-		$ret = substr($src,0,$len+1);
-		return substr($ret,0,strrpos($ret,' ')).' &hellip;';
-	}
 }

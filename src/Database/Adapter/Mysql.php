@@ -21,7 +21,7 @@ use vxPHP\Database\PDOConnection;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.11.3, 2018-06-05
+ * @version 1.12.0, 2018-07-18
  */
 class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -48,9 +48,10 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * @todo parse unix_socket settings
 	 * 
 	 * @param array $config
+     * @param array $connectionAttributes
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config = null) {
+	public function __construct(array $config = null, array $connectionAttributes = []) {
 
 		if($config) {
 
@@ -110,7 +111,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
             }
 
-			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
             $this->setDefaultConnectionAttributes();
 
         }

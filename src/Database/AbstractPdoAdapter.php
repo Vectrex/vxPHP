@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.10.0, 2018-06-05
+ * @version 0.10.3, 2018-10-16
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -121,7 +121,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
 	 */
-	public function __construct(array $config) {
+	public function __construct(array $config, array $connectionAttributes = []) {
 		
 		$config = array_change_key_case($config, CASE_LOWER);
 		
@@ -422,19 +422,21 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function insertRecords($tableName, array $rowsData) {
 
-		// empty array, nothing to do, no rows inserted
+	    $firstRow = current($rowsData);
 
-		if(!count($rowsData)) {
+	    // empty array, nothing to do, no rows inserted
+
+		if(false === $firstRow) {
 			return 0;
 		}
 
-		if(!is_array($rowsData[0])) {
+		if(!is_array($firstRow)) {
 			throw new \InvalidArgumentException('Rows data contains a non-array value. Attributes cannot be determined.');
 		}
 
 		// get keys of first record, which determines which attributes will be written
 
-		$firstRow = array_change_key_case($rowsData[0], CASE_LOWER);
+		$firstRow = array_change_key_case($firstRow, CASE_LOWER);
 		
 		// retrieve attributes of table 
 		

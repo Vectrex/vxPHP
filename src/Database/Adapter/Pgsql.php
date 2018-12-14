@@ -14,13 +14,14 @@ use vxPHP\Application\Application;
 use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
+use vxPHP\Database\PDOConnection;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.2.3, 2018-06-05
+ * @version 1.3.0, 2018-07-18
  */
 class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
@@ -49,7 +50,7 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
      *
      * @todo parse unix_socket settings
      */
-	public function __construct(array $config = null) {
+	public function __construct(array $config = null, array $connectionAttributes = []) {
 
 		if($config) {
 
@@ -93,7 +94,7 @@ class Pgsql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			}
 
-			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password);
+			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
 			$this->connection->exec(sprintf("SET NAMES '%s'", strtoupper($charset)));
 
             $this->setDefaultConnectionAttributes();
