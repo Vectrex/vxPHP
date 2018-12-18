@@ -237,7 +237,7 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
         $statement = $this->primeQuery($statementString, $parameters);
         $statement->execute();
-        return new MysqlRecordsetIterator($statement);
+        return new MysqlRecordsetIterator($statement->fetchAll(\PDO::FETCH_ASSOC));
 
     }
 

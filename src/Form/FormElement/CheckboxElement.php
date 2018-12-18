@@ -14,7 +14,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.10.0 2018-12-14
+ * @version 0.11.0 2018-12-15
  * @author Gregor Kofler
  *
  */
@@ -84,13 +84,7 @@ class CheckboxElement extends InputElement {
 			}
 			$this->attributes['type'] = 'checkbox';
 
-			if($this->label) {
-				$this->html = parent::render(true) . $this->label->render();
-						
-			}
-			else {
-				$this->html = parent::render(true);
-			}
+            return parent::render(true);
 
 		}
 

@@ -1124,12 +1124,13 @@ class HtmlForm {
 
 	}
 
-	/**
-	 * load template
-	 *
-	 * @return bool $success
-	 * @throws HtmlFormException
-	 */
+    /**
+     * load template
+     *
+     * @return bool $success
+     * @throws HtmlFormException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	private function loadTemplate() {
 
 		if(!empty($this->template)) {
@@ -1416,6 +1417,13 @@ class HtmlForm {
 		return null;
 
 	}
+
+    /**
+     * @todo insertFormFields() must not shift element array but instead maintain an index counter
+     */
+	private function insertLabels() {
+
+    }
 
 	/**
 	 * insert form fields into template

@@ -13,7 +13,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * class wrapping a label element
  *
- * @version 0.2.0 2018-12-13
+ * @version 0.3.0 2018-12-15
  * @author Gregor Kofler
  *
  */
@@ -46,6 +46,28 @@ class LabelElement
     {
         $this->labelText = $labelText;
         $this->attributes = $attributes;
+    }
+
+    /**
+     * get the label text
+     *
+     * @return string
+     */
+    public function getLabelText(): string
+    {
+        return $this->labelText;
+    }
+
+    /**
+     * set the label text
+     *
+     * @param string $labelText
+     * @return LabelElement
+     */
+    public function setLabelText(string $labelText): LabelElement
+    {
+        $this->labelText = $labelText;
+        return $this;
     }
 
     /**
