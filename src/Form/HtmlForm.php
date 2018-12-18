@@ -1429,17 +1429,19 @@ class HtmlForm {
 	 * insert form fields into template
 	 * 
 	 * form fields are expected in the following form
-	 * {<type}:{name}[ {attributes}]}
+	 * {element: <name> [ {attributes}]}
 	 * 
 	 * the optional attributes are provided as JSON encoded key-value pairs
-	 * 
+     * future versions may observe *only* the "element" string and deprecate
+     * specific element types
+     *
 	 * @return HtmlForm
 	 */
 	private function insertFormFields() {
 
 		$this->html = preg_replace_callback(
 
-			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox|label):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
+			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox|label|element):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
 
 			function($matches) {
 
@@ -1473,37 +1475,52 @@ class HtmlForm {
 
                     }
 
-                    if ('label' === strtolower($matches[1])) {
+                    // insert rendered element or label
 
-                        // insert rendered label
+                    if (is_array($this->elements[$matches[2]])) {
 
-                    } else {
-                        // insert rendered element
+                        if (!isset($this->formElementIndexes[$matches[2]])) {
+                            $this->formElementIndexes[$matches[2]] = 0;
+                        }
 
-                        if (is_array($this->elements[$matches[2]])) {
+                        if ('label' === strtolower($matches[1])) {
 
-                            if (!isset($this->formElementIndexes[$matches[2]])) {
-                                $this->formElementIndexes[$matches[2]] = 0;
-                            }
+                            // insert label, array index does not advance
 
-                            $e = $this->elements[$this->formElementIndexes[$matches[2]]++];
-
-                            if (isset($attributes)) {
-                                $e->setAttributes($attributes);
-                            }
-
-                            return $e->render();
+                            $e = $this->elements[$this->formElementIndexes[$matches[2]]]->getLabel();
 
                         } else {
 
-                            if (isset($attributes)) {
-                                $this->elements[$matches[2]]->setAttributes($attributes);
-                            }
+                            // insert element, advance array index
 
-                            return $this->elements[$matches[2]]->render();
+                            $e = $this->elements[$this->formElementIndexes[$matches[2]]++];
+
+                        }
+
+                    } else {
+
+                        // insert element
+
+                        $e = $this->elements[$matches[2]];
+
+                        if ('label' === strtolower($matches[1])) {
+
+                            // insert label
+
+                            $e = $e->getLabel();
 
                         }
                     }
+
+                    if($e) {
+
+                        if (isset($attributes)) {
+                            $e->setAttributes($attributes);
+                        }
+
+                        return $e->render();
+                    }
+
                 }
 			},
 
