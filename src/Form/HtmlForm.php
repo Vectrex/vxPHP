@@ -73,7 +73,14 @@ class HtmlForm {
 	 * @var FormElement[]
 	 */
 	private $elements = [];
-				
+
+
+    /**
+     * array that keeps counters for multiple elements with same name
+     *
+     * @var array
+     */
+    private $formElementIndexes = [];
 	/**
 	 * values with which form elements are initialized
 	 * 
@@ -1418,13 +1425,6 @@ class HtmlForm {
 
 	}
 
-    /**
-     * @todo insertFormFields() must not shift element array but instead maintain an index counter
-     */
-	private function insertLabels() {
-
-    }
-
 	/**
 	 * insert form fields into template
 	 * 
@@ -1439,7 +1439,7 @@ class HtmlForm {
 
 		$this->html = preg_replace_callback(
 
-			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
+			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox|label):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
 
 			function($matches) {
 
@@ -1455,49 +1455,56 @@ class HtmlForm {
 
 				else {
 
-					// validate JSON attribute string
+                    // validate JSON attribute string
 
-					if(!empty($matches[3])) {
-		
-						$attributes = json_decode($matches[3], true, 2);
-	
-						if(is_null($attributes)) {
-							throw new HtmlFormException(sprintf("Could not parse JSON attributes for element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
-						}
-	
-						$attributes = array_change_key_case($attributes, CASE_LOWER);
-	
-						if(array_key_exists('name', $attributes)) {
-							throw new HtmlFormException(sprintf("Attribute 'name' is not allowed with element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
-						}
-	
-					}
-	
-					// insert rendered element
-	
-					if(is_array($this->elements[$matches[2]])) {
-	
-						$e = array_shift($this->elements[$matches[2]]);
+                    if (!empty($matches[3])) {
 
-						if(isset($attributes)) {
-							$e->setAttributes($attributes);
-						}
-	
-						return $e->render();
-	
-					}
-	
-					else {
-	
-						if(isset($attributes)) {
-							$this->elements[$matches[2]]->setAttributes($attributes);
-						}
-	
-						return $this->elements[$matches[2]]->render();
-	
-					}
-				}
-				
+                        $attributes = json_decode($matches[3], true, 2);
+
+                        if (is_null($attributes)) {
+                            throw new HtmlFormException(sprintf("Could not parse JSON attributes for element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
+                        }
+
+                        $attributes = array_change_key_case($attributes, CASE_LOWER);
+
+                        if (isset($attributes['name'])) {
+                            throw new HtmlFormException(sprintf("Attribute 'name' is not allowed with element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
+                        }
+
+                    }
+
+                    if ('label' === strtolower($matches[1])) {
+
+                        // insert rendered label
+
+                    } else {
+                        // insert rendered element
+
+                        if (is_array($this->elements[$matches[2]])) {
+
+                            if (!isset($this->formElementIndexes[$matches[2]])) {
+                                $this->formElementIndexes[$matches[2]] = 0;
+                            }
+
+                            $e = $this->elements[$this->formElementIndexes[$matches[2]]++];
+
+                            if (isset($attributes)) {
+                                $e->setAttributes($attributes);
+                            }
+
+                            return $e->render();
+
+                        } else {
+
+                            if (isset($attributes)) {
+                                $this->elements[$matches[2]]->setAttributes($attributes);
+                            }
+
+                            return $this->elements[$matches[2]]->render();
+
+                        }
+                    }
+                }
 			},
 
 			$this->template
