@@ -58,7 +58,7 @@ class RadioOptionElement extends FormElementFragment {
 			);
 
 			if($this->label) {
-			    $this->html .= $this->label->setAttribute('id', $id)->render();
+			    $this->html .= $this->label->setAttribute('for', $id)->render();
             }
 
 		}
