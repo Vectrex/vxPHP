@@ -28,7 +28,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.8.1 2018-02-03
+ * @version 1.8.2 2018-12-28
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -1487,13 +1487,13 @@ class HtmlForm {
 
                             // insert label, array index does not advance
 
-                            $e = $this->elements[$this->formElementIndexes[$matches[2]]]->getLabel();
+                            $e = $this->elements[$matches[2]][$this->formElementIndexes[$matches[2]]]->getLabel();
 
                         } else {
 
                             // insert element, advance array index
 
-                            $e = $this->elements[$this->formElementIndexes[$matches[2]]++];
+                            $e = $this->elements[$matches[2]][$this->formElementIndexes[$matches[2]]++];
 
                         }
 
