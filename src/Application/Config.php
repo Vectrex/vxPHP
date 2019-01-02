@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.0.9 2018-07-07
+ * @version 2.0.10 2019-01-02
  */
 class Config {
 
@@ -144,10 +144,14 @@ class Config {
 
 		}
 
-		if($config->firstChild->nodeName !== 'config') {
-			
-			throw new ConfigException(sprintf("No 'config' root element found in %s.", $xmlFile));
+		// skip any comments
 
+		while($config->firstChild instanceof \DOMComment) {
+			$config->removeChild($config->firstChild);
+		}
+
+		if('config' !== $config->firstChild->nodeName) {
+			throw new ConfigException(sprintf("No 'config' root element found in %s.", $xmlFile));
 		}
 
 		// recursively add all includes to main document
@@ -222,11 +226,20 @@ class Config {
 
 				// import root node and descendants of include
 				
-				$importedNode = $doc->importNode($include->firstChild, TRUE);
+				foreach($include->childNodes as $childNode) {
+
+					if($childNode instanceOf \DOMComment) {
+						continue;
+					}
+
+					$importedNode = $doc->importNode($childNode, true);
+					break;
+
+				}
 				
 				// check whether included file groups several elements under a config element
 
-				if($importedNode->nodeName !== 'config') {
+				if('config' !== $importedNode->nodeName) {
 
 					// replace include element with imported root element
 
@@ -270,14 +283,7 @@ class Config {
 
 			$this->isLocalhost = !isset($_SERVER['SERVER_ADDR']) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
-
 			$rootNode = $config->firstChild;
-
-			if($rootNode->nodeName !== 'config') {
-
-				throw new ConfigException("No root element 'config' found.");
-
-			}
 
 			// allow parsing of specific sections
 
@@ -415,7 +421,7 @@ class Config {
 			throw new ConfigException("Class 'PropelConfiguration' not found.");
 		}
 
-		var_dump(json_decode(json_encode((array) $propel)), TRUE);
+		var_dump(json_decode(json_encode((array) $propel)), true);
 
 	}
 
