@@ -22,11 +22,13 @@ class PasswordInputElement extends InputElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = FALSE) {
+	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
+
 			$this->attributes['type'] = 'password';
-			$this->html = parent::render(TRUE);
+			$this->html = parent::render(true);
+
 		}
 
 		return $this->html;
