@@ -18,7 +18,7 @@ use vxPHP\Form\FormElement\LabelElement;
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.6.0 2018-12-12
+ * @version 0.7.0 2019-01-03
  */
 class RadioOptionElement extends FormElementFragment {
 
@@ -35,11 +35,12 @@ class RadioOptionElement extends FormElementFragment {
 
 	}
 
-	/**
-	 * render element; when $force is FALSE a cached element rendering is re-used 
-	 * 
-	 * @param boolean $force
-	 */
+    /**
+     * render element; when $force is FALSE a cached element rendering is re-used
+     *
+     * @param boolean $force
+     * @return string
+     */
 	public function render($force = false) {
 
 		if(empty($this->html) || $force) {

@@ -44,16 +44,30 @@ class RadioElement extends FormElementWithOptions {
 
 		if(empty($this->html) || $force) {
 
-			$this->html = [];
+            //@TODO flexible rendering of options
 
-			foreach($this->options as $o) {
-				$this->html[] = $o->render();
-			}
+            $attr = [];
+
+            foreach($this->attributes as $k => $v) {
+                $attr[] = sprintf('%s="%s"', $k, $v);
+            }
+
+            $options = [];
+            foreach($this->options as $o) {
+
+                $options[] = sprintf(
+                    "<span %s>%s</span>",
+                    implode(' ', $attr),
+                    $o->render()
+                );
+
+            }
+
+            $this->html = implode("\n", $options);
 
 		}
 
-		//@TODO flexible rendering of options
+		return $this->html;
 
-		return '<span>' . implode('</span><span>', $this->html) . '</span>';
 	}
 }
