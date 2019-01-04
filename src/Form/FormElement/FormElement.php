@@ -17,7 +17,7 @@ use vxPHP\Form\HtmlForm;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.10.0 2018-12-13
+ * @version 0.10.1 2018-01-01
  * @author Gregor Kofler
  * 
  */
@@ -474,61 +474,73 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * first checks whether a value is required,
 	 * then applies validators
+     * checkbox elements are due to their nature handled seperately
 	 * 
 	 * as soon as one validator fails 
 	 * the result will yield FALSE
 	 * 
 	 * and FormElement::$valid will be set accordingly
 	 */
-	protected function applyValidators() {
+    protected function applyValidators() {
 
-		$value = $this->applyModifiers();
+        $value = $this->applyModifiers();
 
-		// first check whether form data is required
-		// if not, then empty strings or null values are considered valid
+        // first check whether form data is required
+        // if not, then empty strings or null values are considered valid
 
-		if(
-			!$this->required &&
-			(
-				$value === '' ||
-				is_null($value)
-			)
-		) {
-			$this->valid = TRUE;
-			return;
-		}
+        if(
+            !$this->required &&
+            (
+                $value === '' ||
+                is_null($value)
+            )
+        ) {
+            $this->valid = true;
+            return;
+        }
 
-		// assume validity, in case no validators are set
+        // handle a required checkboxes separately
 
-		$this->valid = TRUE;
-		
-		// fail at the very first validator that does not validate
+        if(
+            $this->required &&
+            $this instanceof CheckboxElement &&
+            is_null($value)
+        ) {
+            $this->valid = false;
+            return;
+        }
 
-		foreach($this->validators as $validator) {
-			
-			if($validator instanceof \Closure) {
-				
-				if(!$validator($value)) {
-					$this->valid = FALSE;
-					return;
-				}
-			}
+        // assume validity, in case no validators are set
 
-			else if($validator instanceof ConstraintInterface) {
-				
-				if(!$validator->validate($value)) {
-					$this->valid = FALSE;
-					return;
-				}
-			}
+        $this->valid = true;
 
-			else if(!preg_match($validator, $value)) {
-				$this->valid = FALSE;
-				return;
-			}
-		}
+        // fail at the very first validator that does not validate
 
-	}
+        foreach($this->validators as $validator) {
+
+            if($validator instanceof \Closure) {
+
+                if(!$validator($value)) {
+                    $this->valid = false;
+                    return;
+                }
+            }
+
+            else if($validator instanceof ConstraintInterface) {
+
+                if(!$validator->validate($value)) {
+                    $this->valid = false;
+                    return;
+                }
+            }
+
+            else if(!preg_match($validator, $value)) {
+                $this->valid = false;
+                return;
+            }
+        }
+
+    }
 
 	/**
 	 * renders form element and returns markup
