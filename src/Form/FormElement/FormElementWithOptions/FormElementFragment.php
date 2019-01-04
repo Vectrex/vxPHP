@@ -18,7 +18,7 @@ use vxPHP\Form\FormElement\LabelElement;
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.5.0 2018-12-12
+ * @version 0.6.0 2019-01-04
  *
  */
 
@@ -53,6 +53,11 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @var boolean
      */
     protected $selected = false;
+
+    /**
+     * @var array
+     */
+    protected $attributes = [];
 
 	/**
 	 * creates a "fragment" for a form element with options and appends it to $formElement
@@ -136,13 +141,29 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 
 	}
 
-	/**
+    /**
+     * (non-PHPdoc)
+     * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setAttribute()
+     */
+    public function setAttribute($attribute, $value)
+    {
+        if(is_null($value)) {
+            unset($this->attributes[$attribute]);
+        }
+        else {
+            $this->attributes[$attribute] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::select()
 	 */
 	public function select() {
 
-		$this->selected = TRUE;
+		$this->selected = true;
 		return $this;
 
 	}
@@ -153,7 +174,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 */
 	public function unselect() {
 
-		$this->selected = FALSE;
+		$this->selected = false;
 		return $this;
 
 	}
@@ -168,4 +189,5 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 		return $this;
 
 	}
+
 }

@@ -17,7 +17,7 @@ use vxPHP\Form\FormElement\LabelElement;
  * a single option of a select element
  * 
  * @author Gregor Kofler
- * @version 0.5.0 2018-12-15
+ * @version 0.6.0 2019-01-04
  */
 class SelectOptionElement extends FormElementFragment {
 
@@ -42,11 +42,26 @@ class SelectOptionElement extends FormElementFragment {
 	 */
 	public function render($force = false) {
 
-		if(empty($this->html) || $force) {
-			$this->html = sprintf(
-				'<option value="%s"%s>%s</option>',
-				$this->getValue(),
-				$this->selected ? " selected='selected'" : '',
+        if(empty($this->html) || $force) {
+
+            if($this->selected) {
+                $this->attributes['selected'] = 'selected';
+            }
+            else {
+                unset($this->attributes['selected']);
+            }
+
+            $this->attributes['value'] = $this->getValue();
+
+            $attr = [];
+
+            foreach($this->attributes as $k => $v) {
+                $attr[] = sprintf('%s="%s"', $k, $v);
+            }
+
+            $this->html = sprintf(
+				'<option %s>%s</option>',
+                implode(' ', $attr),
 				$this->getLabel()->getLabelText()
 			);
 		}

@@ -15,7 +15,7 @@ use vxPHP\Form\FormElement\LabelElement;
 
 /**
  * @author Gregor Kofler
- * @version 0.5.0 2018-12-14
+ * @version 0.6.0 2019-01-04
  * 
  * @todo check whether setName() or getName() is required
  */
@@ -77,6 +77,15 @@ interface FormElementFragmentInterface {
 	 * @return FormElementFragmentInterface
 	 */
 	public function unselect();
+
+    /**
+     * set an attribute for a form element fragment
+     *
+     * @param string $attribute
+     * @param string $value
+     * @return FormElementFragmentInterface
+     */
+	public function setAttribute($attribute, $value);
 
 	/**
 	 * link fragment to a form element (e.g. options to a <select> element)
