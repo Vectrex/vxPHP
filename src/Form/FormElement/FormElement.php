@@ -17,7 +17,7 @@ use vxPHP\Form\HtmlForm;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.10.1 2018-01-01
+ * @version 0.10.2 2018-01-04
  * @author Gregor Kofler
  * 
  */
@@ -79,8 +79,7 @@ abstract class FormElement implements FormElementInterface {
 	
 	/**
 	 * flag indicating that validators were passed
-	 * set by the applyValidators() method
-	 * 
+	 *
 	 * @var bool
 	 */
 	protected $valid;
@@ -113,7 +112,7 @@ abstract class FormElement implements FormElementInterface {
 	 * @param string $name
 	 * @param mixed $value
 	 */
-	public function __construct($name, $value = NULL) {
+	public function __construct($name, $value = null) {
 
 		$this->name = $name;
 		$this->setValue($value);
@@ -151,7 +150,7 @@ abstract class FormElement implements FormElementInterface {
 	 */
 	public function getModifiedValue() {
 
-		return $this->applyModifiers();
+		return $this->applyModifiers($this->value);
 
 	}
 
@@ -295,7 +294,7 @@ abstract class FormElement implements FormElementInterface {
 	 * mark element as required
 	 * disallow empty values when $required is TRUE
 	 * 
-	 * @param @boolen $required
+	 * @param boolean $required
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
 	public function setRequired($required) {
@@ -403,8 +402,11 @@ abstract class FormElement implements FormElementInterface {
 	public function isValid() {
 
 		if(!isset($this->valid)) {
-			$this->applyValidators();
+            $this->valid = $this->applyValidators(
+                $this->applyModifiers($this->value)
+            );
 		}
+
 		return $this->valid;
 
 	}
@@ -427,63 +429,63 @@ abstract class FormElement implements FormElementInterface {
 	/**
 	 * applies modifiers to FormElement::$value
 	 * FormElement::$value remains unchanged
-	 * 
+	 *
+     * @param string $value
 	 * @return string modified value
 	 */
-	protected function applyModifiers() {
-
-		$v = $this->value;
+	protected function applyModifiers($value) {
 
 		foreach($this->modifiers as $modifier) {
 			
 			if($modifier instanceof \Closure) {
-				$v = $modifier($v);
+				$value = $modifier($value);
 			}
 
 			else {
 				switch(strtolower($modifier)) {
 					case 'trim':
-						$v = trim($v);
+                        $value = trim($value);
 						break;
 
 					case 'uppercase':
-						$v = strtoupper($v);
+                        $value = strtoupper($value);
 						break;
 	
 					case 'lowercase':
-						$v = strtolower($v);
+                        $value = strtolower($value);
 						break;
 	
 					case 'strip_tags':
-						$v = strip_tags($v);
+                        $value = strip_tags($value);
 						break;
 	
 						// assume a regular expressions as fallback
 					default:
-						$v = preg_replace($modifier, '', $v);
+                        $value = preg_replace($modifier, '', $value);
 				}
 			}
 		}
 
-		return $v;
+		return $value;
 
 	}
 
-	/**
-	 * applies validators to modified FormElement::$value
-	 * 
-	 * first checks whether a value is required,
-	 * then applies validators
+    /**
+     * applies validators to modified FormElement::$value
+     *
+     * first checks whether a value is required,
+     * then applies validators
      * checkbox elements are due to their nature handled seperately
-	 * 
-	 * as soon as one validator fails 
-	 * the result will yield FALSE
-	 * 
-	 * and FormElement::$valid will be set accordingly
-	 */
-    protected function applyValidators() {
-
-        $value = $this->applyModifiers();
+     *
+     * as soon as one validator fails
+     * the result will yield FALSE
+     *
+     * and FormElement::$valid will be set accordingly
+     *
+     * @param string $value
+     * @return bool
+     */
+    protected function applyValidators($value) {
 
         // first check whether form data is required
         // if not, then empty strings or null values are considered valid
@@ -495,8 +497,7 @@ abstract class FormElement implements FormElementInterface {
                 is_null($value)
             )
         ) {
-            $this->valid = true;
-            return;
+            return true;
         }
 
         // handle a required checkboxes separately
@@ -504,15 +505,10 @@ abstract class FormElement implements FormElementInterface {
         if(
             $this->required &&
             $this instanceof CheckboxElement &&
-            is_null($value)
+            !$this->getChecked()
         ) {
-            $this->valid = false;
-            return;
+            return false;
         }
-
-        // assume validity, in case no validators are set
-
-        $this->valid = true;
 
         // fail at the very first validator that does not validate
 
@@ -521,30 +517,32 @@ abstract class FormElement implements FormElementInterface {
             if($validator instanceof \Closure) {
 
                 if(!$validator($value)) {
-                    $this->valid = false;
-                    return;
+                    return false;
                 }
             }
 
             else if($validator instanceof ConstraintInterface) {
 
                 if(!$validator->validate($value)) {
-                    $this->valid = false;
-                    return;
+                    return false;
                 }
             }
 
             else if(!preg_match($validator, $value)) {
-                $this->valid = false;
-                return;
+                return false;
             }
         }
+
+        // assume validity when no previous validator failed
+
+        return true;
 
     }
 
 	/**
 	 * renders form element and returns markup
-	 * 
+     *
+	 * @param boolean $force
 	 * @return string
 	 */
 	public abstract function render($force);
