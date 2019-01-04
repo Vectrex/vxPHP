@@ -18,7 +18,7 @@ use vxPHP\Form\FormElement\LabelElement;
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.7.0 2019-01-03
+ * @version 0.8.0 2019-01-04
  */
 class RadioOptionElement extends FormElementFragment {
 
@@ -45,21 +45,37 @@ class RadioOptionElement extends FormElementFragment {
 
 		if(empty($this->html) || $force) {
 
-			$formId = $this->parentElement->getForm()->getAttribute('id');
 			$name = $this->parentElement->getName();
 			$value = $this->getValue();
-			$id = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
+
+            if($this->selected) {
+                $this->attributes['checked'] = 'checked';
+            }
+            else {
+                unset($this->attributes['checked']);
+            }
+
+            if(!isset($this->attributes['id'])) {
+                $formId = $this->parentElement->getForm()->getAttribute('id');
+                $this->attributes['id'] = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
+            }
+
+            $this->attributes['value'] = $this->getValue();
+            $this->attributes['name'] = $this->parentElement->getName();
+
+            $attr = [];
+
+            foreach($this->attributes as $k => $v) {
+                $attr[] = sprintf('%s="%s"', $k, $v);
+            }
 
 			$this->html = sprintf(
-				'<input id="%s" name="%s" type="radio" value="%s"%s>',
-				$id,
-				$name,
-				$value,
-				$this->selected ? " checked='checked'" : ''
+				'<input type="radio" %s>',
+                implode(' ', $attr)
 			);
 
 			if($this->label) {
-			    $this->html .= $this->label->setAttribute('for', $id)->render();
+			    $this->html .= $this->label->setAttribute('for', $this->attributes['id'])->render();
             }
 
 		}
