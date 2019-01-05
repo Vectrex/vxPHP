@@ -13,7 +13,8 @@ namespace vxPHP\Form\FormElement;
 
 /**
  * generic input element
- * 
+ *
+ * @version 0.11.0 2018-01-05
  * @author Gregor Kofler
  */
 class InputElement extends FormElement {
@@ -24,7 +25,7 @@ class InputElement extends FormElement {
 	 * @param string $name
 	 * @param string $value
 	 */
-	public function __construct($name, $value = NULL) {
+	public function __construct($name, $value = null) {
 		parent::__construct($name, $value);
 	}
 
@@ -78,11 +79,20 @@ class InputElement extends FormElement {
 				$attr[] = sprintf('%s="%s"', $k, $v);
 			}
 
-			$this->html = sprintf('<input name="%s" value="%s" %s>',
-				$this->getName(),
-				htmlspecialchars($this->getModifiedValue()),
-				implode(' ', $attr)
-			);
+			if($this->template) {
+
+                parent::render(true);
+            }
+
+			else {
+
+                $this->html = sprintf('<input name="%s" value="%s" %s>',
+                    $this->getName(),
+                    htmlspecialchars($this->getModifiedValue()),
+                    implode(' ', $attr)
+                );
+
+            }
 
 		} 
 

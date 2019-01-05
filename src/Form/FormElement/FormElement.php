@@ -13,11 +13,12 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Form\HtmlForm;
+use vxPHP\Template\SimpleTemplate;
 
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.10.2 2018-01-04
+ * @version 0.11.0 2018-01-05
  * @author Gregor Kofler
  * 
  */
@@ -97,7 +98,14 @@ abstract class FormElement implements FormElementInterface {
      * @var LabelElement
      */
     protected $label;
-	
+
+    /**
+     * a template used for rendering the element
+     *
+     * @var SimpleTemplate
+     */
+    protected $template;
+
 	/**
 	 * the cached markup of the element
 	 * 
@@ -539,11 +547,30 @@ abstract class FormElement implements FormElementInterface {
 
     }
 
-	/**
-	 * renders form element and returns markup
+    public function setSimpleTemplate(SimpleTemplate $template)
+    {
+
+        $this->template = $template;
+        return $this;
+
+    }
+
+    /**
+     * renders form element and returns markup
+     * requires a template for rendering
      *
-	 * @param boolean $force
-	 * @return string
-	 */
-	public abstract function render($force);
+     * @param boolean $force
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     */
+	public function render($force)
+    {
+        if(!$this->template) {
+            throw new \RuntimeException(sprintf("No template for element '%s' defined.", $this->getName()));
+        }
+
+        $this->html = $this->template->assign('element', $this)->display();
+        return $this->html;
+    }
 }

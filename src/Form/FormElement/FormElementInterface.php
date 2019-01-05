@@ -11,6 +11,8 @@
 
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\Template\SimpleTemplate;
+
 interface FormElementInterface {
 
 	public function setValue($value);
@@ -24,6 +26,7 @@ interface FormElementInterface {
     public function setRequired($required);
     public function getRequired();
     public function render($force);
+    public function setSimpleTemplate(SimpleTemplate $template);
     /*
         public function setForm(HtmlForm $form);
         public function getForm();
