@@ -25,7 +25,7 @@ interface FormElementInterface {
 	public function getAttribute($attributeName);
     public function setRequired($required);
     public function getRequired();
-    public function render($force);
+    public function render();
     public function setSimpleTemplate(SimpleTemplate $template);
     /*
         public function setForm(HtmlForm $form);

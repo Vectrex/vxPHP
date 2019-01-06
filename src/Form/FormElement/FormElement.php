@@ -18,7 +18,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.11.0 2018-01-05
+ * @version 0.11.1 2018-01-06
  * @author Gregor Kofler
  * 
  */
@@ -566,12 +566,11 @@ abstract class FormElement implements FormElementInterface {
      * renders form element and returns markup
      * requires a template for rendering
      *
-     * @param boolean $force
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
-	public function render($force)
+	public function render()
     {
         if(!$this->template) {
             throw new \RuntimeException(sprintf("No template for element '%s' defined.", $this->getName()));
