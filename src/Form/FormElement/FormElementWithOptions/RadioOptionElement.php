@@ -31,7 +31,7 @@ class RadioOptionElement extends FormElementFragment {
 	 */
 	public function __construct($value, LabelElement $label, RadioElement $formElement = null) {
 
-		parent::__construct($value, null, $label, $formElement);
+		parent::__construct($value, $label, $formElement);
 
 	}
 
@@ -40,42 +40,54 @@ class RadioOptionElement extends FormElementFragment {
      *
      * @param boolean $force
      * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
 	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
-			$name = $this->parentElement->getName();
-			$value = $this->getValue();
+            if($this->template) {
 
-            if($this->selected) {
-                $this->attributes['checked'] = 'checked';
+                parent::render();
+
             }
+
             else {
-                unset($this->attributes['checked']);
-            }
 
-            if(!isset($this->attributes['id'])) {
-                $formId = $this->parentElement->getForm()->getAttribute('id');
-                $this->attributes['id'] = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
-            }
+                $name = $this->parentElement->getName();
+                $value = $this->getValue();
 
-            $this->attributes['value'] = $this->getValue();
-            $this->attributes['name'] = $this->parentElement->getName();
+                if($this->selected) {
+                    $this->attributes['checked'] = 'checked';
+                }
+                else {
+                    unset($this->attributes['checked']);
+                }
 
-            $attr = [];
+                if(!isset($this->attributes['id'])) {
+                    $formId = $this->parentElement->getForm()->getAttribute('id');
+                    $this->attributes['id'] = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
+                }
 
-            foreach($this->attributes as $k => $v) {
-                $attr[] = sprintf('%s="%s"', $k, $v);
-            }
+                $this->attributes['value'] = $this->getValue();
+                $this->attributes['name'] = $this->parentElement->getName();
 
-			$this->html = sprintf(
-				'<input type="radio" %s>',
-                implode(' ', $attr)
-			);
+                $attr = [];
 
-			if($this->label) {
-			    $this->html .= $this->label->setAttribute('for', $this->attributes['id'])->render();
+                foreach($this->attributes as $k => $v) {
+                    $attr[] = sprintf('%s="%s"', $k, $v);
+                }
+
+                $this->html = sprintf(
+                    '<input type="radio" %s>',
+                    implode(' ', $attr)
+                );
+
+                if($this->label) {
+                    $this->html .= $this->label->setAttribute('for', $this->attributes['id'])->render();
+                }
+
             }
 
 		}

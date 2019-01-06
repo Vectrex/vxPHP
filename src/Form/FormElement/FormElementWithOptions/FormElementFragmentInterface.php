@@ -12,10 +12,11 @@
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 use vxPHP\Form\FormElement\LabelElement;
+use vxPHP\Template\SimpleTemplate;
 
 /**
  * @author Gregor Kofler
- * @version 0.6.0 2019-01-04
+ * @version 0.8.0 2019-01-06
  * 
  * @todo check whether setName() or getName() is required
  */
@@ -36,19 +37,6 @@ interface FormElementFragmentInterface {
 	 */
 	public function getValue();
 
-	/**
-	 * set name of fragment
-	 * 
-	 * @param string $name
-	 * @return FormElementFragmentInterface
-	 */
-	public function setName($name);
-
-	/**
-	 * get name of fragment
-	 */
-	public function getName();
-	
 	/**
 	 * set label of fragment
 	 * 
@@ -79,6 +67,13 @@ interface FormElementFragmentInterface {
 	public function unselect();
 
     /**
+     * get selected status of fragment
+     *
+     * @return bool
+     */
+	public function getSelected();
+
+    /**
      * set an attribute for a form element fragment
      *
      * @param string $attribute
@@ -94,4 +89,27 @@ interface FormElementFragmentInterface {
 	 * @return FormElementFragmentInterface
 	 */
 	public function setParentElement(FormElementWithOptionsInterface $element);
+
+    /**
+     * get parent element the fragment belongs to
+     *
+     * @return FormElementWithOptionsInterface
+     */
+	public function getParentElement();
+
+    /**
+     * set a SimpleTemplate which is used when rendering the fragment
+     *
+     * @param SimpleTemplate $template
+     * @return FormElementFragmentInterface
+     */
+    public function setSimpleTemplate(SimpleTemplate $template);
+
+    /**
+     * render the fragment using an optional SimpleTemplate
+     *
+     * @return string
+     */
+    public function render();
+
 }

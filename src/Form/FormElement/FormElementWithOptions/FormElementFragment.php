@@ -12,22 +12,18 @@
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 use vxPHP\Form\FormElement\LabelElement;
+use vxPHP\Template\SimpleTemplate;
 
 /**
  * abstract base class for form element fragments,
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.6.0 2019-01-04
+ * @version 0.8.0 2019-01-06
  *
  */
 
 abstract class FormElementFragment implements FormElementFragmentInterface {
-
-    /**
-     * @var string
-     */
-	protected	$name;
 
     /**
      * @var string
@@ -59,18 +55,22 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      */
     protected $attributes = [];
 
+    /**
+     * template used for rendering the fragment
+     * @var SimpleTemplate
+     */
+    protected $template;
+
 	/**
 	 * creates a "fragment" for a form element with options and appends it to $formElement
 	 *
 	 * @param string $value
-	 * @param string $name
 	 * @param LabelElement $label
 	 * @param FormElementWithOptionsInterface $formElement
 	 */
-	public function __construct($value, $name, LabelElement $label, FormElementWithOptionsInterface $formElement = null) {
-
+	public function __construct($value, LabelElement $label, FormElementWithOptionsInterface $formElement = null)
+    {
 		$this->setValue($value);
-		$this->setName($name);
 		$this->setLabel($label);
 
 		if(!is_null($formElement)) {
@@ -79,71 +79,51 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setValue()
+	 * @see FormElementFragmentInterface::setValue()
+     * @param string $value
+     * @return $this|FormElementFragmentInterface
 	 */
-	public function setValue($value) {
-
+	public function setValue($value)
+    {
 		$this->value = $value;
 		return $this;
-
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::getValue()
+	 * @see FormElementFragmentInterface::getValue()
+     * @return string
 	 */
-	public function getValue() {
-
+	public function getValue()
+    {
 		return $this->value;
-
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setName()
+	 * @see FormElementFragmentInterface::setLabel()
+     * @param LabelElement $label
+     * @return $this|FormElementFragmentInterface
 	 */
-	public function setName($name) {
-
-		$this->name = $name;
-		return $this;
-
-	}
-
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::getName()
-	 */
-	public function getName() {
-
-		return $this->name;
-
-	}
-
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setLabel()
-	 */
-	public function setLabel(LabelElement $label) {
-
+	public function setLabel(LabelElement $label)
+    {
 		$this->label = $label;
         return $this;
-
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::getLabel()
+	 * @see FormElementFragmentInterface::getLabel()
+     * @return LabelElement
 	 */
-	public function getLabel() {
-
+	public function getLabel()
+    {
 		return $this->label;
-
 	}
 
     /**
-     * (non-PHPdoc)
-     * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setAttribute()
+     * @see FormElementFragmentInterface::setAttribute()
+     * @param string $attribute
+     * @param string $value
+     * @return $this|FormElementFragmentInterface
+
      */
     public function setAttribute($attribute, $value)
     {
@@ -159,35 +139,83 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 
     /**
 	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::select()
+	 * @see FormElementFragmentInterface::select()
+     * @return $this|FormElementFragmentInterface
 	 */
-	public function select() {
-
-		$this->selected = true;
+	public function select()
+    {
+    	$this->selected = true;
 		return $this;
-
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::unselect()
+	 * @see FormElementFragmentInterface::unselect()
+     * @return $this|FormElementFragmentInterface
 	 */
-	public function unselect() {
-
+	public function unselect()
+    {
 		$this->selected = false;
 		return $this;
-
 	}
+
+    /**
+     *
+     * @return bool
+     */
+	public function getSelected()
+    {
+        return $this->selected;
+    }
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface::setParentElement()
+	 * @see FormElementFragmentInterface::setParentElement()
+     * @param FormElementWithOptionsInterface $element
+     * @return $this|FormElementFragmentInterface
 	 */
-	public function setParentElement(FormElementWithOptionsInterface $element) {
-
+	public function setParentElement(FormElementWithOptionsInterface $element)
+    {
 		$this->parentElement = $element;
 		return $this;
-
 	}
+
+    /**
+     * @see FormElementFragmentInterface::getParentElement()
+     * @return $this|FormElementWithOptionsInterface
+     */
+    public function getParentElement()
+    {
+        return $this->parentElement;
+    }
+
+    /**
+     * set a SimpleTemplate which is then used when rendering
+     * the fragment
+     *
+     * @param SimpleTemplate $template
+     * @return $this
+     */
+    public function setSimpleTemplate(SimpleTemplate $template)
+    {
+
+        $this->template = $template;
+        return $this;
+
+    }
+
+    /**
+     * @see FormElementFragmentInterface::render()
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     */
+	public function render()
+    {
+        if(!$this->template) {
+            throw new \RuntimeException(sprintf("No template for fragment of element '%s' defined.", $this->parentElement->getName()));
+        }
+
+        $this->html = $this->template->assign('fragment', $this)->display();
+        return $this->html;
+    }
 
 }
