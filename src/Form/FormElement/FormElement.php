@@ -547,6 +547,13 @@ abstract class FormElement implements FormElementInterface {
 
     }
 
+    /**
+     * set a SimpleTemplate which is then used when rendering
+     * the element
+     *
+     * @param SimpleTemplate $template
+     * @return $this
+     */
     public function setSimpleTemplate(SimpleTemplate $template)
     {
 
