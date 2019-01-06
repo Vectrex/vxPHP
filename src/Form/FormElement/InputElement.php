@@ -14,7 +14,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * generic input element
  *
- * @version 0.11.0 2018-01-05
+ * @version 0.11.1 2018-01-06
  * @author Gregor Kofler
  */
 class InputElement extends FormElement {
@@ -63,28 +63,33 @@ class InputElement extends FormElement {
 	}
 
 	/**
-	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
+     * @param bool $force
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
 	 */
 	public function render($force = false) {
 
 		if(empty($this->html) || $force) {
 
-			if(!isset($this->attributes['type'])) {
-				$this->attributes['type'] = 'text'; 
-			}
-			$attr = [];
+            if($this->template) {
 
-			foreach($this->attributes as $k => $v) {
-				$attr[] = sprintf('%s="%s"', $k, $v);
-			}
-
-			if($this->template) {
-
-                parent::render(true);
+                parent::render();
             }
 
-			else {
+            else {
+
+                if(!isset($this->attributes['type'])) {
+                    $this->attributes['type'] = 'text';
+                }
+
+                $attr = [];
+
+                foreach($this->attributes as $k => $v) {
+                    $attr[] = sprintf('%s="%s"', $k, $v);
+                }
+
 
                 $this->html = sprintf('<input name="%s" value="%s" %s>',
                     $this->getName(),
@@ -94,7 +99,7 @@ class InputElement extends FormElement {
 
             }
 
-		} 
+        }
 
 		return $this->html;
 
