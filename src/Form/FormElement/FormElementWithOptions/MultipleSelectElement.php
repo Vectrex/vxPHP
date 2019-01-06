@@ -15,9 +15,10 @@ namespace vxPHP\Form\FormElement\FormElementWithOptions;
  * a select element of type multiple
  *
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24
+ * @version 0.8.0 2019-01-06
  */
-class MultipleSelectElement extends SelectElement {
+class MultipleSelectElement extends SelectElement
+{
 
 	/**
 	 * initialize element with name and value
@@ -26,17 +27,18 @@ class MultipleSelectElement extends SelectElement {
 	 * @param string $name
 	 * @param string|array $value
 	 */
-	public function __construct($name, $value = NULL) {
-
+	public function __construct($name, $value = null)
+    {
 		parent::__construct($name, $value);
-
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\SelectElement::appendOption()
+	 * @see SelectElement::appendOption()
+     * @param FormElementFragmentInterface $option
+     * @return $this|FormElementWithOptionsInterface|SelectElement
 	 */
-	public function appendOption(FormElementFragmentInterface $option) {
+	public function appendOption(FormElementFragmentInterface $option)
+    {
 
 		$this->options[] = $option;
 		$option->setParentElement($this);
@@ -54,13 +56,15 @@ class MultipleSelectElement extends SelectElement {
 
 	}
 
-	/**
-	 * set value of select element
-	 * value can be either a primitive or an array
-	 * 
-	 * @param mixed $value
-	 */
-	public function setValue($value = NULL) {
+    /**
+     * set value of select element
+     * value can be either a primitive or an array
+     *
+     * @param mixed $value
+     * @return MultipleSelectElement
+     */
+	public function setValue($value = null)
+    {
 
 		if(isset($value)) {
 
@@ -85,14 +89,36 @@ class MultipleSelectElement extends SelectElement {
 
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\SelectElement::render()
-	 */
-	public function render($force = FALSE) {
+    /**
+	 * @see SelectElement::render()
+     * @param bool $force
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     */
+	public function render($force = false)
+    {
 
-		$this->setAttribute('multiple', 'multiple');
-		return parent::render($force);
+        if(empty($this->html) || $force) {
+
+            $attr = [];
+            foreach($this->attributes as $k => $v) {
+                $attr[] = sprintf('%s="%s"', $k, $v);
+            }
+
+            $options = [];
+            foreach($this->options as $o) {
+                $options[] = $o->render();
+            }
+
+            $this->html = sprintf('<select multiple="multiple" name="%s" %s>%s</select>',
+                preg_replace('/\[\]$/', '', $this->getName()) . '[]',
+                implode(' ', $attr),
+                "\n" . implode("\n", $options) . "\n"
+            );
+        }
+
+        return $this->html;
 
 	}
 }

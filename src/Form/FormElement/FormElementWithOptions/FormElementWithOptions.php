@@ -39,7 +39,7 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	 * @param string $name
 	 * @param string $value
 	 */
-	public function __construct($name, $value = NULL) {
+	public function __construct($name, $value = null) {
 		
 		parent::__construct($name, $value);
 
@@ -49,7 +49,7 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	 * {@inheritDoc}
 	 * @see \vxPHP\Form\FormElement\FormElement::setValue()
 	 */
-	public function setValue($value = NULL) {
+	public function setValue($value = null) {
 
 		if(isset($value)) {
 			parent::setValue($value);
@@ -57,7 +57,7 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 
 		if(isset($this->selectedOption) && $this->selectedOption->getValue() != $this->getValue()) {
 			$this->selectedOption->unselect();
-			$this->selectedOption = NULL;
+			$this->selectedOption = null;
 		}
 
 		if(!isset($this->selectedOption)) {
