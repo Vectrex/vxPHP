@@ -18,7 +18,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.11.1 2018-01-06
+ * @version 0.11.2 2018-01-07
  * @author Gregor Kofler
  * 
  */
@@ -512,8 +512,12 @@ abstract class FormElement implements FormElementInterface {
 
         if(
             $this->required &&
-            $this instanceof CheckboxElement &&
-            !$this->getChecked()
+            (
+                $this instanceof CheckboxElement &&
+                !$this->getChecked()
+                ||
+                empty($value)
+            )
         ) {
             return false;
         }
