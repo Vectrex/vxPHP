@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Template;
 
 use vxPHP\Template\Exception\SimpleTemplateException;
@@ -28,26 +27,20 @@ use vxPHP\Application\Exception\ConfigException;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 1.8.0 2018-07-06
+ * @version 2.0.0 2019-01-07
  *
  */
 
 class SimpleTemplate {
 
     /**
-     * @var string
+     * the actual PHP content which will be passed
+     * to the output buffer
      *
-     * absolute path to template file
+     * @var TemplateBuffer
      */
-	private $path;
+	private $bufferInstance;
 
-    /**
-     * @var string
-     *
-     * the unprocessed template string
-     */
-	private $rawContents;
-	
     /**
      * @var string
      *
@@ -113,19 +106,21 @@ class SimpleTemplate {
 	public function __construct($file = null) {
 
 		$application = Application::getInstance();
+        $this->bufferInstance = new TemplateBuffer();
 
 		if($file) {
-			$this->path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
+			$path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
-			if (!file_exists($this->path . $file)) {
-				throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $this->path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+			if (!file_exists($path . $file)) {
+				throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
 			}
 
-			$this->setRawContents(file_get_contents($this->path . $file));
+			$this->setRawContents(file_get_contents($path . $file));
 
 		}
 		
 		$this->locale = $application->getCurrentLocale();
+
 	}
 
     /**
@@ -150,7 +145,7 @@ class SimpleTemplate {
 	 */
 	public function setRawContents($contents) {
 
-		$this->rawContents = (string) $contents;
+		$this->bufferInstance->__rawContents = (string) $contents;
 		return $this;
 
 	}
@@ -165,7 +160,7 @@ class SimpleTemplate {
 	 */
 	public function containsPHP() {
 
-		return 1 === preg_match('~\<\?(?:=|php\s|\s)~', $this->rawContents);
+		return 1 === preg_match('~\<\?(?:=|php\s|\s)~', $this->bufferInstance->__rawContents);
 
 	}
 
@@ -176,7 +171,7 @@ class SimpleTemplate {
 	 */
 	public function getRawContents() {
 
-		return $this->rawContents;
+		return $this->bufferInstance->__rawContents;
 
 	}
 
@@ -189,7 +184,7 @@ class SimpleTemplate {
 
 		if(empty($this->parentTemplateFilename)) {
 		
-			if(preg_match($this->extendRex, $this->rawContents, $matches)) {
+			if(preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
 
 				$this->parentTemplateFilename = $matches[1];
 
@@ -212,9 +207,9 @@ class SimpleTemplate {
 
 		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
-		if(preg_match($blockRegExp, $this->rawContents)) {
+		if(preg_match($blockRegExp, $this->bufferInstance->__rawContents)) {
 
-			$this->rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents);
+			$this->bufferInstance->__rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->bufferInstance->__rawContents);
 
 		}
 
@@ -225,24 +220,34 @@ class SimpleTemplate {
 		return $this;
 	}
 
-	/**
-	 * assign value to variable, which is then available within template
-	 *
-	 * @param string $var
-	 * @param mixed $value
-	 * @return SimpleTemplate
-	 */
-	public function assign($var, $value = '') {
+    /**
+     * assign value to variable, which is then available within template
+     *
+     * @param string | array $var
+     * @param mixed $value
+     * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     */
+	public function assign($var, $value = null) {
+
+        $invalidProperties = ['__rawContents'];
 
 		if(is_array($var)) {
 			foreach($var as $k => $v) {
-				$this->$k = $v;
+			    if(in_array($k, $invalidProperties)) {
+			        throw new SimpleTemplateException("Tried to assign invalid property '%s'", $k);
+                }
+				$this->bufferInstance->$k = $v;
 			}
 
 			return $this;
 		}
 
-		$this->$var = $value;
+        if(in_array($var, $invalidProperties)) {
+            throw new SimpleTemplateException("Tried to assign invalid property '%s'", $var);
+        }
+
+		$this->bufferInstance->$var = $value;
 
 		return $this;
 	}
@@ -364,105 +369,35 @@ class SimpleTemplate {
 		return $this->contents;
 	}
 
-	/**
-	 * include another template file
-	 * does only path handling
-	 *
-	 * @param string $templateFile
-	 */
-	private function includeFile($templateFile) {
-
-		$tpl = $this;
-		eval('?>' . file_get_contents($this->path . $templateFile));
-
-	}
-
     /**
-     * include controller output
-     * $controllerPath is [path/to/controller/]name_of_controller
-     * additional arguments can be passed on to the controller constructor
+     * allow extension of a parent template with current template
      *
-     * @param string $controllerPath
-     * @param string $methodName
-     * @param array $constructorArguments
+     * searches in current rawContents for
+     * <!-- { extend: parent_template.php @ content_block } -->
+     * and in template to extend for
+     * <!-- { block: content_block } -->
      *
-     * @return string
-     * @throws ConfigException
+     * current rawContents is then replaced by parent rawContents with current rawContents filled in
+     *
+     * @throws SimpleTemplateException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null) {
-
-		$namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
-		
-		if(count($namespaces) && $namespaces[0]) {
-			$controller = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
-		}
-		
-		else {
-			throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", $controllerPath));
-		}
-		
-
-		// get instance and set method which will be called in render() method of controller
-
-		$controllerClass = Application::getInstance()->getApplicationNamespace() . $controller;
-		
-		if(!$constructorArguments) {
-			
-			/**
-			 * @var Controller
-			 */
-			$instance = new $controllerClass();
-			
-		}
-
-		else {
-
-			$instance = new $controllerClass(...$constructorArguments);
-				
-		}
-
-		if($methodName) {
-
-			return $instance->setExecutedMethod($methodName)->render();
-
-		}
-		else {
-
-			return $instance->setExecutedMethod('execute')->render();
-
-		}
-
-	}
-
-	/**
-	 * allow extension of a parent template with current template
-	 *
-	 * searches in current rawContents for
-	 * <!-- { extend: parent_template.php @ content_block } -->
-	 * and in template to extend for
-	 * <!-- { block: content_block } -->
-	 *
-	 * current rawContents is then replaced by parent rawContents with current rawContents filled in
-	 *
-	 * @throws SimpleTemplateException
-	 */
 	private function extend() {
 
-		if(preg_match($this->extendRex, $this->rawContents, $matches)) {
+		if(preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
 
 			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
 
-			$extendedContent = file_get_contents($this->path . $matches[1]);
+			$extendedContent = file_get_contents(Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $matches[1]);
 
 			if(preg_match($blockRegExp, $extendedContent)) {
 
-				$this->rawContents = preg_replace(
+				$this->bufferInstance->__rawContents = preg_replace(
 					$blockRegExp,
 					preg_replace(
 						$this->extendRex,
 						'',
-						$this->rawContents
+						$this->bufferInstance->__rawContents
 					),
 					$extendedContent
 				);
@@ -499,12 +434,26 @@ class SimpleTemplate {
 	 * immediate output supressed by output buffering
 	 */
 	private function fillBuffer() {
-		$tpl = $this;
-		ob_start();
 
-		eval('?>' . $this->rawContents);
-		$this->contents = ob_get_contents();
-		ob_end_clean();
+	    // wrap bufferInstance in closure to allow the use of $this in template
+
+	    $closure = function($outer) {
+
+            ob_start();
+
+            /* @deprecated use $this when accessing assigned variables */
+
+            $tpl = $this;
+
+            eval('?>' . $this->__rawContents);
+            $outer->contents = ob_get_contents();
+            ob_end_clean();
+
+        };
+
+	    $boundClosure = $closure->bindTo($this->bufferInstance);
+	    $boundClosure($this);
+
 	}
 
 }
