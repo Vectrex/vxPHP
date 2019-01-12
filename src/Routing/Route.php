@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.1 2018-05-04
+ * @version 1.2.2 2019-01-12
  *
  */
 class Route {
@@ -368,7 +368,7 @@ class Route {
 			
 			$urlSegments = [];
 
-			if($application->hasNiceUris()) {
+			if($application->getRouter()->getServerSideRewrite()) {
 				
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
 					$urlSegments[] = $scriptName;
@@ -638,7 +638,7 @@ class Route {
 			$request->getSchemeAndHttpHost()
 		];
 
-		if($application->hasNiceUris()) {
+		if($application->getRouter()->getServerSideRewrite()) {
 			if(($scriptName = basename($request->getScriptName(), '.php')) !== 'index') {
 				$urlSegments[] = $scriptName;
 			}

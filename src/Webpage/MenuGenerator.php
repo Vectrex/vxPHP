@@ -25,7 +25,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.3, 2018-09-28
+ * @version 0.6.4, 2019-01-12
  *
  * @throws MenuGeneratorException
  */
@@ -58,7 +58,7 @@ class MenuGenerator {
 	 * 
 	 * @var boolean
 	 */
-	protected $useNiceUris;
+	protected $rewriteActive;
 
 	/**
 	 * path segments matched against menu structure to evaluate the
@@ -131,7 +131,7 @@ class MenuGenerator {
 		$application = Application::getInstance();
 
 		$config = $application->getConfig();
-		$this->useNiceUris = $application->hasNiceUris();
+		$this->rewriteActive = $application->getRouter()->getServerSideRewrite();
 
 		$this->route = $application->getCurrentRoute();
 
@@ -231,7 +231,7 @@ class MenuGenerator {
 		
 		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
 
-		if(!in_array($this->menu, self::$primedMenus, TRUE)) {
+		if(!in_array($this->menu, self::$primedMenus, true)) {
 
 			// clear selected menu entries (which remain in the session)
 
@@ -247,7 +247,7 @@ class MenuGenerator {
 
 			// skip script name
 
-			if($this->useNiceUris && basename($request->getScriptName()) != 'index.php') {
+			if($this->rewriteActive && basename($request->getScriptName()) != 'index.php') {
 				array_shift($this->pathSegments);
 			}
 
@@ -272,7 +272,7 @@ class MenuGenerator {
 
 		$m = $this->menu;
 
-		if($this->level !== FALSE) {
+		if($this->level !== false) {
 
 			$htmlId .= '_level_' . $this->level;
 

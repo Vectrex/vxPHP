@@ -182,7 +182,7 @@ class MenuEntry {
 					$pathSegments[] = $e->path;
 				} while ($e = $e->menu->getParentEntry());
 
-				if(Application::getInstance()->hasNiceUris()) {
+				if(Application::getInstance()->getRouter()->getServerSideRewrite()) {
 
 					if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
 						$script = '/';

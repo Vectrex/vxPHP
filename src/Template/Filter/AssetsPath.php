@@ -32,26 +32,15 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 		$application = Application::getInstance();
 
-		$assetsPath = '/' . ($application->hasNiceUris() ? '' : $application->getRelativeAssetsPath());
-
-		// extend <img src="$..." ...> with path to site images
-
-		$templateString = preg_replace_callback(
-			'~<img(.*?)\s+src=("|\')\$([^"\']+)\2(.*?)>~i',
-			function($matches) use ($assetsPath) {
-				return '<img' . $matches[1] . ' src='. $matches[2] . $assetsPath . 'img/site/' . $matches[3] . $matches[2] . $matches[4] . '>';
-			},
-			$templateString
-		);
-
 		// change path of src and href attributes when asset_path is set and use_nice_uris is not set in the configuration
 		// only relative links (without protocol) are matched
 		// when nice uris are used URL rewriting does the job, when no assets path is set, everything is in place already
 
-		if($application->getRelativeAssetsPath() && !$application->hasNiceUris()) {
-
+		if($application->getRelativeAssetsPath()) {
 
 			// src attributes
+
+            $assetsPath = '/' . $application->getRelativeAssetsPath();
 
 			$templateString = preg_replace_callback(
 				'~<(.*?)\s+src=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',

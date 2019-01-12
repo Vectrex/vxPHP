@@ -29,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.9.0 2018-05-11
+ * @version 1.11.0 2019-01-12
  */
 class Application {
 
@@ -116,13 +116,6 @@ class Application {
 	private $sourcePath;
 
 	/**
-	 * indicates the use of webserver rewriting for beautified URLs
-	 *
-	 * @var boolean
-	 */
-	private $useNiceUris;
-	
-	/**
 	 * indicates whether application runs on a localhost or was called from the command line
 	 * 
 	 * @var boolean
@@ -202,15 +195,6 @@ class Application {
 				$this->setRelativeAssetsPath('');
 			}
 			
-			// indicate URL rewriting when configured and web server environment assumed
-
-			if(
-				substr(php_sapi_name(), 0, 3) !== 'cli' &&
-				isset($this->config->site->use_nice_uris)
-			) {
-				$this->useNiceUris = !!$this->config->site->use_nice_uris;
-			}
-
 		}
 
 		catch (\Exception $e) {
@@ -450,17 +434,6 @@ class Application {
 	}
 
 	/**
-	 * retrieve setting for nice uris
-	 *
-	 * @return boolean
-	 */
-	public function hasNiceUris() {
-
-		return $this->useNiceUris;
-
-	}
-
-	/**
 	 * returns true when the application
 	 * was called from the command line or in a localhost environment
 	 * 
@@ -529,7 +502,7 @@ class Application {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		if(!is_null($this->rootPath) && 0 !== strpos($path, $this->rootPath)) {
-			throw new ApplicationException("'$path' not within application path '{$this->rootPath}'", ApplicationException::PATH_MISMATCH);
+			throw new ApplicationException(sprintf("'%s' not within application path '%s'.", $path, $this->rootPath), ApplicationException::PATH_MISMATCH);
 		}
 
 		$this->absoluteAssetsPath = $path;
@@ -552,15 +525,16 @@ class Application {
 
 	/**
 	 * set relative path to web assets
+     * ensure that directory separator is always '/'
 	 * 
 	 * @param string $path
 	 * @return Application
 	 */
 	public function setRelativeAssetsPath($path) {
 
-		$this->relativeAssetsPath = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
+		$this->relativeAssetsPath = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/') . '/';
 		return $this;
-	
+
 	}
 	
 	/**
@@ -574,6 +548,18 @@ class Application {
 		return $this->relativeAssetsPath;
 	
 	}
+
+    /**
+     * prepend slash and path to assets
+     *
+     * @param $path
+     * @return string
+     */
+    public function asset($path) {
+
+	    return '/' . $this->relativeAssetsPath . rtrim($path, '/');
+
+    }
 
 	/**
 	 * set root path of application

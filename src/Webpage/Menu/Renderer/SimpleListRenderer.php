@@ -87,7 +87,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 
 		if(!isset($attributes->display) || $attributes->display !== 'none') {
 
-			if($this->hasNiceUris) {
+			if($this->rewriteActive) {
 
 				if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
 					$script = '/';

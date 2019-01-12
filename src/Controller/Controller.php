@@ -25,7 +25,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.1 2018-07-20
+ * @version 0.6.2 2019-01-12
  *
  */
 abstract class Controller {
@@ -117,7 +117,7 @@ abstract class Controller {
 		
 		// skip script name
 
-		if($application->hasNiceUris() && 'index.php' !== basename($this->request->getScriptName())) {
+		if($application->getRouter()->getServerSideRewrite() && 'index.php' !== basename($this->request->getScriptName())) {
 			array_shift($this->pathSegments);
 		}
 

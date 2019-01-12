@@ -11,7 +11,6 @@
 
 namespace vxPHP\Webpage\Menu\Renderer;
 
-use vxPHP\Webpage\Menu\Renderer\MenuRendererInterface;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
@@ -19,25 +18,29 @@ use vxPHP\Application\Application;
 abstract class MenuRenderer implements MenuRendererInterface {
 
 	protected $menu;
-	protected $hasNiceUris;
+	protected $rewriteActive;
 	protected $parameters;
 
-	/**
-	 * initialize menu renderer
-	 *
-	 * @param Menu $menu
-	 */
+    /**
+     * initialize menu renderer
+     *
+     * @param Menu $menu
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function __construct(Menu $menu) {
 
 		$this->menu = $menu;
-		$this->hasNiceUris = Application::getInstance()->hasNiceUris();
+		$this->rewriteActive = Application::getInstance()->getRouter()->getServerSideRewrite();
 
 	}
 
-	/**
-	/* (non-PHPdoc)
-	 * @see \vxPHP\Webpage\Menu\Renderer\MenuRendererInterface::create()
-	 */
+    /**
+     * /* (non-PHPdoc)
+     * @see \vxPHP\Webpage\Menu\Renderer\MenuRendererInterface::create()
+     * @param Menu $menu
+     * @return MenuRenderer
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public static function create(Menu $menu) {
 
 		return new static($menu);
@@ -47,6 +50,8 @@ abstract class MenuRenderer implements MenuRendererInterface {
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Webpage\Menu\Renderer\MenuRendererInterface::setParameters()
+     * @param array $parameters
+     * @return MenuRenderer
 	 */
 	public function setParameters(Array $parameters) {
 
@@ -58,6 +63,7 @@ abstract class MenuRenderer implements MenuRendererInterface {
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Webpage\Menu\Renderer\MenuRendererInterface::render()
+     * @return string
 	 */
 	abstract public function render();
 
