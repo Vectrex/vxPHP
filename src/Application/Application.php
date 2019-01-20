@@ -29,7 +29,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.11.0 2019-01-12
+ * @version 1.11.1 2019-01-20
  */
 class Application {
 
@@ -532,7 +532,13 @@ class Application {
 	 */
 	public function setRelativeAssetsPath($path) {
 
-		$this->relativeAssetsPath = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/') . '/';
+	    $path = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
+
+	    if($path) {
+	        $path .= '/';
+        }
+
+		$this->relativeAssetsPath =  $path;
 		return $this;
 
 	}
