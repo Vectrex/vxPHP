@@ -57,15 +57,15 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	private function filterHrefWithPath($matches) {
 
 		static $script;
-		static $niceUri;
+		static $observeRewrite;
 		static $config;
 		static $assetsPath;
 
 		if(is_null($config)) {
 			$application = Application::getInstance();
 
-			$config		= $application->getConfig();
-			$niceUri	= $application->hasNiceUris();
+			$config = $application->getConfig();
+			$observeRewrite = $application->getRouter()->getServerSideRewrite();
 		}
 
 		if(is_null($script)) {
@@ -110,7 +110,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 			$uriParts = [];
 
-			if($niceUri) {
+			if($observeRewrite) {
 				if($script !== 'index.php') {
 					$uriParts[] = basename($script, '.php');
 				}
@@ -147,21 +147,21 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	private function filterHref($matches) {
 
 		static $script;
-		static $niceUri;
+		static $observeRewrite;
 
-		if(empty($script)) {
+		if(is_null($script)) {
 			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
 		}
 
-		if(empty($niceUri)) {
-			$niceUri = Application::getInstance()->getConfig()->site->use_nice_uris == 1;
+		if(is_null($observeRewrite)) {
+            $observeRewrite = Application::getInstance()->getRouter()->getServerSideRewrite();
 		}
 
 		$matches[4] = html_entity_decode($matches[4]);
 
 		$uriParts = [];
 
-		if($niceUri) {
+		if($observeRewrite) {
 			if($script !== 'index.php') {
 				$uriParts[] = basename($script, '.php');
 			}
