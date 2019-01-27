@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.10.3, 2018-10-16
+ * @version 0.11.0, 2019-01-27
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -386,23 +386,24 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			$valuePlaceholders .= ', NOW()';
 		}
 
-		// execute statement
+		// prime and execute statement
 
-		$this->statement = $this->connection->prepare(
+        if(
+            $this->primeQuery(
 				sprintf("
-					INSERT INTO
-						%s
-					(%s%s%s)
-					VALUES
-					(%s)
-				",
-				static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-				static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
-				$valuePlaceholders
-			)
-		);
-
-		if($this->statement->execute($values)) {
+                        INSERT INTO
+                            %s
+                        (%s%s%s)
+                        VALUES
+                        (%s)
+                        ",
+                    static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                    static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
+                    $valuePlaceholders
+                ),
+                $values
+    		)->execute()
+		) {
 			return $this->connection->lastInsertId();
 		}
 
@@ -528,22 +529,21 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 
 		// prepare statement
 		
-		$this->statement = $this->connection->prepare(
-			sprintf("
-				INSERT INTO
-					%s
-						(%s%s%s)
-					VALUES
-						%s
-				",
-				static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-				static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
-				implode(',', array_fill(0, count($rowsData), $valuePlaceholders))
-			)
-		);
-
 		if(
-			$this->statement->execute($values)
+		    $this->primeQuery(
+                sprintf("
+                    INSERT INTO
+                        %s
+                            (%s%s%s)
+                        VALUES
+                            %s
+                    ",
+                    static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                    static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
+                    implode(',', array_fill(0, count($rowsData), $valuePlaceholders))
+                ),
+                $values
+            )->execute()
 		) {
 			return $this->statement->rowCount();
 		}
@@ -612,20 +612,19 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	
 			if(count($columns['_primaryKeyColumns']) === 1) {
 
-				$this->statement = $this->connection->prepare(
-					sprintf("
-							UPDATE
-								%s
-							SET
-								%s
-							WHERE
-								%s = ?
-						",
-						static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-						$setPlaceholders,
-						static::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . static::QUOTE_CHAR
-					)
-				);
+			    $sqlString = sprintf("
+                        UPDATE
+                            %s
+                        SET
+                            %s
+                        WHERE
+                            %s = ?
+                    ",
+                    static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                    $setPlaceholders,
+                    static::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . static::QUOTE_CHAR
+                );
+
 				// add pk as parameter
 
 				$values[] = $keyValue;
@@ -655,30 +654,28 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				$whereNames[] = $columns[$whereName]['columnName'];
 				$whereValues[] = $whereValue;
 			}
-			
-			$this->statement = $this->connection->prepare(
-				sprintf("
-						UPDATE
-							%s
-						SET
-							%s
-						WHERE
-							%s = ?
-					",
-					static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-					$setPlaceholders,
-					static::QUOTE_CHAR . implode (static::QUOTE_CHAR . ' = ? AND ' . static::QUOTE_CHAR, $whereNames) . static::QUOTE_CHAR
-				)
+
+			$sqlString = sprintf("
+                    UPDATE
+                        %s
+                    SET
+                        %s
+                    WHERE
+                        %s = ?
+                ",
+                static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                $setPlaceholders,
+                static::QUOTE_CHAR . implode (static::QUOTE_CHAR . ' = ? AND ' . static::QUOTE_CHAR, $whereNames) . static::QUOTE_CHAR
 			);
-			
+
 			// add filtering values as parameter
-			
+
 			$values = array_merge($values, $whereValues);
-		
+
 		}
 
 		if(
-			$this->statement->execute($values)
+			$this->primeQuery($sqlString, $values)->execute()
 		) {
 			return $this->statement->rowCount();
 		}
@@ -711,22 +708,25 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			
 			if(count($columns['_primaryKeyColumns']) === 1) {
 
-				$this->statement = $this->connection->prepare(
-					sprintf("
-							DELETE FROM
-								%s
-							WHERE
-								%s = ?
-						",
-						static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-						static::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . static::QUOTE_CHAR
-					)
-				);
+                if(
+                    $this->primeQuery(
+                        sprintf("
+                                DELETE FROM
+                                    %s
+                                WHERE
+                                    %s = ?
+                            ",
+                            static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                            static::QUOTE_CHAR . $columns['_primaryKeyColumns'][0] . static::QUOTE_CHAR
+                        ),
+                        [$keyValue]
+                    )->execute()
+                ) {
+                    return $this->statement->rowCount();
+                }
 
-				$this->statement->execute((array) $keyValue);
+                throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 
-				return $this->statement->rowCount();
-					
 			}
 			
 			else {
@@ -753,20 +753,19 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				$whereValues[] = $whereValue;
 			}
 
-			$this->statement = $this->connection->prepare(
-				sprintf("
-						DELETE FROM
-							%s
-						WHERE
-							%s = ?
-					",
-					static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-					static::QUOTE_CHAR . implode (static::QUOTE_CHAR . ' = ? AND ' . static::QUOTE_CHAR, $whereNames) . static::QUOTE_CHAR
-				)
-			);
-
 			if(
-				$this->statement->execute($whereValues)
+			    $this->primeQuery(
+                    sprintf("
+                            DELETE FROM
+                                %s
+                            WHERE
+                                %s = ?
+                        ",
+                        static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                        static::QUOTE_CHAR . implode (static::QUOTE_CHAR . ' = ? AND ' . static::QUOTE_CHAR, $whereNames) . static::QUOTE_CHAR
+                    ),
+                    $whereValues
+                )->execute()
 			) {
 				return $this->statement->rowCount();
 			}
@@ -784,10 +783,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 */
 	public function execute($statementString, array $parameters = []) {
 
-	    $statement = $this->primeQuery($statementString, $parameters);
-		$statement->execute();
-
-		return $statement->rowCount();
+	    $this->primeQuery($statementString, $parameters)->execute();
+		return $this->statement->rowCount();
 
 	}
 	
@@ -851,7 +848,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			// set parameter types, depending on parameter values
 	
 			$type = \PDO::PARAM_STR;
-	
+
 			if(is_bool($value)) {
 				$type = \PDO::PARAM_BOOL;
 			}
@@ -863,7 +860,20 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			else if(is_null($value)) {
 				$type = \PDO::PARAM_NULL;
 			}
-	
+
+			else if($value instanceof \DateTime) {
+			    $value = $value->format('Y-m-d H:i:s');
+            }
+
+			else if(is_object($value)) {
+                if(method_exists($value, '__toString')) {
+                    $value = (string) $value;
+                }
+                else {
+                    throw new \InvalidArgumentException('Value cannot be converted into string.');
+                }
+            }
+
 			$statement->bindValue($name, $value, $type);
 
 		}
