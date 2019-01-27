@@ -11,23 +11,19 @@
 namespace vxPHP\Template;
 
 use vxPHP\Template\Exception\SimpleTemplateException;
-use vxPHP\Util\Rex;
 use vxPHP\Application\Application;
-use vxPHP\Webpage\NiceURI;
 use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
 use vxPHP\Template\Filter\ImageCache;
 use vxPHP\Template\Filter\AnchorHref;
 use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
-use vxPHP\Controller\Controller;
-use vxPHP\Application\Exception\ConfigException;
 
 /**
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.0.0 2019-01-07
+ * @version 2.0.1 2019-01-12
  *
  */
 
@@ -305,7 +301,7 @@ class SimpleTemplate {
 			$this->defaultFilters = [
 				new AnchorHref(),
 				new ImageCache(),
-				new AssetsPath()
+				// new AssetsPath()
 			];
 
 			if(!$this->ignoreLocales) {

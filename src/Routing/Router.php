@@ -24,7 +24,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.0.1 2018-05-11
+ * @version 1.1.0 2019-01-12
  *
  */
 class Router {
@@ -42,6 +42,13 @@ class Router {
 	protected $routes = [];
 
     /**
+     * indicate a server side rewrite
+     *
+     * @var boolean
+     */
+	protected $serverSideRewrite;
+
+    /**
      * Router constructor.
      *
      * @param Route[]|null $routes
@@ -56,11 +63,28 @@ class Router {
         if($authenticator) {
             $this->authenticator = $authenticator;
         }
+
+        // check for possible server side rewrite
+
+        if('cli' !== substr(php_sapi_name(), 0, 3) && !empty($_SERVER)) {
+
+            // check whether script name is found in URL path; if not a rewrite is assumed
+
+            $this->serverSideRewrite = (false === strpos(strtok($_SERVER['REQUEST_URI'], '?'), basename($_SERVER['SCRIPT_NAME'])));
+
+        }
+
+        else {
+            $this->serverSideRewrite = false;
+        }
+
     }
 
 
     /**
-     * @param array $routes
+     * assign routes to router
+     *
+     * @param Route[] $routes
      */
 	public function setRoutes(array $routes) {
 
@@ -77,6 +101,9 @@ class Router {
     }
 
     /**
+     * add a single route to router
+     * throws an exception when route has already been assigned
+     *
      * @param Route $route
      */
     public function addRoute(Route $route) {
@@ -93,6 +120,8 @@ class Router {
     }
 
     /**
+     * remove a route assigned to the router
+     *
      * @param string $routeId
      */
     public function removeRoute($routeId) {
@@ -138,7 +167,7 @@ class Router {
 
 		// skip if pathinfo matches script name
 
-		if(count($pathSegments) && $application->hasNiceUris() && basename($script, '.php') === $pathSegments[0]) {
+		if(count($pathSegments) && $this->serverSideRewrite && basename($script, '.php') === $pathSegments[0]) {
 			array_shift($pathSegments);
 		}
 
@@ -168,6 +197,7 @@ class Router {
 	}
 
     /**
+     * get a route identified by its id
      *
      * @param string $routeId
      *
@@ -183,6 +213,17 @@ class Router {
         return $this->routes[$routeId];
 
 	}
+
+    /**
+     * get information about server side rewrite
+     *
+     * @return bool
+     */
+	public function getServerSideRewrite() {
+
+	    return $this->serverSideRewrite;
+
+    }
 
 	/**
 	 * configure the route authentication mechanism
