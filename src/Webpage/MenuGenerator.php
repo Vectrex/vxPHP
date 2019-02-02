@@ -25,7 +25,7 @@ use vxPHP\Application\Config;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.5, 2019-01-30
+ * @version 0.6.6, 2019-02-02
  *
  * @throws MenuGeneratorException
  */
@@ -404,7 +404,7 @@ class MenuGenerator {
 
             // path segment doesn't match menu entry - finish walk
 
-			if(0 === strpos($pathToMatch, $path)) {
+			if($path && 0 === strpos($pathToMatch, $path)) {
 
 				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($path)), '/'));
 				
