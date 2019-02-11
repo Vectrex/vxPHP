@@ -53,7 +53,7 @@ abstract class ImageModifier {
 		
 		// single float value given, represents aspect ratio of cropped image
 
-		if(count($args) == 1) {
+		if(count($args) === 1) {
 
 			if(!is_numeric($args[0]) || $args[0] <= 0) {
 				throw new ImageModifierException('Invalid dimension(s) for cropping: ' . $args[0] . '.');
@@ -64,19 +64,31 @@ abstract class ImageModifier {
 				// width determines
 
 				$left = $right = 0;
-		
-				// choose upper portion
 
-				$top	= round(($this->srcHeight - $this->srcWidth / $args[0]) / 3);
-				$bottom	= round(($this->srcHeight - $this->srcWidth / $args[0]) * 2 / 3);
+				if($srcAspectRatio >= 1) {
+
+				    // assume landscape
+
+                    $top = $bottom = round(($this->srcHeight - $this->srcWidth / $args[0]) / 2);
+
+                }
+
+				else {
+
+				    // assume portrait and shift crop somewhat up
+
+                    $top = round(($this->srcHeight - $this->srcWidth / $args[0]) / 3);
+                    $bottom	= round(($this->srcHeight - $this->srcWidth / $args[0]) * 2 / 3);
+
+                }
 			}
 
 			else {
 		
 				// height determines
 
-				$top	= $bottom	= 0;
-				$left	= $right	= round(($this->srcWidth - $this->srcHeight * $args[0]) / 2);
+				$top = $bottom = 0;
+				$left = $right = round(($this->srcWidth - $this->srcHeight * $args[0]) / 2);
 			}
 		}
 		
@@ -99,7 +111,7 @@ abstract class ImageModifier {
 
 				else {
 
-					// portrait
+					// portrait and shift crop up
 
 					$top	= round(($this->srcHeight - $height) / 3);
 					$bottom	= round(($this->srcHeight - $height) * 2 / 3);
@@ -129,7 +141,9 @@ abstract class ImageModifier {
 		// skip queuing when there is nothing to crop
 		
 		if(!$top && !$bottom && !$left && !$right) {
+
 			return;
+
 		}
 
 		$todo = new \stdClass();
