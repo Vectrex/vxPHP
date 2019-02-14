@@ -11,7 +11,6 @@
 
 namespace vxPHP\Mail;
 
-use vxPHP\Mail\MailerInterface;
 use vxPHP\Mail\Exception\MailerException;
 use vxPHP\Application\Application;
 
@@ -21,27 +20,88 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.4.2 2016-02-03
+ * @version 0.5.0 2019-02-13
  */
 
 class Email {
 	const CRLF = "\r\n";
 
-	private	$mailer,
-			$sender,
-			$subject,
-			$bcc,
-			$cc,
-			$receiver = array(),
-			$mailText,
-			$sig,
-			$htmlMail,
-			$boundary,
-			$headers = array(),
-			$attachments = array(),
-			$encoding;
+    /**
+     * @var \vxPHP\Mail\MailerInterface
+     */
+	private $mailer;
 
-	private static $debug = FALSE;
+    /**
+     * @var string
+     */
+	private $sender;
+
+    /**
+     * @var string
+     */
+	private	$subject;
+
+    /**
+     * @var array
+     */
+    private	$bcc;
+
+    /**
+     * @var array
+     */
+    private	$cc;
+
+    /**
+     * @var array
+     */
+    private	$receiver = [];
+
+    /**
+     * @var string
+     */
+    private	$mailText;
+
+    /**
+     * @var string
+     */
+    private	$sig;
+
+    /**
+     * @var bool
+     */
+    private	$htmlMail;
+
+    /**
+     * @var string
+     */
+    private	$boundary;
+
+    /**
+     * @var array
+     */
+    private	$headers = [];
+
+    /**
+     * @var array
+     */
+    private	$attachments = [];
+
+    /**
+     * @var string
+     */
+    private	$encoding;
+
+    /**
+     * the message body
+     *
+     * @var string
+     */
+	private $msg;
+
+    /**
+     * @var bool
+     */
+	private static $debug = false;
 
 
 	/**
@@ -55,9 +115,9 @@ class Email {
 	 * @param array $cc
 	 * @param array $bcc
 	 * @param string $sig
-	 * @param string $htmlMail
+	 * @param boolean $htmlMail
 	 */
-	public function __construct($receiver = NULL, $subject = '(no subject)', $mailText = '', $sender = NULL, array $cc = array(), array $bcc = array(), $sig = '', $htmlMail = FALSE) {
+	public function __construct($receiver = null, $subject = '(no subject)', $mailText = '', $sender = null, array $cc = [], array $bcc = [], $sig = '', $htmlMail = false) {
 
 		$this->receiver	= (array) $receiver;
 		$this->subject	= $subject;
@@ -191,30 +251,46 @@ class Email {
 	}
 
 	/**
-	 * attach file $filePath; use name $filename in mail 
+	 * attach file $filePath; use $filename as name in mail
 	 * 
 	 * @param string $filePath
 	 * @param string $filename
 	 * 
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function addAttachment($filePath, $filename = NULL) {
+	public function addAttachment($filePath, $filename = null) {
 
 		if(file_exists($filePath)) {
-			$this->attachments[] = array('path' => $filePath, 'filename' => $filename);
+			$this->attachments[] = ['path' => $filePath, 'filename' => $filename];
 		}
 		
 		return $this;
 
 	}
 
-	/**
-	 * send mail
-	 * with Email::$debug set to TRUE,
-	 * a textbox with the mail contents is dumped
-	 * 
-	 * @return boolean
-	 */
+    /**
+     * add (binary) data as attachment; use $filename as name in email
+     *
+     * @param string $data
+     * @param string $filename
+     * @return \vxPHP\Mail\Email
+     */
+	public function addAttachmentData($data, $filename) {
+
+	    $this->attachments[] = ['data' => $data, 'filename' => $filename];
+	    return $this;
+
+    }
+
+    /**
+     * send mail
+     * with Email::$debug set to TRUE,
+     * a textbox with the mail contents is dumped
+     *
+     * @return boolean
+     * @throws \ReflectionException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function send()	{
 
 		$this->buildHeaders();
@@ -224,7 +300,7 @@ class Email {
 			return $this->sendMail();
 		}
 
-		$headers = array();
+		$headers = [];
 		foreach($this->headers as $k => $v) {
 			$headers[] = "$k: $v";
 		}
@@ -233,28 +309,30 @@ class Email {
 		echo implode('<br>', $headers), '<hr>', $this->subject, '<hr>', nl2br($this->msg);
 		echo '</div>';
 
-		return TRUE;
+		return true;
 
 	}
 
-	/**
-	 * evaluate mailer class and send mail
-	 * 
-	 * @return boolean
-	 */
+    /**
+     * evaluate mailer class and send mail
+     *
+     * @return boolean
+     * @throws \ReflectionException
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	private function sendMail() {
 
 		// check for configured mailer
 
 		if(is_null($this->mailer) && !is_null(Application::getInstance()->getConfig()->mail->mailer)) {
 
-			$mailer			= Application::getInstance()->getConfig()->mail->mailer;
-			$reflection		= new \ReflectionClass(str_replace('/', '\\', $mailer->class));
+			$mailer = Application::getInstance()->getConfig()->mail->mailer;
+			$reflection = new \ReflectionClass(str_replace('/', '\\', $mailer->class));
 			
-			$port			= isset($mailer->port)			? $mailer->port : NULL;
-			$encryption		= isset($mailer->encryption)	? $mailer->encryption : NULL;
+			$port = isset($mailer->port) ? $mailer->port : null;
+			$encryption = isset($mailer->encryption) ? $mailer->encryption : null;
 
-			$this->mailer	= $reflection->newInstanceArgs(array($mailer->host, $port, $encryption));
+			$this->mailer = $reflection->newInstanceArgs([$mailer->host, $port, $encryption]);
 
 			if(isset($mailer->auth_type)) {
 				$this->mailer->setCredentials($mailer->user, $mailer->pass, $mailer->auth_type);
@@ -268,7 +346,7 @@ class Email {
 
 			// use PHP's own mail() function
 
-			$headers = array();
+			$headers = [];
 
 			foreach($this->headers as $k => $v) {
 				$headers[] = iconv_mime_encode($k, $v);
@@ -296,17 +374,17 @@ class Email {
 				$this->mailer->setFrom($this->sender);
 				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
 				$this->mailer->setHeaders(array_merge(
-					array(
-						'To'		=> implode(',', (array) $this->receiver),
-						'Subject'	=> $this->subject
-					),
+					[
+						'To' => implode(',', (array) $this->receiver),
+						'Subject' => $this->subject
+					],
 					$this->headers
 				));
 				$this->mailer->setMessage($this->msg);
 				$this->mailer->send();
 
 				$this->mailer->close();
-				return TRUE;
+				return true;
 			}
 
 			catch(MailerException $e) {
@@ -319,7 +397,7 @@ class Email {
 	/**
 	 * explicitly set mailer
 	 *
-	 * @param Mailer $mailer
+	 * @param MailerInterface $mailer
 	 * @return \vxPHP\Mail\Email
 	 */
 	public function setMailer(MailerInterface $mailer) {
@@ -345,16 +423,16 @@ class Email {
 	 */
 	private function buildHeaders() {
 
-		$this->headers = array(
-			'From'			=> $this->sender,
-			'Return-Path'	=> $this->sender,
-			'Reply-To'		=> $this->sender,
-			'Date'			=> date('r'),
-			'Message-ID'	=> '<'.sha1(microtime()).'@'.substr($this->sender, strpos($this->sender, '@') + 1).'>',
-			'User-Agent'	=> 'vxPHP SmtpMailer',
-			'X-Mailer'		=> 'PHP' . phpversion(),
-			'MIME-Version'	=> '1.0'
-		);
+		$this->headers = [
+			'From' => $this->sender,
+			'Return-Path' => $this->sender,
+			'Reply-To' => $this->sender,
+			'Date' => (new \DateTime())->format('r'),
+			'Message-ID' => '<'.sha1(microtime()) . '@' . substr($this->sender, strpos($this->sender, '@') + 1) . '>',
+			'User-Agent' => 'vxPHP SmtpMailer',
+			'X-Mailer' => 'PHP' . phpversion(),
+			'MIME-Version' => '1.0'
+		];
 
 		if(!empty($this->cc)) {
 			$this->headers['CC'] = implode(',', $this->cc);
@@ -393,22 +471,31 @@ class Email {
 		// add signature
 
 		if(!empty($this->sig) && !$this->htmlMail) {
-			$this->msg .=	self::CRLF . self::CRLF . '-- ' . self::CRLF . $this->sig;
+			$this->msg .= self::CRLF . self::CRLF . '-- ' . self::CRLF . $this->sig;
 		}
 			
 		if(!count($this->attachments)) {
 			$this->msg .= self::CRLF;
 		}
-
 		else {
+
 			foreach($this->attachments as $f) {
+
+			    // attached data always has a filename set
+
 				$filename = empty($f['filename']) ? basename($f['path']) : $f['filename'];
 	
 				$this->msg .= self::CRLF . '--' . $this->boundary . self::CRLF;
 				$this->msg .= sprintf('Content-Type: application/octet-stream; name="%s"', $filename) . self::CRLF;
 				$this->msg .= sprintf('Content-Disposition: attachment; filename="%s"', $filename) . self::CRLF;
 				$this->msg .= 'Content-Transfer-Encoding: base64' . self::CRLF . self::CRLF;
-				$this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])), 72, self::CRLF));
+
+				if(isset($f['data'])) {
+                    $this->msg .= rtrim(chunk_split(base64_encode($f['data']), 72, self::CRLF));
+                }
+				else {
+                    $this->msg .= rtrim(chunk_split(base64_encode(file_get_contents($f['path'])), 72, self::CRLF));
+                }
 	
 			}
 			
