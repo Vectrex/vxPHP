@@ -411,7 +411,7 @@ abstract class FormElement implements FormElementInterface {
 
 		if(!isset($this->valid)) {
             $this->valid = $this->applyValidators(
-                $this->applyModifiers($this->value)
+                $this->applyModifiers($this->getValue())
             );
 		}
 

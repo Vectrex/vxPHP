@@ -14,6 +14,7 @@ namespace vxPHP\Form;
 use vxPHP\Form\Exception\HtmlFormException;
 
 use vxPHP\Form\FormElement\CheckboxElement;
+use vxPHP\Form\FormElement\FileInputElement;
 use vxPHP\Form\FormElement\FormElement;
 use vxPHP\Form\FormElement\ImageElement;
 use vxPHP\Form\FormElement\InputElement;
@@ -610,16 +611,17 @@ class HtmlForm {
 
 	}
 
-	/**
-	 * returns error texts extracted from template
-	 * might come in handy with XHR functionality
-	 * returns NULL if extraction fails or template is missing
-	 * if $keys is set, only error texts for given element names are extracted
-	 *
-	 * @param array $keys
-	 * @return array $error_texts
+    /**
+     * returns error texts extracted from template
+     * might come in handy with XHR functionality
+     * returns NULL if extraction fails or template is missing
+     * if $keys is set, only error texts for given element names are extracted
+     *
+     * @param array $keys
+     * @return array $error_texts
      * @throws HtmlFormException
-	 */
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
 	public function getErrorTexts(array $keys = []) {
 
 		if($this->loadTemplate()) {
@@ -870,6 +872,12 @@ class HtmlForm {
 		if($e instanceof CheckboxElement) {
 			$e->setChecked(!!$this->requestValues->get($name));
 		}
+
+		// don't handle file input elements
+
+		else if($e instanceof FileInputElement) {
+
+        }
 
 		else {
 			if(!is_null($value = $this->requestValues->get($name))) {

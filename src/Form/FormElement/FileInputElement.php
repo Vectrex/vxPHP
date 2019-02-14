@@ -9,6 +9,9 @@
  */
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\File\UploadedFile;
+use vxPHP\Http\Request;
+
 class FileInputElement extends InputElement
 {
     /**
@@ -32,14 +35,49 @@ class FileInputElement extends InputElement
         return 'file';
     }
 
+    /**
+     * get original name of an uploaded file associated with this element
+     * if attribute multiple is set the name of the first file is returned
+     *
+     * @return string
+     */
     public function getValue()
     {
+        $file = $this->getFile();
 
+        if($file instanceof UploadedFile) {
+            return $file->getOriginalName();
+        }
+
+        if(is_array($file) && $file[0] instanceof UploadedFile) {
+            return $file[0]->getOriginalName();
+        }
+
+        return null;
     }
+
+    /**
+     * masks parent setValue method since a set value of a file
+     * input is ignored upon rendering
+     *
+     * @param mixed $value
+     * @return $this|FormElement
+     */
 
     public function setValue($value)
     {
         return $this;
+    }
+
+    /**
+     * returns the uploaded file(s) associated with this element
+     *
+     * @return UploadedFile | UploadedFile[]
+     */
+    public function getFile() {
+
+        return Request::createFromGlobals()->files->get($this->name);
+
     }
 
     /**
