@@ -24,7 +24,7 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is an array, the factory returns a collection of elements
  *
  * @author Gregor Kofler
- * @version 0.5.0 2018-01-20
+ * @version 0.5.1 2019-02-14
  */
 class FormElementFactory {
 
@@ -57,7 +57,8 @@ public static function create($type, $name, $value = null, array $attributes = [
 				$e = clone $elem;
 				$e
 					->setName(sprintf('%s[%s]', $name, $k))
-					->setValue($v);
+					->setValue($v)
+                ;
 				$elements[$k] = $e;
 			}
 
@@ -92,6 +93,10 @@ public static function create($type, $name, $value = null, array $attributes = [
 			case 'input':
 				$elem = new InputElement($name);
 				break;
+
+            case 'file':
+                $elem = new FileInputElement($name);
+                break;
 
 			case 'password':
 				$elem = new PasswordInputElement($name);
