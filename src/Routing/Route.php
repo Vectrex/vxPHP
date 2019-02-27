@@ -298,7 +298,7 @@ class Route {
 	 * @throws \RuntimeException
 	 * @return string
 	 */
-	public function getPath(array $pathParameters = NULL) {
+	public function getPath(array $pathParameters = null) {
 
 		$path = $this->path;
 		
@@ -477,8 +477,10 @@ class Route {
 				throw new \InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
 			}
 		}
+
 		$this->requestMethods = $requestMethods;
 		return $this;
+
 	}
 
 	/**
@@ -517,7 +519,7 @@ class Route {
 	 *
 	 * @return string
 	 */
-	public function getPathParameter($name, $default = NULL) {
+	public function getPathParameter($name, $default = null) {
 
 		// lazy initialization of parameters
 
@@ -529,7 +531,7 @@ class Route {
 
 			// extract values
 
-			if(preg_match('~' . $this->match . '~', Request::createFromGlobals()->getPathInfo(), $values)) {
+			if(preg_match('~' . $this->match . '~', ltrim(Request::createFromGlobals()->getPathInfo(), '/'), $values)) {
 
 				array_shift($values);
 
@@ -562,8 +564,8 @@ class Route {
 
 			// both bool false and null are returned as null
 
-			if($this->pathParameters[$name] === FALSE || is_null($this->pathParameters[$name])) {
-				return NULL;
+			if($this->pathParameters[$name] === false || is_null($this->pathParameters[$name])) {
+				return null;
 			}
 
 			return $this->pathParameters[$name];
@@ -602,11 +604,11 @@ class Route {
 			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
-		$found = FALSE;
+		$found = false;
 
 		foreach($this->placeholders as $placeholder) {
 			if($placeholder['name'] === $name) {
-				$found = TRUE;
+				$found = true;
 				break;
 			}
 		}
