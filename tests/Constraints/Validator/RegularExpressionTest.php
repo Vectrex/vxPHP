@@ -8,7 +8,6 @@
 
 namespace vxPHP\Tests\Constraint\RegularExpression;
 
-use vxPHP\Constraint\Validator\Ip;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Constraint\Validator\RegularExpression;
 
@@ -20,6 +19,7 @@ class RegularExpressionTest extends TestCase {
     public function testInvalidRegExp()
     {
 
+        $this->expectException(\InvalidArgumentException::class);
         new RegularExpression('/^(/');
 
     }
