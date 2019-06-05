@@ -13,9 +13,6 @@ use vxPHP\Constraint\Validator\RegularExpression;
 
 class RegularExpressionTest extends TestCase {
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testInvalidRegExp()
     {
 
