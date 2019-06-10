@@ -24,7 +24,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.1.0 2019-01-12
+ * @version 1.2.0 2019-06-10
  *
  */
 class Router {
@@ -259,83 +259,95 @@ class Router {
 			return reset($this->routes);
 		}
 
-		$pathToCheck	= implode('/', $pathSegments);
-		$requestMethod	= Request::createFromGlobals()->getMethod();
-
-		/* @var Route $foundRoute */
-
-		$foundRoute = null;
-
-        /* @var Route $default */
-
+        $requestMethod = Request::createFromGlobals()->getMethod();
+		$requestMatchingRoutes = [];
 		$default = null;
 
-		// iterate over routes and try to find the "best" match
+		// filter for request method first and retrieve default route
 
-        /* @var Route $route */
+		foreach($this->routes as $id => $route) {
 
-		foreach($this->routes as $route) {
+		    if(!$default && 'default' === $id) {
+		        $default = $route;
+            }
 
-			// keep default route as fallback, when no match is found
+		    else if($route->allowsRequestMethod($requestMethod)) {
+                $requestMatchingRoutes[] = $route;
+            }
 
-			if($route->getRouteId() === 'default') {
-				$default = $route;
-			}
+        }
 
-			// pick route only when request method requirement is met
+        $pathToCheck = implode('/', $pathSegments);
 
-			if(
-				preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck) &&
-				$route->allowsRequestMethod($requestMethod)
-			) {
+		// check for routes with exact path matches
 
-				// if no route was found yet, pick this first match
+		$pathMatchingRoutes = array_filter(
+		    $requestMatchingRoutes,
+            function(Route $route) use($pathToCheck) {
+		        return preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck);
+		    }
+        );
 
-				if(!isset($foundRoute)) {
-                    $foundRoute = $route;
-                    continue;
+		// check for routes with relative path matches
+
+		if(!count($pathMatchingRoutes)) {
+
+            $pathMatchingRoutes = array_filter(
+                $requestMatchingRoutes,
+                function(Route $route) use($pathToCheck) {
+                    return $route->hasRelativePath() && preg_match('~' . $route->getMatchExpression() . '$~', $pathToCheck);
                 }
+            );
 
-                // prefer route which is more specific with request methods
+        }
 
-                if(count($route->getRequestMethods()) > count($foundRoute->getRequestMethods())) {
-                    continue;
-                }
+        if(count($pathMatchingRoutes)) {
 
-                // a route with less (or no) placeholders is preferred over one with placeholders
+	        /* @var Route $foundRoute */
 
-                if(count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())) {
-                    continue;
-                }
+	        // get the first matching entry in the list as reference and check for "better" matches against this
 
-                // if a route has been found previously, choose the more "precise" and/or later one
-                // choose the route with more satisfied placeholders
-                // @todo could be optimized
+			$foundRoute = array_shift($pathMatchingRoutes);
 
-                $foundRouteSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($foundRoute, $pathToCheck));
-                $routeSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($route, $pathToCheck));
+	        foreach($pathMatchingRoutes as $route) {
 
-                if (
-                    ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) < ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames()))
-                ) {
-                    continue;
-                }
-                if (
-                    ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) === ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames())) &&
-                    count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())
-                ) {
-                    continue;
-                }
+	            // prefer route which is more specific with request methods
 
-                $foundRoute = $route;
+	            if(count($route->getRequestMethods()) > count($foundRoute->getRequestMethods())) {
+	                continue;
+	            }
 
-			}
-		}
+	            // a route with less (or no) placeholders is preferred over one with placeholders
 
-		// return "normal" route, if found
+	            if(count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())) {
+	                continue;
+	            }
 
-		if(isset($foundRoute)) {
+	            // if a route has been found previously, choose the more "precise" and/or later one
+	            // choose the route with more satisfied placeholders
+	            // @todo optimizations?
+
+	            $foundRouteSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($foundRoute, $pathToCheck));
+	            $routeSatisfiedPlaceholderCount = count($this->getSatisfiedPlaceholders($route, $pathToCheck));
+
+	            if (
+	                ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) < ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames()))
+	            ) {
+	                continue;
+	            }
+	            if (
+	                ($routeSatisfiedPlaceholderCount - count($route->getPlaceholderNames())) === ($foundRouteSatisfiedPlaceholderCount - count($foundRoute->getPlaceholderNames())) &&
+	                count($route->getPlaceholderNames()) > count($foundRoute->getPlaceholderNames())
+	            ) {
+	                continue;
+	            }
+
+	            $foundRoute = $route;
+
+	        }
+
 			return $foundRoute;
+
 		}
 
 		// return default route as fallback (if available)

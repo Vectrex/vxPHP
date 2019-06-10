@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.2 2019-01-12
+ * @version 1.3.0 2019-06-10
  *
  */
 class Route {
@@ -122,6 +122,14 @@ class Route {
 	 */
 	private $requestMethods;
 
+    /**
+     * indicate that the path is "relative"
+     * and can be prefixed by other path segments
+     *
+     * @var bool
+     */
+	private $pathIsRelative;
+
 	/**
 	 * Constructor.
 	 *
@@ -135,10 +143,21 @@ class Route {
 		$this->scriptName	= $scriptName;
 
 		if(isset($parameters['path'])) {
-			$this->path = $parameters['path'];
+
+            // check for relative paths, i.e. path does not start with a slash
+
+            if('/' === substr($parameters['path'], 0, 1)) {
+                $this->path = substr($parameters['path'], 1);
+                $this->pathIsRelative = false;
+            }
+            else {
+                $this->path = $parameters['path'];
+                $this->pathIsRelative = true;
+            }
 		}
 		else {
 			$this->path = $routeId;
+			$this->pathIsRelative = true;
 		}
 
 		if(isset($parameters['auth'])) {
@@ -660,4 +679,15 @@ class Route {
 		return new RedirectResponse(implode('/', $urlSegments) . '/' . $this->redirect . $query, $statusCode);
 
 	}
+
+    /**
+     * get information whether path can be prefixed by other path segments
+     *
+     * @return bool
+     */
+	public function hasRelativePath()
+    {
+        return $this->pathIsRelative;
+    }
+
 }
