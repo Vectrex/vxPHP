@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.0 2019-06-10
+ * @version 1.3.1 2019-06-10
  *
  */
 class Route {
@@ -373,11 +373,21 @@ class Route {
      * When no (or only some) path parameters are passed on previously
      * set parameters are considered when generating the URL.
      *
+     * an optional prefix can be supplied to extend the path to the left
+     * an exception will be triggered, when the route has an absolute path
+     * configured
+     *
      * @param array $pathParameters
+     * @param string $prefix
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \InvalidArgumentException
      */
-	public function getUrl(array $pathParameters = null) {
+	public function getUrl(array $pathParameters = null, $prefix = '') {
+
+	    if(!$this->pathIsRelative && $prefix) {
+	        throw new \InvalidArgumentException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
+        }
 
 		// avoid building URL in subsequent calls
 
@@ -410,11 +420,25 @@ class Route {
 		// add path and path parameters
 
 		$path = $this->getPath($pathParameters);
-		
+
 		if($path) {
+
+            // add an optional prefix
+
+            if($prefix) {
+                return '/' . trim($prefix, '/') . $this->url . '/' . $path;
+            }
+
 			return $this->url . '/' . $path;
+
 		}
-		
+
+		// add an optional prefix
+
+        if($prefix) {
+            return '/' . trim($prefix, '/') . $this->url;
+        }
+
 		return $this->url;
 		
 	}
