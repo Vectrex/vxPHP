@@ -23,7 +23,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.1.1 2019-06-17
+ * @version 2.1.2 2019-06-23
  */
 class Config {
 
@@ -746,7 +746,7 @@ class Config {
 
 								// turn this path parameter into regexp and make it optional
 
-								$rex = preg_replace('~{.*?\}~', '(?:([^/]+))?', $rex, 1);
+								$rex = preg_replace('~/{.*?\}~', '/?(?:([^/]+))?', $rex, 1);
 
 							}
 
