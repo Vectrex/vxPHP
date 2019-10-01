@@ -12,6 +12,7 @@
 namespace vxPHP\Template\Filter;
 
 use vxPHP\File\FilesystemFolder;
+use vxPHP\Image\Exception\ImageModifierException;
 use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Application\Application;
 use vxPHP\Image\ImageModifierFactory;
@@ -20,13 +21,13 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
- * @version 1.4.0 2018-10-04
+ * @version 1.5.0 2019-10-01
  * @author Gregor Kofler
  *
  * @todo parse inline url() style rule
  */
-class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
+class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
     /**
      * @var array
      *
@@ -42,14 +43,13 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @see vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
      *
      */
-    public function apply(&$templateString) {
-
+    public function apply(&$templateString)
+    {
         $templateString = preg_replace_callback(
             $this->markupToMatch,
             [$this, 'filterCallBack'],
             $templateString
         );
-
     }
 
     /**
@@ -62,9 +62,10 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @return string
      * @throws SimpleTemplateException
      * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ImageModifierException
      */
-    private function filterCallBack($matches) {
-
+    private function filterCallBack($matches): ?string
+    {
         // narrow down the type of replacement, matches[2] contains src attribute value
 
         /*
@@ -74,150 +75,137 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
          * 3. compare 1. and 2. (sorting of actions is irrelevant)
          * 4. with changed modifications, retrieve source file and proceed as with normal modifications
          */
+        try {
+            if (preg_match('~(.*?)' . preg_quote(FilesystemFolder::CACHE_PATH, '~') . '/([^/]+)@(.*?)\.\w+$~i', $matches[2], $filestrings) && 4 === count($filestrings)) {
 
-        if(preg_match('~(.*?)' . preg_quote(FilesystemFolder::CACHE_PATH) . '/([^/]+)@(.*?)\.\w+$~i', $matches[2], $filestrings) && 4 === count($filestrings)) {
+                // retrieve modifications of cached file and source file
 
-            // retrieve modifications of cached file and source file
+                $srcFile = $filestrings[1] . $filestrings[2];
+                $cachedActions = $this->sanitizeActions($filestrings[3]);
 
-            $srcFile = $filestrings[1] . $filestrings[2];
-            $cachedActions = $this->sanitizeActions($filestrings[3]);
+            }
 
-        }
+            // <img src="...#{actions}">
 
-        // <img src="...#{actions}">
+            if (preg_match('~(.*?)#([\w\s\.\|]+)~', $matches[2], $details)) {
 
-        if(preg_match('~(.*?)#([\w\s\.\|]+)~', $matches[2], $details)) {
+                $sanitizedActions = $this->sanitizeActions($details[2]);
 
-            $sanitizedActions = $this->sanitizeActions($details[2]);
+                if (isset($cachedActions)) {
 
-            if(isset($cachedActions)) {
+                    // detected actions are duplicates of already executed actions
 
-                // detected actions are duplicates of already executed actions
+                    if (count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
+                        return $matches[0];
+                    } // create new thumb with new actions
 
-                if(count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
-                    return $matches[0];
-                }
-
-                // create new thumb with new actions
+                    else {
+                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+                    }
+                } // no previously cached image detected
 
                 else {
-                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+                    $dest = $this->getCachedImagePath($details[1], $sanitizedActions);
                 }
-            }
 
-            // no previously cached image detected
+                return preg_replace('~src=([\'"]).*?\1~i', 'src="' . $dest . '"', $matches[0]);
 
-            else {
-                $dest = $this->getCachedImagePath($details[1], $sanitizedActions);
-            }
+            } // <img src="..." style="width: ...; height: ...">
 
-            return preg_replace('~src=([\'"]).*?\1~i', 'src="' . $dest . '"', $matches[0]);
+            else if (preg_match('~\s+style=(["\'])(.*?)\1~i', $matches[0], $details)) {
 
-        }
+                // analyze dimensions
 
-        // <img src="..." style="width: ...; height: ...">
+                if (!preg_match('~(width|height):\s*(\d+)px;.*?(width|height):\s*(\d+)px~', strtolower($details[2]), $dimensions)) {
 
-        else if(preg_match('~\s+style=(["\'])(.*?)\1~i', $matches[0], $details)) {
+                    return $matches[0];
 
-            // analyze dimensions
+                }
 
-            if(!preg_match('~(width|height):\s*(\d+)px;.*?(width|height):\s*(\d+)px~', strtolower($details[2]), $dimensions)) {
+                if ($dimensions[1] == 'width') {
+                    $width = $dimensions[2];
+                    $height = $dimensions[4];
+                } else {
+                    $width = $dimensions[4];
+                    $height = $dimensions[2];
+                }
 
+                $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
+
+                if (isset($cachedActions)) {
+
+                    // set size mirrors size of already saved thumbnail
+
+                    if (count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
+                        return $matches[0];
+                    } // create new thumb with new size
+
+                    else {
+                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+                    }
+                } // no previously cached image detected
+
+                else {
+                    $dest = $this->getCachedImagePath($matches[2], $sanitizedActions);
+                }
+
+                return preg_replace('~src=([\'"]).*?\1~i', 'src="' . $dest . '"', $matches[0]);
+
+            } // <img src="..." width="..." height="...">
+
+            else if (preg_match('~\s+(width|height)=~', $matches[0])) {
+
+                $dom = new \DOMDocument();
+                $dom->loadHTML($matches[0]);
+                $img = $dom->getElementsByTagName('img')->item(0);
+
+                // if width attribute is not set, this will evaluate to 0 and force a proportional scaling
+
+                $width = (int)$img->getAttribute('width');
+                $height = (int)$img->getAttribute('height');
+
+                $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
+
+                if (isset($cachedActions)) {
+
+                    // set size mirrors size of already saved thumbnail
+
+                    if (count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
+                        return $matches[0];
+                    } // create new thumb with new size
+
+                    else {
+                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+                    }
+                } // no previously cached image detected
+
+                else {
+                    $dest = $this->getCachedImagePath($matches[2], $sanitizedActions);
+                }
+
+                $img->setAttribute('src', $dest);
+                return $dom->saveHTML($img);
+
+            } else {
                 return $matches[0];
-
             }
 
-            if($dimensions[1] == 'width') {
-                $width = $dimensions[2];
-                $height = $dimensions[4];
-            }
-            else {
-                $width = $dimensions[4];
-                $height = $dimensions[2];
-            }
+            /*
+                    // url(...#...), won't be matched by assetsPath filter
+                    // @FIXME: getRelativeAssetsPath() doesn't observe mod rewrite
 
-            $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
-
-            if(isset($cachedActions)) {
-
-                // set size mirrors size of already saved thumbnail
-
-                if(count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
-                    return $matches[0];
+                    $relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
+                    return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
                 }
-
-                // create new thumb with new size
-
-                else {
-                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
-                }
-            }
-
-            // no previously cached image detected
-
-            else {
-                $dest = $this->getCachedImagePath($matches[2], $sanitizedActions);
-            }
-
-            return preg_replace('~src=([\'"]).*?\1~i', 'src="' . $dest . '"', $matches[0]);
-
+            */
         }
-
-        // <img src="..." width="..." height="...">
-
-        else if(preg_match('~\s+(width|height)=~', $matches[0])) {
-
-            $dom = new \DOMDocument();
-            $dom->loadHTML($matches[0]);
-            $img = $dom->getElementsByTagName('img')->item(0);
-
-            // if width attribute is not set, this will evaluate to 0 and force a proportional scaling
-
-            $width = (int) $img->getAttribute('width');
-            $height = (int) $img->getAttribute('height');
-
-            $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
-
-            if(isset($cachedActions)) {
-
-                // set size mirrors size of already saved thumbnail
-
-                if(count(array_intersect($cachedActions, $sanitizedActions)) === count($cachedActions)) {
-                    return $matches[0];
-                }
-
-                // create new thumb with new size
-
-                else {
-                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
-                }
+        catch (ImageModifierException $e) {
+            if(isset($this->parameters['image_not_found_placeholder']) && $e->getCode() === ImageModifierException::FILE_NOT_FOUND) {
+                return str_replace($matches[2], $this->parameters['image_not_found_placeholder'], $matches[0]);
             }
-
-            // no previously cached image detected
-
-            else {
-                $dest = $this->getCachedImagePath($matches[2], $sanitizedActions);
-            }
-
-            $img->setAttribute('src', $dest);
-            return $dom->saveHTML($img);
-
+            throw $e;
         }
-
-        else {
-            return $matches[0];
-        }
-
-        /*
-                // url(...#...), won't be matched by assetsPath filter
-                // @FIXME: getRelativeAssetsPath() doesn't observe mod rewrite
-
-                $relAssetsPath = ltrim(Application::getInstance()->getRelativeAssetsPath(), '/');
-                return 'url(' . $matches[1] . '/' . $relAssetsPath . $dest . $matches[1] . ')';
-            }
-        */
     }
-
     /**
      * retrieve cached image which matches src attribute $src and actions $actions
      * if no cached image is found, a cached image with $actions applied is created
@@ -228,8 +216,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @throws SimpleTemplateException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-    private function getCachedImagePath($src, array $actions) {
-
+    private function getCachedImagePath($src, array $actions): string
+    {
         $pathinfo	= pathinfo($src);
         $extension	= isset($pathinfo['extension']) ? ('.' . $pathinfo['extension']) : '';
 
@@ -255,7 +243,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
             if(!file_exists($cachePath)) {
 
-                if(!@mkdir($cachePath)) {
+                if(!mkdir($cachePath) && !is_dir($cachePath)) {
                     throw new SimpleTemplateException("Failed to create cache folder $cachePath");
                 }
                 chmod($cachePath, 0777);
@@ -289,8 +277,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @param string $actionsString
      * @return array
      */
-    private function sanitizeActions($actionsString) {
-
+    private function sanitizeActions($actionsString): array
+    {
         $actions = [];
         $actionsString = strtolower($actionsString);
 

@@ -17,17 +17,44 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.5.2 2014-04-06
+ * @version 0.5.3 2019-10-01
  */
-abstract class ImageModifier {
+abstract class ImageModifier
+{
+    /**
+     * @var array
+     */
+	protected $queue;
 
-	protected	$queue,
-				$mimeType,
-				$supportedFormats = array('jpeg', 'gif', 'png'),
-				$file,
-				$path,
-				$srcWidth,
-				$srcHeight;
+    /**
+     * @var string
+     */
+    protected $mimeType;
+
+    /**
+     * @var array
+     */
+    protected $supportedFormats = ['jpeg', 'gif', 'png'];
+
+    /**
+     * @var string
+     */
+    protected $file;
+
+    /**
+     * @var string
+     */
+    protected $path;
+
+    /**
+     * @var int
+     */
+    protected $srcWidth;
+
+    /**
+     * @var int
+     */
+    protected $srcHeight;
 
 	/**
 	 * adds a crop-"command" to queue
@@ -45,8 +72,8 @@ abstract class ImageModifier {
 	 * 
 	 * @throws ImageModifierException
 	 */
-	public function crop() {
-
+	public function crop()
+    {
 		$args = func_get_args();
 		
 		$srcAspectRatio = $this->srcWidth / $this->srcHeight;
@@ -56,7 +83,7 @@ abstract class ImageModifier {
 		if(count($args) === 1) {
 
 			if(!is_numeric($args[0]) || $args[0] <= 0) {
-				throw new ImageModifierException('Invalid dimension(s) for cropping: ' . $args[0] . '.');
+				throw new ImageModifierException(sprintf("Invalid dimension(s) for cropping: '%s'.", $args[0]), ImageModifierException::INVALID_PARAMETERS);
 			}
 		
 			if($srcAspectRatio <= $args[0]) {
@@ -96,8 +123,8 @@ abstract class ImageModifier {
 		
 		else if(count($args) === 2) {
 
-			$width	= (int) $args[0];
-			$height	= (int) $args[1];
+			$width = (int) $args[0];
+			$height = (int) $args[1];
 		
 			if($width > 0 && $height > 0) {
 				$left = $right = round(($this->srcWidth - $width) / 2);
@@ -119,23 +146,23 @@ abstract class ImageModifier {
 			}
 		
 			else {
-				throw new ImageModifierException('Invalid dimension(s) for cropping: ' . $width . ', ' . $height . '.');
+				throw new ImageModifierException(sprintf("Invalid dimension(s) for cropping: %d, %d.", $width, $height), ImageModifierException::INVALID_PARAMETERS);
 			}
 		}
 		
 		// top, left, bottom, right
 		
-		else if(count($args) == 4) {
+		else if(count($args) === 4) {
 
-			$top	= (int) $args[0];
-			$left	= (int) $args[1];
-			$bottom	= (int) $args[2];
-			$right	= (int) $args[3];
+			$top = (int) $args[0];
+			$left = (int) $args[1];
+			$bottom = (int) $args[2];
+			$right = (int) $args[3];
 
 		}
 
 		else {
-			throw new ImageModifierException('Insufficient arguments for cropping.');
+			throw new ImageModifierException('Insufficient arguments for cropping.', ImageModifierException::MISSING_PARAMETERS);
 		}
 		
 		// skip queuing when there is nothing to crop
@@ -148,13 +175,13 @@ abstract class ImageModifier {
 
 		$todo = new \stdClass();
 		
-		$todo->method		= __FUNCTION__;
-		$todo->parameters	= array($top, $right, $bottom, $left);
+		$todo->method = __FUNCTION__;
+		$todo->parameters = [$top, $right, $bottom, $left];
 
 		$this->queue[] = $todo;
 		
-		$this->srcWidth		= $this->srcWidth - $left - $right;
-		$this->srcHeight	= $this->srcHeight - $top - $bottom;
+		$this->srcWidth -= $left + $right;
+		$this->srcHeight -= $top + $bottom;
 
 	}
 
@@ -170,7 +197,8 @@ abstract class ImageModifier {
 	 * 
 	 * @throws ImageModifierException
 	 */
-	public function resize() {
+	public function resize()
+    {
 		
 		$args = func_get_args();
 		
@@ -182,13 +210,13 @@ abstract class ImageModifier {
 		
 			if(preg_match('/max_([1-9]\d*)/i', $args[0], $matches)) {
 		
-				$maxWidth	= $matches[1];
-				$height		= (int) $args[1];
-				$width		= round($height / $this->srcHeight * $this->srcWidth);
+				$maxWidth = $matches[1];
+				$height = (int) $args[1];
+				$width = round($height / $this->srcHeight * $this->srcWidth);
 		
 				if($width > $maxWidth) {
-					$width	= $maxWidth;
-					$height	= round($width / $this->srcWidth * $this->srcHeight);
+					$width = $maxWidth;
+					$height = round($width / $this->srcWidth * $this->srcHeight);
 				}
 			}
 		
@@ -196,9 +224,9 @@ abstract class ImageModifier {
 		
 			else if(preg_match('/max_([1-9]\d*)/i', $args[1], $matches)) {
 		
-				$maxHeight	= $matches[1];
-				$width		= (int) $args[0];
-				$height		= round($width / $this->srcWidth * $this->srcHeight);
+				$maxHeight = $matches[1];
+				$width = (int) $args[0];
+				$height = round($width / $this->srcWidth * $this->srcHeight);
 		
 				if($height > $maxHeight) {
 					$height	= $maxHeight;
@@ -210,59 +238,58 @@ abstract class ImageModifier {
 		
 			else {
 
-				$width	= (int) $args[0];
-				$height	= (int) $args[1];
+				$width = (int) $args[0];
+				$height = (int) $args[1];
 		
-				if($width != 0 || $height != 0) {
+				if($width || $height) {
 
-					if($height == 0) {
+					if(!$height) {
 						$height = round($width / $this->srcWidth * $this->srcHeight);
 					}
 
-					if($width == 0) {
+					if(!$width) {
 						$width = round($height / $this->srcHeight * $this->srcWidth);
 					}
 				}
 		
 				else {
-					throw new ImageModifierException('Invalid dimension(s) for resizing: ' . $width . ', ' . $height . '.');
+					throw new ImageModifierException(sprintf("Invalid dimension(s) for resizing: %d, %d.", $width, $height), ImageModifierException::INVALID_PARAMETERS);
 				}
 			}
 		}
 		
 		// single float value given
 		
-		else if(count($args) == 1) {
+		else if(count($args) === 1) {
 
 			if(!is_numeric($args[0]) || $args[0] == 0) {
-				throw new ImageModifierException('Invalid dimension(s) for resizing: ' . $args[0] . '.');
+                throw new ImageModifierException(sprintf("Invalid dimension(s) for resizing: %s.", $args[0]), ImageModifierException::INVALID_PARAMETERS);
 			}
 
-			$width	= round($this->srcWidth * $args[0]);
-			$height	= round($this->srcHeight * $args[0]);
+			$width = round($this->srcWidth * $args[0]);
+			$height = round($this->srcHeight * $args[0]);
 		}
 
 		else {
-			throw new ImageModifierException('Insufficient arguments for resizing.');
+            throw new ImageModifierException('Insufficient arguments for resizing.', ImageModifierException::MISSING_PARAMETERS);
 		}
 		
 		// skip queueing when original size equals resized size
 
-		if($width == $this->srcWidth && $height == $this->srcHeight) {
+		if($width === $this->srcWidth && $height === $this->srcHeight) {
 			return;
 		}
 		
 		
 		$todo = new \stdClass();
 
-		$todo->method		= __FUNCTION__;
-		$todo->parameters	= array($width, $height);
+		$todo->method = __FUNCTION__;
+		$todo->parameters = [$width, $height];
 
 		$this->queue[] = $todo;
 		
-		$this->srcWidth		= $width;
-		$this->srcHeight	= $height;
-
+		$this->srcWidth = $width;
+		$this->srcHeight = $height;
 	}
 
 	/**
@@ -272,15 +299,16 @@ abstract class ImageModifier {
 	 * 
 	 * @throws ImageModifierException
 	 */
-	public function watermark() {
-		
+	public function watermark()
+    {
 		$args = func_get_args();
 
 		if(!count($args)) {
-			throw new ImageModifierException('Insufficient arguments for watermarking.');
+            throw new ImageModifierException('Insufficient arguments for watermarking.', ImageModifierException::MISSING_PARAMETERS);
 		}
 		
 		if(!file_exists(realpath($args[0]))) {
+            throw new ImageModifierException('Insufficient arguments for watermarking.', ImageModifierException::MISSING_PARAMETERS);
 			throw new ImageModifierException('Watermark file not found.');
 		}
 		
@@ -310,7 +338,7 @@ abstract class ImageModifier {
 	/**
 	 * performs crop-"command"
 	 * 
-	 * @param stdClass $src
+	 * @param \stdClass $src
 	 * @param int $top
 	 * @param int $left
 	 * @param int $bottom
@@ -321,7 +349,7 @@ abstract class ImageModifier {
 	/**
 	 * performs resize-"command"
 	 * 
-	 * @param stdClass $src
+	 * @param \stdClass $src
 	 * @param int $width
 	 * @param int $height
 	 */
@@ -330,7 +358,7 @@ abstract class ImageModifier {
 	/**
 	 * performs "watermark"-command
 	 * 
-	 * @param stdClass $src
+	 * @param \stdClass $src
 	 * @param string $watermarkFile
 	 */
 	abstract protected function do_watermark(\stdClass $src, $watermarkFile);
@@ -338,7 +366,7 @@ abstract class ImageModifier {
 	/**
 	 * performs "bw"-command
 	 * 
-	 * @param stdClass $src
+	 * @param \stdClass $src
 	 */
 	abstract protected function do_greyscale(\stdClass $src);
 

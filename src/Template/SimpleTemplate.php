@@ -15,7 +15,6 @@ use vxPHP\Application\Application;
 use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
 use vxPHP\Template\Filter\ImageCache;
 use vxPHP\Template\Filter\AnchorHref;
-use vxPHP\Template\Filter\AssetsPath;
 use vxPHP\Template\Filter\LocalizedPhrases;
 use vxPHP\Application\Locale\Locale;
 

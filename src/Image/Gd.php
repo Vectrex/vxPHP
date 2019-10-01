@@ -17,13 +17,22 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.4 2016-10-19
+ * @version 0.5.5 2019-10-01
  */
-class Gd extends ImageModifier {
-
-	private	$src,
-			$destinationBuffer,
-			$bufferNdx = 0;
+class Gd extends ImageModifier
+{
+    /**
+     * @var \stdClass
+     */
+	private	$src;
+    /**
+     * @var array
+     */
+	private $destinationBuffer;
+    /**
+     * @var int
+     */
+	private $bufferNdx = 0;
 
 	/**
 	 * initializes object with optional filename
@@ -31,24 +40,24 @@ class Gd extends ImageModifier {
 	 * @param string $file
 	 * @throws ImageModifierException
 	 */
-	public function __construct($file) {
-
+	public function __construct($file)
+    {
 		$src = new \stdClass();
 
 		if(!file_exists($file)) {
-			throw new ImageModifierException(sprintf("File '%s' doesn't exist.", $file));
+			throw new ImageModifierException(sprintf("File '%s' doesn't exist.", $file), ImageModifierException::FILE_NOT_FOUND);
 		}
 
 		$info = @getimagesize($file);
-		if($info === FALSE) {
-			throw new ImageModifierException(sprintf("getimagesize() reports error for file '%s'.", $file));
+		if($info === false) {
+			throw new ImageModifierException(sprintf("getimagesize() reports error for file '%s'.", $file), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
-		$this->file		= $file;
-		$this->mimeType	= $info['mime'];
+		$this->file = $file;
+		$this->mimeType = $info['mime'];
 
 		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
-			throw new ImageModifierException("File $file is not of type '" . implode("', '", $this->supportedFormats) . "'.");
+			throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
 		switch($this->mimeType) {
@@ -63,21 +72,22 @@ class Gd extends ImageModifier {
 				break;
 		}
 		
-		$this->srcWidth		= $info[0];
-		$this->srcHeight	= $info[1];
+		$this->srcWidth = $info[0];
+		$this->srcHeight = $info[1];
 
-		$src->width			= $info[0];
-		$src->height		= $info[1];
+		$src->width = $info[0];
+		$src->height = $info[1];
 
-		$this->src					= $src;
-		$this->queue				= [];
-		$this->destinationBuffer	= [new \stdClass(), new \stdClass()];
+		$this->src = $src;
+		$this->queue = [];
+		$this->destinationBuffer = [new \stdClass(), new \stdClass()];
 	}
 
 	/**
 	 * cleanup resources upon destruct
 	 */
-	public function __destruct() {
+	public function __destruct()
+    {
 		if(isset($this->src->resource)) {
 			imagedestroy($this->src->resource);
 		}
@@ -93,16 +103,16 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_crop()
 	 */
-	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right) {
-
+	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right)
+    {
 		$dst = new \stdClass();
-		$dst->width		= $src->width - $left - $right;
-		$dst->height	= $src->height - $top - $bottom;
-		$dst->resource	= imagecreatetruecolor($dst->width, $dst->height);
+		$dst->width = $src->width - $left - $right;
+		$dst->height = $src->height - $top - $bottom;
+		$dst->resource = imagecreatetruecolor($dst->width, $dst->height);
 
-		if($this->mimeType == 'image/png' || $this->mimeType == 'image/gif') {
-			imagealphablending($dst->resource, FALSE);
-			imagesavealpha($dst->resource, TRUE);
+		if($this->mimeType === 'image/png' || $this->mimeType === 'image/gif') {
+			imagealphablending($dst->resource, false);
+			imagesavealpha($dst->resource, true);
 		}
 
 		imagecopy(
@@ -120,16 +130,16 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_resize()
 	 */
-	protected function do_resize(\stdClass $src, $width, $height) {
-
+	protected function do_resize(\stdClass $src, $width, $height)
+    {
 		$dst = new \stdClass();
-		$dst->resource	= imagecreatetruecolor($width, $height);
-		$dst->width		= $width;
-		$dst->height	= $height;
+		$dst->resource = imagecreatetruecolor($width, $height);
+		$dst->width = $width;
+		$dst->height = $height;
 
-		if($this->mimeType == 'image/png' || $this->mimeType == 'image/gif') {
-			imagealphablending($dst->resource, FALSE);
-			imagesavealpha($dst->resource, TRUE);
+		if($this->mimeType === 'image/png' || $this->mimeType === 'image/gif') {
+			imagealphablending($dst->resource, false);
+			imagesavealpha($dst->resource, true);
 		}
 
 		imagecopyresampled(
@@ -142,11 +152,11 @@ class Gd extends ImageModifier {
 		
 		// add some sharpening
 
-		imageconvolution($dst->resource, array(
-			array(-1, -0.8, -1),
-			array(-0.8, 16, -0.8),
-			array(-1, -0.8, -1)
-		), 16 - 7.2, 0);
+		imageconvolution($dst->resource, [
+			[-1, -0.8, -1],
+			[-0.8, 16, -0.8],
+			[-1, -0.8, -1]
+		], 16 - 7.2, 0);
 
 		return $dst;
 	}
@@ -155,18 +165,23 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_watermark()
 	 */
-	protected function do_watermark(\stdClass $src, $watermarkFile) {
+	protected function do_watermark(\stdClass $src, $watermarkFile)
+    {
+        if(!file_exists($watermarkFile)) {
+            throw new ImageModifierException(sprintf("Watermark file '%s' not found.", $watermarkFile), ImageModifierException::FILE_NOT_FOUND);
+        }
 
-		$stamp			= imagecreatefrompng($watermarkFile);
-		$stampWidth		= imagesx($stamp);
-		$stampHeight	= imagesy($stamp);
+    	$stamp = imagecreatefrompng($watermarkFile);
+		$stampWidth = imagesx($stamp);
+		$stampHeight = imagesy($stamp);
 
 		$dst = new \stdClass();
-		$dst->resource	= imagecreatetruecolor($src->width, $src->height);
-		$dst->width		= $src->width;
-		$dst->height	= $src->height;
+		$dst->resource = imagecreatetruecolor($src->width, $src->height);
+		$dst->width = $src->width;
+		$dst->height = $src->height;
 
 		// stamp is centered onto source image, opacity 50%
+
 		imagecopy($dst->resource, $src->resource, 0, 0, 0, 0, $src->width, $src->height);
 
 		$this->imagecopymerge_alpha(
@@ -187,19 +202,20 @@ class Gd extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
 	 */
-	protected function do_greyscale(\stdClass $src) {
-
-		$dst = new \stdClass();
-		$dst->resource	= imagecreatetruecolor($src->width, $src->height);
-		$dst->width		= $src->width;
-		$dst->height	= $src->height;
+	protected function do_greyscale(\stdClass $src)
+    {
+    	$dst = new \stdClass();
+		$dst->resource = imagecreatetruecolor($src->width, $src->height);
+		$dst->width = $src->width;
+		$dst->height = $src->height;
 
 		imagecopy($dst->resource, $src->resource, 0, 0, 0, 0, $src->width, $src->height);
 		imagefilter($dst->resource, IMG_FILTER_GRAYSCALE);
 		return $dst;
 	}
 
-	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity) {
+	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity)
+    {
 		$cut = imagecreatetruecolor($srcW, $srcH);
 		imagecopy($cut, $dst, 0, 0, $dstX, $dstY, $srcW, $srcH);
 		imagecopy($cut, $src, 0, 0, $srcX, $srcY, $srcW, $srcH);
@@ -211,21 +227,21 @@ class Gd extends ImageModifier {
      * (non-PHPdoc)
      * @see \vxPHP\Image\ImageModifier::export()
      */
-	public function export($path = NULL, $mimetype = NULL) {
-
+	public function export($path = null, $mimetype = null)
+    {
 		if(!$mimetype) {
 			$mimetype = $this->mimeType;
 		}
 		
 		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $mimetype)) {
-			throw new ImageModifierException("$mimetype not supported by export.");
+			throw new ImageModifierException(sprintf("%s not supported by export.", $mimetype), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
-		$this->path = $path ? $path : $this->file;
+		$this->path = $path ?: $this->file;
 
 		// if image was not altered, create only copy
 
-		if($this->mimeType == $mimetype && !count($this->queue)) {
+		if($this->mimeType === $mimetype && !count($this->queue)) {
 			copy($this->file, $this->path);
 		}
 
@@ -234,11 +250,11 @@ class Gd extends ImageModifier {
 			$src = $this->src;
 			
 			foreach($this->queue as $step) {
-				$this->destinationBuffer[$this->bufferNdx] = call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($src), $step->parameters));
+				$this->destinationBuffer[$this->bufferNdx] = call_user_func_array([$this, 'do_' . $step->method], array_merge([$src], $step->parameters));
 				$src = $this->destinationBuffer[$this->bufferNdx];
 				$this->bufferNdx = ++$this->bufferNdx % 2;
 			}
-			
+
 			switch($mimetype) {
 
 				case 'image/jpeg':

@@ -18,13 +18,13 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for Imagick
  *
  * @author Gregor Kofler
- * @version 0.3.1 2016-10-19
+ * @version 0.3.2 2019-10-01
  * 
  * @todo improve grayscale conversion
  * 
  */
-class ImageMagick extends ImageModifier {
-
+class ImageMagick extends ImageModifier
+{
 	/**
 	 * @var \stdClass
 	 */
@@ -35,35 +35,35 @@ class ImageMagick extends ImageModifier {
 	 * @param unknown $file
 	 * @throws ImageModifierException
 	 */
-	public function __construct($file) {
-		
+	public function __construct($file)
+    {
 		if(!file_exists($file)) {
-			throw new ImageModifierException("File '$file' doesn't exist.");
+            throw new ImageModifierException(sprintf("File '%s' doesn't exist.", $file), ImageModifierException::FILE_NOT_FOUND);
 		}
 		
 		try {
 			$img = new \Imagick($file);
 		}
 		catch(\ImagickException $e) {
-			throw new ImageModifierException("Imagick reports error for file $file.");
+            throw new ImageModifierException(sprintf("Imagick reports error '%s' for file %s.", $e->getMessage(), $file), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
-		$this->file			= $file;
-		$this->mimeType		= 'image/' . strtolower($img->getImageFormat());
-		$this->srcWidth		= $img->getImageWidth();
-		$this->srcHeight	= $img->getImageHeight();
+		$this->file = $file;
+		$this->mimeType = 'image/' . strtolower($img->getImageFormat());
+		$this->srcWidth = $img->getImageWidth();
+		$this->srcHeight = $img->getImageHeight();
 
 		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
-			throw new ImageModifierException("File $file is not of type '" . implode("', '", $this->supportedFormats) . "'.");
+            throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
-		$src			= new \stdClass();
-		$src->resource	= $img;
-		$src->width		= $this->srcWidth;
-		$src->height	= $this->srcHeight;
+		$src = new \stdClass();
+		$src->resource = $img;
+		$src->width = $this->srcWidth;
+		$src->height = $this->srcHeight;
 
-		$this->src		= $src;
-		$this->queue	= array();
+		$this->src = $src;
+		$this->queue = [];
 
 	}
 	
@@ -77,28 +77,29 @@ class ImageMagick extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::export()
 	 */
-	public function export($path = NULL, $mimetype = NULL) {
+	public function export($path = null, $mimetype = null)
+    {
 		
 		if(!$mimetype) {
 			$mimetype = $this->mimeType;
 		}
 
 		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $mimetype)) {
-			throw new ImageModifierException("$mimetype not supported by export.");
+            throw new ImageModifierException(sprintf("%s not supported by export.", $mimetype), ImageModifierException::WRONG_FILE_TYPE);
 		}
 		
-		$this->path = $path ? $path : $this->file;
+		$this->path = $path ?: $this->file;
 
 		// if image was not altered, create only copy
 		
-		if($this->mimeType == $mimetype && !count($this->queue)) {
+		if($this->mimeType === $mimetype && !count($this->queue)) {
 			copy($this->file, $this->path);
 		}
 		
 		else {
 
 			foreach($this->queue as $step) {
-				call_user_func_array(array($this, 'do_' . $step->method), array_merge(array($this->src), $step->parameters));
+				call_user_func_array([$this, 'do_' . $step->method], array_merge([$this->src], $step->parameters));
 			}
 
 			switch($mimetype) {
@@ -129,41 +130,41 @@ class ImageMagick extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_crop()
 	 */
-	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right) {
+	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right)
+    {
 
 		$src->resource->cropImage($src->width - $right - $left, $src->height - $bottom - $top, $left, $top);
 
-		$src->width		= $src->width - $right - $left;
-		$src->height	= $src->height - $bottom - $top;
+		$src->width = $src->width - $right - $left;
+		$src->height = $src->height - $bottom - $top;
 
 		return $src;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_resize()
 	 */
-	protected function do_resize(\stdClass $src, $width, $height) {
-
-		$src->resource->resizeImage($width, $height, \Imagick::FILTER_CATROM, 1, FALSE);
+	protected function do_resize(\stdClass $src, $width, $height)
+    {
+		$src->resource->resizeImage($width, $height, \Imagick::FILTER_CATROM, 1, false);
 		$src->resource->convolveImage([-1, -0.8, -1, -0.8, 16, -0.8, -1, -0.8, -1]);
 		
 		$src->width		= $width;
 		$src->height	= $height;
 
 		return $src;
-		
 	}
 	
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_watermark()
 	 */
-	protected function do_watermark(\stdClass $src, $watermarkFile) {
+	protected function do_watermark(\stdClass $src, $watermarkFile)
+    {
 		
 		if(!file_exists($watermarkFile)) {
-			throw new ImageModifierException("Watermark '$watermarkFile' doesn't exist.");
+            throw new ImageModifierException(sprintf("Watermark file '%s' not found.", $watermarkFile), ImageModifierException::FILE_NOT_FOUND);
 		}
 		
 		$watermark = new \Imagick($watermarkFile);
@@ -179,8 +180,8 @@ class ImageMagick extends ImageModifier {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
 	 */
-	protected function do_greyscale(\stdClass $src) {
-		
+	protected function do_greyscale(\stdClass $src)
+    {
 		$src->resource->modulateImage(100, 0, 100);
 
 		return $src;
