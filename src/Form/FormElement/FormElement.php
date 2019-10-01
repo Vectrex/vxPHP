@@ -18,7 +18,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.11.2 2018-01-07
+ * @version 0.12.0 2019-10-02
  * @author Gregor Kofler
  * 
  */
@@ -133,11 +133,10 @@ abstract class FormElement implements FormElementInterface {
 	 * @param mixed $value
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setValue($value) {
-
+	public function setValue($value)
+    {
 		$this->value = $value;
 		return $this;
-
 	}
 
 	/**
@@ -145,10 +144,9 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return string
 	 */
-	public function getValue() {
-
+	public function getValue()
+    {
 		return $this->value;
-
 	}
 
 	/**
@@ -156,10 +154,9 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return string
 	 */
-	public function getModifiedValue() {
-
+	public function getModifiedValue()
+    {
 		return $this->applyModifiers($this->value);
-
 	}
 
 	/**
@@ -168,11 +165,10 @@ abstract class FormElement implements FormElementInterface {
 	 * @param string $name
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setName($name) {
-
+	public function setName($name)
+    {
 		$this->name = $name;
 		return $this;
-
 	}
 
 	/**
@@ -180,10 +176,9 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return string $name
 	 */
-	public function getName() {
-
+	public function getName()
+    {
 		return $this->name;
-
 	}
 
     /**
@@ -195,7 +190,6 @@ abstract class FormElement implements FormElementInterface {
      */
     public function setLabel(LabelElement $label)
     {
-
         $this->label = $label;
 
         if(($for = $this->getAttribute('id'))) {
@@ -203,7 +197,6 @@ abstract class FormElement implements FormElementInterface {
         }
 
         return $this;
-
     }
 
     /**
@@ -213,9 +206,7 @@ abstract class FormElement implements FormElementInterface {
      */
     public function getLabel()
     {
-
         return $this->label;
-
     }
 
     /**
@@ -227,8 +218,8 @@ abstract class FormElement implements FormElementInterface {
 	 * @param mixed $value
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setAttribute($attr, $value) {
-
+	public function setAttribute($attr, $value)
+    {
 		$attr = strtolower($attr);
 
 		if($attr === 'value') {
@@ -250,7 +241,6 @@ abstract class FormElement implements FormElementInterface {
 			$this->attributes[$attr] = $value;
 		}
 		return $this;
-
 	}
 
 	/**
@@ -259,13 +249,12 @@ abstract class FormElement implements FormElementInterface {
 	 * @param array $attributes
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setAttributes(Array $attributes) {
-
+	public function setAttributes(Array $attributes)
+    {
 		foreach($attributes as $k => $v) {
 			$this->setAttribute($k, $v);
 		}
 		return $this;
-
 	}
 
     /**
@@ -276,8 +265,8 @@ abstract class FormElement implements FormElementInterface {
      * @param $name
      * @return string|null
      */
-	public function getAttribute($name) {
-
+	public function getAttribute($name)
+    {
 	    $key = strtolower($name);
 
 	    if('value' === $key) {
@@ -295,7 +284,6 @@ abstract class FormElement implements FormElementInterface {
         }
 
 	    return null;
-
     }
 
 	/**
@@ -305,11 +293,10 @@ abstract class FormElement implements FormElementInterface {
 	 * @param boolean $required
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function setRequired($required) {
-
+	public function setRequired($required)
+    {
 		$this->required = (bool) $required;
 		return $this;
-
 	}
 
 	/**
@@ -317,10 +304,9 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return boolean
 	 */
-	public function getRequired() {
-
+	public function getRequired()
+    {
 		return $this->required;
-
 	}
 	
 	/**
@@ -333,24 +319,13 @@ abstract class FormElement implements FormElementInterface {
 	 * @param mixed $validatingRule
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function addValidator($validatingRule) {
-
+	public function addValidator($validatingRule)
+    {
 		$this->validators[] = $validatingRule;
 		$this->valid = NULL;
 		return $this;
-
 	}
 
-	/**
-	 * get form the element is assigned to
-	 *
-	 * @return HtmlForm
-	 */
-	public function getForm()
-    {
-		return $this->form;
-	}
-	
 	/**
 	 * set form to which an element is assigned
 	 * automatically called by HtmlForm::addElement()
@@ -395,11 +370,10 @@ abstract class FormElement implements FormElementInterface {
 	 * @param mixed $modifier
 	 * @return \vxPHP\Form\FormElement\FormElement
 	 */
-	public function addModifier($modifier) {
-
+	public function addModifier($modifier)
+    {
 		$this->modifiers[] = $modifier;
 		return $this;
-
 	}
 
 	/**
@@ -407,8 +381,8 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return boolean $success
 	 */
-	public function isValid() {
-
+	public function isValid()
+    {
 		if(!isset($this->valid)) {
             $this->valid = $this->applyValidators(
                 $this->applyModifiers($this->getValue())
@@ -416,7 +390,6 @@ abstract class FormElement implements FormElementInterface {
 		}
 
 		return $this->valid;
-
 	}
 
 	/**
@@ -424,14 +397,13 @@ abstract class FormElement implements FormElementInterface {
 	 * 
 	 * @return boolean $result
 	 */
-	public function canSubmit() {
-
-		return 
-			$this instanceof InputElement && isset($this->attributes['type']) && $this->attributes['type'] == 'submit' ||
+	public function canSubmit()
+    {
+		return
+            ($this instanceof InputElement && isset($this->attributes['type']) && $this->attributes['type'] === 'submit') ||
 			$this instanceof ImageElement ||
 			$this instanceof SubmitInputElement ||
-			$this instanceof ButtonElement && $this->attributes['type'] == 'submit';
-
+            ($this instanceof ButtonElement && $this->attributes['type'] === 'submit');
 	}
 	
 	/**
@@ -441,8 +413,8 @@ abstract class FormElement implements FormElementInterface {
      * @param string $value
 	 * @return string modified value
 	 */
-	protected function applyModifiers($value) {
-
+	protected function applyModifiers($value)
+    {
 		foreach($this->modifiers as $modifier) {
 			
 			if($modifier instanceof \Closure) {
@@ -475,7 +447,6 @@ abstract class FormElement implements FormElementInterface {
 		}
 
 		return $value;
-
 	}
 
     /**
@@ -493,8 +464,8 @@ abstract class FormElement implements FormElementInterface {
      * @param string $value
      * @return bool
      */
-    protected function applyValidators($value) {
-
+    protected function applyValidators($value)
+    {
         // first check whether form data is required
         // if not, then empty strings or null values are considered valid
 
@@ -513,8 +484,10 @@ abstract class FormElement implements FormElementInterface {
         if(
             $this->required &&
             (
-                $this instanceof CheckboxElement &&
-                !$this->getChecked()
+                (
+                    $this instanceof CheckboxElement &&
+                    !$this->getChecked()
+                )
                 ||
                 empty($value)
             )
@@ -548,7 +521,6 @@ abstract class FormElement implements FormElementInterface {
         // assume validity when no previous validator failed
 
         return true;
-
     }
 
     /**
@@ -560,10 +532,8 @@ abstract class FormElement implements FormElementInterface {
      */
     public function setSimpleTemplate(SimpleTemplate $template)
     {
-
         $this->template = $template;
         return $this;
-
     }
 
     /**

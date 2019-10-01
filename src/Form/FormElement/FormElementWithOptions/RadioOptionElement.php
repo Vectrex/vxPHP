@@ -18,10 +18,10 @@ use vxPHP\Form\FormElement\LabelElement;
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.8.0 2019-01-04
+ * @version 0.9.0 2019-10-02
  */
-class RadioOptionElement extends FormElementFragment {
-
+class RadioOptionElement extends FormElementFragment
+{
 	/**
 	 * initialize option with value, label and parent RadioElement
 	 * 
@@ -29,10 +29,9 @@ class RadioOptionElement extends FormElementFragment {
 	 * @param LabelElement $label
 	 * @param RadioElement $formElement
 	 */
-	public function __construct($value, LabelElement $label, RadioElement $formElement = null) {
-
+	public function __construct($value, LabelElement $label, RadioElement $formElement = null)
+    {
 		parent::__construct($value, $label, $formElement);
-
 	}
 
     /**
@@ -43,8 +42,8 @@ class RadioOptionElement extends FormElementFragment {
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
-	public function render($force = false) {
-
+	public function render($force = false)
+    {
 		if(empty($this->html) || $force) {
 
             if($this->template) {
@@ -55,7 +54,6 @@ class RadioOptionElement extends FormElementFragment {
 
             else {
 
-                $name = $this->parentElement->getName();
                 $value = $this->getValue();
 
                 if($this->selected) {
@@ -65,9 +63,8 @@ class RadioOptionElement extends FormElementFragment {
                     unset($this->attributes['checked']);
                 }
 
-                if(!isset($this->attributes['id'])) {
-                    $formId = $this->parentElement->getForm()->getAttribute('id');
-                    $this->attributes['id'] = ($formId ? ($formId . '_') : '') . $name . '_' . $value;
+                if(!isset($this->attributes['id']) && ($parentId = $this->getParentElement()->getAttribute('id'))) {
+                    $this->attributes['id'] = $parentId . '_' . $value;
                 }
 
                 $this->attributes['value'] = $this->getValue();
@@ -85,7 +82,11 @@ class RadioOptionElement extends FormElementFragment {
                 );
 
                 if($this->label) {
-                    $this->html .= $this->label->setAttribute('for', $this->attributes['id'])->render();
+                    if(!empty($this->attributes['id'])) {
+                        $this->label->setAttribute('for', $this->attributes['id']);
+                    }
+
+                    $this->html .= $this->label->render();
                 }
 
             }
@@ -93,6 +94,5 @@ class RadioOptionElement extends FormElementFragment {
 		}
 
 		return $this->html;
-
 	}
 }
