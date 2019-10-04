@@ -14,27 +14,13 @@ namespace vxPHP\Security\Csrf;
 use vxPHP\Session\Session;
 
 /**
- * polyfill for hash_equals() by Cedric Van Bockhaven
- * @link http://php.net/manual/de/function.hash-equals.php
- */
-if(!function_exists('hash_equals')) {
-
-	function hash_equals($a, $b) {
-
-		$ret = strlen($a) ^ strlen($b);
-		$ret |= array_sum(unpack('C*', $a ^ $b));
-		return !$ret;
-
-	}
-}
-
-/**
  * simple wrapper for CSRF token management
  *  
  * @author Gregor Kofler
  * @version 0.3.1 2017-05-04
  */
-class CsrfTokenManager {
+class CsrfTokenManager
+{
 
 	/**
 	 * @var CsrfTokenSessionStorage
@@ -50,24 +36,24 @@ class CsrfTokenManager {
 	 * 
 	 * @param integer $tokenLength
 	 */
-	public function __construct($tokenLength = 32) {
-
-		$this->storage		= new CsrfTokenSessionStorage(Session::getSessionDataBag());
-		$this->tokenLength	= (int) $tokenLength;
-		
+	public function __construct($tokenLength = 32)
+    {
+		$this->storage = new CsrfTokenSessionStorage(Session::getSessionDataBag());
+		$this->tokenLength = (int) $tokenLength;
 	}
-	
-	/**
-	 * returns a CSRF token for the given token id
-	 * 
-	 * if previously no token existed for the given id, a new token is
-	 * generated, stored and returned; otherwise the existing token is returned
-	 * 
-	 * @param string $tokenId
-	 * @return CsrfToken
-	 */
-	public function getToken($tokenId) {
 
+    /**
+     * returns a CSRF token for the given token id
+     *
+     * if previously no token existed for the given id, a new token is
+     * generated, stored and returned; otherwise the existing token is returned
+     *
+     * @param string $tokenId
+     * @return CsrfToken
+     * @throws Exception\CsrfTokenException
+     */
+	public function getToken($tokenId): CsrfToken
+    {
 		if($this->storage->hasToken($tokenId)) {
 			return $this->storage->getToken($tokenId);
 		}
@@ -83,16 +69,17 @@ class CsrfTokenManager {
 	}
 
     /**
-	 * generates a new token for the given id
-	 * a new token will be generated, independent
-	 * of whether a token value previously existed or not
-	 * useful to enforce once-only tokens 
-	 * 
-	 * @param string $tokenId
-	 * @return CsrfToken
+     * generates a new token for the given id
+     * a new token will be generated, independent
+     * of whether a token value previously existed or not
+     * useful to enforce once-only tokens
+     *
+     * @param string $tokenId
+     * @return CsrfToken
+     * @throws \Exception
      */
-	public function refreshToken($tokenId) {
-
+	public function refreshToken($tokenId): CsrfToken
+    {
 		$this->storage->removeToken($tokenId);
 
 		$token = new CsrfToken(
@@ -103,7 +90,6 @@ class CsrfTokenManager {
 		$this->storage->setToken($tokenId, $token);
 
 		return $token;
-
 	}
 	
     /**
@@ -114,42 +100,42 @@ class CsrfTokenManager {
 	 * @param string $tokenId
      * @return CsrfToken
      */
-	public function removeToken($tokenId) {
-
+	public function removeToken($tokenId): ?CsrfToken
+    {
 		return $this->storage->removeToken($tokenId);
-
 	}
-	
-	/**
-	 * check whether the given CSRF token is valid
-	 * returns TRUE if the token is valid, FALSE otherwise
-	 * 
-	 * @param CsrfToken $token
-	 * @return bool
-	 */
-	public function isTokenValid(CsrfToken $token) {
 
+    /**
+     * check whether the given CSRF token is valid
+     * returns TRUE if the token is valid, FALSE otherwise
+     *
+     * @param CsrfToken $token
+     * @return bool
+     * @throws Exception\CsrfTokenException
+     */
+	public function isTokenValid(CsrfToken $token): bool
+    {
 		$tokenId = $token->getId();
 
 		if (!$this->storage->hasToken($tokenId)) {
-			return FALSE;
+			return false;
 		}
 	
 		return hash_equals($this->storage->getToken($tokenId)->getValue(), $token->getValue());
-
 	}
 
-	/**
-	 * generate random bytes of length $length
-	 * use random_bytes() when available
-	 *
-	 * @param int $length
-	 * @return string
-	 * @throws \InvalidArgumentException
-	 * @throws \Exception
-	 */
-	protected function generateValue($length) {
-	
+    /**
+     * generate random bytes of length $length
+     * use random_bytes() when available
+     *
+     * @param int $length
+     * @return string
+     * @throws \InvalidArgumentException
+     * @throws \BadFunctionCallException
+     * @throws \Exception
+     */
+	protected function generateValue($length)
+    {
 		if(!(int) $length) {
 			throw new \InvalidArgumentException('CSRF token length not set or too short.');
 		}
@@ -167,11 +153,9 @@ class CsrfTokenManager {
 		}
 
 		else {
-			throw new \Exception('No suitable function for generating a CSRF token available.');
+			throw new \BadFunctionCallException('No suitable function for generating a CSRF token available.');
 		}
 
 		return rtrim(strtr(base64_encode($randomBytes), '+/', '-_'), '=');
-
 	}
-
 }

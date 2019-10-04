@@ -29,7 +29,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.0 2019-10-03
+ * @version 1.9.1 2019-10-04
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -230,7 +230,7 @@ class HtmlForm
 		}
 
 		else {
-			if($this->request->getMethod() == 'GET') {
+			if($this->request->getMethod() === 'GET') {
 				$this->requestValues = $this->request->query;
 			}
 			else {
@@ -394,16 +394,14 @@ class HtmlForm
 
 				foreach($this->requestValues->keys() as $k) {
 
-					if(preg_match('/^' . $name . '\\[(.*?)\\]$/', $k, $m)) {
-
-						if(isset($this->elements[$name][$m[1]]) && $this->elements[$name][$m[1]]->canSubmit()) {
-
-							$this->clickedSubmit = $this->elements[$name][$m[1]];
-							return $this->clickedSubmit;
-
-						}
-					}
-
+					if(
+					    preg_match('/^' . $name . '\\[(.*?)\\]$/', $k, $m) &&
+						isset($this->elements[$name][$m[1]]) &&
+                        $this->elements[$name][$m[1]]->canSubmit()
+                    ) {
+                        $this->clickedSubmit = $this->elements[$name][$m[1]];
+                        return $this->clickedSubmit;
+                    }
 				}
 
 				foreach($e as $k => $ee) {
@@ -460,6 +458,7 @@ class HtmlForm
      *
      * @throws HtmlFormException
      * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
 	public function render(): ?string
     {
@@ -511,7 +510,7 @@ class HtmlForm
 
 					// @todo since elements in an array are all of same type they don't need to be checked individually
 					
-					if($elem->canSubmit() && !$getSubmits) {
+					if(!$getSubmits && $elem->canSubmit()) {
 						continue;
 					}
 
@@ -565,11 +564,11 @@ class HtmlForm
 						$this->elements[$name]->setChecked($this->elements[$name]->getValue() == $value);
 					}
 					else {
-						$this->elements[$name]->setChecked(!is_null($this->requestValues->get($name)));
+						$this->elements[$name]->setChecked($this->requestValues->get($name) !== null);
 					}
 				}
 
-				else if(is_null($this->elements[$name]->getValue())) {
+				else if($this->elements[$name]->getValue() === null) {
 					$this->elements[$name]->setValue($value);
 				}
 			}
@@ -619,14 +618,15 @@ class HtmlForm
 		}
 	}
 
-	/**
-	 * validate form by checking validity of each form element
-	 * error flags are stored in HtmlForm::formErrors
-	 * will throw a HtmlFormException when CSRF tokens are enabled and the check fails
-	 *
-	 * @return HtmlForm
-	 * @throws HtmlFormException
-	 */
+    /**
+     * validate form by checking validity of each form element
+     * error flags are stored in HtmlForm::formErrors
+     * will throw a HtmlFormException when CSRF tokens are enabled and the check fails
+     *
+     * @return HtmlForm
+     * @throws HtmlFormException
+     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     */
 	public function validate(): HtmlForm
     {
 		// check whether a CSRF token was tainted
@@ -955,31 +955,33 @@ class HtmlForm
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
      */
 	private function renderCsrfToken(): string
     {
 		$tokenManager = new CsrfTokenManager();
-		$token = $tokenManager->refreshToken('_' . $this->action . '_');
+		$token = $tokenManager->getToken('_' . $this->action . '_');
 
 		$e = new InputElement(self::CSRF_TOKEN_NAME, $token->getValue());
 		$e->setAttribute('type', 'hidden');
 		
 		return $e->render();
 	}
-	
-	/**
-	 * check whether a CSRF token remained untainted
-	 * compares the stored token with the request value
-	 * 
-	 * @return bool
-	 */
+
+    /**
+     * check whether a CSRF token remained untainted
+     * compares the stored token with the request value
+     *
+     * @return bool
+     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     */
 	private function checkCsrfToken(): bool
     {
 		$tokenManager = new CsrfTokenManager();
 
 		$token = new CsrfToken(
 			'_' . $this->action . '_',
-			$this->requestValues->get(self::CSRF_TOKEN_NAME)
+			$this->requestValues->get(self::CSRF_TOKEN_NAME, $this->request->headers->get('X-CSRF-Token'))
 		);
 
 		return $tokenManager->isTokenValid($token);
@@ -1083,7 +1085,7 @@ class HtmlForm
      */
 	public function removeHtmlByName($id, $index = null): HtmlForm
     {
-		if(!is_null($index) && isset($this->miscHtml[$id][$index])) {
+		if(null !== $index && isset($this->miscHtml[$id][$index])) {
 			unset($this->miscHtml[$id][$index]);
 		}
 		else if(isset($this->miscHtml[$id])) {
@@ -1182,7 +1184,7 @@ class HtmlForm
 			$right = !empty($s['right']) ? $s['right'] : '';
 
 			if(!isset($s['loopVar']) || !isset($this->vars[$s['loopVar']])) {
-				$markup .= $left.$right;
+				$markup .= $left . $right;
 				continue;
 			}
 
@@ -1209,7 +1211,7 @@ class HtmlForm
 				}
 			}
 
-			$markup .= $left.$inner.$right;
+			$markup .= $left . $inner . $right;
 		}
 
 		return $markup;
@@ -1506,6 +1508,7 @@ class HtmlForm
      * @throws HtmlFormException
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
      */
 	private function insertFormStart(): HtmlForm
     {
@@ -1593,8 +1596,8 @@ class HtmlForm
 				$this->method,
 				$this->encType ? ( 'enctype="' . $this->encType . '"') : '',
 				implode(' ', $attr),
-				$this->enableAntiSpam	? $this->renderAntiSpam() : '',
-				$this->enableCsrfToken	? $this->renderCsrfToken() : '',
+				$this->enableAntiSpam ? $this->renderAntiSpam() : '',
+				$this->enableCsrfToken ? $this->renderCsrfToken() : '',
 				$this->html
 			);
 		}

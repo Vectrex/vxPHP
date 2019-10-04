@@ -38,19 +38,17 @@ class CsrfToken {
 	 * constructor
 	 *
 	 * @param string $id
-	 * @param int $length
+	 * @param string $value
 	 */
-	public function __construct($id, $value) {
-
-		$this->value	= (string) $value;
-		$this->id		= (string) $id;
-
+	public function __construct($id, $value)
+    {
+		$this->value = (string) $value;
+		$this->id = (string) $id;
 	}
 
-	public function __toString() {
-
+	public function __toString()
+    {
 		return $this->value;
-
 	}
 
 	/**
@@ -58,10 +56,9 @@ class CsrfToken {
 	 *
 	 * @return string
 	 */
-	public function getId() {
-
+	public function getId(): string
+    {
 		return $this->id;
-
 	}
 	
 	/**
@@ -69,10 +66,8 @@ class CsrfToken {
 	 *
 	 * @return string
 	 */
-	public function getValue() {
-
+	public function getValue(): string
+    {
 		return $this->value;
-
 	}
-
 }
