@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.5.0 2017-02-04
+ * @version 0.5.1 2019-10-11
  *
  * @todo test delete()
  */
@@ -58,9 +58,15 @@ class FilesystemFolder {
 	 */
 	private $parentFolder;
 
-	public static function getInstance($path) {
+	public static function getInstance($path)
+    {
+	    $path = realpath($path);
 
-		$path = rtrim(realpath($path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+	    if($path === false) {
+            throw new FilesystemFolderException(sprintf('Path %s does not exist or is no directory.', $path));
+        }
+
+		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
@@ -86,33 +92,31 @@ class FilesystemFolder {
 		else {
 			throw new FilesystemFolderException(sprintf('Directory %s does not exist or is no directory.', $path));
 		}
-
 	}
 
 	/**
 	 * returns path of filesystem folder
 	 */
-	public function getPath() {
-
+	public function getPath()
+    {
 		return $this->path;
-
 	}
 
-	/**
-	 * returns path relative to assets path root
-	 *
-	 * @param boolean $force
-	 * @return string
-	 */
-	public function getRelativePath($force = FALSE) {
-
+    /**
+     * returns path relative to assets path root
+     *
+     * @param boolean $force
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	public function getRelativePath($force = false)
+    {
 		if(!isset($this->relPath) || $force) {
 			$relPath = preg_replace('~^' . preg_quote(Application::getInstance()->getAbsoluteAssetsPath(), '~').'~', '', $this->path, -1, $replaced);
 			$this->relPath = $replaced === 0 ? NULL : $relPath;
 		}
 
 		return $this->relPath;
-
 	}
 
 	/**
@@ -120,15 +124,15 @@ class FilesystemFolder {
 	 * when $extension is specified, only files with extension are returned
 	 *
 	 * @param $extension
-	 * @return array of FilesystemFile instances
+	 * @return FilesystemFile[]
 	 */
-	public function getFiles($extension = NULL) {
-
+	public function getFiles($extension = null)
+    {
 		$result = [];
 		$glob = $this->path . '*';
 
 		if(!is_null($extension)) {
-			$glob .= ".$extension";
+			$glob .= '.' . $extension;
 		}
 
 		foreach(array_filter(glob($glob), 'is_file') as $f) {
@@ -138,13 +142,14 @@ class FilesystemFolder {
 		return $result;
 	}
 
-	/**
-	 * returns all FilesystemFolder instances in folder
-	 *
-	 * @return Array
-	 */
-	public function getFolders() {
-
+    /**
+     * returns all FilesystemFolder instances in folder
+     *
+     * @return Array
+     * @throws FilesystemFolderException
+     */
+	public function getFolders()
+    {
 		$result = [];
 		$files = glob($this->path . '*', GLOB_ONLYDIR);
 
@@ -155,7 +160,6 @@ class FilesystemFolder {
 		}
 
 		return $result;
-
 	}
 
 	/**
