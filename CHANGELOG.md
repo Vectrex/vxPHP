@@ -4,5 +4,8 @@
 - Required PHP version bumped to 7.1
 
 ## v1.6.5
-- Bugfix
+- Bugfixes
 - CSRF token handling improved
+
+## v1.6.6
+- URL validator fixed

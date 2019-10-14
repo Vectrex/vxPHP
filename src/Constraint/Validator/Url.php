@@ -16,7 +16,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check an URL for validity
  * 
- * @version 0.1.0 2016-11-25
+ * @version 0.1.1 2019-10-13
  * @author Gregor Kofler
  */
 class Url extends AbstractConstraint implements ConstraintInterface {
@@ -25,7 +25,7 @@ class Url extends AbstractConstraint implements ConstraintInterface {
 		(%s)://														# protocol
 		(([\pL\pN-]+:)?([\pL\pN-]+)@)?								# optional auth
 		(
-			([\pL\pN\pS-\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)	# domain name
+			([\pL\pN\pS\.-])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)	# domain name
 			|														# or
 			\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}						# IPv4 address
 			|														# or
@@ -58,14 +58,13 @@ class Url extends AbstractConstraint implements ConstraintInterface {
 	 * @param bool $checkDns
 	 * @param array $schemes
 	 */
-	public function __construct($checkDns = FALSE, array $schemes = NULL) {
-	
+	public function __construct($checkDns = false, array $schemes = null)
+    {
 		$this->checkDns = $checkDns;
 
 		if($schemes) {
 			$this->schemes = $schemes;
 		}
-
 	}
 
 	/**
@@ -74,16 +73,16 @@ class Url extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value) {
-		
+	public function validate($value): bool
+    {
 		$value = trim($value);
 
 		// check for matching format
-		
-		if(!preg_match(sprintf(static::MATCH_PATTERN, implode('|', $this->schemes), $value))) {
+
+		if(!preg_match(sprintf(static::MATCH_PATTERN, implode('|', $this->schemes)), $value)) {
 
 			$this->setErrorMessage(sprintf("Value '%s' is not a valid URL.", $value));
-			return FALSE;
+			return false;
 
 		}
 
@@ -96,12 +95,11 @@ class Url extends AbstractConstraint implements ConstraintInterface {
 			if(!checkdnsrr($host, 'ANY')) {
 
 				$this->setErrorMessage(sprintf("Host '%s' could not be resolved.", $host));
-				return FALSE;
+				return false;
 
 			}
 		}
 		
-		return TRUE;
-
+		return true;
 	}
 }
