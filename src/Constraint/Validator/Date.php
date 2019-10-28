@@ -23,8 +23,8 @@ use vxPHP\Application\Application;
  * @version 0.3.1 2017-10-04
  * @author Gregor Kofler
  */
-class Date extends AbstractConstraint implements ConstraintInterface {
-	
+class Date extends AbstractConstraint
+{
 	/**
 	 * the locale applied to the validation
 	 * 
@@ -55,8 +55,8 @@ class Date extends AbstractConstraint implements ConstraintInterface {
      * @throws \InvalidArgumentException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public function __construct(array $options = []) {
-		
+	public function __construct(array $options = [])
+    {
 		$this->locale = isset($options['locale']) ? $options['locale'] : Application::getInstance()->getCurrentLocale();
 		
 		if(!$this->locale instanceof Locale) {
@@ -82,12 +82,10 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 			$this->validUntil = $options['validUntil'];
 
 		}
-		
-		
+
 		if(is_null($this->locale)) {
 			throw new \InvalidArgumentException('Date validator requires either a valid locale, either passed to constructor or configured in application.');
 		}
-
 	}
 	
 	/**
@@ -96,8 +94,8 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value) {
-
+	public function validate($value): bool
+    {
 		$localeId = $this->locale->getLocaleId();
 
 		switch($localeId) {
@@ -112,7 +110,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 				if(!preg_match('~^' . $rex . '$~', $value, $matches))	{
 					
 					$this->setErrorMessage(sprintf("'%s' is not a properly formatted date string.", $value));
-					return FALSE;
+					return false;
 				}
 
 				// explode along separating character
@@ -132,7 +130,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 					if(!checkdate($tmp[1], $tmp[0], $tmp[2])) {
 
 						$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
-						return FALSE;
+						return false;
 
 					}
 					
@@ -142,13 +140,14 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 
 				// mm.dd.yyyy
 
-				else if(!checkdate($tmp[0], $tmp[1], $tmp[2])) {
-					
-					$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
-					return FALSE;
-				}
+                if(!checkdate($tmp[0], $tmp[1], $tmp[2])) {
 
-				$isoFormat = sprintf('%04d-%02d-%02d', $tmp[2], $tmp[0], $tmp[1]);
+                    $this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
+                    return false;
+
+                }
+
+                $isoFormat = sprintf('%04d-%02d-%02d', $tmp[2], $tmp[0], $tmp[1]);
 				break;
 		
 			default:
@@ -160,7 +159,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 				if(!preg_match('~^' . $rex . '$~', $value, $matches))	{
 
 					$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
-					return FALSE;
+					return false;
 				}
 
 				// explode along separating character
@@ -176,7 +175,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 				if(!checkdate($tmp[1], $tmp[2], $tmp[0])) {
 					
 					$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
-					return FALSE;
+					return false;
 				
 				}
 
@@ -188,7 +187,7 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 		if($this->validFrom && $this->validFrom->format('Y-m-d') >= $isoFormat) {
 			
 			$this->setErrorMessage(sprintf("'%s' is not within validFrom boundary.", $value));
-			return FALSE;
+			return false;
 
 		}
 
@@ -197,14 +196,12 @@ class Date extends AbstractConstraint implements ConstraintInterface {
 		if($this->validUntil && $this->validUntil->format('Y-m-d') <= $isoFormat) {
 
 			$this->setErrorMessage(sprintf("'%s' is not within validUntil boundary.", $value));
-			return FALSE;
+			return false;
 
 		}
 
 		// all checks passed
 
-		return TRUE;
-		
+		return true;
 	}
-
 }

@@ -20,8 +20,8 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.1.0 2016-11-28
  * @author Gregor Kofler
  */
-class Email extends AbstractConstraint implements ConstraintInterface {
-	
+class Email extends AbstractConstraint
+{
 	/**
 	 * indicate which type of additional checking (MX or host) is required
 	 *
@@ -40,10 +40,10 @@ class Email extends AbstractConstraint implements ConstraintInterface {
 	 * build regular expression against which
 	 * email is checked
 	 * 
-	 * @param boolean $checkMx
+	 * @param string $type
 	 */
-	public function __construct($type = NULL) {
-		
+	public function __construct($type = null)
+    {
 		if($type) {
 
 			$allowedTypes = 'checkMX checkHost';
@@ -59,30 +59,29 @@ class Email extends AbstractConstraint implements ConstraintInterface {
 
 		}
 		
-		$qtext			= '[^\\x0d\\x22\\x5c\\x80-\\xff]';
-		$dtext			= '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
-		$atom			= '[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]+';
-		$atom_umlaut	= '(?:[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]|[äöüÄÖÜ])+';
-		$quoted_pair	= '\\x5c[\\x00-\\x7f]';
+		$qtext          = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
+		$dtext          = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
+		$atom           = '[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]+';
+		$atom_umlaut    = '(?:[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]|[äöüÄÖÜ])+';
+		$quoted_pair    = '\\x5c[\\x00-\\x7f]';
 
-		$domain_literal	= "\\x5b(?:$dtext|$quoted_pair)*\\x5d";
-		$quoted_string	= "\\x22(?:$qtext|$quoted_pair)*\\x22";
-		$domain_ref		= $atom_umlaut;
-		$sub_domain		= "(?:$domain_ref|$domain_literal)";
-		$word			= "(?:$atom|$quoted_string)";
+		$domain_literal = "\\x5b(?:$dtext|$quoted_pair)*\\x5d";
+		$quoted_string  = "\\x22(?:$qtext|$quoted_pair)*\\x22";
+		$domain_ref     = $atom_umlaut;
+		$sub_domain     = "(?:$domain_ref|$domain_literal)";
+		$word           = "(?:$atom|$quoted_string)";
 
 		//now a two-part domain identifier is required (not conforming to RFC822)
 
-		$domain			= "$sub_domain(?:\\x2e$sub_domain)+";	// "$sub_domain(\\x2e$sub_domain)*"
+		$domain         = "$sub_domain(?:\\x2e$sub_domain)+";	// "$sub_domain(\\x2e$sub_domain)*"
 		
 		//capturing parantheses added
 
-		$local_part		= "$word(?:\\x2e$word)*";
+		$local_part     = "$word(?:\\x2e$word)*";
 		
 		// put everything together
 
 		$this->regExp = '/^(' . $local_part . ')@(' . $domain .')$/';
-		
 	}
 	
 	/**
@@ -91,11 +90,11 @@ class Email extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\AbstractConstraint::validate()
 	 */
-	public function validate($value) {
-
+	public function validate($value): bool
+    {
 		if(!preg_match($this->regExp, $value)) {
 			$this->setErrorMessage(sprintf("'%s' does not appear to be a valid email.", $value));
-			return FALSE;
+			return false;
 		}
 		
 		// extract host information
@@ -105,19 +104,17 @@ class Email extends AbstractConstraint implements ConstraintInterface {
 		if($this->checkType === 'checkmx') {
 			if(!checkdnsrr($host)) {
 				$this->setErrorMessage(sprintf("MX lookup for '%s' failed.", $value));
-				return FALSE;
+				return false;
 			}
 		}
 		
 		else if($this->checkType === 'checkhost') {
 			if(!(checkdnsrr($host) || checkdnsrr($host, 'A') || checkdnsrr($host, 'AAAA'))) {
 				$this->setErrorMessage(sprintf("A, AAAA or MX lookup for '%s' failed.", $value));
-				return FALSE;
+				return false;
 			}
 		}
 
-		return TRUE;
-
+		return true;
 	}
-	
 }

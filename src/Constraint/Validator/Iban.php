@@ -11,8 +11,8 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.4.0 2017-12-02
  *
  */
-class Iban extends AbstractConstraint implements ConstraintInterface {
-
+class Iban extends AbstractConstraint
+{
 	private $ibanPatternsByCountry = [
 
 	    /*
@@ -141,7 +141,6 @@ class Iban extends AbstractConstraint implements ConstraintInterface {
         'TF' => 'FR', // French Southern Territories
         'YT' => 'FR', // Mayotte
         'WF' => 'FR', // Wallis and Futuna Islands
-        'YT' => 'FR', // Mayotte
     ];
 
 	/**
@@ -150,8 +149,8 @@ class Iban extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\AbstractConstraint::validate()
 	 */
-	public function validate($value) {
-		
+	public function validate($value): bool
+    {
 		$this->clearErrorMessage();
 
 		$iban = strtoupper(preg_replace('/\s+/', '', $value));
@@ -215,7 +214,5 @@ class Iban extends AbstractConstraint implements ConstraintInterface {
 		}
 
 		return true;
-
 	}
-
 }

@@ -19,7 +19,8 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.1.2 2018-04-25
  * @author Gregor Kofler
  */
-class RegularExpression extends AbstractConstraint implements ConstraintInterface {
+class RegularExpression extends AbstractConstraint
+{
 	
 	/**
 	 * regular expression the value is matched against
@@ -36,9 +37,10 @@ class RegularExpression extends AbstractConstraint implements ConstraintInterfac
 	 * @throws \InvalidArgumentException
 	 * 
 	 */
-	public function __construct($regExp) {
+	public function __construct($regExp)
+    {
 
-		if(@preg_match($regExp, '') === FALSE) {
+		if(@preg_match($regExp, '') === false) {
 			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $regExp));
 		}
 
@@ -52,10 +54,8 @@ class RegularExpression extends AbstractConstraint implements ConstraintInterfac
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value) {
-
+	public function validate($value): bool
+    {
 		return (bool) preg_match($this->regExp, $value);
-
 	}
-	
 }

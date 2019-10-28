@@ -20,13 +20,14 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.3.0 2016-11-28
  * @author Gregor Kofler
  */
-class Time extends AbstractConstraint implements ConstraintInterface {
-	
+class Time extends AbstractConstraint
+{
+
 	/**
 	 * constructor, parses options
 	 */
-	public function __construct() {
-	
+	public function __construct()
+    {
 	}
 
 	/**
@@ -35,14 +36,14 @@ class Time extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value) {
-		
+	public function validate($value): bool
+    {
 		// check for matching format
 		
 		if(!preg_match('~^\d{1,2}:\d{1,2}(:\d{1,2})?$~', $value))	{
 			
 			$this->setErrorMessage(sprintf("'%s' is not a properly formatted time string.", $value));
-			return FALSE;
+			return false;
 
 		}
 		
@@ -50,14 +51,13 @@ class Time extends AbstractConstraint implements ConstraintInterface {
 		
 		$tmp = explode(':', $value);
 		
-		if(((int) $tmp[0] > 23 || (int) $tmp[1] > 59 || isset($tmp[2]) && $tmp[2] > 59)) {
+		if(((int) $tmp[0] > 23 || (int) $tmp[1] > 59 || (isset($tmp[2]) && $tmp[2] > 59))) {
 
 			$this->setErrorMessage(sprintf("'%s' is an invalid time value.", $value));
-			return FALSE;
+			return false;
 			
 		}
 
-		return TRUE;
-
+		return true;
 	}
 }

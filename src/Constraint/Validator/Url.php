@@ -19,8 +19,8 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.1.1 2019-10-13
  * @author Gregor Kofler
  */
-class Url extends AbstractConstraint implements ConstraintInterface {
-	
+class Url extends AbstractConstraint
+{
 	const MATCH_PATTERN = '~^
 		(%s)://														# protocol
 		(([\pL\pN-]+:)?([\pL\pN-]+)@)?								# optional auth

@@ -21,10 +21,10 @@ use vxPHP\Constraint\ConstraintInterface;
  * integer or a string representing either; scientific notation is
  * not supported
  *
- * @version 0.1.0 2018-04-29W
+ * @version 0.1.0 2018-04-29
  * @author Gregor Kofler
  */
-class Range extends AbstractConstraint implements ConstraintInterface
+class Range extends AbstractConstraint
 {
 
     /**
@@ -42,6 +42,12 @@ class Range extends AbstractConstraint implements ConstraintInterface
      */
     private $max;
 
+    /**
+     * Range constructor.
+     * @param $min
+     * @param $max
+     * @param array $options
+     */
     public function __construct($min, $max, $options = [])
     {
         $this->min = $min;
@@ -55,7 +61,7 @@ class Range extends AbstractConstraint implements ConstraintInterface
      *
      * @see \vxPHP\Constraint\ConstraintInterface::validate()
      */
-    public function validate($value)
+    public function validate($value): bool
     {
         if(!(is_int($value) || is_float($value)) && !preg_match('/^[+-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/', $value)) {
             return false;
@@ -66,6 +72,5 @@ class Range extends AbstractConstraint implements ConstraintInterface
         }
 
         return ($value >= $this->min) && ($value <= $this->max);
-
     }
 }

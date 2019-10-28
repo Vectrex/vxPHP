@@ -19,8 +19,8 @@ use vxPHP\Constraint\AbstractConstraint;
  * @version 0.1.0 2016-11-30
  * @author Gregor Kofler
  */
-class Ip extends AbstractConstraint implements ConstraintInterface {
-	
+class Ip extends AbstractConstraint
+{
 	/**
 	 * version against which address is validated 
 	 * 
@@ -41,21 +41,21 @@ class Ip extends AbstractConstraint implements ConstraintInterface {
 	 * @param string $version
 	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($version = 'all') {
-	
+	public function __construct($version = 'all')
+    {
 		$allowedVersions = [
-			'all'					=> NULL,
-			'v4'					=> FILTER_FLAG_IPV4,
-			'v6'					=> FILTER_FLAG_IPV6,
-			'all_no_priv_range'		=> FILTER_FLAG_NO_PRIV_RANGE,
-			'v4_no_priv_range'		=> FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE,
-			'v6_no_priv_range'		=> FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE,
-			'all_no_res_range'		=> FILTER_FLAG_NO_RES_RANGE,
-			'v4_no_res_range'		=> FILTER_FLAG_IPV4 | FILTER_FLAG_NO_RES_RANGE,
-			'v6_no_res_range'		=> FILTER_FLAG_IPV6 | FILTER_FLAG_NO_RES_RANGE,
-			'all_no_public_range'	=> FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
-			'v4_no_public_range'	=> FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
-			'v6_no_public_range'	=> FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+			'all'                 => null,
+			'v4'                  => FILTER_FLAG_IPV4,
+			'v6'                  => FILTER_FLAG_IPV6,
+			'all_no_priv_range'   => FILTER_FLAG_NO_PRIV_RANGE,
+			'v4_no_priv_range'    => FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE,
+			'v6_no_priv_range'    => FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE,
+			'all_no_res_range'    => FILTER_FLAG_NO_RES_RANGE,
+			'v4_no_res_range'     => FILTER_FLAG_IPV4 | FILTER_FLAG_NO_RES_RANGE,
+			'v6_no_res_range'     => FILTER_FLAG_IPV6 | FILTER_FLAG_NO_RES_RANGE,
+			'all_no_public_range' => FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+			'v4_no_public_range'  => FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+			'v6_no_public_range'  => FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
 		];
 
 		$version = strtolower($version);
@@ -66,7 +66,6 @@ class Ip extends AbstractConstraint implements ConstraintInterface {
 
 		$this->version = $version;
 		$this->flags = $allowedVersions[$version];
-
 	}
 
 	/**
@@ -75,13 +74,13 @@ class Ip extends AbstractConstraint implements ConstraintInterface {
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value) {
-
+	public function validate($value): bool
+    {
 		if(!filter_var($value, FILTER_VALIDATE_IP, $this->flags)) {
 			$this->setErrorMessage(sprintf("'%s' does not appear to be a valid IP address.", $value));
-			return FALSE;
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 }
