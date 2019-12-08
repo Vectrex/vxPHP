@@ -11,7 +11,9 @@
 
 namespace vxPHP\File;
 
-use vxPHP\File\MimeTypeGetter;
+use DirectoryIterator;
+use SplFileInfo;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\PublisherInterface;
 
@@ -20,54 +22,71 @@ use vxPHP\Observer\PublisherInterface;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2017-02-04
+ * @version 0.7.0 2019-12-06
  */
 
-class FilesystemFile implements PublisherInterface {
+class FilesystemFile implements PublisherInterface
+{
+    public const WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
-	protected static $instances = array();
+    /**
+     * @var array
+     */
+    protected static $instances = [];
 
-	protected	$filename,
-				$folder,
-				$mimetype,
+    /**
+     * @var string
+     */
+	protected $filename;
 
-				/**
-				 * @var \SplFileInfo
-				 */
-				$fileInfo;
+    /**
+     * @var FilesystemFolder
+     */
+    protected $folder;
 
-	/**
-	 * @param string $path
-	 * @return FilesystemFile;
-	 */
-	public static function getInstance($path) {
+    /**
+     * @var string
+     */
+	protected $mimetype;
 
+    /**
+     * @var SplFileInfo
+     */
+    protected $fileInfo;
+
+    /**
+     * @param string $path
+     * @return FilesystemFile;
+     * @throws FilesystemFileException
+     * @throws Exception\FilesystemFolderException
+     */
+	public static function getInstance($path): FilesystemFile
+    {
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
 		}
 		return self::$instances[$path];
-
 	}
 
-	public static function unsetInstance($path) {
-
+	public static function unsetInstance($path): void
+    {
 		if(isset(self::$instances[$path])) {
 			unset(self::$instances[$path]);
 		}
-
 	}
 
-	/**
-	 * constructs mapper for filesystem files
-	 * if folder is provided a bulk generation is assumed and certain checks are omitted
-	 *
-	 * @param string $path
-	 * @param FilesystemFolder $folder
-	 *
-	 * @throws FilesystemFileException
-	 */
-	public function __construct($path, FilesystemFolder $folder = NULL) {
-
+    /**
+     * constructs mapper for filesystem files
+     * if folder is provided a bulk generation is assumed and certain checks are omitted
+     *
+     * @param string $path
+     * @param FilesystemFolder $folder
+     *
+     * @throws FilesystemFileException
+     * @throws Exception\FilesystemFolderException
+     */
+	public function __construct($path, FilesystemFolder $folder = null)
+    {
 		if($folder) {
 			$path = $folder->getPath() . $path;
 		}
@@ -79,106 +98,103 @@ class FilesystemFile implements PublisherInterface {
 			throw new FilesystemFileException("File $path does not exist!", FilesystemFileException::FILE_DOES_NOT_EXIST);
 		}
 
-		$this->folder	= $folder ? $folder : FilesystemFolder::getInstance(pathinfo($path, PATHINFO_DIRNAME));
-		$this->filename	= pathinfo($path, PATHINFO_BASENAME);
-		$this->fileInfo	= new \SplFileInfo($path);
+		$this->folder = $folder ?: FilesystemFolder::getInstance(pathinfo($path, PATHINFO_DIRNAME));
+		$this->filename = pathinfo($path, PATHINFO_BASENAME);
+		$this->fileInfo = new SplFileInfo($path);
 	}
 
 	/**
 	 * retrieve file information provided by SplFileInfo object
 	 */
-	public function getFileInfo() {
-
+	public function getFileInfo(): SplFileInfo
+    {
 		return $this->fileInfo;
-
 	}
 
-	/**
-	 * retrieve mime type
-	 * requires MimeTypeGetter
-	 *
-	 * @param bool $force forces re-read of mime type
-	 */
-	public function getMimetype($force = false) {
-
+    /**
+     * retrieve mime type
+     * requires MimeTypeGetter
+     *
+     * @param bool $force forces re-read of mime type
+     * @return string
+     */
+	public function getMimetype($force = false): string
+    {
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return $this->mimetype;
-
 	}
 
-	/**
-	 * check whether mime type indicates web image
-	 * (i.e. image/jpeg, image/gif, image/png)
-	 *
-	 * @param bool $force forces re-read of mime type
-	 */
-	public function isWebImage($force = false) {
-
+    /**
+     * check whether mime type indicates web image
+     * (i.e. image/jpeg, image/gif, image/png)
+     *
+     * @param bool $force forces re-read of mime type
+     * @return bool
+     */
+	public function isWebImage($force = false): bool
+    {
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
-		return preg_match('~^image/(p?jpeg|png|gif)$~', $this->mimetype);
-
+		return in_array($this->mimetype, self::WEBIMAGE_MIMETYPES, true);
 	}
 
 	/**
 	 * retrieve filename
 	 */
-	public function getFilename() {
+	public function getFilename(): string
+    {
 		return $this->filename;
 	}
 
 	/**
 	 * retrieves physical path of file
 	 */
-	public function getPath() {
+	public function getPath(): string
+    {
 		return $this->folder->getPath() . $this->filename;
 	}
 
-	/**
-	 * returns path relative to assets path root
-	 *
-	 * @param boolean $force
-	 * @return string
-	 */
-	public function getRelativePath($force = FALSE) {
-
-		if(!is_null($this->folder->getRelativePath())) {
-			return $this->folder->getRelativePath() . $this->filename;
-		}
-
+    /**
+     * returns path relative to assets path root
+     *
+     * @param boolean $force
+     * @return string
+     * @throws ApplicationException
+     */
+	public function getRelativePath($force = false): string
+    {
+        return $this->folder->getRelativePath($force) . $this->filename;
 	}
 
 	/**
 	 * return filesystem folder of file
 	 */
-	public function getFolder() {
-
+	public function getFolder(): FilesystemFolder
+    {
 		return $this->folder;
-
 	}
 
 	/**
 	 * rename file
 	 *
 	 * @param string $to new filename
-	 * @return \vxPHP\File\FilesystemFile
+	 * @return FilesystemFile
 	 * @throws FilesystemFileException
 	 */
-	public function rename($to) {
-
-		$from		= $this->filename;
+	public function rename($to): FilesystemFile
+    {
+		$from = $this->filename;
 
 		// name is unchanged, nothing to do
 
 		if($from !== $to) {
 
-			$oldpath	= $this->folder->getPath() . $from;
-			$newpath	= $this->folder->getPath() . $to;
-	
-	
+			$oldpath = $this->folder->getPath() . $from;
+			$newpath = $this->folder->getPath() . $to;
+
 			if(file_exists($newpath)) {
 				throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
 			}
@@ -193,7 +209,7 @@ class FilesystemFile implements PublisherInterface {
 
 				// re-read fileinfo
 				
-				$this->fileInfo	= new \SplFileInfo($newpath);
+				$this->fileInfo	= new SplFileInfo($newpath);
 
 				self::$instances[$newpath] = $this;
 				unset(self::$instances[$oldpath]);
@@ -206,7 +222,6 @@ class FilesystemFile implements PublisherInterface {
 		}
 		
 		return $this;
-
 	}
 
 	/**
@@ -214,17 +229,17 @@ class FilesystemFile implements PublisherInterface {
 	 * orphaned cache entries are deleted, new cache entries are not generated
 	 *
 	 * @param FilesystemFolder $destination
-	 * @return \vxPHP\File\FilesystemFile
+	 * @return FilesystemFile
 	 * @throws FilesystemFileException
 	 */
-	public function move(FilesystemFolder $destination) {
-
+	public function move(FilesystemFolder $destination): FilesystemFile
+    {
 		// already in destination folder, nothing to do
 
 		if($destination !== $this->folder) {
 
-			$oldpath	= $this->folder->getPath() . $this->filename;
-			$newpath	= $destination->getPath() . $this->filename;
+			$oldpath = $this->folder->getPath() . $this->filename;
+			$newpath = $destination->getPath() . $this->filename;
 	
 			if(@rename($oldpath, $newpath)) {
 
@@ -236,7 +251,7 @@ class FilesystemFile implements PublisherInterface {
 	
 				// re-read fileinfo
 
-				$this->fileInfo	= new \SplFileInfo($newpath);
+				$this->fileInfo	= new SplFileInfo($newpath);
 
 				self::$instances[$newpath] = $this;
 				unset(self::$instances[$oldpath]);
@@ -248,7 +263,7 @@ class FilesystemFile implements PublisherInterface {
 			}
 	
 			else {
-				throw new FilesystemFileException("Moving from '$oldpath' to '$newpath' failed.", FilesystemFileException::FILE_RENAME_FAILED);
+				throw new FilesystemFileException(sprintf("Moving from '%s' to '%s' failed.", $oldpath, $newpath), FilesystemFileException::FILE_RENAME_FAILED);
 			}
 
 		}
@@ -261,11 +276,11 @@ class FilesystemFile implements PublisherInterface {
 	 *
  	 * @param string $to new filename
 	 */
-	protected function renameCacheEntries($to) {
+	protected function renameCacheEntries($to): void
+    {
+		if(($cachePath = $this->folder->getCachePath(true))) {
 
-		if(($cachePath = $this->folder->getCachePath(TRUE))) {
-
-			$di	= new \DirectoryIterator($cachePath);
+			$di	= new DirectoryIterator($cachePath);
 
 			foreach($di as $fileinfo) {
 
@@ -288,8 +303,8 @@ class FilesystemFile implements PublisherInterface {
 	 * deletes file and removes instance from lookup array
 	 * @throws FilesystemFileException
 	 */
-	public function delete() {
-
+	public function delete(): void
+    {
 		if(@unlink($this->getPath())) {
 			$this->deleteCacheEntries();
 			self::unsetInstance($this->getPath());
@@ -297,18 +312,17 @@ class FilesystemFile implements PublisherInterface {
 		else {
 			throw new FilesystemFileException("Delete of file '{$this->getPath()}' failed.", FilesystemFileException::FILE_DELETE_FAILED);
 		}
-
 	}
 
 	/**
 	 * cleans up cache entries associated with
 	 * "original" file
 	 */
-	protected function deleteCacheEntries() {
+	protected function deleteCacheEntries(): void
+    {
+		if(($cachePath = $this->folder->getCachePath(true))) {
 
-		if(($cachePath = $this->folder->getCachePath(TRUE))) {
-
-			$di	= new \DirectoryIterator($cachePath);
+			$di	= new DirectoryIterator($cachePath);
 
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
@@ -326,23 +340,22 @@ class FilesystemFile implements PublisherInterface {
 	/**
 	 * remove all cache entries of file
 	 */
-	public function clearCacheEntries() {
-
+	public function clearCacheEntries(): void
+    {
 		$this->deleteCacheEntries();
-
 	}
 
 	/**
 	 * retrieve information about cached files
-	 * @return array information
+	 * @return array|bool information
 	 */
-	public function getCacheInfo() {
+	public function getCacheInfo()
+    {
+		if(($cachePath = $this->folder->getCachePath(true))) {
+			$size = 0;
+			$count = 0;
 
-		if(($cachePath = $this->folder->getCachePath(TRUE))) {
-			$size	= 0;
-			$count	= 0;
-
-			$di	= new \DirectoryIterator($cachePath);
+			$di	= new DirectoryIterator($cachePath);
 
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
@@ -356,22 +369,24 @@ class FilesystemFile implements PublisherInterface {
 			}
 			return ['count' => $count, 'totalSize' => $size];
 		}
-		return FALSE;
+		return false;
 	}
 
-	/**
-	 * return all filesystem files instances within a certain folder
-	 *
-	 * @param FilesystemFolder $folder
-	 * @return Array filesystem files
-	 */
-	public static function getFilesystemFilesInFolder(FilesystemFolder $folder) {
-
+    /**
+     * return all filesystem files instances within a certain folder
+     *
+     * @param FilesystemFolder $folder
+     * @return array filesystem files
+     * @throws Exception\FilesystemFolderException
+     * @throws FilesystemFileException
+     */
+	public static function getFilesystemFilesInFolder(FilesystemFolder $folder): array
+    {
 		$files = [];
 
 		$glob = glob($folder->getPath() . '*', GLOB_NOSORT);
 
-		if($glob !== FALSE) {
+		if($glob !== false) {
 
 			foreach($glob as $f) {
 				if(!is_dir($f)) {
@@ -396,11 +411,11 @@ class FilesystemFile implements PublisherInterface {
 	 *
 	 * @param string $filename
 	 * @param FilesystemFolder $dir
-	 * @param integer $starting_index used in renamed file
+	 * @param integer $ndx starting index used in renamed file
 	 * @return string
 	 */
-	public static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2) {
-
+	public static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2): string
+    {
 		// remove any characters which are not allowed in any file system
 
 		$filename = preg_replace('~[<>:"/\\|?*\\x00-\\x1F]~', '_', $filename);
@@ -418,6 +433,5 @@ class FilesystemFile implements PublisherInterface {
 		}
 
 		return sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']);
-
 	}
 }
