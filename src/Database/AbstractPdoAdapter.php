@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.11.0, 2019-01-27
+ * @version 0.12.0, 2019-12-11
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface {
 
@@ -691,8 +691,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * 
 	 * @throws \PDOException
 	 */
-	public function deleteRecord($tableName, $keyValue) {
-		
+	public function deleteRecord($tableName, $keyValue)
+    {
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
@@ -740,17 +740,26 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			// record identified with one or more specific attributes
 			
 			$keyValue = array_change_key_case($keyValue, CASE_LOWER);
-			
-			$whereNames = [];
+
+            $wheres = [];
 			$whereValues = [];
-			
+
 			foreach($keyValue as $whereName => $whereValue) {
-			
 				if (!in_array($whereName, $attributes)) {
 					throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
 				}
-				$whereNames[] = $columns[$whereName]['columnName'];
-				$whereValues[] = $whereValue;
+
+				$where = static::QUOTE_CHAR . $whereName . static::QUOTE_CHAR;
+
+				if(is_array($whereValue)) {
+				    $where .=  sprintf(' IN (%s)', implode(',', array_fill(0, count($whereValue), '?')));
+                    $whereValues = array_merge($whereValues, $whereValue);
+                }
+				else {
+				    $where .= ' = ?';
+				    $whereValues[] = $whereValue;
+                }
+				$wheres[] = $where;
 			}
 
 			if(
@@ -759,10 +768,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
                             DELETE FROM
                                 %s
                             WHERE
-                                %s = ?
+                                %s
                         ",
                         static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-                        static::QUOTE_CHAR . implode (static::QUOTE_CHAR . ' = ? AND ' . static::QUOTE_CHAR, $whereNames) . static::QUOTE_CHAR
+                        implode(' AND ', $wheres)
                     ),
                     $whereValues
                 )->execute()
@@ -771,9 +780,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			}
 			
 			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-			
 		}
-
 	}
 
 	/**

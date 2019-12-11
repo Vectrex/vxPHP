@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.6.0, 2018-07-18
+ * @version 0.7.0, 2019-12-11
  *
  */
 interface DatabaseInterface {
@@ -79,8 +79,9 @@ interface DatabaseInterface {
 	/**
 	 * delete a record in table $tableName, identified by $keyValue
 	 * $keyValue can either be a scalar (matching a single-field primary
-	 * key) or an associative array
-	 *
+	 * key) or an associative array <attr> => <value>
+     * if the value is again an array an IN clause is used
+     *
 	 * returns affected row count
 	 *
 	 * @param string $tableName
