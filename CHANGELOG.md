@@ -15,3 +15,6 @@
 
 ## v1.6.8
 - DatabaseInterface::deleteRecord allows arrays as values when key-value pairs are passed to the method; in this case the resulting WHERE clause will use IN()
+
+## v1.6.9
+- bugfix: in form templates element arrays expected the form element to appear after its label
