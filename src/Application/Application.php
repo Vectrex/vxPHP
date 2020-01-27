@@ -10,6 +10,7 @@
 
 namespace vxPHP\Application;
 
+use Exception;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
@@ -29,7 +30,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.11.1 2019-01-20
+ * @version 1.11.2 2019-01-27
  */
 class Application {
 
@@ -164,11 +165,11 @@ class Application {
 	 * 
 	 * @param Config $config
 	 */
-	private function __construct(Config $config) {
-
+	private function __construct(Config $config)
+    {
 		try {
-			$this->config			= $config;
-			$this->eventDispatcher	= EventDispatcher::getInstance();
+			$this->config = $config;
+			$this->eventDispatcher = EventDispatcher::getInstance();
 
 			$this->config->createConst();
 
@@ -197,9 +198,9 @@ class Application {
 			
 		}
 
-		catch (\Exception $e) {
+		catch (Exception $e) {
 
-			if (substr(php_sapi_name(), 0, 3) === 'cli') {
+			if (strpos(PHP_SAPI, 'cli') === 0) {
 				printf(
 					"Application error!\r\nMessage: %s",
 					$e->getMessage()
@@ -229,17 +230,16 @@ class Application {
      * @return Application
      * @throws ApplicationException
      */
-	public static function getInstance(Config $config = null) {
-
-		if(is_null(self::$instance)) {
-			if(is_null($config)) {
+	public static function getInstance(Config $config = null): Application
+    {
+		if(self::$instance === null) {
+			if($config === null) {
 				throw new ApplicationException('No configuration object provided. Cannot instantiate application.');
 			}
 			self::$instance = new Application($config);
 		}
 
 		return self::$instance;
-
 	}
 	
 	/**
@@ -248,10 +248,9 @@ class Application {
 	 * 
 	 * @return string
 	 */
-	public function getApplicationNamespace() {
-		
+	public function getApplicationNamespace(): string
+    {
 		return 'App';
-		
 	}
 
     /**
@@ -263,15 +262,15 @@ class Application {
      * @return Application
      * @throws ApplicationException
      */
-	public function registerPlugins() {
-		
+	public function registerPlugins(): Application
+    {
 		if($this->plugins) {
 			foreach($this->plugins as $plugin) {
 				$this->eventDispatcher->removeSubscriber($plugin);
 			}
 		}
 
-		$this->plugins = array();
+		$this->plugins = [];
 		
 		// initialize plugins (if configured)
 		
@@ -284,7 +283,6 @@ class Application {
 		}
 
 		return $this; 
-
 	}
 
     /**
@@ -294,11 +292,11 @@ class Application {
      * if no 'db' configuration is found, it tries to return a
      * configured default vxpdo datasource
      *
-     * @return \vxPHP\Database\DatabaseInterface
-     * @throws \Exception
+     * @return DatabaseInterface
+     * @throws Exception
      */
-	public function getDb() {
-
+	public function getDb(): ?DatabaseInterface
+    {
 		if(empty($this->db)) {
 
 			if(empty($this->config->db)) {
@@ -316,7 +314,7 @@ class Application {
 			$config = $this->config->db;
 
 			$this->db = DatabaseInterfaceFactory::create(
-				isset($config->type) ? $config->type : 'mysql',
+				$config->type ?? 'mysql',
 				[
 					'host'		=> $config->host,
 					'dbname'	=> $config->name,
@@ -327,7 +325,6 @@ class Application {
 		}
 
 		return $this->db;
-
 	}
 
 	/**
@@ -337,10 +334,10 @@ class Application {
 	 * @param string $name
 	 * @throws ApplicationException
 	 * 
-	 * @return \vxPHP\Database\DatabaseInterface
+	 * @return DatabaseInterface
 	 */
-	public function getVxPDO($name = 'default') {
-		
+	public function getVxPDO ($name = 'default'): DatabaseInterface
+    {
 		if(!array_key_exists($name, $this->vxPDOInstances)) {
 
 			if(empty($this->config->vxpdo) || !array_key_exists($name, $this->config->vxpdo)) {
@@ -364,7 +361,6 @@ class Application {
 		}
 
 		return $this->vxPDOInstances[$name];
-		
 	}
 	
 	/**
@@ -372,10 +368,9 @@ class Application {
 	 *
 	 * @return Config
 	 */
-	public function getConfig() {
-
+	public function getConfig(): Config
+    {
 		return $this->config;
-
 	}
 
     /**
@@ -388,14 +383,13 @@ class Application {
      * @return ServiceInterface :ServiceInterface
      * @throws ApplicationException
      */
-	public function getService($serviceId) {
-
+	public function getService($serviceId): ServiceInterface
+    {
 		$args = func_get_args();
 		$service = $this->initializeService($serviceId, array_splice($args, 1));
 		$this->services[] = $service;
 
 		return $service;
-
 	}
 
     /**
@@ -405,10 +399,9 @@ class Application {
      * @param $serviceId
      * @return bool
      */
-	public function hasService($serviceId) {
-
+	public function hasService($serviceId): bool
+    {
 	    return !empty($this->config->services) && array_key_exists($serviceId, $this->config->services);
-
     }
 
 	/**
@@ -416,10 +409,9 @@ class Application {
 	 *
 	 * @return EventDispatcher
 	 */
-	public function getEventDispatcher() {
-
+	public function getEventDispatcher(): EventDispatcher
+    {
 		return $this->eventDispatcher;
-
 	}
 
 	/**
@@ -427,10 +419,9 @@ class Application {
 	 *
 	 * @return Route
 	 */
-	public function getCurrentRoute() {
-
+	public function getCurrentRoute(): ?Route
+    {
 		return $this->currentRoute;
-
 	}
 
 	/**
@@ -439,9 +430,9 @@ class Application {
 	 * 
 	 * @return boolean
 	 */
-	public function runsLocally() {
-
-		if(is_null($this->isLocal)) {
+	public function runsLocally(): bool
+    {
+		if($this->isLocal === null) {
 			
 			$remote =
 				isset($_SERVER['HTTP_CLIENT_IP']) ||
@@ -465,7 +456,6 @@ class Application {
 		}		
 
 		return $this->isLocal;
-
 	}
 
 	/**
@@ -473,11 +463,11 @@ class Application {
 	 *
 	 * @return string
 	 */
-	public function getSourcePath() {
-
+	public function getSourcePath(): string
+    {
 		// lazy init
 
-		if(is_null($this->sourcePath)) {
+		if($this->sourcePath === null) {
 
 			$this->sourcePath =
 				$this->rootPath .
@@ -486,7 +476,6 @@ class Application {
 		}
 
 		return $this->sourcePath;
-
 	}
 
 	/**
@@ -497,18 +486,17 @@ class Application {
 	 * @return Application
 	 * @throws ApplicationException
 	 */
-	public function setAbsoluteAssetsPath($path) {
-
+	public function setAbsoluteAssetsPath($path): Application
+    {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		if(!is_null($this->rootPath) && 0 !== strpos($path, $this->rootPath)) {
+		if($this->rootPath !== null && 0 !== strpos($path, $this->rootPath)) {
 			throw new ApplicationException(sprintf("'%s' not within application path '%s'.", $path, $this->rootPath), ApplicationException::PATH_MISMATCH);
 		}
 
 		$this->absoluteAssetsPath = $path;
 
 		return $this;
-
 	}
 
 	/**
@@ -517,10 +505,9 @@ class Application {
 	 *
 	 * @return string
 	 */
-	public function getAbsoluteAssetsPath() {
-
+	public function getAbsoluteAssetsPath(): ?string
+    {
 		return $this->absoluteAssetsPath;
-	
 	}
 
 	/**
@@ -530,8 +517,8 @@ class Application {
 	 * @param string $path
 	 * @return Application
 	 */
-	public function setRelativeAssetsPath($path) {
-
+	public function setRelativeAssetsPath($path): Application
+    {
 	    $path = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
 
 	    if($path) {
@@ -540,7 +527,6 @@ class Application {
 
 		$this->relativeAssetsPath =  $path;
 		return $this;
-
 	}
 	
 	/**
@@ -549,10 +535,9 @@ class Application {
 	 *
 	 * @return string
 	 */
-	public function getRelativeAssetsPath() {
-	
+	public function getRelativeAssetsPath(): string
+    {
 		return $this->relativeAssetsPath;
-	
 	}
 
     /**
@@ -561,10 +546,9 @@ class Application {
      * @param $path
      * @return string
      */
-    public function asset($path) {
-
+    public function asset($path): string
+    {
 	    return '/' . $this->relativeAssetsPath . rtrim($path, '/');
-
     }
 
 	/**
@@ -575,11 +559,11 @@ class Application {
 	 * @return Application
 	 * @throws ApplicationException
 	 */
-	public function setRootPath($path) {
-
+	public function setRootPath($path): Application
+    {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		if(!is_null($this->absoluteAssetsPath) && 0 !== strpos($this->absoluteAssetsPath, $path)) {
+		if($this->absoluteAssetsPath !== null && 0 !== strpos($this->absoluteAssetsPath, $path)) {
 			throw new ApplicationException("'$path' not a parent of assets path '{$this->absoluteAssetsPath}'", ApplicationException::PATH_MISMATCH);
 		}
 
@@ -587,7 +571,6 @@ class Application {
 		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', (string) $this->absoluteAssetsPath));
 
 		return $this;
-
 	}
 
 	/**
@@ -596,47 +579,43 @@ class Application {
 	 *
 	 * @return string
 	 */
-	public function getRootPath() {
-
+	public function getRootPath(): ?string
+    {
 		return $this->rootPath;
-
 	}
 
 	/**
 	 * return the current application user
 	 * 
-	 * @return \vxPHP\User\UserInterface
+	 * @return UserInterface
 	 */
-	public function getCurrentUser() {
-
+	public function getCurrentUser(): ?UserInterface
+    {
 		return $this->currentUser;
-
 	}
 
 	/**
 	 * set the user which is currently using the application
 	 * 
 	 * @param UserInterface $user
-	 * @return \vxPHP\Application\Application
+	 * @return Application
 	 */
-	public function setCurrentUser(UserInterface $user) {
-
+	public function setCurrentUser(UserInterface $user): Application
+    {
 		$this->currentUser = $user;
 		return $this;
-
 	}
 	
 	/**
 	 * set role hierarchy
 	 * 
 	 * @param RoleHierarchy $roleHierarchy
-	 * @return \vxPHP\Application\Application
+	 * @return Application
 	 */
-	public function setRoleHierarchy(RoleHierarchy $roleHierarchy) {
-
+	public function setRoleHierarchy(RoleHierarchy $roleHierarchy): Application
+    {
 		$this->roleHierarchy = $roleHierarchy;
 		return $this;
-
 	}
 	
 	/**
@@ -644,10 +623,9 @@ class Application {
 	 *
 	 * @return RoleHierarchy
 	 */
-	public function getRoleHierarchy() {
-	
+	public function getRoleHierarchy(): ?RoleHierarchy
+    {
 		return $this->roleHierarchy;
-	
 	}
 
     /**
@@ -658,36 +636,32 @@ class Application {
      * @param string $path
      * @return string
      */
-	public function extendToAbsoluteAssetsPath($path) {
-
+	public function extendToAbsoluteAssetsPath($path): string
+    {
 		if(strpos($path, DIRECTORY_SEPARATOR) === 0 || strpos($path, ':\\') === 1) {
 			return $path;
 		}
 
-		else {
+        $pathSegments = explode(DIRECTORY_SEPARATOR, $path);
 
-			$pathSegments	= explode(DIRECTORY_SEPARATOR, $path);
+        // eliminate doubling of assets path
+        // a subdir with the name of the assets path as a child of the assets path will *not* work
 
-			// eliminate doubling of assets path
-			// a subdir with the name of the assets path as a child of the assets path will *not* work
+        if($pathSegments[0] === trim($this->getRelativeAssetsPath(), '/')) {
+            array_shift($pathSegments);
+        }
 
-			if($pathSegments[0] === trim($this->getRelativeAssetsPath(), '/')) {
-				array_shift($pathSegments);
-			}
-
-			return $this->getAbsoluteAssetsPath() . implode(DIRECTORY_SEPARATOR, $pathSegments);
-		}
-
+        return $this->getAbsoluteAssetsPath() . implode(DIRECTORY_SEPARATOR, $pathSegments);
 	}
 
 	/**
 	 * returns an array with available Locale instances
 	 * because of lazy instantiation, missing instances are created now
 	 *
-	 * @return array
+	 * @return Locale[]
 	 */
-	public function getAvailableLocales() {
-
+	public function getAvailableLocales(): array
+    {
 		foreach($this->locales as $id => $l) {
 			if(!$l) {
 				$this->locales[$id] = new Locale($id);
@@ -704,10 +678,9 @@ class Application {
 	 * @param string $localeId
 	 * @return boolean
 	 */
-	public function hasLocale($localeId) {
-
+	public function hasLocale($localeId): bool
+    {
 		return array_key_exists(strtolower($localeId), $this->locales);
-
 	}
 
     /**
@@ -716,15 +689,15 @@ class Application {
      * @return Locale
      * @throws ApplicationException
      */
-	public function getLocale($localeId) {
-
+	public function getLocale($localeId): Locale
+    {
 		$localeId = strtolower($localeId);
 
 		if(!array_key_exists($localeId, $this->locales)) {
 			throw new ApplicationException(sprintf("Locale '%s' does not exist.", $localeId), ApplicationException::INVALID_LOCALE);
 		}
 
-		if(is_null($this->locales[$localeId])) {
+		if($this->locales[$localeId] === null) {
 			$this->locales[$localeId] = new Locale($localeId);
 		}
 
@@ -736,10 +709,9 @@ class Application {
 	 *
 	 * @return Locale
 	 */
-	public function getCurrentLocale() {
-
+	public function getCurrentLocale(): ?Locale
+    {
 		return $this->currentLocale;
-
 	}
 
 	/**
@@ -748,11 +720,10 @@ class Application {
 	 * @param Locale $locale
 	 * @return Application
 	 */
-	public function setCurrentLocale(Locale $locale) {
-
+	public function setCurrentLocale(Locale $locale): Application
+    {
 		$this->currentLocale = $locale;
 		return $this;
-
 	}
 
     /**
@@ -760,7 +731,7 @@ class Application {
      *
      * @return Router
      */
-    public function getRouter(): Router
+    public function getRouter(): ?Router
     {
         return $this->router;
     }
@@ -784,8 +755,8 @@ class Application {
 	 * @param Route $route
 	 * @return Application
 	 */
-	public function setCurrentRoute(Route $route) {
-
+	public function setCurrentRoute(Route $route): Application
+    {
 		$this->currentRoute = $route;
 		return $this;
 		
@@ -799,8 +770,8 @@ class Application {
 	 * @throws ApplicationException
 	 * @return ServiceInterface
 	 */
-	private function initializeService($serviceId, array $constructorArguments) {
-		
+	private function initializeService($serviceId, array $constructorArguments): ServiceInterface
+    {
 		if(!isset($this->config->services[$serviceId])) {
 			throw new ApplicationException(sprintf("Service '%s' not configured.", $serviceId));
 		}
@@ -809,14 +780,14 @@ class Application {
 
 		// get class name
 
-		$class	= $configData['class'];
+		$class = $configData['class'];
 
 		// create instance and pass additional parameters to constructor
 
 		try {
 			$service = new $class(...$constructorArguments);
 		}
-		catch(\Exception $e) {
+		catch(Exception $e) {
 			throw new ApplicationException(sprintf("Instancing of service '%s' failed. Error: %s", $serviceId, $e->getMessage()));
 		}
 
@@ -831,7 +802,6 @@ class Application {
 		$service->setParameters($configData['parameters']);
 		
 		return $service;
-
 	}
 	
 	/**
@@ -841,26 +811,21 @@ class Application {
 	 * @throws ApplicationException
 	 * @return SubscriberInterface
 	 */
-	private function initializePlugin($pluginId) {
-
+	private function initializePlugin($pluginId): SubscriberInterface
+    {
 		$configData = $this->config->plugins[$pluginId];
 
 		// load class file
 
-		$class	= str_replace('/', '\\', $configData['class']);
-		
-		$file	= $this->rootPath . 'src/' . $configData['classPath'] . $class . '.php';
+		$class = $configData['class'];
 
-		if(!file_exists($file)) {
-			throw new ApplicationException(sprintf("Class file '%s' for plugin '%s' not found.", $file, $pluginId));
-		}
+		try {
+		    $plugin = new $class();
+        }
+        catch(Exception $e) {
+            throw new ApplicationException(sprintf("Instancing of plugin '%s' failed. Error: %s", $pluginId, $e->getMessage()));
+        }
 
-		require $file;
-		
-		// create instance
-
-		$plugin = new $class;
-		
 		// check whether instance implements SubscriberInterface
 		
 		if(!$plugin instanceof SubscriberInterface) {
@@ -881,8 +846,7 @@ class Application {
 		// register plugin with dispatcher
 
 		EventDispatcher::getInstance()->addSubscriber($plugin);
-		
-		return $plugin;
 
+		return $plugin;
 	}
 }

@@ -10,6 +10,9 @@
 
 namespace vxPHP\Application;
 
+use DOMDocument;
+use DOMNode;
+use stdClass;
 use vxPHP\Application\Exception\ConfigException;
 
 use vxPHP\Webpage\Menu\Menu;
@@ -23,12 +26,12 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.1.2 2019-06-23
+ * @version 2.1.3 2020-01-27
  */
 class Config {
 
 	/**
-	 * @var \stdClass
+	 * @var stdClass
 	 */
 	public	$site;
 
@@ -37,7 +40,7 @@ class Config {
 	 * will be replaced by vxpdo settings
 	 *
 	 * @deprecated
-	 * @var \stdClass
+	 * @var stdClass
 	 */
 	public	$db;
 
@@ -49,12 +52,12 @@ class Config {
 	public $vxpdo;
 
 	/**
-	 * @var \stdClass
+	 * @var stdClass
 	 */
 	public	$mail;
 
 	/**
-	 * @var \stdClass
+	 * @var stdClass
 	 */
 	public	$binaries;
 
@@ -93,7 +96,7 @@ class Config {
 	public	$plugins;
 
 	/**
-	 * @var \stdClass
+	 * @var stdClass
 	 *
 	 * holds configuration for templating
 	 */
@@ -128,14 +131,14 @@ class Config {
 	 * @param array $sections
 	 * @throws ConfigException
 	 */
-	public function __construct($xmlFile, array $sections = []) {
-
+	public function __construct($xmlFile, array $sections = [])
+    {
 		$this->sections	= $sections;
 		$xmlFile = realpath($xmlFile);
 
-		$previousUseErrors = libxml_use_internal_errors(TRUE);
+		$previousUseErrors = libxml_use_internal_errors(true);
 
-		$config = new \DOMDocument();
+		$config = new DOMDocument();
 
 		if(!$config->load($xmlFile, LIBXML_NOCDATA)) {
 
@@ -161,7 +164,6 @@ class Config {
 		$this->getServerConfig();
 
 		libxml_use_internal_errors($previousUseErrors);
-
 	}
 
 	/**
@@ -170,35 +172,32 @@ class Config {
 	 * @param string $xmlFile
 	 * @throws ConfigException
 	 */
-	private function dumpXmlErrors($xmlFile) {
-
+	private function dumpXmlErrors($xmlFile): void
+    {
 		$severity = [LIBXML_ERR_WARNING => 'Warning', LIBXML_ERR_ERROR => 'Error', LIBXML_ERR_FATAL => 'Fatal'];
 		$errors = [];
 
 		foreach(libxml_get_errors() as $error) {
-			$errors[] = sprintf("Row %d, column %d: %s (%d) %s", $error->line, $error->column, $severity[$error->level], $error->code, $error->message);
+			$errors[] = sprintf('Row %d, column %d: %s (%d) %s', $error->line, $error->column, $severity[$error->level], $error->code, $error->message);
 		}
 
 		throw new ConfigException(sprintf("Could not parse XML configuration in '%s'.\n\n%s", $xmlFile, implode("\n", $errors)));
-
 	}
 
 	/**
 	 * recursively include XML files in include tags
 	 * to avoid circular references any file can only be included once
 	 *
-	 * @param \DOMDocument $doc
+	 * @param DOMDocument $doc
 	 * @param string $filepath
 	 * @throws ConfigException
 	 */
-	private function includeIncludes(\DOMDocument $doc, $filepath) {
-
+	private function includeIncludes(DOMDocument $doc, $filepath): void
+    {
 		$path = rtrim(dirname(realpath($filepath)), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		if(in_array($filepath, $this->parsedXmlFiles)) {
-
-			throw new ConfigException(sprintf("File %s has already been used.", $filepath));
-
+		if(in_array($filepath, $this->parsedXmlFiles, true)) {
+			throw new ConfigException(sprintf('File %s has already been used.', $filepath));
 		}
 
 		$this->parsedXmlFiles[] = $filepath;
@@ -211,7 +210,7 @@ class Config {
 
 				// load file
 
-				$include = new \DOMDocument();
+				$include = new DOMDocument();
 
 				if(!$include->load($path . $node->nodeValue, LIBXML_NOCDATA)) {
 
@@ -260,7 +259,6 @@ class Config {
 					// delete include element
 					
 					$node->parentNode->removeChild($node);
-
 				}
 			}
 		}
@@ -271,17 +269,17 @@ class Config {
 	 * file; if a method matching the section name is found this method
 	 * is called to parse the section
 	 *
-	 * @param \DOMDocument $config
+	 * @param DOMDocument $config
 	 * @throws ConfigException
 	 * @return void
 	 */
-	private function parseConfig(\DOMDocument $config) {
-
+	private function parseConfig(DOMDocument $config): void
+    {
 		try {
 
 			// determine server context, missing SERVER_ADDR assumes localhost/CLI
 
-			$this->isLocalhost = !isset($_SERVER['SERVER_ADDR']) || !!preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
+			$this->isLocalhost = !isset($_SERVER['SERVER_ADDR']) || (bool) preg_match('/^(?:127|192|1|0)(?:\.\d{1,3}){3}$/', $_SERVER['SERVER_ADDR']);
 
 			$rootNode = $config->firstChild;
 
@@ -297,7 +295,7 @@ class Config {
 
 				$sectionName = $section->nodeName;
 
-				if(empty($this->sections) || in_array($sectionName, $this->sections)) {
+				if(empty($this->sections) || in_array($sectionName, $this->sections, true)) {
 
 					$methodName =
 						'parse' .
@@ -306,24 +304,16 @@ class Config {
 					;
 
 					if(method_exists($this, $methodName)) {
-
-						call_user_func([$this, $methodName], $section);
-
+						$this->$methodName($section);
 					}
 				}
-
 			}
 		}
 
 		catch(ConfigException $e) {
-
 			throw $e;
-
 		}
-
 	}
-
-
 
 	/**
 	 * parse db settings
@@ -332,8 +322,8 @@ class Config {
 	 *
 	 * @param DOMNode $db
 	 */
-	private function parseDbSettings(\DOMNode $db) {
-
+	private function parseDbSettings(DOMNode $db): void
+    {
 		$context = $this->isLocalhost ? 'local' : 'remote';
 		$xpath = new \DOMXPath($db->ownerDocument);
 
@@ -344,7 +334,7 @@ class Config {
 		}
 
 		if($d->length) {
-			$this->db = new \stdClass();
+			$this->db = new stdClass();
 
 			foreach($d->item(0)->childNodes as $node) {
 
@@ -356,21 +346,19 @@ class Config {
 				$k = $node->nodeName;
 
 				$this->db->$k = $v;
-
 			}
 		}
-
 	}
 
 	/**
 	 * parse datasource settings
 	 *
-	 * @param \DOMNode $datasources
+	 * @param DOMNode $vxpdo
 	 * @throws ConfigException
 	 */
-	private function parseVxpdoSettings(\DOMNode $vxpdo) {
-
-		if(is_null($this->vxpdo)) {
+	private function parseVxpdoSettings(DOMNode $vxpdo): void
+    {
+		if($this->vxpdo === null) {
 			$this->vxpdo = [];
 		}
 
@@ -404,40 +392,22 @@ class Config {
 			}
 
 			$this->vxpdo[$name] = (object) $config;
-
 		}
-
-	}
-
-	/**
-	 * @todo
-	 *
-	 * @param \DOMNode $propel
-	 * @throws ConfigException
-	 */
-	private function parsePropelSettings(\DOMNode $propel) {
-
-		if(!class_exists('\\PropelConfiguration')) {
-			throw new ConfigException("Class 'PropelConfiguration' not found.");
-		}
-
-		var_dump(json_decode(json_encode((array) $propel)), true);
-
 	}
 
 	/**
 	 * parses all (optional) mail settings
 	 *
-	 * @param \DOMNode $mail
+	 * @param DOMNode $mail
 	 * @throws ConfigException
 	 */
-	private function parseMailSettings(\DOMNode $mail) {
-
+	private function parseMailSettings(DOMNode $mail): void
+    {
 		if(($mailer = $mail->getElementsByTagName('mailer')->item(0))) {
 
-			if(is_null($this->mail)) {
-				$this->mail = new \stdClass();
-				$this->mail->mailer = new \stdClass();
+			if($this->mail === null) {
+				$this->mail = new stdClass();
+				$this->mail->mailer = new stdClass();
 			}
 
 
@@ -456,26 +426,24 @@ class Config {
 				$this->mail->mailer->{$node->nodeName} = trim($node->nodeValue);
 			}
 		}
-
 	}
 
 	/**
 	 * parse settings for binaries
-	 * @todo clean up code
 	 *
-	 * @param \DOMNode $binaries
+	 * @param DOMNode $binaries
 	 * @throws ConfigException
 	 */
-	private function parseBinariesSettings(\DOMNode $binaries) {
-
+	private function parseBinariesSettings(DOMNode $binaries): void
+    {
 		$context = $this->isLocalhost ? 'local' : 'remote';
 
 		$xpath = new \DOMXPath($binaries->ownerDocument);
 
-		$e = $xpath->query("db_connection[@context='$context']", $binaries);
+		$e = $xpath->query("executables[@context='$context']", $binaries);
 
 		if(!$e->length) {
-			$e = $xpath->query('executables');
+			$e = $xpath->query('executables', $binaries);
 		}
 
 		if($e->length) {
@@ -486,7 +454,7 @@ class Config {
 				throw new ConfigException('Malformed "site.ini.xml"! Missing path for binaries.');
 			}
 
-			$this->binaries = new \stdClass;
+			$this->binaries = new stdClass;
 			$this->binaries->path = rtrim($p->item(0)->nodeValue, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 			foreach($e->item(0)->getElementsByTagName('executable') as $v) {
@@ -500,20 +468,19 @@ class Config {
 				}
 			}
 		}
-
 	}
 
 	/**
 	 * parse general website settings
 	 *
-	 * @param \DOMNode $site
+	 * @param DOMNode $site
 	 */
-	private function parseSiteSettings(\DOMNode $site) {
+	private function parseSiteSettings(DOMNode $site): void
+    {
+		if($this->site === null) {
 
-		if(is_null($this->site)) {
-
-			$this->site = new \stdClass;
-			$this->site->use_nice_uris = FALSE;
+			$this->site = new stdClass;
+			$this->site->use_nice_uris = false;
 
 		}
 
@@ -535,7 +502,7 @@ class Config {
 
 					foreach($node->getElementsByTagName('locale') as $locale) {
 						$loc = $locale->getAttribute('value');
-						if($loc && !in_array($loc, $this->site->locales)) {
+						if($loc && !in_array($loc, $this->site->locales, true)) {
 							$this->site->locales[] = $loc;
 						}
 						if($loc && $locale->getAttribute('default') === '1') {
@@ -547,28 +514,27 @@ class Config {
 
 				case 'site->use_nice_uris':
 					if($v === '1') {
-						$this->site->use_nice_uris = TRUE;
+						$this->site->use_nice_uris = true;
 					}
 					break;
 
 				default:
 					$this->site->$k = $v;
 			}
-
 		}
-
 	}
 
-	/**
-	 * parse templating configuration
-	 * currently only filters for SimpleTemplate templates and their configuration are parsed
-	 *
-	 * @param \DOMNode $templating
-	 */
-	private function parseTemplatingSettings(\DOMNode $templating) {
-
-		if(is_null($this->templating)) {
-			$this->templating = new \stdClass;
+    /**
+     * parse templating configuration
+     * currently only filters for SimpleTemplate templates and their configuration are parsed
+     *
+     * @param DOMNode $templating
+     * @throws ConfigException
+     */
+	private function parseTemplatingSettings(DOMNode $templating): void
+    {
+		if($this->templating === null) {
+			$this->templating = new stdClass;
 			$this->templating->filters = [];
 		}
 
@@ -601,19 +567,17 @@ class Config {
 				'class' => $class,
 				'parameters' => $filter->getAttribute('parameters')
 			];
-
 		}
-
 	}
 
 	/**
 	 * parse various path setting
 	 *
-	 * @param \DOMNode $paths
+	 * @param DOMNode $paths
 	 */
-	private function parsePathsSettings(\DOMNode $paths) {
-
-		if(is_null($this->paths)) {
+	private function parsePathsSettings(DOMNode $paths): void
+    {
+		if($this->paths === null) {
 			$this->paths = [];
 		}
 
@@ -631,20 +595,18 @@ class Config {
 			// additional attributes are currently ignored
 
 			$this->paths[$id] = ['subdir' => $subdir];
-
 		}
-
 	}
 
 	/**
 	 * parse page routes
 	 * called seperately for differing script attributes
 	 *
-	 * @param \DOMNode $pages
+	 * @param DOMNode $pages
 	 * @throws ConfigException
 	 */
-	private function parsePagesSettings(\DOMNode $pages) {
-
+	private function parsePagesSettings(DOMNode $pages): void
+    {
 		$scriptName = $pages->getAttribute('script');
 
 		if(!$scriptName) {
@@ -658,7 +620,7 @@ class Config {
 
 		$redirect = $pages->getAttribute('default_redirect');
 
-		if(is_null($this->routes)) {
+		if($this->routes === null) {
 			$this->routes = [];
 		}
 
@@ -676,7 +638,7 @@ class Config {
 
 			$pageId	= $page->getAttribute('id');
 
-			if(is_null($pageId) || trim($pageId) === '') {
+			if($pageId === null || trim($pageId) === '') {
 				throw new ConfigException('Route with missing or invalid id found.');
 			}
 
@@ -710,7 +672,7 @@ class Config {
 				$requestMethods	= preg_split('~\s*,\s*~', strtoupper($requestMethods));
 
 				foreach($requestMethods as $requestMethod) {
-					if(!in_array($requestMethod, $allowedMethods)) {
+					if(!in_array($requestMethod, $allowedMethods, true)) {
 						throw new ConfigException(sprintf("Invalid request method '%s' for route '%s'.", $requestMethod, $pageId));
 					}
 				}
@@ -763,14 +725,10 @@ class Config {
 							}
 						}
 					}
-
 					$parameters['placeholders'] = $placeholders;
 				}
-
 				$parameters['path'] = $path;
-
 			}
-
 			else {
 				$rex = $pageId;
 			}
@@ -788,7 +746,6 @@ class Config {
 				}
 
 				$parameters['auth'] = $auth;
-
 			}
 
 			if(isset($this->routes[$scriptName][$pageId])) {
@@ -797,9 +754,7 @@ class Config {
 
 			$route = new Route($pageId, $scriptName, $parameters);
 			$this->routes[$scriptName][$route->getRouteId()] = $route;
-
 		}
-
 	}
 
     /**
@@ -808,11 +763,11 @@ class Config {
      * to the first; other menu attributes are left unchanged
      *
      *
-     * @param \DOMNode $menus
+     * @param DOMNode $menus
      * @throws ConfigException
      */
-	private function parseMenusSettings(\DOMNode $menus) {
-
+	private function parseMenusSettings(DOMNode $menus): void
+    {
 		foreach ((new \DOMXPath($menus->ownerDocument))->query('menu', $menus) as $menu) {
 
 			$id = $menu->getAttribute('id') ?: Menu::DEFAULT_ID;
@@ -823,9 +778,7 @@ class Config {
 			else {
 				$this->menus[$id] = $this->parseMenu($menu);
 			}
-
 		}
-
 	}
 
 	/**
@@ -833,12 +786,12 @@ class Config {
 	 * only service id, class and parameters are parsed
 	 * lazy initialization is handled by Application instance
 	 *
-	 * @param \DOMNode $services
+	 * @param DOMNode $services
 	 * @throws ConfigException
 	 */
-	private function parseServicesSettings(\DOMNode $services) {
-
-		if(is_null($this->services)) {
+	private function parseServicesSettings(DOMNode $services): void
+    {
+		if($this->services === null) {
 			$this->services = [];
 		}
 
@@ -863,8 +816,8 @@ class Config {
 			// store parsed information
 
 			$this->services[$id] = [
-				'class'			=> $class,
-				'parameters'	=> []
+				'class' => $class,
+				'parameters' => []
 			];
 
 			foreach($service->getElementsByTagName('parameter') as $parameter) {
@@ -877,11 +830,8 @@ class Config {
 				}
 
 				$this->services[$id]['parameters'][$name] = $value;
-
 			}
-
 		}
-
 	}
 
     /**
@@ -889,11 +839,11 @@ class Config {
      * plugin id, class, events and parameters are parsed
      * initialization (not lazy) is handled by Application instance
      *
-     * @param \DOMNode $plugins
+     * @param DOMNode $plugins
      * @throws ConfigException
      */
-	private function parsePluginsSettings(\DOMNode $plugins) {
-
+	private function parsePluginsSettings(DOMNode $plugins): void
+    {
 		if(is_null($this->services)) {
 			$this->services = [];
 		}
@@ -919,8 +869,8 @@ class Config {
 			// store parsed information
 
 			$this->plugins[$id] = [
-				'class'			=> $class,
-				'parameters'	=> []
+				'class' => $class,
+				'parameters' => []
 			];
 
 			foreach($plugin->getElementsByTagName('parameter') as $parameter) {
@@ -933,22 +883,19 @@ class Config {
 				}
 
 				$this->plugins[$id]['parameters'][$name] = $value;
-
 			}
-
 		}
-
 	}
 
     /**
      * Parse XML menu entries and creates menu instance
      *
-     * @param \DOMNode $menu
+     * @param DOMNode $menu
      * @return Menu
      * @throws ConfigException
      */
-	private function parseMenu(\DOMNode $menu) {
-
+	private function parseMenu(DOMNode $menu): Menu
+    {
 		$root = $menu->getAttribute('script');
 
 		if(!$root) {
@@ -961,11 +908,11 @@ class Config {
 		}
 
 		$type = $menu->getAttribute('type') === 'dynamic' ? 'dynamic' : 'static';
-		$service = $menu->getAttribute('service') ?: NULL;
-		$id = $menu->getAttribute('id') ?: NULL;
+		$service = $menu->getAttribute('service') ?: null;
+		$id = $menu->getAttribute('id') ?: null;
 
 		if($type === 'dynamic' && !$service) {
-			throw new ConfigException("A dynamic menu requires a configured service.");
+			throw new ConfigException('A dynamic menu requires a configured service.');
 		}
 
 		$m = new Menu(
@@ -990,7 +937,6 @@ class Config {
 		$this->appendMenuEntries($menu->childNodes, $m);
 
 		return $m;
-
 	}
 
     /**
@@ -1001,8 +947,8 @@ class Config {
      * @param Menu $menu
      * @throws ConfigException
      */
-	private function appendMenuEntries(\DOMNodeList $entries, Menu $menu) {
-
+	private function appendMenuEntries(\DOMNodeList $entries, Menu $menu): void
+    {
 		foreach($entries as $entry) {
 
 			if($entry->nodeType !== XML_ELEMENT_NODE || 'menuentry' !== $entry->nodeName) {
@@ -1098,12 +1044,11 @@ class Config {
 		}
 	}
 
-
 	/**
 	 * create constants for simple access to certain configuration settings
 	 */
-	public function createConst() {
-
+	public function createConst(): void
+    {
 		$properties = get_object_vars($this);
 
 		if(isset($properties['db'])) {
@@ -1143,13 +1088,14 @@ class Config {
 	 * returns all paths matching access criteria
 	 *
 	 * @param string $access
-	 * @return paths
+	 * @return array
 	 */
-	public function getPaths($access = 'rw') {
+	public function getPaths($access = 'rw'): array
+    {
 		$paths = [];
 		foreach($this->paths as $p) {
 			if($p['access'] === $access) {
-				array_push($paths, $p);
+				$paths[] = $p;
 			}
 		}
 		return $paths;
@@ -1158,8 +1104,8 @@ class Config {
 	/**
 	 * add particular information regarding server configuration, like PHP extensions
 	 */
-	private function getServerConfig() {
-
+	private function getServerConfig(): void
+    {
 		$this->server['apc_on'] = extension_loaded('apc') && function_exists('apc_add') && ini_get('apc.enabled') && ini_get('apc.rfc1867');
 
 		$fs = ini_get('upload_max_filesize');
@@ -1176,6 +1122,5 @@ class Config {
 		}
 
 		$this->server['max_upload_filesize'] = $mult ? (float) (substr($fs, 0, -1)) * $mult : (int) $fs;
-
 	}
 }

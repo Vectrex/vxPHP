@@ -1,3 +1,7 @@
+## v1.6.11
+- bugfixes to plugin initialization
+- some code clean-up
+
 ## v1.6.10
 - FilesystemFolder provides a rename method
 
