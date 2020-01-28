@@ -8,11 +8,10 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\File;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\File\Exception\FilesystemFolderException;
-use vxPHP\File\FilesystemFile;
 use vxPHP\Application\Application;
 
 /**
@@ -102,8 +101,10 @@ class FilesystemFolder {
 
 	/**
 	 * returns path of filesystem folder
+     *
+     * @return string
 	 */
-	public function getPath()
+	public function getPath(): string
     {
 		return $this->path;
 	}
@@ -113,7 +114,7 @@ class FilesystemFolder {
      *
      * @param boolean $force
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
 	public function getRelativePath($force = false): string
     {
@@ -139,7 +140,7 @@ class FilesystemFolder {
 		$result = [];
 		$glob = $this->path . '*';
 
-		if(!is_null($extension)) {
+		if($extension !== null) {
 			$glob .= '.' . $extension;
 		}
 
@@ -178,7 +179,7 @@ class FilesystemFolder {
      * @return FilesystemFolder
      * @throws FilesystemFolderException
      */
-	public function getParentFolder($force = false)
+	public function getParentFolder($force = false): FilesystemFolder
     {
 		if(!isset($this->parentFolder) || $force) {
 			
@@ -222,7 +223,7 @@ class FilesystemFolder {
 	 * @param boolean $force
 	 * @return string
 	 */
-	public function getCachePath($force = false)
+	public function getCachePath($force = false): ?string
     {
 		if($this->hasCache($force)) {
 			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
@@ -271,13 +272,13 @@ class FilesystemFolder {
 	/**
 	 * tries to create a FilesystemFolder::CACHE_PATH subfolder
 	 *
-	 * @return path
+	 * @return string
 	 * @throws FilesystemFolderException
 	 */
-	public function createCache()
+	public function createCache(): ?string
     {
 		if($this->hasCache(true)) {
-			return $this->path.self::CACHE_PATH . DIRECTORY_SEPARATOR;
+			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
 		}
 
 		if(!mkdir($concurrentDirectory = $this->path . self::CACHE_PATH) && !is_dir($concurrentDirectory)) {
@@ -285,7 +286,7 @@ class FilesystemFolder {
 		}
 		else {
 			chmod($this->path.self::CACHE_PATH, 0777);
-			return $this->path.self::CACHE_PATH . DIRECTORY_SEPARATOR;
+			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
 		}
 	}
 
@@ -295,7 +296,7 @@ class FilesystemFolder {
 	 * @param boolean $force
 	 * @throws FilesystemFolderException
 	 */
-	public function purgeCache($force = false)
+	public function purgeCache($force = false): void
     {
 		if(($path = $this->getCachePath($force))) {
 			foreach(glob($path. '*') as $f) {
@@ -312,7 +313,7 @@ class FilesystemFolder {
 	 *
 	 * @throws FilesystemFolderException
 	 */
-	public function purge()
+	public function purge(): void
     {
 		foreach(
 			new \RecursiveIteratorIterator(
@@ -345,7 +346,7 @@ class FilesystemFolder {
 	 *
 	 * @throws FilesystemFolderException
 	 */
-	public function delete()
+	public function delete(): void
     {
 		$this->purge();
 
