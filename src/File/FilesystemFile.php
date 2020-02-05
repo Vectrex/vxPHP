@@ -22,10 +22,10 @@ use vxPHP\Observer\PublisherInterface;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2019-12-06
+ * @version 1.0.0 2020-02-05
  */
 
-class FilesystemFile implements PublisherInterface
+class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 {
     public const WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
@@ -181,10 +181,10 @@ class FilesystemFile implements PublisherInterface
 	 * rename file
 	 *
 	 * @param string $to new filename
-	 * @return FilesystemFile
+	 * @return FilesystemFileInterface
 	 * @throws FilesystemFileException
 	 */
-	public function rename($to): FilesystemFile
+	public function rename($to): FilesystemFileInterface
     {
 		$from = $this->filename;
 
@@ -229,10 +229,10 @@ class FilesystemFile implements PublisherInterface
 	 * orphaned cache entries are deleted, new cache entries are not generated
 	 *
 	 * @param FilesystemFolder $destination
-	 * @return FilesystemFile
+	 * @return FilesystemFileInterface
 	 * @throws FilesystemFileException
 	 */
-	public function move(FilesystemFolder $destination): FilesystemFile
+	public function move(FilesystemFolder $destination): FilesystemFileInterface
     {
 		// already in destination folder, nothing to do
 
@@ -418,7 +418,7 @@ class FilesystemFile implements PublisherInterface
     {
 		// remove any characters which are not allowed in any file system
 
-		$filename = preg_replace('~[<>:"/\\|?*\\x00-\\x1F]~', '_', $filename);
+		$filename = preg_replace('~[<>:"/|?*\\x00-\\x1F]~', '_', $filename);
 
 		if(!file_exists($dir->getPath() . $filename)) {
 			return $filename;

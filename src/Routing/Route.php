@@ -10,7 +10,9 @@
 
 namespace vxPHP\Routing;
 
+use InvalidArgumentException;
 use vxPHP\Application\Application;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
 use vxPHP\Http\RedirectResponse;
 
@@ -21,11 +23,12 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.1 2019-06-10
+ * @version 1.3.2 2020-02-05
  *
  */
-class Route {
 
+class Route
+{
 	/**
 	 * unique id of route
 	 * 
@@ -137,16 +140,18 @@ class Route {
 	 * @param string $scriptName, name of assigned script
 	 * @param array $parameters, collection of route parameters
 	 */
-	public function __construct($routeId, $scriptName, array $parameters = []) {
+	public function __construct($routeId, $scriptName, array $parameters = [])
+    {
+		$this->routeId = $routeId;
+		$this->scriptName = $scriptName;
 
-		$this->routeId		= $routeId;
-		$this->scriptName	= $scriptName;
+        $this->setRequestMethods((array) $parameters['requestMethods'] ?: []);
 
-		if(isset($parameters['path'])) {
+        if(isset($parameters['path'])) {
 
             // check for relative paths, i.e. path does not start with a slash
 
-            if('/' === substr($parameters['path'], 0, 1)) {
+            if(0 === strpos($parameters['path'], '/')) {
                 $this->path = substr($parameters['path'], 1);
                 $this->pathIsRelative = false;
             }
@@ -163,47 +168,30 @@ class Route {
 		if(isset($parameters['auth'])) {
 			$this->auth = $parameters['auth'];
 		}
-
 		if(isset($parameters['authParameters'])) {
 			$this->authParameters = $parameters['authParameters'];
 		}
-
 		if(isset($parameters['redirect'])) {
 			$this->redirect = $parameters['redirect'];
 		}
-
 		if(isset($parameters['controller'])) {
 			$this->controllerClassName = $parameters['controller'];
 		}
-
 		if(isset($parameters['method'])) {
 			$this->methodName = $parameters['method'];
 		}
-
-		if(isset($parameters['requestMethods'])) {
-			$this->requestMethods = $parameters['requestMethods'];
-		}
-
-		if(isset($parameters['match'])) {
-			$this->match = $parameters['match'];
-		}
-		else {
-			$this->match = $routeId;
-		}
-
-		if(isset($parameters['placeholders'])) {
-			$this->placeholders = $parameters['placeholders'];
-		}
-
+        if(isset($parameters['placeholders'])) {
+            $this->placeholders = $parameters['placeholders'];
+        }
+        $this->match = $parameters['match'] ?: $routeId;
 	}
 
 	/**
 	 * prevent caching of path parameters
 	 */
-	public function __destruct() {
-
+	public function __destruct()
+    {
 		$this->clearPathParameters();
-
 	}
 
 	/**
@@ -211,10 +199,9 @@ class Route {
 	 * 
 	 * @return string $page
 	 */
-	public function getRouteId() {
-
+	public function getRouteId(): string
+    {
 		return $this->routeId;
-
 	}
 
 	/**
@@ -222,10 +209,9 @@ class Route {
 	 * 
 	 * @return string $scriptName
 	 */
-	public function getScriptName() {
-
+	public function getScriptName(): string
+    {
 		return $this->scriptName;
-
 	}
 
 	/**
@@ -233,10 +219,9 @@ class Route {
 	 * 
 	 * @return string $matchExpression
 	 */
-	public function getMatchExpression() {
-
+	public function getMatchExpression(): string
+    {
 		return $this->match;
-
 	}
 
 	/**
@@ -245,10 +230,9 @@ class Route {
 	 * 
 	 * @return string $auth
 	 */
-	public function getAuth() {
-
+	public function getAuth(): ?string
+    {
 		return $this->auth;
-
 	}
 
 	/**
@@ -256,13 +240,12 @@ class Route {
 	 * parsed by router to evaluate route access
 	 * 
 	 * @param string $auth
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function setAuth($auth) {
-
+	public function setAuth($auth): self
+    {
 		$this->auth = $auth;
 		return $this;
-
 	}
 
 	/**
@@ -270,23 +253,21 @@ class Route {
 	 * 
 	 * @return string
 	 */
-	public function getAuthParameters() {
-
+	public function getAuthParameters(): ?string
+    {
 		return $this->authParameters;
-
 	}
 
 	/**
 	 * set additional auth parameters
 	 * 
 	 * @param string $authParameters
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function setAuthParameters($authParameters) {
-
+	public function setAuthParameters($authParameters): self
+    {
 		$this->authParameters = $authParameters;
 		return $this;
-
 	}
 
 	/**
@@ -295,10 +276,9 @@ class Route {
 	 * 
 	 * @return string
 	 */
-	public function getMethodName() {
-
+	public function getMethodName(): ?string
+    {
 		return $this->methodName;
-
 	}
 
 	/**
@@ -314,11 +294,11 @@ class Route {
 	 * expects path parameters when required by route
 	 * 
 	 * @param array $pathParameters
-	 * @throws \RuntimeException
 	 * @return string
+     * @throws \RuntimeException
 	 */
-	public function getPath(array $pathParameters = null) {
-
+	public function getPath(array $pathParameters = null): string
+    {
 		$path = $this->path;
 		
 		//insert path parameters
@@ -359,7 +339,6 @@ class Route {
 		// remove trailing slashes which might stem from one or more empty path parameters
 
 		return rtrim($path, '/');
-
 	}
 
     /**
@@ -380,13 +359,13 @@ class Route {
      * @param array $pathParameters
      * @param string $prefix
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \InvalidArgumentException
+     * @throws ApplicationException
+     * @throws InvalidArgumentException
      */
-	public function getUrl(array $pathParameters = null, $prefix = '') {
-
+	public function getUrl(array $pathParameters = null, $prefix = ''): string
+    {
 	    if(!$this->pathIsRelative && $prefix) {
-	        throw new \InvalidArgumentException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
+	        throw new InvalidArgumentException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
         }
 
 		// avoid building URL in subsequent calls
@@ -440,20 +419,18 @@ class Route {
         }
 
 		return $this->url;
-		
 	}
 
 	/**
 	 * set controller class name of route
 	 * 
 	 * @param string $className
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function setControllerClassName($className) {
-
+	public function setControllerClassName($className): self
+    {
 		$this->controllerClassName = $className;
 		return $this;
-
 	}
 
 	/**
@@ -461,10 +438,9 @@ class Route {
 	 * 
 	 * @return string
 	 */
-	public function getControllerClassName() {
-
+	public function getControllerClassName(): ?string
+    {
 		return $this->controllerClassName;
-
 	}
 
 	/**
@@ -472,10 +448,9 @@ class Route {
 	 * 
 	 * @return string $redirect route id
 	 */
-	public function getRedirect() {
-
+	public function getRedirect(): ?string
+    {
 		return $this->redirect;
-
 	}
 
 	/**
@@ -483,13 +458,12 @@ class Route {
 	 * invoked
 	 * 
 	 * @param string $redirectRouteId
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function setRedirect($redirectRouteId) {
-
+	public function setRedirect($redirectRouteId): self
+    {
 		$this->redirect = $redirectRouteId;
 		return $this;
-
 	}
 
 	/**
@@ -497,33 +471,31 @@ class Route {
 	 * 
 	 * @return array
 	 */
-	public function getRequestMethods() {
-
-		return $this->requestMethods ?: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-
+	public function getRequestMethods(): array
+    {
+		return $this->requestMethods;
 	}
 
 	/**
 	 * set all allowed request methods for a route
 	 * 
 	 * @param array $requestMethods
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function setRequestMethods(array $requestMethods) {
-
+	public function setRequestMethods(array $requestMethods): self
+    {
 	    $requestMethods = array_map('strtoupper', $requestMethods);
 
         $allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
         foreach($requestMethods as $requestMethod) {
-			if(!in_array($requestMethod, $allowedMethods)) {
-				throw new \InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
+			if(!in_array($requestMethod, $allowedMethods, true)) {
+				throw new InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
 			}
 		}
 
 		$this->requestMethods = $requestMethods;
 		return $this;
-
 	}
 
 	/**
@@ -532,10 +504,9 @@ class Route {
 	 * @param string $requestMethod
 	 * @return boolean
 	 */
-	public function allowsRequestMethod($requestMethod) {
-
+	public function allowsRequestMethod($requestMethod): bool
+    {
 		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods);
-
 	}
 
 	/**
@@ -544,14 +515,13 @@ class Route {
 	 * 
 	 * @return array
 	 */
-	public function getPlaceholderNames() {
-
+	public function getPlaceholderNames(): array
+    {
 		if(!empty($this->placeholders)) {
 			return array_keys($this->placeholders);
 		}
 
 		return [];
-		
 	}
 	
 	/**
@@ -562,11 +532,11 @@ class Route {
 	 *
 	 * @return string
 	 */
-	public function getPathParameter($name, $default = null) {
-
+	public function getPathParameter($name, $default = null): ?string
+    {
 		// lazy initialization of parameters
 
-		if(empty($this->pathParameters) && !is_null($this->placeholders)) {
+		if(empty($this->pathParameters) && $this->placeholders !== null) {
 
 			// collect all placeholder names
 
@@ -598,7 +568,6 @@ class Route {
 					$this->pathParameters = array_combine($names, $values);
 				}
 			}
-
 		}
 
 		$name = strtolower($name);
@@ -607,7 +576,7 @@ class Route {
 
 			// both bool false and null are returned as null
 
-			if($this->pathParameters[$name] === false || is_null($this->pathParameters[$name])) {
+			if($this->pathParameters[$name] === false || $this->pathParameters[$name] === null) {
 				return null;
 			}
 
@@ -615,19 +584,17 @@ class Route {
 		}
 
 		return $default;
-
 	}
 	
 	/**
 	 * clear all path parameters
 	 *
-	 * @return \vxPHP\Routing\Route
+	 * @return Route
 	 */
-	public function clearPathParameters() {
-		
+	public function clearPathParameters(): self
+    {
 		$this->pathParameters = [];
 		return $this;
-		
 	}
 
 	/**
@@ -636,15 +603,15 @@ class Route {
 	 * 
 	 * @param string $name
 	 * @param string $value
-	 * @throws \InvalidArgumentException
-	 * @return \vxPHP\Routing\Route
+	 * @throws InvalidArgumentException
+	 * @return Route
 	 */
-	public function setPathParameter($name, $value) {
-		
+	public function setPathParameter($name, $value): self
+    {
 		// check whether path parameter $name exists
 
 		if(empty($this->placeholders)) {
-			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
+			throw new InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
 		$found = false;
@@ -657,7 +624,7 @@ class Route {
 		}
 
 		if(!$found) {
-			throw new \InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
+			throw new InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
 		
 		$this->pathParameters[$name] = $value;
@@ -672,12 +639,16 @@ class Route {
      * @param array $queryParams
      * @param int $statusCode
      * @return RedirectResponse
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	public function redirect($queryParams = [],  $statusCode = 302) {
+	public function redirect($queryParams = [],  $statusCode = 302): RedirectResponse {
 
-		$request		= Request::createFromGlobals();
-		$application	= Application::getInstance();
+		$request = Request::createFromGlobals();
+		$application = Application::getInstance();
+
+		if(!$application->getRouter()) {
+		    throw new \RuntimeException('No router assigned to application. Cannot generate a redirect response.');
+        }
 
 		$urlSegments = [
 			$request->getSchemeAndHttpHost()
@@ -701,7 +672,6 @@ class Route {
 		}
 
 		return new RedirectResponse(implode('/', $urlSegments) . '/' . $this->redirect . $query, $statusCode);
-
 	}
 
     /**
@@ -709,7 +679,7 @@ class Route {
      *
      * @return bool
      */
-	public function hasRelativePath()
+	public function hasRelativePath(): bool
     {
         return $this->pathIsRelative;
     }

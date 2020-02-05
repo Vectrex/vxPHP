@@ -22,10 +22,10 @@ use vxPHP\File\Exception\FilesystemFileException;
  * 
  * @author Gregor Kofler
  *
- * @version 0.5.2 2017-02-04
+ * @version 1.0.0 2020-02-05
  */
-class UploadedFile extends FilesystemFile {
-	
+class UploadedFile extends FilesystemFile
+{
 	/**
 	 * the original file name
 	 * 
@@ -41,16 +41,20 @@ class UploadedFile extends FilesystemFile {
 	 */
 	private $alreadyUploaded;
 
-	public function __construct($path, $originalName) {
-
+	public function __construct($path, $originalName)
+    {
 		$this->originalName = $originalName;
 		parent::__construct($path);
 	}
 
-	public function getOriginalName() {
-
+    /**
+     * get the original file name of the uploaded file
+     *
+     * @return string
+     */
+	public function getOriginalName(): string
+    {
 		return $this->originalName;
-
 	}
 
 	/**
@@ -61,8 +65,8 @@ class UploadedFile extends FilesystemFile {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\File\FilesystemFile::rename()
 	 */
-	public function rename($to) {
-		
+	public function rename($to): FilesystemFileInterface
+    {
 		if($this->alreadyUploaded) {
 			return parent::rename($to);
 		}
@@ -70,9 +74,7 @@ class UploadedFile extends FilesystemFile {
 		$this->originalName = $to;
 
 		return $this;
-
 	}
-
 
 	/**
 	 * performs an initial move of an uploaded file
@@ -84,15 +86,15 @@ class UploadedFile extends FilesystemFile {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\File\FilesystemFile::move()
 	 */
-	public function move(FilesystemFolder $destination) {
-
+	public function move(FilesystemFolder $destination): FilesystemFileInterface
+    {
 		if($this->alreadyUploaded) {
 			return parent::move($destination);
 		}
 
-		$oldpath	= $this->folder->getPath() . $this->filename;
-		$filename	= self::sanitizeFilename($this->originalName, $destination);
-		$newpath	= $destination->getPath() . $filename;
+		$oldpath = $this->folder->getPath() . $this->filename;
+		$filename = self::sanitizeFilename($this->originalName, $destination);
+		$newpath = $destination->getPath() . $filename;
 
 		// ensure that only uploaded files are handled
 
@@ -105,7 +107,7 @@ class UploadedFile extends FilesystemFile {
 				// flag completed upload
 				
 				$this->alreadyUploaded = TRUE;
-				
+
 				// set new folder reference
 
 				$this->folder = $destination;
@@ -139,7 +141,5 @@ class UploadedFile extends FilesystemFile {
 		}
 		
 		return $this;
-				
 	}
-
 }
