@@ -1,3 +1,6 @@
+## 1.6.12
+- added an interface for FilesystemFile
+
 ## v1.6.11
 - bugfixes to plugin initialization
 - some code clean-up
