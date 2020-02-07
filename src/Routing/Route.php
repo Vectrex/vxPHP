@@ -641,8 +641,8 @@ class Route
      * @return RedirectResponse
      * @throws ApplicationException
      */
-	public function redirect($queryParams = [],  $statusCode = 302): RedirectResponse {
-
+	public function redirect($queryParams = [],  $statusCode = 302): RedirectResponse
+    {
 		$request = Request::createFromGlobals();
 		$application = Application::getInstance();
 

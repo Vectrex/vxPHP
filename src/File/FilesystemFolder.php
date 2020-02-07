@@ -19,7 +19,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.6.0 2020-01-12
+ * @version 0.6.1 2020-02-07
  *
  * @todo test delete()
  */
@@ -228,6 +228,7 @@ class FilesystemFolder {
 		if($this->hasCache($force)) {
 			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
 		}
+		return null;
 	}
 
 	/**
@@ -275,7 +276,7 @@ class FilesystemFolder {
 	 * @return string
 	 * @throws FilesystemFolderException
 	 */
-	public function createCache(): ?string
+	public function createCache(): string
     {
 		if($this->hasCache(true)) {
 			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
@@ -284,10 +285,8 @@ class FilesystemFolder {
 		if(!mkdir($concurrentDirectory = $this->path . self::CACHE_PATH) && !is_dir($concurrentDirectory)) {
 			throw new FilesystemFolderException(sprintf('Cache folder %s could not be created!', $this->path . self::CACHE_PATH));
 		}
-		else {
-			chmod($this->path.self::CACHE_PATH, 0777);
-			return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
-		}
+        chmod($this->path.self::CACHE_PATH, 0777);
+        return $this->path . self::CACHE_PATH . DIRECTORY_SEPARATOR;
 	}
 
 	/**
