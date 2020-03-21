@@ -23,7 +23,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.2 2020-02-05
+ * @version 1.3.3 2020-02-27
  *
  */
 
@@ -145,7 +145,7 @@ class Route
 		$this->routeId = $routeId;
 		$this->scriptName = $scriptName;
 
-        $this->setRequestMethods((array) $parameters['requestMethods'] ?: []);
+        $this->setRequestMethods(isset($parameters['requestMethods']) ?(array) $parameters['requestMethods'] : []);
 
         if(isset($parameters['path'])) {
 
