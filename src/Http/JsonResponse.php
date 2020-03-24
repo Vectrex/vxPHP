@@ -22,158 +22,160 @@ namespace vxPHP\Http;
  * @version 0.2.0
  * @author Igor Wiedler <igor@wiedler.ch>, Gregor Kofler
  */
-class JsonResponse extends Response {
+class JsonResponse extends Response
+{
+    protected $data;
 
-	protected $data;
-	protected $callback;
-	protected $encodingOptions;
+    // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
+    // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+    public const DEFAULT_ENCODING_OPTIONS = 15;
+
+    protected $encodingOptions = self::DEFAULT_ENCODING_OPTIONS;
 
     /**
-     * constructor
-     *
-     * @param mixed $responseData
-     * @param integer $statusCode
-     * @param array $headers
+     * @param mixed $data The response data
+     * @param int $status The response status code
+     * @param array $headers An array of response headers
+     * @param bool $json If the data is already a JSON string
      * @throws \Exception
      */
-	public function __construct($responseData = null, $statusCode = 200, $headers = []) {
+    public function __construct($data = null, int $status = 200, array $headers = [], bool $json = false)
+    {
+        parent::__construct('', $status, $headers);
 
-		parent::__construct('', $statusCode, $headers);
+        if (null === $data) {
+            $data = new \ArrayObject();
+        }
 
-		if(is_null($responseData)) {
-			$responseData = new \ArrayObject();
-		}
-
-		// encode <, >, ', &, and " for RFC4627-compliant JSON, which may also be embedded into HTML
-
-		$this->setEncodingOptions(JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$this->setPayload($responseData);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public static function create($responseData = NULL, $statusCode = 200, $headers = []) {
-
-		return new static($responseData, $statusCode, $headers);
-
-	}
-	
-	/**
-	 * set the JSONP callback
-	 * pass NULL for not using a callback
-	 *
-	 * @param string|null $callback
-	 *
-	 * @return JsonResponse
-	 *
-	 * @throws \InvalidArgumentException when callback name is not valid
-	 */
-	public function setCallback($callback = NULL) {
-
-		if (NULL !== $callback) {
-
-			// taken from http://www.geekality.net/2011/08/03/valid-javascript-identifier/
-			$pattern = '/^[$_\p{L}][$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\x{200C}\x{200D}]*+$/u';
-
-			foreach (explode('.', $callback) as $part) {
-				if (!preg_match($pattern, $part)) {
-					throw new \InvalidArgumentException(sprintf("The callback name '%s' is not valid.", $part));
-				}
-			}
-		}
-
-		$this->callback = $callback;
-
-		return $this->update();
-
-	}
+        $json ? $this->setJson($data) : $this->setData($data);
+    }
 
     /**
-     * Set payload
+     * Factory method for chainability.
      *
-     * @param mixed $responseData
+     * Example:
      *
-     * @return JsonResponse
+     *     return JsonResponse::create(['key' => 'value'])
+     *         ->setSharedMaxAge(300);
+     *
+     * @param mixed $data The JSON response data
+     * @param int $status The response status code
+     * @param array $headers An array of response headers
+     *
+     * @return static
      * @throws \Exception
      */
-	public function setPayload($responseData) {
-
-		try {
-			$this->data = json_encode($responseData, $this->encodingOptions);
-		}
-
-		catch (\Exception $e) {
-
-			// PHP 5.4 wrap exceptions thrown by JsonSerializable in a new exception that needs to be removed
-
-			if ('Exception' === get_class($e) && 0 === strpos($e->getMessage(), 'Failed calling ')) {
-				throw $e->getPrevious() ?: $e;
-			}
-			throw $e;
-		}
-
-		if (JSON_ERROR_NONE !== json_last_error()) {
-			throw new \InvalidArgumentException(json_last_error_msg());
-		}
-
-		return $this->update();
-
-	}
-
-	/**
-	 * get options used when encoding data to JSON
-	 * 
-	 * @return int
-	 */
-	public function getEncodingOptions() {
-
-		return $this->encodingOptions;
-
-	}
+    public static function create($data = null, $status = 200, $headers = [])
+    {
+        return new static($data, $status, $headers);
+    }
 
     /**
-     * set options used while encoding data to JSON
-     * re-encodes payload with new encoding setting
+     * Factory method for chainability.
+     *
+     * Example:
+     *
+     *     return JsonResponse::fromJsonString('{"key": "value"}')
+     *         ->setSharedMaxAge(300);
+     *
+     * @param string|null $data The JSON response string
+     * @param int $status The response status code
+     * @param array $headers An array of response headers
+     *
+     * @return static
+     * @throws \Exception
+     */
+    public static function fromJsonString($data = null, $status = 200, $headers = []): self
+    {
+        return new static($data, $status, $headers, true);
+    }
+
+    /**
+     * Sets a raw string containing a JSON document to be sent.
+     *
+     * @param string $json
+     *
+     * @return $this
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setJson($json): self
+    {
+        $this->data = $json;
+
+        return $this->update();
+    }
+
+    /**
+     * Sets the data to be sent as JSON.
+     *
+     * @param mixed $data
+     *
+     * @return $this
+     *
+     * @throws \InvalidArgumentException
+     * @throws \Exception
+     */
+    public function setData($data = []): self
+    {
+        try {
+            $data = json_encode($data, $this->encodingOptions);
+        } catch (\Exception $e) {
+            if ('Exception' === \get_class($e) && 0 === strpos($e->getMessage(), 'Failed calling ')) {
+                throw $e->getPrevious() ?: $e;
+            }
+            throw $e;
+        }
+
+        if (\PHP_VERSION_ID >= 70300 && (JSON_THROW_ON_ERROR & $this->encodingOptions)) {
+            return $this->setJson($data);
+        }
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new \InvalidArgumentException(json_last_error_msg());
+        }
+
+        return $this->setJson($data);
+    }
+
+    /**
+     * Returns options used while encoding data to JSON.
+     *
+     * @return int
+     */
+    public function getEncodingOptions(): int
+    {
+        return $this->encodingOptions;
+    }
+
+    /**
+     * Sets options used while encoding data to JSON.
      *
      * @param int $encodingOptions
      *
-     * @return JsonResponse
+     * @return $this
      * @throws \Exception
      */
-	public function setEncodingOptions($encodingOptions) {
+    public function setEncodingOptions($encodingOptions): self
+    {
+        $this->encodingOptions = (int) $encodingOptions;
 
-		$this->encodingOptions = (int) $encodingOptions;
-		
-		return $this->setPayload(json_decode($this->data));
+        return $this->setData(json_decode($this->data));
+    }
 
-	}
-	
-	/**
-	 * update content and headers according to the JSON data and a set callback
-	 *
-	 * @return JsonResponse
-	 */
-	protected function update() {
-		
-		if(!is_null($this->callback)) {
-			
-			// Not using application/javascript for compatibility reasons with older browsers.
-			$this->headers->set('Content-Type', 'text/javascript');
-				
-			return $this->setContent(sprintf('/**/%s(%s);', $this->callback, $this->data)); 
+    /**
+     * Updates the content and headers according to the JSON data and callback.
+     *
+     * @return $this
+     */
+    protected function update(): self
+    {
+        // Only set the header when there is none
+        // in order to not overwrite a custom definition.
+        if (!$this->headers->has('Content-Type')) {
+            $this->headers->set('Content-Type', 'application/json');
+        }
 
-		}
-		
-		// set header only when there is none or when it equals 'text/javascript' (from a previous update with callback)
-		// in order to not overwrite a custom definition
-
-		if(!$this->headers->has('Content-Type') || $this->headers->get('Content-Type') === 'text/javascript') {
-			$this->headers->set('Content-Type', 'application/json');
-		}
-
-		return $this->setContent($this->data);
-
-	}
-	
+        return $this->setContent($this->data);
+    }
 }

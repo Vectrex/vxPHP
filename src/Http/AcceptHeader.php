@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 /*
  * with minor adaptations lifted from Symfony's HttpFoundation classes
  *
@@ -25,166 +24,156 @@ namespace vxPHP\Http;
  *
  * @author Jean-François Simon <contact@jfsimon.fr>
  */
-class AcceptHeader {
+class AcceptHeader
+{
+    /**
+     * @var AcceptHeaderItem[]
+     */
+    private $items = [];
 
-	/**
-	 * @var AcceptHeaderItem[]
-	 */
-	private $items = array();
+    /**
+     * @var bool
+     */
+    private $sorted = true;
 
-	/**
-	 * @var bool
-	 */
-	private $sorted = TRUE;
+    /**
+     * @param AcceptHeaderItem[] $items
+     */
+    public function __construct(array $items)
+    {
+        foreach ($items as $item) {
+            $this->add($item);
+        }
+    }
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AcceptHeaderItem[] $items
-	 */
-	public function __construct(array $items) {
+    /**
+     * Builds an AcceptHeader instance from a string.
+     *
+     * @param string $headerValue
+     *
+     * @return self
+     */
+    public static function fromString($headerValue): AcceptHeader
+    {
+        $index = 0;
 
-		foreach ($items as $item) {
-			$this->add($item);
-		}
+        $parts = HeaderUtils::split((string) $headerValue, ',;=');
 
-	}
+        return new self(array_map(function ($subParts) use (&$index) {
+            $part = array_shift($subParts);
+            $attributes = HeaderUtils::combine($subParts);
 
-	/**
-	 * Builds an AcceptHeader instance from a string.
-	 *
-	 * @param string $headerValue
-	 *
-	 * @return AcceptHeader
-	 */
-	public static function fromString($headerValue) {
+            $item = new AcceptHeaderItem($part[0], $attributes);
+            $item->setIndex($index++);
 
-		$index = 0;
+            return $item;
+        }, $parts));
+    }
 
-		return new self(array_map(
-			function ($itemValue) use (&$index) {
-				$item = AcceptHeaderItem::fromString($itemValue);
-				$item->setIndex($index++);
-				return $item;
-			},
-			preg_split('/\s*(?:,*("[^"]+"),*|,*(\'[^\']+\'),*|,+)\s*/',
-				$headerValue,
-				0,
-				PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
-		)));
-	}
+    /**
+     * Returns header value's string representation.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return implode(',', $this->items);
+    }
 
-	/**
-	 * Returns header value's string representation.
-	 *
-	 * @return string
-	 */
-	public function __toString() {
+    /**
+     * Tests if header has given value.
+     *
+     * @param string $value
+     *
+     * @return bool
+     */
+    public function has($value): bool
+    {
+        return isset($this->items[$value]);
+    }
 
-		return implode(',', $this->items);
+    /**
+     * Returns given value's item, if exists.
+     *
+     * @param string $value
+     *
+     * @return AcceptHeaderItem|null
+     */
+    public function get($value): ?AcceptHeader
+    {
+        return $this->items[$value] ?? $this->items[explode('/', $value)[0].'/*'] ?? $this->items['*/*'] ?? $this->items['*'] ?? null;
+    }
 
-	}
+    /**
+     * Adds an item.
+     *
+     * @param AcceptHeaderItem $item
+     * @return $this
+     */
+    public function add(AcceptHeaderItem $item): AcceptHeader
+    {
+        $this->items[$item->getValue()] = $item;
+        $this->sorted = false;
 
-	/**
-	 * Tests if header has given value.
-	 *
-	 * @param string $value
-	 *
-	 * @return Boolean
-	 */
-	public function has($value) {
+        return $this;
+    }
 
-		return isset($this->items[$value]);
+    /**
+     * Returns all items.
+     *
+     * @return AcceptHeaderItem[]
+     */
+    public function all(): array
+    {
+        $this->sort();
 
-	}
+        return $this->items;
+    }
 
-	/**
-	 * Returns given value's item, if exists.
-	 *
-	 * @param string $value
-	 *
-	 * @return AcceptHeaderItem|NULL
-	 */
-	public function get($value) {
+    /**
+     * Filters items on their value using given regex.
+     *
+     * @param string $pattern
+     *
+     * @return self
+     */
+    public function filter($pattern): AcceptHeader
+    {
+        return new self(array_filter($this->items, static function (AcceptHeaderItem $item) use ($pattern) {
+            return preg_match($pattern, $item->getValue());
+        }));
+    }
 
-		return isset($this->items[$value]) ? $this->items[$value] : NULL;
+    /**
+     * Returns first item.
+     *
+     * @return AcceptHeaderItem|null
+     */
+    public function first(): ?AcceptHeaderItem
+    {
+        $this->sort();
 
-	}
+        return !empty($this->items) ? reset($this->items) : null;
+    }
 
-	/**
-	 * Adds an item.
-	 *
-	 * @param AcceptHeaderItem $item
-	 *
-	 * @return AcceptHeader
-	 */
-	public function add(AcceptHeaderItem $item) {
+    /**
+     * Sorts items by descending quality.
+     */
+    private function sort(): void
+    {
+        if (!$this->sorted) {
+            uasort($this->items, static function (AcceptHeaderItem $a, AcceptHeaderItem $b) {
+                $qA = $a->getQuality();
+                $qB = $b->getQuality();
 
-		$this->items[$item->getValue()] = $item;
-		$this->sorted = FALSE;
+                if ($qA === $qB) {
+                    return $a->getIndex() > $b->getIndex() ? 1 : -1;
+                }
 
-		return $this;
+                return $qA > $qB ? -1 : 1;
+            });
 
-	}
-
-	/**
-	 * Returns all items.
-	 *
-	 * @return AcceptHeaderItem[]
-	 */
-	public function all() {
-
-		$this->sort();
-
-		return $this->items;
-
-	}
-
-	/**
-	 * Filters items on their value using given regex.
-	 *
-	 * @param string $pattern
-	 *
-	 * @return AcceptHeader
-	 */
-	public function filter($pattern) {
-
-		return new self(array_filter($this->items, function (AcceptHeaderItem $item) use ($pattern) {
-			return preg_match($pattern, $item->getValue());
-		}));
-	}
-
-	/**
-	 * Returns first item.
-	 *
-	 * @return AcceptHeaderItem|NULL
-	 */
-	public function first() {
-
-		$this->sort();
-
-		return !empty($this->items) ? reset($this->items) : NULL;
-
-	}
-
-	/**
-	 * Sorts items by descending quality
-	 */
-	private function sort() {
-
-		if (!$this->sorted) {
-			uasort($this->items, function ($a, $b) {
-				$qA = $a->getQuality();
-				$qB = $b->getQuality();
-
-				if ($qA === $qB) {
-					return $a->getIndex() > $b->getIndex() ? 1 : -1;
-				}
-
-				return $qA > $qB ? -1 : 1;
-			});
-
-			$this->sorted = TRUE;
-		}
-	}
+            $this->sorted = true;
+        }
+    }
 }

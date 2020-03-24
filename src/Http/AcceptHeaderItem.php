@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 /*
  * with minor adaptations lifted from Symfony's HttpFoundation classes
  *
@@ -22,224 +21,176 @@ namespace vxPHP\Http;
  *
  * @author Jean-François Simon <contact@jfsimon.fr>
  */
-class AcceptHeaderItem {
-	/**
-	 * @var string
-	 */
-	private $value;
+class AcceptHeaderItem
+{
+    private $value;
+    private $quality = 1.0;
+    private $index = 0;
+    private $attributes = [];
 
-	/**
-	 * @var float
-	 */
-	private $quality = 1.0;
+    public function __construct(string $value, array $attributes = [])
+    {
+        $this->value = $value;
+        foreach ($attributes as $name => $value) {
+            $this->setAttribute($name, $value);
+        }
+    }
 
-	/**
-	 * @var int
-	 */
-	private $index = 0;
+    /**
+     * Builds an AcceptHeaderInstance instance from a string.
+     *
+     * @param string $itemValue
+     *
+     * @return self
+     */
+    public static function fromString($itemValue): self
+    {
+        $parts = HeaderUtils::split($itemValue, ';=');
 
-	/**
-	 * @var array
-	 */
-	private $attributes = array();
+        $part = array_shift($parts);
+        $attributes = HeaderUtils::combine($parts);
 
-	/**
-	 * Constructor.
-	 *
-	 * @param string $value
-	 * @param array  $attributes
-	 */
-	public function __construct($value, array $attributes = array()) {
+        return new self($part[0], $attributes);
+    }
 
-		$this->value = $value;
+    /**
+     * Returns header value's string representation.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        $string = $this->value.($this->quality < 1 ? ';q='.$this->quality : '');
+        if (\count($this->attributes) > 0) {
+            $string .= '; '.HeaderUtils::toString($this->attributes, ';');
+        }
 
-		foreach ($attributes as $name => $value) {
-			$this->setAttribute($name, $value);
-		}
-	}
+        return $string;
+    }
 
-	/**
-	 * Builds an AcceptHeaderInstance instance from a string.
-	 *
-	 * @param string $itemValue
-	 *
-	 * @return AcceptHeaderItem
-	 */
-	public static function fromString($itemValue) {
+    /**
+     * Set the item value.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function setValue($value): self
+    {
+        $this->value = $value;
 
-		$bits		= preg_split('/\s*(?:;*("[^"]+");*|;*(\'[^\']+\');*|;+)\s*/', $itemValue, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-		$value		= array_shift($bits);
-		$attributes	= array();
+        return $this;
+    }
 
-		$lastNullAttribute = NULL;
+    /**
+     * Returns the item value.
+     *
+     * @return string
+     */
+    public function getValue(): string
+    {
+        return $this->value;
+    }
 
-		foreach ($bits as $bit) {
-			if (($start = substr($bit, 0, 1)) === ($end = substr($bit, -1)) && ($start === '"' || $start === '\'')) {
-				$attributes[$lastNullAttribute] = substr($bit, 1, -1);
-			}
-			elseif ('=' === $end) {
-				$lastNullAttribute = $bit = substr($bit, 0, -1);
-				$attributes[$bit] = NULL;
-			}
-			else {
-				$parts = explode('=', $bit);
-				$attributes[$parts[0]] = isset($parts[1]) && strlen($parts[1]) > 0 ? $parts[1] : '';
-			}
-		}
+    /**
+     * Set the item quality.
+     *
+     * @param float $quality
+     *
+     * @return $this
+     */
+    public function setQuality($quality): self
+    {
+        $this->quality = $quality;
 
-		return new self(($start = substr($value, 0, 1)) === ($end = substr($value, -1)) && ($start === '"' || $start === '\'') ? substr($value, 1, -1) : $value, $attributes);
+        return $this;
+    }
 
-	}
+    /**
+     * Returns the item quality.
+     *
+     * @return float
+     */
+    public function getQuality(): float
+    {
+        return $this->quality;
+    }
 
-	/**
-	 * Returns header  value's string representation.
-	 *
-	 * @return string
-	 */
-	public function __toString() {
+    /**
+     * Set the item index.
+     *
+     * @param int $index
+     *
+     * @return $this
+     */
+    public function setIndex($index): self
+    {
+        $this->index = $index;
 
-		$string = $this->value.($this->quality < 1 ? ';q=' . $this->quality : '');
+        return $this;
+    }
 
-		if (count($this->attributes) > 0) {
-			$string .= ';'.implode(';', array_map(
-				function($name, $value) { return sprintf(preg_match('/[,;=]/', $value) ? '%s="%s"' : '%s=%s', $name, $value); },
-				array_keys($this->attributes), $this->attributes));
-		}
+    /**
+     * Returns the item index.
+     *
+     * @return int
+     */
+    public function getIndex(): int
+    {
+        return $this->index;
+    }
 
-		return $string;
+    /**
+     * Tests if an attribute exists.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasAttribute($name): bool
+    {
+        return isset($this->attributes[$name]);
+    }
 
-	}
+    /**
+     * Returns an attribute by its name.
+     *
+     * @param string $name
+     * @param mixed  $default
+     *
+     * @return mixed
+     */
+    public function getAttribute($name, $default = null)
+    {
+        return $this->attributes[$name] ?? $default;
+    }
 
-	/**
-	 * Set the item value.
-	 *
-	 * @param string $value
-	 *
-	 * @return AcceptHeaderItem
-	 */
-	public function setValue($value) {
+    /**
+     * Returns all attributes.
+     *
+     * @return array
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
 
-		$this->value = $value;
-		return $this;
+    /**
+     * Set an attribute.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function setAttribute($name, $value): self
+    {
+        if ('q' === $name) {
+            $this->quality = (float) $value;
+        } else {
+            $this->attributes[$name] = (string) $value;
+        }
 
-	}
-
-	/**
-	 * Returns the item value.
-	 *
-	 * @return string
-	 */
-	public function getValue() {
-
-		return $this->value;
-
-	}
-
-	/**
-	 * Set the item quality.
-	 *
-	 * @param float $quality
-	 *
-	 * @return AcceptHeaderItem
-	 */
-	public function setQuality($quality) {
-
-		$this->quality = $quality;
-		return $this;
-
-	}
-
-	/**
-	 * Returns the item quality.
-	 *
-	 * @return float
-	 */
-	public function getQuality() {
-
-		return $this->quality;
-
-	}
-
-	/**
-	 * Set the item index.
-	 *
-	 * @param int $index
-	 *
-	 * @return AcceptHeaderItem
-	 */
-	public function setIndex($index) {
-
-		$this->index = $index;
-		return $this;
-
-	}
-
-	/**
-	 * Returns the item index.
-	 *
-	 * @return int
-	 */
-	public function getIndex() {
-
-		return $this->index;
-
-	}
-
-	/**
-	 * Tests if an attribute exists.
-	 *
-	 * @param string $name
-	 *
-	 * @return Boolean
-	 */
-	public function hasAttribute($name) {
-
-		return isset($this->attributes[$name]);
-
-	}
-
-	/**
-	 * Returns an attribute by its name.
-	 *
-	 * @param string $name
-	 * @param mixed  $default
-	 *
-	 * @return mixed
-	 */
-	public function getAttribute($name, $default = NULL) {
-
-		return isset($this->attributes[$name]) ? $this->attributes[$name] : $default;
-
-	}
-
-	/**
-	 * Returns all attributes.
-	 *
-	 * @return array
-	 */
-	public function getAttributes() {
-
-		return $this->attributes;
-
-	}
-
-	/**
-	 * Set an attribute.
-	 *
-	 * @param string $name
-	 * @param string $value
-	 *
-	 * @return AcceptHeaderItem
-	 */
-	public function setAttribute($name, $value) {
-
-		if ('q' === $name) {
-			$this->quality = (float) $value;
-		}
-		else {
-			$this->attributes[$name] = (string) $value;
-		}
-
-		return $this;
-	}
+        return $this;
+    }
 }

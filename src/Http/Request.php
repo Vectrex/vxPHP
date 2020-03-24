@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 /*
  * with minor adaptations lifted from Symfony's HttpFoundation classes
  *
