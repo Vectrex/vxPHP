@@ -6,7 +6,7 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint\Validator;
+namespace vxPHP\Tests\Constraint;
 
 use vxPHP\Constraint\Validator\Range;
 use PHPUnit\Framework\TestCase;

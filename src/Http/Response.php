@@ -226,7 +226,7 @@ class Response
      *
      * @return static
      */
-    public static function create($content = '', $status = 200, $headers = [])
+    public static function create($content = '', $status = 200, $headers = []): Response
     {
         return new static($content, $status, $headers);
     }
@@ -268,7 +268,7 @@ class Response
      * @param Request $request
      * @return $this
      */
-    public function prepare(Request $request): self
+    public function prepare(Request $request): Response
     {
         $headers = $this->headers;
 
@@ -338,7 +338,7 @@ class Response
      *
      * @return $this
      */
-    public function sendHeaders(): self
+    public function sendHeaders(): Response
     {
         // headers have already been sent by the developer
         if (headers_sent()) {
@@ -369,7 +369,7 @@ class Response
      *
      * @return $this
      */
-    public function sendContent(): self
+    public function sendContent(): Response
     {
         echo $this->content;
 
@@ -406,7 +406,7 @@ class Response
      *
      * @throws \UnexpectedValueException
      */
-    public function setContent($content): self
+    public function setContent($content): Response
     {
         if (null !== $content && !\is_string($content) && !is_numeric($content) && !\is_callable([$content, '__toString'])) {
             throw new \UnexpectedValueException(sprintf('The Response content must be a string or object implementing __toString(), "%s" given.', \gettype($content)));
@@ -954,6 +954,8 @@ class Response
      *
      * @param array $options
      * @return $this
+     *
+     * @throws \InvalidArgumentException
      *
      * @final
      */

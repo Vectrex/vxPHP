@@ -202,7 +202,7 @@ class Cookie
      *
      * @return string
      */
-    public function getValue(): string
+    public function getValue(): ?string
     {
         return $this->value;
     }
@@ -212,7 +212,7 @@ class Cookie
      *
      * @return string
      */
-    public function getDomain(): string
+    public function getDomain(): ?string
     {
         return $this->domain;
     }

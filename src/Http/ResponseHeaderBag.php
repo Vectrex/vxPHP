@@ -107,7 +107,6 @@ class ResponseHeaderBag extends HeaderBag
 
         if ($key) {
             $key = strtr($key, self::UPPER, self::LOWER);
-
             return 'set-cookie' !== $key ? $headers[$key] ?? [] : array_map('strval', $this->getCookies());
         }
 
@@ -147,7 +146,6 @@ class ResponseHeaderBag extends HeaderBag
             $this->headerNames['cache-control'] = 'Cache-Control';
             $this->computedCacheControl = $this->parseCacheControl($computed);
         }
-
     }
 
     /**
@@ -186,7 +184,7 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
-    public function getCacheControlDirective($key): bool
+    public function getCacheControlDirective($key)
     {
         return $this->computedCacheControl[$key] ?? null;
     }
@@ -194,6 +192,7 @@ class ResponseHeaderBag extends HeaderBag
     public function setCookie(Cookie $cookie): void
     {
         $this->cookies[$cookie->getDomain()][$cookie->getPath()][$cookie->getName()] = $cookie;
+        $this->headerNames['set-cookie'] = 'Set-Cookie';
     }
 
     /**
@@ -235,7 +234,7 @@ class ResponseHeaderBag extends HeaderBag
      */
     public function getCookies($format = self::COOKIES_FLAT): array
     {
-        if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY])) {
+        if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY], true)) {
             throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])));
         }
 
@@ -264,9 +263,10 @@ class ResponseHeaderBag extends HeaderBag
      * @param bool   $secure
      * @param bool   $httpOnly
      */
-    public function clearCookie($name, $path = '/', $domain = null, $secure = false, $httpOnly = true)
+    public function clearCookie($name, $path = '/', $domain = null, $secure = false, $httpOnly = true/*, $sameSite = null*/): void
     {
-        $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, null));
+        $sameSite = \func_num_args() > 5 ? func_get_arg(5) : null;
+        $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, $sameSite));
     }
 
     /**

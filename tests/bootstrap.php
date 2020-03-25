@@ -13,3 +13,4 @@ $loader = new vxPHP\Autoload\Psr4();
 $loader->register();
 
 $loader->addPrefix('vxPHP', __DIR__ . '/../src');
+$loader->addPrefix('vxPHP\\Tests', __DIR__ . '/../tests');

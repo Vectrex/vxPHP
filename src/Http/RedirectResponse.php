@@ -57,7 +57,7 @@ class RedirectResponse extends Response
      *
      * @return static
      */
-    public static function create($url = '', $status = 302, $headers = [])
+    public static function create($url = '', $status = 302, $headers = []): Response
     {
         return new static($url, $status, $headers);
     }

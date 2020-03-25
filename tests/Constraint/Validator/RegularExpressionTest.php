@@ -6,7 +6,7 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint\RegularExpression;
+namespace vxPHP\Tests\Constraint;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Constraint\Validator\RegularExpression;

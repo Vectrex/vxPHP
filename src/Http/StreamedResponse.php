@@ -23,7 +23,7 @@ namespace vxPHP\Http;
  * A StreamedResponse uses a callback for its content.
  *
  * The callback should use the standard PHP functions like echo
- * to stream the response back to the client. The flush() method
+ * to stream the response back to the client. The flush() function
  * can also be used if needed.
  *
  * @see flush()
@@ -32,92 +32,119 @@ namespace vxPHP\Http;
  *
  * @api
  */
-class StreamedResponse extends Response {
+class StreamedResponse extends Response
+{
+    protected $callback;
+    protected $streamed;
+    private $headersSent;
 
-	protected $callback;
-	protected $streamed;
+    /**
+     * @param callable|null $callback A valid PHP callback or null to set it later
+     * @param int           $status   The response status code
+     * @param array         $headers  An array of response headers
+     */
+    public function __construct(callable $callback = null, int $status = 200, array $headers = [])
+    {
+        parent::__construct(null, $status, $headers);
 
-	/**
-	 * Constructor.
-	 *
-	 * @param mixed   $callback A valid PHP callback
-	 * @param integer $status   The response status code
-	 * @param array   $headers  An array of response headers
-	 */
-	public function __construct(callable $callback = NULL, $status = 200, $headers = []) {
+        if (null !== $callback) {
+            $this->setCallback($callback);
+        }
+        $this->streamed = false;
+        $this->headersSent = false;
+    }
 
-		parent::__construct(NULL, $status, $headers);
+    /**
+     * Factory method for chainability.
+     *
+     * @param callable|null $callback A valid PHP callback or null to set it later
+     * @param int           $status   The response status code
+     * @param array         $headers  An array of response headers
+     *
+     * @return static
+     */
+    public static function create($callback = null, $status = 200, $headers = []): Response
+    {
+        return new static($callback, $status, $headers);
+    }
 
-		if (NULL !== $callback) {
-				$this->setCallback($callback);
-		}
+    /**
+     * Sets the PHP callback associated with this Response.
+     *
+     * @return $this
+     */
+    public function setCallback(callable $callback): self
+    {
+        $this->callback = $callback;
 
-		$this->streamed = FALSE;
+        return $this;
+    }
 
-	}
+    /**
+     * {@inheritdoc}
+     *
+     * This method only sends the headers once.
+     *
+     * @return $this
+     */
+    public function sendHeaders(): Response
+    {
+        if ($this->headersSent) {
+            return $this;
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public static function create($callback = NULL, $status = 200, $headers = []) {
+        $this->headersSent = true;
 
-		return new static($callback, $status, $headers);
+        return parent::sendHeaders();
+    }
 
-	}
+    /**
+     * {@inheritdoc}
+     *
+     * This method only sends the content once.
+     *
+     * @return $this
+     */
+    public function sendContent(): Response
+    {
+        if ($this->streamed) {
+            return $this;
+        }
 
-	/**
-	 * Sets the PHP callback associated with this Response.
-	 *
-	 * @param callable $callback
-	 */
-	public function setCallback(callable $callback) {
+        $this->streamed = true;
 
-		$this->callback = $callback;
+        if (null === $this->callback) {
+            throw new \LogicException('The Response callback must not be null.');
+        }
 
-	}
+        ($this->callback)();
 
-	/**
-	 * {@inheritdoc}
-	 *
-	 * This method only sends the content once.
-	 */
-	public function sendContent() {
+        return $this;
+    }
 
-		if ($this->streamed) {
-			return;
-		}
+    /**
+     * {@inheritdoc}
+     *
+     * @throws \LogicException when the content is not null
+     *
+     * @return $this
+     */
+    public function setContent($content): Response
+    {
+        if (null !== $content) {
+            throw new \LogicException('The content cannot be set on a StreamedResponse instance.');
+        }
 
-		$this->streamed = TRUE;
+        $this->streamed = true;
 
-		if (NULL === $this->callback) {
-			throw new \LogicException('The Response callback must not be null.');
-		}
+        return $this;
+    }
 
-		call_user_func($this->callback);
-
-	}
-
-	/**
-	 * {@inheritdoc}
-	 *
-	 * @throws \LogicException when the content is not null
-	 */
-	public function setContent($content) {
-
-		if (NULL !== $content) {
-			throw new \LogicException('The content cannot be set on a StreamedResponse instance.');
-		}
-
-	}
-
-	/**
-	 * {@inheritdoc}
-	 *
-	 * @return false
-	 */
-	public function getContent() {
-
-		return FALSE;
-
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getContent()
+    {
+        return false;
+    }
 }

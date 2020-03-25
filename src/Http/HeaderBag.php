@@ -121,7 +121,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function get($key, $default = null): ?string
     {
-        $headers = $this->headers[strtr($key, self::UPPER, self::LOWER)] ?? [];
+        $headers = $this->all((string) $key);
 
         if (!$headers) {
             return $default;
@@ -188,7 +188,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function contains($key, $value): bool
     {
-        return \in_array($value, $this->headers[strtr($key, self::UPPER, self::LOWER)] ?? []);
+        return \in_array($value, $this->all((string) $key), true);
 	}
 
     /**
@@ -238,7 +238,6 @@ class HeaderBag implements \IteratorAggregate, \Countable
     public function addCacheControlDirective($key, $value = true)
     {
         $this->cacheControl[$key] = $value;
-
         $this->set('Cache-Control', $this->getCacheControlHeader());
     }
 
@@ -261,7 +260,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return mixed|null The directive value if defined, null otherwise
      */
-    public function getCacheControlDirective($key): bool
+    public function getCacheControlDirective($key)
     {
         return $this->cacheControl[$key] ?? null;
     }

@@ -6,7 +6,7 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint\Validator;
+namespace vxPHP\Tests\Constraint;
 
 use vxPHP\Constraint\Validator\Ip;
 use PHPUnit\Framework\TestCase;

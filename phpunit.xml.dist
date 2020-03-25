@@ -10,7 +10,7 @@
 
   <testsuites>
     <testsuite name="vxPHP test suite">
-      <directory>tests</directory>
+      <directory>./tests</directory>
     </testsuite>
   </testsuites>
 

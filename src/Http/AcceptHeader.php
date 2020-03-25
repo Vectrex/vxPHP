@@ -59,7 +59,7 @@ class AcceptHeader
 
         $parts = HeaderUtils::split((string) $headerValue, ',;=');
 
-        return new self(array_map(function ($subParts) use (&$index) {
+        return new self(array_map(static function ($subParts) use (&$index) {
             $part = array_shift($subParts);
             $attributes = HeaderUtils::combine($subParts);
 
@@ -99,7 +99,7 @@ class AcceptHeader
      *
      * @return AcceptHeaderItem|null
      */
-    public function get($value): ?AcceptHeader
+    public function get($value): ?AcceptHeaderItem
     {
         return $this->items[$value] ?? $this->items[explode('/', $value)[0].'/*'] ?? $this->items['*/*'] ?? $this->items['*'] ?? null;
     }
