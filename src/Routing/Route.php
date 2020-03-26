@@ -23,7 +23,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.3 2020-02-27
+ * @version 1.3.4 2020-03-26
  *
  */
 
@@ -145,7 +145,7 @@ class Route
 		$this->routeId = $routeId;
 		$this->scriptName = $scriptName;
 
-        $this->setRequestMethods(isset($parameters['requestMethods']) ?(array) $parameters['requestMethods'] : []);
+        $this->setRequestMethods(isset($parameters['requestMethods']) ? (array) $parameters['requestMethods'] : []);
 
         if(isset($parameters['path'])) {
 
@@ -183,7 +183,7 @@ class Route
         if(isset($parameters['placeholders'])) {
             $this->placeholders = $parameters['placeholders'];
         }
-        $this->match = $parameters['match'] ?: $routeId;
+        $this->match = $parameters['match'] ?? $routeId;
 	}
 
 	/**

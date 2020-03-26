@@ -247,30 +247,19 @@ class BinaryFileResponseTest extends ResponseTestCase
         ];
     }
 
-    /**
-     * @dataProvider provideXSendfileFiles
-     */
-    public function testXSendfile($file)
+    public function testXSendfile()
     {
         $request = Request::create('/');
         $request->headers->set('X-Sendfile-Type', 'X-Sendfile');
 
         BinaryFileResponse::trustXSendfileTypeHeader();
-        $response = BinaryFileResponse::create($file, 200, ['Content-Type' => 'application/octet-stream']);
+        $response = BinaryFileResponse::create(new FilesystemFile(__DIR__.'/File/FakeFile.php'), 200, ['Content-Type' => 'application/octet-stream']);
         $response->prepare($request);
 
         $this->expectOutputString('');
         $response->sendContent();
 
-        $this->assertStringContainsString('README.md', $response->headers->get('X-Sendfile'));
-    }
-
-    public function provideXSendfileFiles()
-    {
-        return [
-            [__DIR__.'/../README.md'],
-            ['file://'.__DIR__.'/../README.md'],
-        ];
+        $this->assertStringContainsString('FakeFile.php', $response->headers->get('X-Sendfile'));
     }
 
     /**
@@ -344,7 +333,7 @@ class BinaryFileResponseTest extends ResponseTestCase
 
     protected function provideResponse()
     {
-        return new BinaryFileResponse(new FilesystemFile(__DIR__.'/../README.md'), 200, ['Content-Type' => 'application/octet-stream']);
+        return new BinaryFileResponse(new FilesystemFile(__DIR__.'/File/FakeFile.php'), 200, ['Content-Type' => 'application/octet-stream']);
     }
 
     public static function tearDownAfterClass(): void
