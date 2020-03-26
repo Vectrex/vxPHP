@@ -11,12 +11,17 @@ class RouteTest extends TestCase {
         $route = new Route('foo', 'index.php');
         $this->assertEquals('foo', $route->getRouteId());
         $this->assertEquals('index.php', $route->getScriptName());
+        $this->assertEquals(Route::KNOWN_REQUEST_METHODS, $route->getRequestMethods());
+        $route = new Route('foo', 'index.php', ['requestMethods' => 'get']);
+        $this->assertEquals(['GET'], $route->getRequestMethods());
+        $this->expectException('InvalidArgumentException');
+        new Route('foo', 'index.php', ['requestMethods' => 'foo']);
     }
 
     public function testSetRequestMethods()
     {
         $route = new Route('foo', 'index.php');
-        $this->assertEquals([], $route->getRequestMethods());
+        $this->assertEquals(Route::KNOWN_REQUEST_METHODS, $route->getRequestMethods());
 
         $route->setRequestMethods(['get', 'post']);
         $this->assertEquals(['GET', 'POST'], $route->getRequestMethods());

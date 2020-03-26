@@ -23,7 +23,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.4 2020-03-26
+ * @version 1.3.5 2020-03-26
  *
  */
 
@@ -133,6 +133,7 @@ class Route
      */
 	private $pathIsRelative;
 
+	public const KNOWN_REQUEST_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 	/**
 	 * Constructor.
 	 *
@@ -145,7 +146,7 @@ class Route
 		$this->routeId = $routeId;
 		$this->scriptName = $scriptName;
 
-        $this->setRequestMethods(isset($parameters['requestMethods']) ? (array) $parameters['requestMethods'] : []);
+        $this->setRequestMethods(isset($parameters['requestMethods']) ? (array) $parameters['requestMethods'] : self::KNOWN_REQUEST_METHODS);
 
         if(isset($parameters['path'])) {
 
@@ -486,13 +487,11 @@ class Route
     {
 	    $requestMethods = array_map('strtoupper', $requestMethods);
 
-        $allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+	    $notAllowed = array_diff($requestMethods, self::KNOWN_REQUEST_METHODS);
 
-        foreach($requestMethods as $requestMethod) {
-			if(!in_array($requestMethod, $allowedMethods, true)) {
-				throw new InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
-			}
-		}
+	    if(count($notAllowed)) {
+            throw new InvalidArgumentException(sprintf("Invalid request method(s) '%s'.", implode("', '", $notAllowed)));
+        }
 
 		$this->requestMethods = $requestMethods;
 		return $this;
