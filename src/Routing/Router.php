@@ -24,7 +24,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.2.0 2019-06-10
+ * @version 1.2.1 2020-03-26
  *
  */
 class Router {
@@ -313,7 +313,7 @@ class Router {
 
 	            // prefer route which is more specific with request methods
 
-	            if(count($route->getRequestMethods()) > count($foundRoute->getRequestMethods())) {
+	            if(count($foundRoute->getRequestMethods()) && (count($route->getRequestMethods()) > count($foundRoute->getRequestMethods()))) {
 	                continue;
 	            }
 
