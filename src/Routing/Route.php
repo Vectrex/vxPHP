@@ -23,7 +23,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.3 2020-02-27
+ * @version 1.3.5 2020-03-26
  *
  */
 
@@ -145,7 +145,7 @@ class Route
 		$this->routeId = $routeId;
 		$this->scriptName = $scriptName;
 
-        $this->setRequestMethods(isset($parameters['requestMethods']) ?(array) $parameters['requestMethods'] : []);
+        $this->setRequestMethods(isset($parameters['requestMethods']) ? (array) $parameters['requestMethods'] : self::KNOWN_REQUEST_METHODS);
 
         if(isset($parameters['path'])) {
 
@@ -183,7 +183,7 @@ class Route
         if(isset($parameters['placeholders'])) {
             $this->placeholders = $parameters['placeholders'];
         }
-        $this->match = $parameters['match'] ?: $routeId;
+        $this->match = $parameters['match'] ?? $routeId;
 	}
 
 	/**
@@ -486,13 +486,11 @@ class Route
     {
 	    $requestMethods = array_map('strtoupper', $requestMethods);
 
-        $allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+	    $notAllowed = array_diff($requestMethods, self::KNOWN_REQUEST_METHODS);
 
-        foreach($requestMethods as $requestMethod) {
-			if(!in_array($requestMethod, $allowedMethods, true)) {
-				throw new InvalidArgumentException(sprintf("Invalid request method '%s'.", $requestMethod));
-			}
-		}
+	    if(count($notAllowed)) {
+            throw new InvalidArgumentException(sprintf("Invalid request method(s) '%s'.", implode("', '", $notAllowed)));
+        }
 
 		$this->requestMethods = $requestMethods;
 		return $this;
