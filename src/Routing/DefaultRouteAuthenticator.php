@@ -1,5 +1,4 @@
 <?php
-
 /*
  * This file is part of the vxPHP/vxWeb framework
  *
@@ -23,11 +22,11 @@ use vxPHP\Application\Application;
  * the auth attribute of the route
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0, 2018-05-11
+ * @version 0.3.0, 2020-03-29
  * 
  */
-class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
-
+class DefaultRouteAuthenticator implements RouteAuthenticatorInterface
+{
     /**
      * @var Route[]
      */
@@ -39,14 +38,16 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
 	 *
 	 * @see \vxPHP\Routing\RouteAuthenticatorInterface::authenticate()
 	 */
-	public function authenticate(Route $route, UserInterface $user = null) {
+	public function authenticate(Route $route, UserInterface $user = null): bool
+    {
+        if($user === null) {
+            $user = Application::getInstance()->getCurrentUser();
+        }
 
-		// no user or no authenticated user?
+        // no user or no authenticated user?
 
-		if(is_null($user) || !$user->isAuthenticated()) {
-
+		if($user === null || !$user->isAuthenticated()) {
 			return false;
-
 		}
 		
 		// role hierarchy defined? check roles and sub-roles
@@ -84,7 +85,6 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
 		}
 
         return false;
-		
 	}
 
     /**
@@ -96,7 +96,6 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
      */
     public function handleViolation(Route $route)
     {
-
         if(in_array($route, $this->violatingRoutes)) {
             throw new ApplicationException('Circular redirects detected; aborting.');
         }
@@ -110,11 +109,6 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface {
         if($redirect = $route->getRedirect()) {
             return Application::getInstance()->getRouter()->getRoute($redirect);
         }
-
-        else {
-            throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
-        }
-
+        throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
     }
-
 }

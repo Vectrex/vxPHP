@@ -11,8 +11,6 @@
 namespace vxPHP\Routing;
 
 use InvalidArgumentException;
-use vxPHP\Application\Application;
-use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
 use vxPHP\Http\RedirectResponse;
 
@@ -23,12 +21,20 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.3.5 2020-03-26
+ * @version 2.0.0 2020-04-03
  *
  */
 
 class Route
 {
+    /**
+     * the router the route is assigned to
+     * required to access router related options when generating URLs, etc.
+     *
+     * @var Router
+     */
+    private $router;
+
 	/**
 	 * unique id of route
 	 * 
@@ -140,6 +146,7 @@ class Route
 	 * @param string $routeId, the route identifier
 	 * @param string $scriptName, name of assigned script
 	 * @param array $parameters, collection of route parameters
+     * @throws \InvalidArgumentException
 	 */
 	public function __construct($routeId, $scriptName, array $parameters = [])
     {
@@ -160,9 +167,51 @@ class Route
                 $this->path = $parameters['path'];
                 $this->pathIsRelative = true;
             }
+
+            // extract route parameters and default values
+
+            if(preg_match_all('~{(.*?)(=.*?)?}~', $this->path, $matches)) {
+
+                $this->placeholders = [];
+                $rex = $this->path;
+
+                if(!empty($matches[1])) {
+                    foreach($matches[1] as $ndx => $name) {
+
+                        $name = strtolower($name);
+
+                        if(!empty($matches[2][$ndx])) {
+
+                            $this->placeholders[$name] = [
+                                'name' => $name,
+                                'default' => substr($matches[2][$ndx], 1)
+                            ];
+
+                            // turn this path parameter into regexp and make it optional
+
+                            $rex = preg_replace('~/{.*?}~', '/?(?:([^/]+))?', $rex, 1);
+                        }
+                        else {
+
+                            $this->placeholders[$name] = [
+                                'name' => $name
+                            ];
+
+                            // turn this path parameter into regexp
+
+                            $rex = preg_replace('~{.*?}~', '([^/]+)', $rex, 1);
+                        }
+                    }
+                }
+                $this->match = $rex;
+            }
+            else {
+                $this->match = $this->path;
+            }
 		}
 		else {
 			$this->path = $routeId;
+			$this->match = $routeId;
 			$this->pathIsRelative = true;
 		}
 
@@ -182,9 +231,11 @@ class Route
 			$this->methodName = $parameters['method'];
 		}
         if(isset($parameters['placeholders'])) {
+            if (!is_array($parameters['placeholders'])) {
+                throw new \InvalidArgumentException("Route placeholders can't be a scalar.");
+            }
             $this->placeholders = $parameters['placeholders'];
         }
-        $this->match = $parameters['match'] ?? $routeId;
 	}
 
 	/**
@@ -195,7 +246,29 @@ class Route
 		$this->clearPathParameters();
 	}
 
-	/**
+    /**
+     * set the router handling the route
+     *
+     * @param Router $router
+     * @return $this
+     */
+    public function setRouter(Router $router): self
+    {
+        $this->router = $router;
+        return $this;
+    }
+
+    /**
+     * get router handling the route
+     *
+     * @return Router|null
+     */
+    public function getRouter(): ?Router
+    {
+        return $this->router;
+    }
+
+    /**
 	 * return id of route
 	 * 
 	 * @return string $page
@@ -220,7 +293,7 @@ class Route
 	 * 
 	 * @return string $matchExpression
 	 */
-	public function getMatchExpression(): string
+	public function getMatchExpression(): ?string
     {
 		return $this->match;
 	}
@@ -270,6 +343,18 @@ class Route
 		$this->authParameters = $authParameters;
 		return $this;
 	}
+
+    /**
+     * set name of invoked controller method
+     *
+     * @param string $methodName
+     * @return Route
+     */
+    public function setMethodName(string $methodName): self
+    {
+        $this->methodName = $methodName;
+        return $this;
+    }
 
 	/**
 	 * get name of method which is invoked after instancing the
@@ -360,41 +445,36 @@ class Route
      * @param array $pathParameters
      * @param string $prefix
      * @return string
-     * @throws ApplicationException
-     * @throws InvalidArgumentException
+     * @throws \RuntimeException
      */
 	public function getUrl(array $pathParameters = null, $prefix = ''): string
     {
 	    if(!$this->pathIsRelative && $prefix) {
-	        throw new InvalidArgumentException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
+	        throw new \RuntimeException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
+        }
+
+	    if(!$this->router) {
+            throw new \RuntimeException(sprintf("Route '%s' has no router configured. Generating an URL is not possible.", $this->routeId));
         }
 
 		// avoid building URL in subsequent calls
 
 		if(!$this->url) {
-			
-			$application = Application::getInstance();
-			
 			$urlSegments = [];
 
-			if($application->getRouter()->getServerSideRewrite()) {
-				
+			if($this->router->getServerSideRewrite()) {
 				if(($scriptName = basename($this->scriptName, '.php')) !== 'index') {
 					$urlSegments[] = $scriptName;
 				}
 			}
-			
 			else {
-				
-				if($application->getRelativeAssetsPath()) {
-					$urlSegments[] = trim($application->getRelativeAssetsPath(), '/');
+                if($relPath = $this->router->getRelativeAssetsPath()) {
+					$urlSegments[] = trim($relPath, '/');
 				}
-				
 				$urlSegments[] = $this->scriptName;
 			}
 			
 			$this->url = rtrim('/' . implode('/', $urlSegments), '/');
-			
 		}
 
 		// add path and path parameters
@@ -410,7 +490,6 @@ class Route
             }
 
 			return $this->url . '/' . $path;
-
 		}
 
 		// add an optional prefix
@@ -505,7 +584,7 @@ class Route
 	 */
 	public function allowsRequestMethod($requestMethod): bool
     {
-		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods);
+		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods, true);
 	}
 
 	/**
@@ -638,22 +717,21 @@ class Route
      * @param array $queryParams
      * @param int $statusCode
      * @return RedirectResponse
-     * @throws ApplicationException
+     * @throws \RuntimeException
      */
 	public function redirect($queryParams = [],  $statusCode = 302): RedirectResponse
     {
 		$request = Request::createFromGlobals();
-		$application = Application::getInstance();
 
-		if(!$application->getRouter()) {
-		    throw new \RuntimeException('No router assigned to application. Cannot generate a redirect response.');
+        if(!$this->router) {
+            throw new \RuntimeException(sprintf("Route '%s' has no router configured. Cannot generate a redirect response.", $this->routeId));
         }
 
 		$urlSegments = [
 			$request->getSchemeAndHttpHost()
 		];
 
-		if($application->getRouter()->getServerSideRewrite()) {
+		if($this->router->getServerSideRewrite()) {
 			if(($scriptName = basename($request->getScriptName(), '.php')) !== 'index') {
 				$urlSegments[] = $scriptName;
 			}
@@ -682,5 +760,4 @@ class Route
     {
         return $this->pathIsRelative;
     }
-
 }

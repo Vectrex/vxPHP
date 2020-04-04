@@ -26,7 +26,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.1.3 2020-01-27
+ * @version 2.1.5 2020-04-03
  */
 class Config {
 
@@ -668,7 +668,7 @@ class Config {
 			// read optional allowed request methods
 
 			if(($requestMethods = $page->getAttribute('request_methods'))) {
-				$allowedMethods	= ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+				$allowedMethods	= Route::KNOWN_REQUEST_METHODS;
 				$requestMethods	= preg_split('~\s*,\s*~', strtoupper($requestMethods));
 
 				foreach($requestMethods as $requestMethod) {
@@ -679,61 +679,9 @@ class Config {
 				$parameters['requestMethods'] = $requestMethods;
 			}
 
-			// when no path is defined page id will be used for route lookup
-
 			if(($path = $page->getAttribute('path'))) {
-
-				// initialize lookup expression, remove any leading slashes
-
-				$rex = ltrim($path, '/');
-
-				// extract route parameters and default values
-
-				if(preg_match_all('~\{(.*?)(=.*?)?\}~', $path, $matches)) {
-
-					$placeholders = [];
-
-					if(!empty($matches[1])) {
-
-						foreach($matches[1] as $ndx => $name) {
-
-							$name = strtolower($name);
-
-							if(!empty($matches[2][$ndx])) {
-
-								$placeholders[$name] = [
-									'name' => $name,
-									'default' => substr($matches[2][$ndx], 1)
-								];
-
-								// turn this path parameter into regexp and make it optional
-
-								$rex = preg_replace('~/{.*?\}~', '/?(?:([^/]+))?', $rex, 1);
-
-							}
-
-							else {
-
-								$placeholders[$name] = [
-									'name' => $name
-								];
-
-								// turn this path parameter into regexp
-
-								$rex = preg_replace('~\{.*?\}~', '([^/]+)', $rex, 1);
-
-							}
-						}
-					}
-					$parameters['placeholders'] = $placeholders;
-				}
 				$parameters['path'] = $path;
 			}
-			else {
-				$rex = $pageId;
-			}
-
-			$parameters['match'] = $rex;
 
 			// extract optional authentication requirements
 

@@ -30,7 +30,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.11.2 2019-01-27
+ * @version 1.12.0 2020-03-29
  */
 class Application {
 
@@ -745,6 +745,14 @@ class Application {
     public function setRouter(Router $router): Application
     {
         $this->router = $router;
+
+        if($this->locales) {
+            $router->setLocalePrefixes(array_keys($this->locales));
+        }
+        if($this->relativeAssetsPath) {
+            $router->setRelativeAssetsPath($this->relativeAssetsPath);
+        }
+
         return $this;
     }
 
