@@ -11,14 +11,16 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Form\FormElement\LabelElement;
+use vxPHP\Template\Exception\SimpleTemplateException;
 
 /**
  * a single option belonging to a group of <input type="option"> elements
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.9.0 2019-10-02
+ * @version 0.9.1 2020-04-05
  */
 class RadioOptionElement extends FormElementFragment
 {
@@ -39,21 +41,16 @@ class RadioOptionElement extends FormElementFragment
      *
      * @param boolean $force
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
-	public function render($force = false)
+	public function render(bool $force = false): string
     {
 		if(empty($this->html) || $force) {
-
             if($this->template) {
-
                 parent::render();
-
             }
-
             else {
-
                 $value = $this->getValue();
 
                 if($this->selected) {

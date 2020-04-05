@@ -11,7 +11,9 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Form\FormElement\LabelElement;
+use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Template\SimpleTemplate;
 
 /**
@@ -19,10 +21,8 @@ use vxPHP\Template\SimpleTemplate;
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.8.0 2019-01-06
- *
+ * @version 0.8.1 2020-04-05
  */
-
 abstract class FormElementFragment implements FormElementFragmentInterface {
 
     /**
@@ -68,12 +68,12 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * @param LabelElement $label
 	 * @param FormElementWithOptionsInterface $formElement
 	 */
-	public function __construct($value, LabelElement $label, FormElementWithOptionsInterface $formElement = null)
+	public function __construct(string $value, LabelElement $label, FormElementWithOptionsInterface $formElement = null)
     {
 		$this->setValue($value);
 		$this->setLabel($label);
 
-		if(!is_null($formElement)) {
+		if($formElement !== null) {
 			$this->setParentElement($formElement);
 		}
 	}
@@ -83,7 +83,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @param string $value
      * @return $this|FormElementFragmentInterface
 	 */
-	public function setValue($value)
+	public function setValue(string $value): FormElementFragmentInterface
     {
 		$this->value = $value;
 		return $this;
@@ -93,7 +93,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * @see FormElementFragmentInterface::getValue()
      * @return string
 	 */
-	public function getValue()
+	public function getValue(): string
     {
 		return $this->value;
 	}
@@ -103,7 +103,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @param LabelElement $label
      * @return $this|FormElementFragmentInterface
 	 */
-	public function setLabel(LabelElement $label)
+	public function setLabel(LabelElement $label): FormElementFragmentInterface
     {
 		$this->label = $label;
         return $this;
@@ -113,7 +113,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * @see FormElementFragmentInterface::getLabel()
      * @return LabelElement
 	 */
-	public function getLabel()
+	public function getLabel(): LabelElement
     {
 		return $this->label;
 	}
@@ -125,9 +125,9 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @return $this|FormElementFragmentInterface
 
      */
-    public function setAttribute($attribute, $value)
+    public function setAttribute(string $attribute, string $value = null): FormElementFragmentInterface
     {
-        if(is_null($value)) {
+        if($value === null) {
             unset($this->attributes[$attribute]);
         }
         else {
@@ -142,7 +142,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * @see FormElementFragmentInterface::select()
      * @return $this|FormElementFragmentInterface
 	 */
-	public function select()
+	public function select(): FormElementFragmentInterface
     {
     	$this->selected = true;
 		return $this;
@@ -152,7 +152,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	 * @see FormElementFragmentInterface::unselect()
      * @return $this|FormElementFragmentInterface
 	 */
-	public function unselect()
+	public function unselect(): FormElementFragmentInterface
     {
 		$this->selected = false;
 		return $this;
@@ -162,7 +162,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      *
      * @return bool
      */
-	public function getSelected()
+	public function getSelected(): bool
     {
         return $this->selected;
     }
@@ -172,7 +172,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @param FormElementWithOptionsInterface $element
      * @return $this|FormElementFragmentInterface
 	 */
-	public function setParentElement(FormElementWithOptionsInterface $element)
+	public function setParentElement(FormElementWithOptionsInterface $element): FormElementFragmentInterface
     {
 		$this->parentElement = $element;
 		return $this;
@@ -180,9 +180,9 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 
     /**
      * @see FormElementFragmentInterface::getParentElement()
-     * @return $this|FormElementWithOptionsInterface
+     * @return FormElementWithOptionsInterface
      */
-    public function getParentElement()
+    public function getParentElement(): FormElementWithOptionsInterface
     {
         return $this->parentElement;
     }
@@ -194,21 +194,20 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
      * @param SimpleTemplate $template
      * @return $this
      */
-    public function setSimpleTemplate(SimpleTemplate $template)
+    public function setSimpleTemplate(SimpleTemplate $template): FormElementFragmentInterface
     {
-
         $this->template = $template;
         return $this;
-
     }
 
     /**
      * @see FormElementFragmentInterface::render()
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws \RuntimeException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
-	public function render()
+	public function render(bool $force = false): string
     {
         if(!$this->template) {
             throw new \RuntimeException(sprintf("No template for fragment of element '%s' defined.", $this->parentElement->getName()));
@@ -217,5 +216,4 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
         $this->html = $this->template->assign('fragment', $this)->display();
         return $this->html;
     }
-
 }

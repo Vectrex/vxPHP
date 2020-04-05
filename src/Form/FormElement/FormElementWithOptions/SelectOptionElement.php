@@ -17,7 +17,7 @@ use vxPHP\Form\FormElement\LabelElement;
  * a single option of a select element
  * 
  * @author Gregor Kofler
- * @version 0.8.0 2019-01-06
+ * @version 0.8.1 2020-04-05
  */
 class SelectOptionElement extends FormElementFragment {
 
@@ -28,10 +28,9 @@ class SelectOptionElement extends FormElementFragment {
 	 * @param string $label
 	 * @param SelectElement $formElement
 	 */
-	public function __construct($value, $label, SelectElement $formElement = null) {
-
+	public function __construct(string $value, string $label, SelectElement $formElement = null)
+    {
 		parent::__construct($value, new LabelElement($label), $formElement);
-
 	}
 
 	/**
@@ -40,8 +39,8 @@ class SelectOptionElement extends FormElementFragment {
 	 * @param boolean $force
      * @return string
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
         if(empty($this->html) || $force) {
 
             if($this->selected) {
@@ -67,6 +66,5 @@ class SelectOptionElement extends FormElementFragment {
 		}
 
 		return $this->html;
-
 	}
 }

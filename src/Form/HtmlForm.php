@@ -274,7 +274,6 @@ class HtmlForm
 
 	/**
 	 * set form action
-	 * @todo auto convert action to nice uri and vice versa
 	 *
 	 * @param string $action
 	 * @return HtmlForm
@@ -522,11 +521,8 @@ class HtmlForm
 				}
 
 				$tmp->set($name, $vals);
-
 			}
-
 			else {
-
 				if(
                     ($e->canSubmit() && !$getSubmits) ||
 					!$e->isValid() ||
@@ -534,9 +530,7 @@ class HtmlForm
 				) {
 					continue;
 				}
-
 				$tmp->set($name, $e->getModifiedValue());
-
 			}
 		}
 
@@ -877,7 +871,7 @@ class HtmlForm
 				if(isset($values[$k])) {
 					$e->setValue($values[$k]);
 				}
-				elseif($e->getValue() === null || isset($this->initFormValues[$name][$k])) {
+				elseif($e->getValue() === null && isset($this->initFormValues[$name][$k])) {
 					$e->setValue($this->initFormValues[$name][$k]);
 				}
 			}

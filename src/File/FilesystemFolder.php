@@ -20,8 +20,6 @@ use vxPHP\Application\Application;
  * @author Gregor Kofler
  *
  * @version 0.6.1 2020-02-07
- *
- * @todo test delete()
  */
 
 class FilesystemFolder {

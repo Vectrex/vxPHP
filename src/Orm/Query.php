@@ -219,7 +219,6 @@ abstract class Query implements QueryInterface {
 
 	/**
 	 * builds query string by parsing WHERE and ORDER BY clauses
-	 * @todo column names are currently masked in MySQL style
 	 * @todo incomplete masking (e.g. ON clauses)
 	 */
 	protected function buildQueryString() {
