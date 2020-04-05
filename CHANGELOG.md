@@ -1,3 +1,8 @@
+## 2.0.0
+- updated Http/* classes based on Symfony's HttpFoundation updated to versions of Symfony 4.4
+- routing improved; removed some dependencies
+- several bugfixes
+
 ## 1.6.13
 - bugfixes to routing
 
