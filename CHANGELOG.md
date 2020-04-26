@@ -1,3 +1,6 @@
+## 2.1.0
+- updated Controller class: removed obsolete code and several dependencies; Controller::createControllerFromRoute() now expects additional parameters 
+
 ## 2.0.0
 - updated Http/* classes based on Symfony's HttpFoundation updated to versions of Symfony 4.4
 - routing improved; removed some dependencies
