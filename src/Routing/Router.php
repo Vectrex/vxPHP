@@ -24,8 +24,8 @@ use vxPHP\Http\Request;
  * @version 2.0.0 2020-03-30
  *
  */
-class Router {
-
+class Router
+{
 	/**
 	 * class used for route authentication
 	 * 
