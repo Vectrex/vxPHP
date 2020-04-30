@@ -10,9 +10,7 @@
 
 namespace vxPHP\Constraint\Validator;
 
-
 use vxPHP\Constraint\AbstractConstraint;
-use vxPHP\Constraint\ConstraintInterface;
 
 /**
  * check whether a float or numeric value is within a given range
@@ -21,12 +19,11 @@ use vxPHP\Constraint\ConstraintInterface;
  * integer or a string representing either; scientific notation is
  * not supported
  *
- * @version 0.1.0 2018-04-29
+ * @version 0.1.1 2020-04-30
  * @author Gregor Kofler
  */
 class Range extends AbstractConstraint
 {
-
     /**
      * @var bool
      */
@@ -63,7 +60,7 @@ class Range extends AbstractConstraint
      */
     public function validate($value): bool
     {
-        if(!(is_int($value) || is_float($value)) && !preg_match('/^[+-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/', $value)) {
+        if(!(is_int($value) || is_float($value)) && !preg_match('/^[+-]?(?:0|[1-9]\d*)(?:\.\d+)?$/', $value)) {
             return false;
         }
 

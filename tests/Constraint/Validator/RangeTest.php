@@ -8,8 +8,8 @@
 
 namespace vxPHP\Tests\Constraint;
 
-use vxPHP\Constraint\Validator\Range;
 use PHPUnit\Framework\TestCase;
+use vxPHP\Constraint\Validator\Range;
 
 class RangeTest extends TestCase {
 

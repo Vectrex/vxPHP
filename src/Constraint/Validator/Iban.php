@@ -1,14 +1,13 @@
 <?php
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
  * Validate IBANs
  * 
  * @author Gregor Kofler
- * @version 0.4.0 2017-12-02
+ * @version 0.4.1 2020-04-30
  *
  */
 class Iban extends AbstractConstraint
@@ -157,7 +156,7 @@ class Iban extends AbstractConstraint
 
 		// no IBAN exceeds 34 chars and starts with country code and checksum
 
-		if(!preg_match('/^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/', $iban)) {
+		if(!preg_match('/^[A-Z]{2}\\d{2}[A-Z0-9]{1,30}$/', $iban)) {
 
 			$this->setErrorMessage('IBAN does not meet basic formal requirements.');
 			return false;

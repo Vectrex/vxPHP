@@ -10,7 +10,7 @@
 
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Constraint\AbstractConstraint;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Application;
@@ -53,11 +53,11 @@ class Date extends AbstractConstraint
      *
      * @param array $options
      * @throws \InvalidArgumentException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
 	public function __construct(array $options = [])
     {
-		$this->locale = isset($options['locale']) ? $options['locale'] : Application::getInstance()->getCurrentLocale();
+		$this->locale = $options['locale'] ?? Application::getInstance()->getCurrentLocale();
 		
 		if(!$this->locale instanceof Locale) {
 			throw new \InvalidArgumentException("Date validator option 'locale' is not a Locale instance.");

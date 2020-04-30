@@ -10,13 +10,12 @@
 
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
  * check string whether it matches IPv4 or IPv6 address
  * 
- * @version 0.1.0 2016-11-30
+ * @version 0.1.1 2020-04-30
  * @author Gregor Kofler
  */
 class Ip extends AbstractConstraint
@@ -60,7 +59,7 @@ class Ip extends AbstractConstraint
 
 		$version = strtolower($version);
 
-		if(!in_array($version, array_keys($allowedVersions))) {
+		if(!array_key_exists($version, $allowedVersions)) {
 			throw new \InvalidArgumentException(sprintf("'%s' is an invalid IP address version; allowed are '%s'.", $version, implode("', '", array_keys($allowedVersions))));
 		}
 

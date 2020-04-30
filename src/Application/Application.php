@@ -11,6 +11,7 @@
 namespace vxPHP\Application;
 
 use Exception;
+use vxPHP\Http\Response;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
 use vxPHP\Application\Exception\ApplicationException;
@@ -30,7 +31,7 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.12.0 2020-03-29
+ * @version 1.12.1 2020-04-30
  */
 class Application {
 
@@ -195,11 +196,9 @@ class Application {
 			else {
 				$this->setRelativeAssetsPath('');
 			}
-			
 		}
 
 		catch (Exception $e) {
-
 			if (strpos(PHP_SAPI, 'cli') === 0) {
 				printf(
 					"Application error!\r\nMessage: %s",
@@ -207,15 +206,12 @@ class Application {
 				);
 			}
 			else {
-				printf(
-					'<div style="border: solid 2px; color: #c00; font-weight: bold; padding: 1em; width: 40em; margin: auto; ">Application Error!<br>Message: %s</div>',
-					$e->getMessage()
-				);
+                (new Response(sprintf(
+                    "Application error!<br>Message: %s",
+                    $e->getMessage()), 500
+                ))->send();
 			}
-
-			exit();
 		}
-
 	}
 
 	/**
@@ -316,10 +312,10 @@ class Application {
 			$this->db = DatabaseInterfaceFactory::create(
 				$config->type ?? 'mysql',
 				[
-					'host'		=> $config->host,
-					'dbname'	=> $config->name,
-					'user'		=> $config->user,
-					'password'	=> $config->pass,
+					'host' => $config->host,
+					'dbname' => $config->name,
+					'user' => $config->user,
+					'password' => $config->pass,
 				]
 			);
 		}
@@ -349,20 +345,20 @@ class Application {
 			$this->vxPDOInstances[$name] = DatabaseInterfaceFactory::create(
 				$dsConfig->driver,
 				[
-					'dsn'		=> $dsConfig->dsn,
-					'host'		=> $dsConfig->host,
-					'port'		=> $dsConfig->port,
-					'dbname'	=> $dsConfig->dbname,
-					'user'		=> $dsConfig->user,
-					'password'	=> $dsConfig->password,
-					'name'		=> $name
+					'dsn' => $dsConfig->dsn,
+					'host' => $dsConfig->host,
+					'port' => $dsConfig->port,
+					'dbname' => $dsConfig->dbname,
+					'user' => $dsConfig->user,
+					'password' => $dsConfig->password,
+					'name' => $name
 				]
 			);
 		}
 
 		return $this->vxPDOInstances[$name];
 	}
-	
+
 	/**
 	 * returns config instance reference
 	 *
@@ -564,7 +560,7 @@ class Application {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		if($this->absoluteAssetsPath !== null && 0 !== strpos($this->absoluteAssetsPath, $path)) {
-			throw new ApplicationException("'$path' not a parent of assets path '{$this->absoluteAssetsPath}'", ApplicationException::PATH_MISMATCH);
+			throw new ApplicationException(sprintf("'%s' not a parent of assets path '%s'.", $path, $this->absoluteAssetsPath), ApplicationException::PATH_MISMATCH);
 		}
 
 		$this->rootPath = $path;
@@ -755,7 +751,6 @@ class Application {
 
         return $this;
     }
-
 
 	/**
 	 * set the current route, avoids re-parsing of path

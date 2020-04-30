@@ -2,7 +2,6 @@
 
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /*
@@ -17,7 +16,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check an email for validity
  *
- * @version 0.1.0 2016-11-28
+ * @version 0.1.1 2020-04-30
  * @author Gregor Kofler
  */
 class Email extends AbstractConstraint
@@ -45,18 +44,13 @@ class Email extends AbstractConstraint
 	public function __construct($type = null)
     {
 		if($type) {
-
 			$allowedTypes = 'checkMX checkHost';
 			$type = strtolower($type);
 
-			if(!in_array($type, explode(' ', strtolower($allowedTypes)))) {
+			if(!in_array($type, explode(' ', strtolower($allowedTypes)), true)) {
 				throw new \InvalidArgumentException(sprintf("Invalid type for DNS checking '%s'; allowed types are '%s'.", $type, str_replace(' ', "', '", $allowedTypes)));
 			}
-			
-			else {
-				$this->checkType = $type;
-			}
-
+            $this->checkType = $type;
 		}
 		
 		$qtext          = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
@@ -107,13 +101,10 @@ class Email extends AbstractConstraint
 				return false;
 			}
 		}
-		
-		else if($this->checkType === 'checkhost') {
-			if(!(checkdnsrr($host) || checkdnsrr($host, 'A') || checkdnsrr($host, 'AAAA'))) {
-				$this->setErrorMessage(sprintf("A, AAAA or MX lookup for '%s' failed.", $value));
-				return false;
-			}
-		}
+		else if(($this->checkType === 'checkhost') && !(checkdnsrr($host) || checkdnsrr($host, 'A') || checkdnsrr($host, 'AAAA'))) {
+            $this->setErrorMessage(sprintf("A, AAAA or MX lookup for '%s' failed.", $value));
+            return false;
+        }
 
 		return true;
 	}

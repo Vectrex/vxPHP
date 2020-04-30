@@ -10,7 +10,6 @@
 
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
@@ -21,7 +20,7 @@ use vxPHP\Constraint\AbstractConstraint;
  */
 class Url extends AbstractConstraint
 {
-	const MATCH_PATTERN = '~^
+	public const MATCH_PATTERN = '~^
 		(%s)://														# protocol
 		(([\pL\pN-]+:)?([\pL\pN-]+)@)?								# optional auth
 		(

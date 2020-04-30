@@ -16,16 +16,15 @@ namespace vxPHP\Constraint;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.1.0, 2016-10-31
+ * @version 0.1.1, 2020-04-30
  */
-interface ConstraintInterface {
-	
+interface ConstraintInterface
+{
 	/**
 	 * Check a value
 	 * 
 	 * @param mixed $value
 	 * @return bool
 	 */
-	public function validate($value);
-	
+	public function validate($value): bool;
 }

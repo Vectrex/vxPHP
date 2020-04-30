@@ -10,7 +10,6 @@
 
 namespace vxPHP\Constraint\Validator;
 
-use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
@@ -21,7 +20,6 @@ use vxPHP\Constraint\AbstractConstraint;
  */
 class RegularExpression extends AbstractConstraint
 {
-	
 	/**
 	 * regular expression the value is matched against
 	 * 
@@ -39,13 +37,10 @@ class RegularExpression extends AbstractConstraint
 	 */
 	public function __construct($regExp)
     {
-
 		if(@preg_match($regExp, '') === false) {
 			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $regExp));
 		}
-
 		$this->regExp = $regExp;
-		
 	}
 
 	/**
