@@ -11,6 +11,7 @@
 namespace vxPHP\Template;
 
 use vxPHP\Application\Application;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Controller\Controller;
 
@@ -20,12 +21,14 @@ use vxPHP\Controller\Controller;
  * capturing the output buffer
  *
  * @author Gregor Kofler
- * @version 1.0.0 2019-01-07
+ * @version 1.1.0 2020-05-18
  *
  * @package vxPHP\Template
  */
 class TemplateBuffer
 {
+    public const INVALID_PROPERTIES = ['__rawContents'];
+
     /**
      * @var string
      *
@@ -39,10 +42,10 @@ class TemplateBuffer
      * included files are within the same scope as the including file
      *
      * @param string $templateFilename
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-    public function includeFile($templateFilename) {
-
+    public function includeFile($templateFilename): void
+    {
         /* @deprecated use $this when accessing assigned variables */
 
         $tpl = $this;
@@ -52,7 +55,6 @@ class TemplateBuffer
                 (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') .
                 $templateFilename
             ));
-
     }
 
     /**
@@ -66,10 +68,10 @@ class TemplateBuffer
      *
      * @return string
      * @throws ConfigException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-    public function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null) {
-
+    public function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null): ?string
+    {
         $namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 
         if(count($namespaces) && $namespaces[0]) {
@@ -86,31 +88,18 @@ class TemplateBuffer
         $controllerClass = Application::getInstance()->getApplicationNamespace() . $controller;
 
         if(!$constructorArguments) {
-
             /**
              * @var Controller
              */
             $instance = new $controllerClass();
-
         }
-
         else {
-
             $instance = new $controllerClass(...$constructorArguments);
-
         }
 
         if($methodName) {
-
             return $instance->setExecutedMethod($methodName)->render();
-
         }
-        else {
-
-            return $instance->setExecutedMethod('execute')->render();
-
-        }
-
+        return $instance->setExecutedMethod('execute')->render();
     }
-
 }
