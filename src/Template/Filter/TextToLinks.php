@@ -20,30 +20,31 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  */
-class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
+class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
+    /**
+     * indicates, whether the protocol is displayed in link texts
+     *
+     * @var boolean
+     */
+	private	$showProtocol;
 
-			/**
-			 * indicates, whether the protocol is displayed in link texts
-			 *
-			 * @var boolean
-			 */
-	private	$showProtocol,
+    /**
+     * current encoding of web site, returned by Application
+     *
+     * @var string
+     */
+    private $encoding;
 
-			/**
-			 * current encoding of web site, returned by Application
-			 *
-			 * @var string
-			 */
-			$encoding;
-
-	/**
-	 * (non-PHPdoc)
-	 *
-	 * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-	 *
-	 */
-	public function apply(&$templateString) {
-
+    /**
+     * (non-PHPdoc)
+     *
+     * @param $templateString
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @see SimpleTemplateFilterInterface::apply()
+     */
+	public function apply(&$templateString): void
+    {
 		$this->encoding = strtoupper(Application::getInstance()->getConfig()->site->default_encoding);
 
 		$templateString = preg_replace_callback(
@@ -57,7 +58,6 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 			array($this, 'obfuscatedMailAnchors'),
 			$templateString
 		);
-
 	}
 
 	/**
@@ -65,12 +65,13 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 	 *
 	 * @param boolean $showProtocol
 	 */
-	public function setShowProtocol($showProtocol) {
+	public function setShowProtocol($showProtocol)
+    {
 		$this->showProtocol = $showProtocol;
 	}
 
-	private function urlAnchors($matches) {
-
+	private function urlAnchors($matches)
+    {
 		if(substr($matches[1], 0, 2) == '<a') {
 			return $matches[0];
 		}
@@ -82,8 +83,9 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 			'</a>' .
 			$matches[9];
 	}
-	private function obfuscatedMailAnchors($matches) {
 
+	private function obfuscatedMailAnchors($matches)
+    {
 		if($matches[1] !== '' || $matches[5] !== '') {
 			return $matches[0];
 		}
@@ -95,7 +97,7 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 		$len = strlen($pref);
 
 		for($i = 0; $i < $len; ++$i) {
-			$href .= rand(0,1) ? '&#x'.dechex(ord($pref[$i])).';' : '&#'.ord($pref[$i]).';';
+			$href .= random_int(0, 1) ? '&#x'.dechex(ord($pref[$i])).';' : '&#'.ord($pref[$i]).';';
 		}
 
 		$len = mb_strlen($matches[2], $this->encoding);
@@ -106,7 +108,7 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 				$text .= $t;
 			}
 			else {
-				$text .= rand(0,1) ? '&#x'.dechex(ord($t)).';' : '&#'.ord($t).';';
+				$text .= random_int(0, 1) ? '&#x'.dechex(ord($t)).';' : '&#'.ord($t).';';
 			}
 		}
 		$href .= $text;

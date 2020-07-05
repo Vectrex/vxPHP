@@ -21,16 +21,16 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  */
-class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
-	/**
-	 * (non-PHPdoc)
-	 *
-	 * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-	 *
-	 */
-	public function apply(&$templateString) {
-
+class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
+    /**
+     * (non-PHPdoc)
+     *
+     * @param $templateString
+     * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
+     */
+	public function apply(&$templateString): void
+    {
 		$templateString = preg_replace_callback(
 			'~<a(.*?)\s+href=("|\')\$([a-z0-9_]+[a-z0-9_.\/-]*)(.*?)\2(.*?)>~i',
 			array($this, 'filterHrefWithPath'),
@@ -45,17 +45,18 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 	}
 
-	/**
-	 * callback to turn href shortcuts into site conform valid URLs
-	 * tries to build a path reflecting the position of the page in a nested menu
-	 *
-	 * $foo/bar?baz=1 becomes /level1/level2/foo/bar?baz=1 or index.php/level1/level2/foo/bar?baz=1
-	 *
-	 * @param array $matches
-	 * @return string
-	 */
-	private function filterHrefWithPath($matches) {
-
+    /**
+     * callback to turn href shortcuts into site conform valid URLs
+     * tries to build a path reflecting the position of the page in a nested menu
+     *
+     * $foo/bar?baz=1 becomes /level1/level2/foo/bar?baz=1 or index.php/level1/level2/foo/bar?baz=1
+     *
+     * @param array $matches
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	private function filterHrefWithPath($matches): string
+    {
 		static $script;
 		static $observeRewrite;
 		static $config;
@@ -93,11 +94,9 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		};
 
 		foreach($config->menus as $menu) {
-			if($menu->getScript() === $script) {
-				if(($e = $recursiveFind($menu))) {
-					break;
-				}
-			}
+			if(($menu->getScript() === $script) && ($e = $recursiveFind($menu))) {
+                break;
+            }
 		}
 
 		if(isset($e)) {
@@ -136,16 +135,17 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		}
 	}
 
-	/**
-	 * callback to turn href shortcuts into site conform valid URLs
-	 *
-	 * $/foo/bar?baz=1 becomes /foo/bar?baz=1 or index.php/foo/bar?baz=1
-	 *
-	 * @param array $matches
-	 * @return string
-	 */
-	private function filterHref($matches) {
-
+    /**
+     * callback to turn href shortcuts into site conform valid URLs
+     *
+     * $/foo/bar?baz=1 becomes /foo/bar?baz=1 or index.php/foo/bar?baz=1
+     *
+     * @param array $matches
+     * @return string
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     */
+	private function filterHref($matches)
+    {
 		static $script;
 		static $observeRewrite;
 

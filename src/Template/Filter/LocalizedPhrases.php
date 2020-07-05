@@ -20,25 +20,22 @@ use vxPHP\Application\Application;
  * @author Gregor Kofler
  *
  */
-class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
+class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
 	/**
 	 * (non-PHPdoc)
 	 *
 	 * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
 	 *
 	 */
-	public function apply(&$templateString) {
-
-		$application	= Application::getInstance();
-		$config			= $application->getConfig();
-
-		$locale = $application->getCurrentLocale();
+	public function apply(&$templateString): void
+    {
+		$locale = Application::getInstance()->getCurrentLocale();
 
 		// without locale replace placeholders with their identifier
 
-		if(empty($locale)) {
-
+		if($locale === null)
+		{
 			$templateString = preg_replace(
 				array(
 					'@\{![a-z0-9_]+\}@i',
@@ -51,7 +48,6 @@ class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFil
 				$templateString
 			);
 			return;
-
 		}
 
 		$this->getPhrases($locale);
@@ -68,10 +64,9 @@ class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFil
 	 *
 	 * @param unknown $matches
 	 */
-	private function translatePhraseCallback($matches) {
-
-		return 'xxxx';
-
+	private function translatePhraseCallback($matches)
+    {
+	    /*
 		if(!empty($GLOBALS['phrases'][$config->site->current_locale][$matches[1]])) {
 			return $GLOBALS['phrases'][$config->site->current_locale][$matches[1]];
 		}
@@ -82,17 +77,16 @@ class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFil
 		else {
 			return $this->storePhrase($matches[1]);
 		}
+	    */
 	}
 
-	private function getPhrases($locale) {
-
+	private function getPhrases($locale)
+    {
 		if(
-		!isset($GLOBALS['phrases'][$locale]) &&
-		file_exists((defined('LOCALE_PATH') ? LOCALE_PATH : '').$locale.'.phrases')
+            !isset($GLOBALS['phrases'][$locale]) &&
+            file_exists((defined('LOCALE_PATH') ? LOCALE_PATH : '').$locale.'.phrases')
 		) {
 			$GLOBALS['phrases'][$locale] = parse_ini_file(LOCALE_PATH.$locale.'.phrases');
 		}
 	}
-
-
 }

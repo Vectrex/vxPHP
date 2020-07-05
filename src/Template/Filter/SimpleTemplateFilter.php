@@ -17,7 +17,6 @@ namespace vxPHP\Template\Filter;
  */
 abstract class SimpleTemplateFilter
 {
-
     /**
      * @var array
      */

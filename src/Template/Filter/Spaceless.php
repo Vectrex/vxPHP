@@ -19,17 +19,15 @@ namespace vxPHP\Template\Filter;
  *
  * @author Gregor Kofler
  */
-class Spaceless extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
+class Spaceless extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Template\Filter\SimpleTemplateFilter::apply()
 	 */
-	public function apply(&$templateString) {
-		
+	public function apply(&$templateString): void
+    {
 		$templateString = trim(preg_replace('/>\s+</', '><', $templateString));
-		
 	}
-
 }
 

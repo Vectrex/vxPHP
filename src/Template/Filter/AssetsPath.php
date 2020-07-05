@@ -7,8 +7,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-
 namespace vxPHP\Template\Filter;
 
 use vxPHP\Application\Application;
@@ -20,21 +18,18 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  */
-class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
-	/**
-	 * (non-PHPdoc)
-	 *
-	 * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-	 *
-	 */
-	public function apply(&$templateString) {
-
+class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
+    /**
+     * change path of src and href attributes when asset_path is configured
+     *
+     * @param $templateString
+     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @see SimpleTemplateFilterInterface::apply()
+     */
+	public function apply(&$templateString): void
+    {
 		$application = Application::getInstance();
-
-		// change path of src and href attributes when asset_path is set and use_nice_uris is not set in the configuration
-		// only relative links (without protocol) are matched
-		// when nice uris are used URL rewriting does the job, when no assets path is set, everything is in place already
 
 		if($application->getRelativeAssetsPath()) {
 
@@ -66,8 +61,6 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 				},
 				$templateString
 			);
-
 		}
 	}
-
 }
