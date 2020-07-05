@@ -13,6 +13,10 @@ namespace vxPHP\Application;
 use DOMDocument;
 use DOMNode;
 use stdClass;
+use vxPHP\Application\Config\Parser\Xml\MailSettings;
+use vxPHP\Application\Config\Parser\Xml\SiteSettings;
+use vxPHP\Application\Config\Parser\Xml\TemplatingSettings;
+use vxPHP\Application\Config\Parser\Xml\VxpdoSettings;
 use vxPHP\Application\Exception\ConfigException;
 
 use vxPHP\Webpage\Menu\Menu;
@@ -26,7 +30,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.1.6 2020-07-04
+ * @version 2.2.0 2020-07-04
  */
 class Config {
 
@@ -309,7 +313,6 @@ class Config {
 				}
 			}
 		}
-
 		catch(ConfigException $e) {
 			throw $e;
 		}
@@ -358,41 +361,7 @@ class Config {
 	 */
 	private function parseVxpdoSettings(DOMNode $vxpdo): void
     {
-		if($this->vxpdo === null) {
-			$this->vxpdo = [];
-		}
-
-		foreach($vxpdo->getElementsByTagName('datasource') as $datasource) {
-
-			$name = $datasource->getAttribute('name') ?: 'default';
-
-			if(array_key_exists($name,  $this->vxpdo)) {
-				throw new ConfigException(sprintf("Datasource '%s' declared twice.", $name));
-			}
-
-			$config = [
-				'driver' => null,
-				'dsn' => null,
-				'host' => null,
-				'port' => null,
-				'user' => null,
-				'password' => null,
-				'dbname' => null,
-			];
-
-			foreach($datasource->childNodes as $node) {
-
-				if($node->nodeType !== XML_ELEMENT_NODE) {
-					continue;
-				}
-
-				if(array_key_exists($node->nodeName, $config)) {
-					$config[$node->nodeName] = trim($node->nodeValue);
-				}
-			}
-
-			$this->vxpdo[$name] = (object) $config;
-		}
+        $this->vxpdo = (new VxpdoSettings())->parse($vxpdo);
 	}
 
 	/**
@@ -403,29 +372,7 @@ class Config {
 	 */
 	private function parseMailSettings(DOMNode $mail): void
     {
-		if(($mailer = $mail->getElementsByTagName('mailer')->item(0))) {
-
-			if($this->mail === null) {
-				$this->mail = new stdClass();
-				$this->mail->mailer = new stdClass();
-			}
-
-
-			if(!($class = $mailer->getAttribute('class'))) {
-				throw new ConfigException('No mailer class specified.');
-			}
-
-			$this->mail->mailer->class = $class;
-
-			foreach($mailer->childNodes as $node) {
-
-				if($node->nodeType !== XML_ELEMENT_NODE) {
-					continue;
-				}
-
-				$this->mail->mailer->{$node->nodeName} = trim($node->nodeValue);
-			}
-		}
+        $this->mail = (new MailSettings())->parse($mail);
 	}
 
 	/**
@@ -477,37 +424,7 @@ class Config {
 	 */
 	private function parseSiteSettings(DOMNode $site): void
     {
-		if($this->site === null) {
-			$this->site = new stdClass;
-		}
-
-		foreach($site->childNodes as $node) {
-
-			if($node->nodeType !== XML_ELEMENT_NODE) {
-				continue;
-			}
-
-			$v = trim($node->nodeValue);
-			$k = $node->nodeName;
-
-            if ('locales' === $k) {
-                if (!isset($this->site->locales)) {
-                    $this->site->locales = [];
-                }
-
-                foreach ($node->getElementsByTagName('locale') as $locale) {
-                    $loc = $locale->getAttribute('value');
-                    if ($loc && !in_array($loc, $this->site->locales, true)) {
-                        $this->site->locales[] = $loc;
-                    }
-                    if ($loc && $locale->getAttribute('default') === '1') {
-                        $this->site->default_locale = $loc;
-                    }
-                }
-            } else {
-                $this->site->$k = $v;
-            }
-		}
+        $this->site = (new SiteSettings())->parse($site);
 	}
 
     /**
@@ -515,45 +432,10 @@ class Config {
      * currently only filters for SimpleTemplate templates and their configuration are parsed
      *
      * @param DOMNode $templating
-     * @throws ConfigException
      */
 	private function parseTemplatingSettings(DOMNode $templating): void
     {
-		if($this->templating === null) {
-			$this->templating = new stdClass;
-			$this->templating->filters = [];
-		}
-
-		$xpath = new \DOMXPath($templating->ownerDocument);
-
-		foreach($xpath->query("filters/filter", $templating) as $filter) {
-
-			$id = $filter->getAttribute('id');
-			$class = $filter->getAttribute('class');
-
-			if(!$id) {
-				throw new ConfigException('Templating filter without id found.');
-			}
-
-			if(!$class)	{
-				throw new ConfigException(sprintf("No class for templating filter '%s' configured.", $id));
-			}
-
-			if(isset($this->templating->filters[$id])) {
-				throw new ConfigException(sprintf("Templating filter '%s' has already been defined.", $id));
-			}
-
-			// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
-
-			$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
-
-			// store parsed information
-
-			$this->templating->filters[$id] = [
-				'class' => $class,
-				'parameters' => $filter->getAttribute('parameters')
-			];
-		}
+        $this->templating = (new TemplatingSettings())->parse($templating);
 	}
 
 	/**
