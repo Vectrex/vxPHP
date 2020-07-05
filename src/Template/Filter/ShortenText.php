@@ -19,13 +19,14 @@ namespace vxPHP\Template\Filter;
  *
  * @author Gregor Kofler
  */
-class ShortenText extends SimpleTemplateFilter implements SimpleTemplateFilterInterface {
-
+class ShortenText extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
+{
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Template\Filter\SimpleTemplateFilter::apply()
 	 */
-	public function apply(&$templateString) {
+	public function apply(&$templateString): void
+    {
 
 		$templateString = preg_replace_callback(
 			'~<(\w+)\s+(.*?)class=(\'|")?([a-z0-9_]*\s*)shortened_(\d+)(.*?)>(?s)(.*?)(?-s)</\s*\1>~i',
@@ -44,6 +45,5 @@ class ShortenText extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 			},
 			$templateString
 		);
-
 	}
 }

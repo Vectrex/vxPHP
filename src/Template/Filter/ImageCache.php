@@ -40,10 +40,10 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
     /**
      * (non-PHPdoc)
      *
+     * @param $templateString
      * @see vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-     *
      */
-    public function apply(&$templateString)
+    public function apply(&$templateString): void
     {
         $templateString = preg_replace_callback(
             $this->markupToMatch,
@@ -112,7 +112,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
             } // <img src="..." style="width: ...; height: ...">
 
-            else if (preg_match('~\s+style=(["\'])(.*?)\1~i', $matches[0], $details)) {
+            if (preg_match('~\s+style=(["\'])(.*?)\1~i', $matches[0], $details)) {
 
                 // analyze dimensions
 
@@ -122,7 +122,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
                 }
 
-                if ($dimensions[1] == 'width') {
+                if ($dimensions[1] === 'width') {
                     $width = $dimensions[2];
                     $height = $dimensions[4];
                 } else {
@@ -153,7 +153,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
             } // <img src="..." width="..." height="...">
 
-            else if (preg_match('~\s+(width|height)=~', $matches[0])) {
+            if (preg_match('~\s+(width|height)=~', $matches[0])) {
 
                 $dom = new \DOMDocument();
                 $dom->loadHTML($matches[0]);
@@ -186,9 +186,9 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                 $img->setAttribute('src', $dest);
                 return $dom->saveHTML($img);
 
-            } else {
-                return $matches[0];
             }
+
+            return $matches[0];
 
             /*
                     // url(...#...), won't be matched by assetsPath filter

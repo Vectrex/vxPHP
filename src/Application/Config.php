@@ -26,7 +26,7 @@ use vxPHP\Routing\Route;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 2.1.5 2020-04-03
+ * @version 2.1.6 2020-07-04
  */
 class Config {
 
@@ -478,10 +478,7 @@ class Config {
 	private function parseSiteSettings(DOMNode $site): void
     {
 		if($this->site === null) {
-
 			$this->site = new stdClass;
-			$this->site->use_nice_uris = false;
-
 		}
 
 		foreach($site->childNodes as $node) {
@@ -493,34 +490,23 @@ class Config {
 			$v = trim($node->nodeValue);
 			$k = $node->nodeName;
 
-			switch ($k) {
+            if ('locales' === $k) {
+                if (!isset($this->site->locales)) {
+                    $this->site->locales = [];
+                }
 
-				case 'locales':
-					if(!isset($this->site->locales)) {
-						$this->site->locales = [];
-					}
-
-					foreach($node->getElementsByTagName('locale') as $locale) {
-						$loc = $locale->getAttribute('value');
-						if($loc && !in_array($loc, $this->site->locales, true)) {
-							$this->site->locales[] = $loc;
-						}
-						if($loc && $locale->getAttribute('default') === '1') {
-							$this->site->default_locale = $loc;
-						}
-					}
-
-					break;
-
-				case 'site->use_nice_uris':
-					if($v === '1') {
-						$this->site->use_nice_uris = true;
-					}
-					break;
-
-				default:
-					$this->site->$k = $v;
-			}
+                foreach ($node->getElementsByTagName('locale') as $locale) {
+                    $loc = $locale->getAttribute('value');
+                    if ($loc && !in_array($loc, $this->site->locales, true)) {
+                        $this->site->locales[] = $loc;
+                    }
+                    if ($loc && $locale->getAttribute('default') === '1') {
+                        $this->site->default_locale = $loc;
+                    }
+                }
+            } else {
+                $this->site->$k = $v;
+            }
 		}
 	}
 

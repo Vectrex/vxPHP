@@ -16,8 +16,8 @@ namespace vxPHP\Template\Filter;
  * @author Gregor Kofler
  *
  */
-interface SimpleTemplateFilterInterface {
-
+interface SimpleTemplateFilterInterface
+{
 	/**
 	 * apply filter to template string
 	 * template string is passed by reference
@@ -26,5 +26,5 @@ interface SimpleTemplateFilterInterface {
 	 *
 	 * @return void
 	 */
-	public function apply(&$templateString);
+	public function apply(&$templateString): void;
 }
