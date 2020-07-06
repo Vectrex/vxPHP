@@ -14,6 +14,8 @@ use DOMDocument;
 use DOMNode;
 use stdClass;
 use vxPHP\Application\Config\Parser\Xml\MailSettings;
+use vxPHP\Application\Config\Parser\Xml\PluginsSettings;
+use vxPHP\Application\Config\Parser\Xml\ServicesSettings;
 use vxPHP\Application\Config\Parser\Xml\SiteSettings;
 use vxPHP\Application\Config\Parser\Xml\TemplatingSettings;
 use vxPHP\Application\Config\Parser\Xml\VxpdoSettings;
@@ -607,47 +609,7 @@ class Config {
 	 */
 	private function parseServicesSettings(DOMNode $services): void
     {
-		if($this->services === null) {
-			$this->services = [];
-		}
-
-		foreach($services->getElementsByTagName('service') as $service) {
-
-			if(!($id = $service->getAttribute('id'))) {
-				throw new ConfigException('Service without id found.');
-			}
-
-			if(isset($this->services[$id])) {
-				throw new ConfigException(sprintf("Service '%s' has already been defined.", $id));
-			}
-
-			if(!($class = $service->getAttribute('class'))) {
-				throw new ConfigException(sprintf("No class for service '%s' configured.", $id));
-			}
-
-			// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
-
-			$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
-
-			// store parsed information
-
-			$this->services[$id] = [
-				'class' => $class,
-				'parameters' => []
-			];
-
-			foreach($service->getElementsByTagName('parameter') as $parameter) {
-
-				$name = $parameter->getAttribute('name');
-				$value = $parameter->getAttribute('value');
-
-				if(!$name) {
-					throw new ConfigException(sprintf("A parameter for service '%s' has no name.", $id));
-				}
-
-				$this->services[$id]['parameters'][$name] = $value;
-			}
-		}
+        $this->services = (new ServicesSettings())->parse($services);
 	}
 
     /**
@@ -660,47 +622,7 @@ class Config {
      */
 	private function parsePluginsSettings(DOMNode $plugins): void
     {
-		if(is_null($this->services)) {
-			$this->services = [];
-		}
-
-		foreach($plugins->getElementsByTagName('plugin') as $plugin) {
-
-			if(!($id = $plugin->getAttribute('id'))) {
-				throw new ConfigException('Plugin without id found.');
-			}
-
-			if(isset($this->plugins[$id])) {
-				throw new ConfigException(sprintf("Plugin '%s' has already been defined.", $id));
-			}
-
-			if(!($class = $plugin->getAttribute('class'))) {
-				throw new ConfigException(sprintf("No class for plugin '%s' configured.", $id));
-			}
-
-			// clean path delimiters, prepend leading backslash, and replace slashes with backslashes
-
-			$class = '\\' . ltrim(str_replace('/', '\\', $class), '/\\');
-
-			// store parsed information
-
-			$this->plugins[$id] = [
-				'class' => $class,
-				'parameters' => []
-			];
-
-			foreach($plugin->getElementsByTagName('parameter') as $parameter) {
-
-				$name = $parameter->getAttribute('name');
-				$value = $parameter->getAttribute('value');
-
-				if(!$name) {
-					throw new ConfigException(sprintf("A parameter for plugin '%s' has no name.", $id));
-				}
-
-				$this->plugins[$id]['parameters'][$name] = $value;
-			}
-		}
+        $this->plugins = (new PluginsSettings())->parse($plugins);
 	}
 
     /**
