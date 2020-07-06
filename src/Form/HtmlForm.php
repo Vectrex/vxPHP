@@ -29,7 +29,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.2 2019-12-23
+ * @version 1.9.3 2020-07-06
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -373,7 +373,7 @@ class HtmlForm
 	 * 
 	 * @return FormElement
 	 */
-	public function getSubmittingElement(): FormElement
+	public function getSubmittingElement(): ?FormElement
     {
 		// cache submitting element
 
