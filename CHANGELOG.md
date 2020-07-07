@@ -1,3 +1,8 @@
+## 2.2.0
+- parsing of configuration files improved:
+  - order of top-level elements is no longer relevant
+  - parsers moved to separate classes which should allow more flexibility with other config file formats
+
 ## 2.1.1
 - bugfixes
 - code of template filters cleaned up
