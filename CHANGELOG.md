@@ -1,3 +1,7 @@
+## 2.1.1
+- bugfixes
+- code of template filters cleaned up
+
 ## 2.1.0
 - updated Controller class: removed obsolete code and several dependencies; Controller::createControllerFromRoute() now expects additional parameters 
 
