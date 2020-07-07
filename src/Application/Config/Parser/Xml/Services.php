@@ -12,7 +12,7 @@ namespace vxPHP\Application\Config\Parser\Xml;
 
 use vxPHP\Application\Exception\ConfigException;
 
-class PluginsSettings implements XmlParserInterface
+class Services implements XmlParserInterface
 {
     /**
      * @param \DOMNode $node
@@ -21,25 +21,25 @@ class PluginsSettings implements XmlParserInterface
      */
     public function parse(\DOMNode $node): array
     {
-        $plugins = [];
+        $services = [];
 
-        foreach($node->getElementsByTagName('plugin') as $plugin) {
+        foreach($node->getElementsByTagName('service') as $service) {
 
-            if(!($id = $plugin->getAttribute('id'))) {
-                throw new ConfigException('Plugin without id found.');
+            if(!($id = $service->getAttribute('id'))) {
+                throw new ConfigException('Service without id found.');
             }
 
-            if(isset($plugins[$id])) {
-                throw new ConfigException(sprintf("Plugin '%s' has already been defined.", $id));
+            if(isset($services[$id])) {
+                throw new ConfigException(sprintf("Service '%s' has already been defined.", $id));
             }
 
-            if(!($class = $plugin->getAttribute('class'))) {
-                throw new ConfigException(sprintf("No class for plugin '%s' configured.", $id));
+            if(!($class = $service->getAttribute('class'))) {
+                throw new ConfigException(sprintf("No class for service '%s' configured.", $id));
             }
 
             // store parsed information
 
-            $plugins[$id] = [
+            $services[$id] = [
 
                 // clean path delimiters, prepend leading backslash, and replace slashes with backslashes
 
@@ -47,19 +47,19 @@ class PluginsSettings implements XmlParserInterface
                 'parameters' => []
             ];
 
-            foreach($plugin->getElementsByTagName('parameter') as $parameter) {
+            foreach($service->getElementsByTagName('parameter') as $parameter) {
 
                 $name = $parameter->getAttribute('name');
                 $value = $parameter->getAttribute('value');
 
                 if(!$name) {
-                    throw new ConfigException(sprintf("A parameter for plugin '%s' has no name.", $id));
+                    throw new ConfigException(sprintf("A parameter for service '%s' has no name.", $id));
                 }
 
-                $plugins[$id]['parameters'][$name] = $value;
+                $services[$id]['parameters'][$name] = $value;
             }
         }
 
-        return $plugins;
+        return $services;
     }
 }

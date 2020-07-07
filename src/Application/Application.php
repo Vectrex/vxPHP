@@ -118,13 +118,6 @@ class Application {
 	private $sourcePath;
 
 	/**
-	 * indicates whether application runs on a localhost or was called from the command line
-	 * 
-	 * @var boolean
-	 */
-	private $isLocal;
-
-	/**
 	 * all configured services
 	 * 
 	 * @var ServiceInterface[]
@@ -158,7 +151,15 @@ class Application {
      * @var Router
      */
 	private $router;
-	/**
+
+    /**
+     * indicates whether application runs on a localhost or was called from the command line
+     *
+     * @var boolean
+     */
+    private static $isLocal;
+
+    /**
 	 * Constructor.
 	 *
 	 * create configuration object, database object
@@ -426,10 +427,10 @@ class Application {
 	 * 
 	 * @return boolean
 	 */
-	public function runsLocally(): bool
+	public static function runsLocally(): bool
     {
-		if($this->isLocal === null) {
-			
+		if(self::$isLocal === null) {
+
 			$remote =
 				isset($_SERVER['HTTP_CLIENT_IP']) ||
 				isset($_SERVER['HTTP_X_FORWARDED_FOR']) ||
@@ -447,11 +448,11 @@ class Application {
 				)
 			;
 
-			$this->isLocal = PHP_SAPI === 'cli' || !$remote;
+            self::$isLocal = PHP_SAPI === 'cli' || !$remote;
 
 		}		
 
-		return $this->isLocal;
+		return self::$isLocal;
 	}
 
 	/**

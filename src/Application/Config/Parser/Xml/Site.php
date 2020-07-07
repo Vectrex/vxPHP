@@ -10,7 +10,7 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
-class SiteSettings implements XmlParserInterface
+class Site implements XmlParserInterface
 {
 
     /**

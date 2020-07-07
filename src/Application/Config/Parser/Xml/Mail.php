@@ -12,7 +12,7 @@ namespace vxPHP\Application\Config\Parser\Xml;
 
 use vxPHP\Application\Exception\ConfigException;
 
-class MailSettings implements XmlParserInterface
+class Mail implements XmlParserInterface
 {
     /**
      * @param \DOMNode $node

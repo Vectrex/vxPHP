@@ -12,7 +12,7 @@ namespace vxPHP\Application\Config\Parser\Xml;
 
 use vxPHP\Application\Exception\ConfigException;
 
-class VxpdoSettings implements XmlParserInterface
+class Vxpdo implements XmlParserInterface
 {
     /**
      * @param \DOMNode $node
