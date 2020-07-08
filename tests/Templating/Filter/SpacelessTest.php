@@ -18,7 +18,20 @@ class SpacelessTest extends TestCase
                 <foo>   </foo>
                 <bar> x </bar>
                 <baz> y </baz>
-                <!-- {endspaceless} --> </p>', '<p> <foo></foo><bar> x </bar><baz> y </baz> </p>'],
+                <!-- {endspaceless} --> </p>',
+                '<p> <foo></foo><bar> x </bar><baz> y </baz> </p>'
+            ],
+            ['<p> <!-- {spaceless} -->
+                <foo>   </foo>
+                <bar> x </bar>
+                <baz> y </baz>
+                <!-- {endspaceless} --> </p> <!-- {spaceless} -->
+                <foo>   </foo>
+                <bar> x </bar>
+                <baz> y </baz>
+                <!-- {endspaceless} -->',
+                '<p> <foo></foo><bar> x </bar><baz> y </baz> </p> <foo></foo><bar> x </bar><baz> y </baz>'
+            ],
         ];
     }
 
