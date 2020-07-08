@@ -1,3 +1,5 @@
+## 2.2.2
+- bugfix: spaceless filter didn't work over multiple lines
 ## 2.2.1
 - spaceless filter for templates will only work within marked blocks; added as a default filter
 ## 2.2.0

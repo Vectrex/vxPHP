@@ -26,7 +26,7 @@ class Spaceless extends SimpleTemplateFilter implements SimpleTemplateFilterInte
 	public function apply(&$templateString): void
     {
         $templateString = preg_replace_callback(
-            '~<!--\s*{\s*spaceless\s*}\s*-->(.*?)<!--\s*{\s*endspaceless\s*}\s*-->~',
+            '~<!--\s*{\s*spaceless\s*}\s*-->(.*?)<!--\s*{\s*endspaceless\s*}\s*-->~s',
             static function($matches) {
                 return trim(preg_replace('~>\s+<~', '><', $matches[1]));
             },
