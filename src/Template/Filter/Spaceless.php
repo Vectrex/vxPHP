@@ -1,5 +1,4 @@
 <?php
-
 /*
  * This file is part of the vxPHP/vxWeb framework
  *
@@ -12,10 +11,9 @@
 namespace vxPHP\Template\Filter;
 
 /**
- * Simple filter that shortens a text between its opening and closing tag
- * to specified count of characters; this count is determined by value of class attribute
- * of enclosing tag (e.g. <p class="shortened_10">This will be very short.</p>
- * text will only be shortened along word boundaries
+ * Removes whitespaces between HTML tags.
+ * Only active in <!-- { spaceless } --> <!-- { endspaceless } --> blocks
+ * no checks for nested or missing opening/closing directives are performed
  *
  * @author Gregor Kofler
  */
@@ -27,7 +25,13 @@ class Spaceless extends SimpleTemplateFilter implements SimpleTemplateFilterInte
 	 */
 	public function apply(&$templateString): void
     {
-		$templateString = trim(preg_replace('/>\s+</', '><', $templateString));
+        $templateString = preg_replace_callback(
+            '~<!--\s*{\s*spaceless\s*}\s*-->(.*?)<!--\s*{\s*endspaceless\s*}\s*-->~',
+            static function($matches) {
+                return trim(preg_replace('~>\s+<~', '><', $matches[1]));
+            },
+            $templateString
+        );
 	}
 }
 

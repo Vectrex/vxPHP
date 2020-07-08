@@ -2,8 +2,6 @@
 namespace vxPHP\Tests\Templating;
 
 use PHPUnit\Framework\TestCase;
-use vxPHP\Application\Application;
-use vxPHP\Application\Config;
 use vxPHP\Template\SimpleTemplate;
 
 class SimpleTemplateTest extends TestCase

@@ -17,12 +17,13 @@ use vxPHP\Template\Filter\SimpleTemplateFilterInterface;
 use vxPHP\Template\Filter\ImageCache;
 use vxPHP\Template\Filter\AnchorHref;
 use vxPHP\Template\Filter\LocalizedPhrases;
+use vxPHP\Template\Filter\Spaceless;
 
 /**
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.1.0 2020-05-18
+ * @version 2.2.0 2020-07-08
  *
  */
 
@@ -95,6 +96,7 @@ class SimpleTemplate
             strtolower(AnchorHref::class) => new AnchorHref(),
             strtolower(ImageCache::class) => new ImageCache(),
             strtolower(LocalizedPhrases::class) => new LocalizedPhrases(),
+            strtolower(Spaceless::class) => new Spaceless()
             // new AssetsPath()
         ];
 
