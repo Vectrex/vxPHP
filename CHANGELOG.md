@@ -1,7 +1,12 @@
+## 2.2.3
+- fixes to avoid deprecation notices in PasswordGenerator; removed obsolete code
+
 ## 2.2.2
 - bugfix: spaceless filter didn't work over multiple lines
+
 ## 2.2.1
 - spaceless filter for templates will only work within marked blocks; added as a default filter
+
 ## 2.2.0
 - parsing of configuration files improved:
   - order of top-level elements is no longer relevant
