@@ -8,27 +8,26 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Webpage\MenuEntry;
 
-use vxPHP\Webpage\MenuEntry\MenuEntry;
-
-class DynamicMenuEntry extends MenuEntry {
-	public function __construct($path, $attributes) {
+class DynamicMenuEntry extends MenuEntry
+{
+	public function __construct($path, $attributes)
+    {
 		parent::__construct($path, $attributes);
 	}
 
-	public function setPath($path) {
+	public function setPath($path): DynamicMenuEntry
+    {
 		$this->path = $path;
+		return $this;
 	}
 
-	public function setAttributes(Array $attributes) {
+	public function setAttributes(Array $attributes): DynamicMenuEntry
+    {
 		foreach($attributes as $attr => $value) {
 			$this->attributes->$attr = $value;
 		}
-	}
-
-	public function __destruct() {
-		parent::__destruct();
+		return $this;
 	}
 }
