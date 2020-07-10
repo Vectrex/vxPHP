@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Webpage\MenuEntry;
 
 use vxPHP\Webpage\Menu\Menu;
@@ -19,10 +18,10 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.4.2 2017-10-27
+ * @version 0.5.0 2020-07-10
  */
-class MenuEntry {
-	
+class MenuEntry
+{
 	/**
 	 * the index counter of menu entries
 	 * @var integer
@@ -84,12 +83,12 @@ class MenuEntry {
 	 */
 	protected $href;
 
-	public function __construct($path, array $attributes, $localPage = TRUE) {
-
-		$this->ndx			= self::$count++;
-		$this->path			= trim($path, '/');
-		$this->localPage	= (boolean) $localPage;
-		$this->attributes	= new \stdClass();
+	public function __construct($path, array $attributes, $localPage = true)
+    {
+		$this->ndx = self::$count++;
+		$this->path = trim($path, '/');
+		$this->localPage = (boolean) $localPage;
+		$this->attributes = new \stdClass();
 
 		foreach($attributes as $attr => $value) {
 			$attr = strtolower($attr);
@@ -99,43 +98,95 @@ class MenuEntry {
 
 	// purge dynamically generated submenus
 
-	public function __destruct() {
-		if($this->subMenu && $this->subMenu->getType() == 'dynamic') {
+	public function __destruct()
+    {
+		if($this->subMenu && $this->subMenu->getType() === 'dynamic') {
 			$this->subMenu->__destruct();
 		}
 	}
 
-	public function __toString() {
+	public function __toString()
+    {
 		return $this->path;
 	}
 
-	public function appendMenu(Menu $menu) {
+    /**
+     * append menu to menu entry
+     *
+     * @param Menu $menu
+     * @return MenuEntry
+     */
+    public function appendMenu(Menu $menu): MenuEntry
+    {
 		$menu->setParentEntry($this);
 		$this->subMenu = $menu;
+        return $this;
 	}
 
-	public function setMenu(Menu $menu) {
+    /**
+     * assign this menu entry to a menu
+     *
+     * @param Menu $menu
+     * @return $this
+     */
+    public function setMenu(Menu $menu): MenuEntry
+    {
 		$this->menu = $menu;
+		return $this;
 	}
 
-	public function getMenu() {
+    /**
+     * get menu the entry belongs to
+     *
+     * @return Menu
+     */
+	public function getMenu(): ?Menu
+    {
 		return $this->menu;
 	}
 
-	public function getAuth() {
+    /**
+     * get auth information
+     *
+     * @return string
+     */
+	public function getAuth(): ?string
+    {
 		return $this->auth;
 	}
 
-	public function setAuth($auth) {
+    /**
+     * set auth information
+     *
+     * @param $auth
+     * @return $this
+     */
+	public function setAuth($auth): MenuEntry
+    {
 		$this->auth = $auth;
+		return $this;
 	}
 
-	public function getAuthParameters() {
+    /**
+     * get additonal auth parameters
+     *
+     * @return string
+     */
+	public function getAuthParameters(): ?string
+    {
 		return $this->authParameters;
 	}
 
-	public function setAuthParameters($authParameters) {
+    /**
+     * set additional auth parameters
+     *
+     * @param $authParameters
+     * @return $this
+     */
+	public function setAuthParameters($authParameters): MenuEntry
+    {
 		$this->authParameters = $authParameters;
+		return $this;
 	}
 
 	/**
@@ -144,33 +195,57 @@ class MenuEntry {
 	 * @param Role $role
 	 * @return boolean
 	 */
-	public function isAuthenticatedByRole(Role $role) {
-
+	public function isAuthenticatedByRole(Role $role): bool
+    {
 		return !isset($this->auth) || $this->auth === $role->getRoleName();
-
 	}
 
-	public function refersLocalPage() {
+    /**
+     * check whether menu entry points to a local page and not an external URL
+     *
+     * @return bool
+     */
+	public function refersLocalPage(): bool
+    {
 		return $this->localPage;
 	}
 
-	public function select() {
+    /**
+     * mark the menu entry as selected
+     *
+     * @return $this
+     */
+	public function select(): MenuEntry
+    {
 		$this->menu->setSelectedEntry($this);
+		return $this;
 	}
 
-	public function getSubMenu() {
+    /**
+     * get sub menu
+     *
+     * @return Menu
+     */
+	public function getSubMenu(): ?Menu
+    {
 		return $this->subMenu;
 	}
 
-	public function getPath() {
+    /**
+     * get path configured with route
+     *
+     * @return string
+     */
+	public function getPath(): string
+    {
 		return $this->path;
 	}
 
 	/**
 	 * get href attribute value of menu entry
 	 */
-	public function getHref() {
-
+	public function getHref(): string
+    {
 		if(is_null($this->href)) {
 
 			if($this->localPage) {
@@ -182,29 +257,30 @@ class MenuEntry {
 					$pathSegments[] = $e->path;
 				} while ($e = $e->menu->getParentEntry());
 
-				if(Application::getInstance()->getRouter()->getServerSideRewrite()) {
+                $router = Application::getInstance()->getRouter();
 
-					if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
+                if(!$router) {
+                    throw new \RuntimeException('Not router assigned. Cannot create href attribute for menu entry.');
+                }
+
+                if($router->getServerSideRewrite()) {
+					if(($script = basename($this->menu->getScript(), '.php')) === 'index') {
 						$script = '/';
 					}
-
 					else {
 						$script = '/'. $script . '/';
 					}
-				}
+				} else if ($relPath = $router->getRelativeAssetsPath()) {
+                    $script = '/' . $relPath . '/' . $this->menu->getScript() . '/';
+                } else {
+                    $script = '/' . $this->menu->getScript() . '/';
+                }
 
-				else {
-					$script = '/' . $this->menu->getScript() . '/';
-				}
-
-				$this->href = $script . implode('/', array_reverse(array_map('rawurlencode', $pathSegments)));
+                $this->href = $script . implode('/', array_reverse(array_map('rawurlencode', $pathSegments)));
 
 			}
-
 			else {
-
 				$this->href = $this->path;
-
 			}
 		}
 
@@ -213,24 +289,24 @@ class MenuEntry {
 
 	/**
 	 * get all attributes
+     *
 	 * @return \stdClass
 	 */
-	public function getAttributes() {
-
+	public function getAttributes(): \stdClass
+    {
 		return $this->attributes;
-
 	}
 
-	/**
-	 * set a single attribute
-	 * 
-	 * @param string $attr
-	 * @param mixed $value
-	 */
-	public function setAttribute($attr, $value) {
-
+    /**
+     * set a single attribute
+     *
+     * @param string $attr
+     * @param mixed $value
+     * @return MenuEntry
+     */
+	public function setAttribute($attr, $value): MenuEntry
+    {
 		$this->attributes->$attr = $value;
-
+		return $this;
 	}
-
 }
