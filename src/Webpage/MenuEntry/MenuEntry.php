@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.5.0 2020-07-10
+ * @version 0.5.1 2020-07-11
  */
 class MenuEntry
 {
@@ -271,7 +271,7 @@ class MenuEntry
 						$script = '/'. $script . '/';
 					}
 				} else if ($relPath = $router->getRelativeAssetsPath()) {
-                    $script = '/' . $relPath . '/' . $this->menu->getScript() . '/';
+                    $script = '/' . trim($relPath, '/') . '/' . $this->menu->getScript() . '/';
                 } else {
                     $script = '/' . $this->menu->getScript() . '/';
                 }

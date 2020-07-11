@@ -15,22 +15,23 @@ use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
 use vxPHP\Database\PDOConnection;
+use vxPHP\Database\RecordsetIteratorInterface;
 
 /**
  * wraps \PDO and adds methods to support basic CRUD tasks
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.12.0, 2018-07-18
+ * @version 1.13.0, 2020-07-11
  */
-class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
-
+class Mysql extends AbstractPdoAdapter
+{
 	/**
 	 * the identifier quote character
 	 * 
 	 * @var string
 	 */
-	const QUOTE_CHAR = '`';
+	public const QUOTE_CHAR = '`';
 
 	/**
 	 * map translating encoding names
@@ -51,8 +52,8 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
      * @param array $connectionAttributes
 	 * @throws \PDOException
 	 */
-	public function __construct(array $config = null, array $connectionAttributes = []) {
-
+	public function __construct(array $config = null, array $connectionAttributes = [])
+    {
 		if($config) {
 
 			parent::__construct($config);
@@ -113,16 +114,15 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 
 			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
             $this->setDefaultConnectionAttributes();
-
         }
-
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public function setConnection(ConnectionInterface $connection) {
+	public function setConnection(ConnectionInterface $connection): void
+    {
 
 		// redeclaring a connection is not possible
 
@@ -142,7 +142,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		$this->dbname = $connection->getDbName();
 
 		$this->setDefaultConnectionAttributes();
-
 	}
 
 	/**
@@ -154,8 +153,8 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * 
 	 * @throws \PDOException
 	 */
-	public function getEnumValues($tableName, $columnName) {
-
+	public function getEnumValues($tableName, $columnName): array
+    {
 		// check whether column exists
 
 		if(!$this->columnExists($tableName, $columnName)) {
@@ -183,49 +182,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		}
 		
 		return $this->tableStructureCache[$tableName][$columnName]['enumValues'];
-		
-	}
-
-	/**
-	 * clears the table structure cache
-	 * might be required after extensive alterations to several table
-	 * structures
-	 * 
-	 * @return \vxPHP\Database\Adapter\Mysql
-	 */
-	
-	public function clearTableStructureCache() {
-
-		$this->tableStructureCache = [];
-		return $this;
-
-	}
-
-	/**
-	 * refresh table structure cache for a single table
-	 * required after changes to a tables structure
-	 * 
-	 * @param string $tableName
-	 * @return \vxPHP\Database\Adapter\Mysql
-	 */
-	public function refreshTableStructureCache($tableName) {
-
-		unset ($this->tableStructureCache[$tableName]);
-		$this->fillTableStructureCache($tableName);
-		
-		return $this;
-		
-	}
-	
-	/**
-	 * get last PDO statement prepared/executed
-	 * 
-	 * @return \PDOStatement
-	 */
-	public function getStatement() {
-
-		return $this->statement;
-
 	}
 
     /**
@@ -233,29 +189,28 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
      * {@inheritDoc}
      * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
      */
-    public function doPreparedQuery($statementString, array $parameters = []) {
-
+    public function doPreparedQuery($statementString, array $parameters = []): RecordsetIteratorInterface
+    {
         $statement = $this->primeQuery($statementString, $parameters);
         $statement->execute();
         return new MysqlRecordsetIterator($statement->fetchAll(\PDO::FETCH_ASSOC));
-
     }
 
     /**
      * set initial attributes for database connection
+     * attributes are always returned as lower case
      */
-    protected function setDefaultConnectionAttributes() {
-
-        $config = Application::getInstance()->getConfig();
-
+    protected function setDefaultConnectionAttributes(): void
+    {
         $options = [
-            \PDO::ATTR_ERRMODE				=> \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE	=> \PDO::FETCH_ASSOC,
-            \PDO::ATTR_STRINGIFY_FETCHES	=> false,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_STRINGIFY_FETCHES => false,
+            \PDO::ATTR_CASE => \PDO::CASE_LOWER,
 
             // set emulated prepares for MySQL servers < 5.1.17
 
-            \PDO::ATTR_EMULATE_PREPARES     => version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<')
+            \PDO::ATTR_EMULATE_PREPARES => version_compare($this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION), '5.1.17', '<')
         ];
 
         // if not explicitly specified, attributes are returned lower case
@@ -267,7 +222,6 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
         foreach($options as $key => $value) {
             $this->connection->setAttribute($key, $value);
         }
-
     }
 
     /**
@@ -275,23 +229,21 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()
 	 */
-	protected function fillTableStructureCache($tableName) {
-
+	protected function fillTableStructureCache($tableName): void
+    {
 		// get all table names
 
 		if(empty($this->tableStructureCache)) {
-
 			$this->tableStructureCache = [];
 
 			foreach ($this->connection->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN, 0) as $tn) {
 				$this->tableStructureCache[$tn] = [];
 			} 
-
 		}
 
 		// return when table name does not exist; leave handling of this situation to calling method
 
-		if(!in_array($tableName, array_keys($this->tableStructureCache))) {
+		if(!array_key_exists($tableName, $this->tableStructureCache)) {
 			return;
 		}
 
@@ -303,10 +255,8 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 				data_type,
 				is_nullable,
 				column_type
-
 			FROM
 				information_schema.COLUMNS
-
 			WHERE
 				TABLE_SCHEMA = ? AND
 				TABLE_NAME = ?
@@ -317,23 +267,26 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 			$tableName
 		]);
 
-		$columns			= [];
-		$primaryKeyColumns	= [];
+		$columns = [];
+		$primaryKeyColumns = [];
 
 		foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $column) {
 
 			// get standard information for column
 			
 			$columns[strtolower($column['column_name'])] = [
-				'columnName'	=> $column['column_name'],
-				'columnKey'		=> $column['column_key'],
-				'columnDefault'	=> $column['column_default'],
-				'dataType'		=> $column['data_type'],
-				'isNullable'	=> $column['is_nullable'],
-					
+				'columnName' => $column['column_name'],
+				'columnKey' => $column['column_key'],
+				'columnDefault' => $column['column_default'],
+                'isNullable' => strtoupper($column['is_nullable']) === 'YES',
+
+                // int, tinyint, varchar, datetime...
+
+				'dataType' => $column['data_type'],
+
 				// required to retrieve options for enum and set data types
 					
-				'columnType'	=> $column['column_type']
+				'columnType' => $column['column_type']
 			];
 
 			if($column['column_key'] === 'PRI') {
@@ -344,5 +297,4 @@ class Mysql extends AbstractPdoAdapter implements DatabaseInterface {
 		$this->tableStructureCache[$tableName] = $columns;
 		$this->tableStructureCache[$tableName]['_primaryKeyColumns'] = $primaryKeyColumns;
 	}
-
 }
