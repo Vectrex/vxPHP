@@ -1,3 +1,11 @@
+## 2.2.5
+- bugfixes: queries to obtain table metadata in the PostgreSQL adapter were incompatible with recent Postgres versions
+- refactored both the MySQL and Postgres adapters
+
+## 2.2.4
+- bugfix: menu entries did not observer relative paths to script files
+- refactored menu entries to use a fluent interface
+
 ## 2.2.3
 - fixes to avoid deprecation notices in PasswordGenerator; removed obsolete code
 
