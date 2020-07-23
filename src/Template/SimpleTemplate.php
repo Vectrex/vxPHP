@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.0 2020-07-08
+ * @version 2.2.1 2020-07-23
  *
  */
 
@@ -165,7 +165,7 @@ class SimpleTemplate
      *
      * @return string
      */
-	public function getParentTemplateFilename(): string
+	public function getParentTemplateFilename(): ?string
     {
 		if(empty($this->parentTemplateFilename) && preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
             $this->parentTemplateFilename = $matches[1];
