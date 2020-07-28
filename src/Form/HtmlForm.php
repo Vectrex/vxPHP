@@ -29,7 +29,7 @@ use vxPHP\Security\Csrf\CsrfToken;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.3 2020-07-06
+ * @version 1.9.4 2020-07-28
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -1363,10 +1363,10 @@ class HtmlForm
 
 		switch ($terms[2]) {
 			case '==':
-				return $terms[1] === $terms[3];
+				return $terms[1] == $terms[3];
 
 			case '!=':
-				return $terms[1] !== $terms[3];
+				return $terms[1] != $terms[3];
 
 			case '<':
 				return $terms[1] < $terms[3];
