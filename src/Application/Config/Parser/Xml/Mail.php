@@ -35,8 +35,11 @@ class Mail implements XmlParserInterface
                 if($childNode->nodeType !== XML_ELEMENT_NODE) {
                     continue;
                 }
+                $mail->mailer->{$childNode->nodeName} = trim($childNode->nodeValue);
+            }
 
-                $mail->mailer->{$node->nodeName} = trim($node->nodeValue);
+            if(!isset($mail->mailer->host)) {
+                throw new ConfigException('Mailer requires a configured host.');
             }
         }
 
