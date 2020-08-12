@@ -20,11 +20,11 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.5.0 2019-02-13
+ * @version 0.5.1 2020-08-12
  */
 
 class Email {
-	const CRLF = "\r\n";
+	public const CRLF = "\r\n";
 
     /**
      * @var \vxPHP\Mail\MailerInterface
@@ -54,7 +54,7 @@ class Email {
     /**
      * @var array
      */
-    private	$receiver = [];
+    private $receiver;
 
     /**
      * @var string
@@ -104,32 +104,31 @@ class Email {
 	private static $debug = false;
 
 
-	/**
-	 * mail constructor
-	 * all parameters are optional
-	 * 
-	 * @param mixed $receiver
-	 * @param string $subject
-	 * @param string $mailText
-	 * @param string $sender
-	 * @param array $cc
-	 * @param array $bcc
-	 * @param string $sig
-	 * @param boolean $htmlMail
-	 */
-	public function __construct($receiver = null, $subject = '(no subject)', $mailText = '', $sender = null, array $cc = [], array $bcc = [], $sig = '', $htmlMail = false) {
-
+    /**
+     * mail constructor
+     * all parameters are optional
+     *
+     * @param mixed $receiver
+     * @param string $subject
+     * @param string $mailText
+     * @param string $sender
+     * @param array $cc
+     * @param array $bcc
+     * @param string $sig
+     * @param boolean $htmlMail
+     */
+	public function __construct($receiver = null, $subject = '(no subject)', $mailText = '', $sender = '', array $cc = [], array $bcc = [], $sig = '', $htmlMail = false)
+    {
 		$this->receiver	= (array) $receiver;
-		$this->subject	= $subject;
-		$this->mailText	= $mailText;
-		$this->sender	= !empty($sender) ? $sender : (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
-		$this->cc		= $cc;
-		$this->bcc		= $bcc;
-		$this->sig		= $sig;
-		$this->htmlMail	= $htmlMail;
+		$this->subject = $subject;
+		$this->mailText = $mailText;
+		$this->sender = $sender ?: (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
+		$this->cc = $cc;
+		$this->bcc = $bcc;
+		$this->sig = $sig;
+		$this->htmlMail = $htmlMail;
 
-		$this->encoding	= defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8';
-
+		$this->encoding = defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8';
 	}
 
 	/**
@@ -138,10 +137,9 @@ class Email {
 	 * 
 	 * @param boolean $state
 	 */
-	public static function setDebug($state) {
-
+	public static function setDebug($state): void
+    {
 		self::$debug = (boolean) $state;
-
 	}
 
 	/**
@@ -150,11 +148,10 @@ class Email {
 	 * @param mixed $receiver
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setReceiver($receiver) {
-
+	public function setReceiver($receiver): Email
+    {
 		$this->receiver = $receiver;
 		return $this;
-
 	}
 
 	/**
@@ -163,11 +160,10 @@ class Email {
 	 * @param string $sender
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSender($sender) {
-
+	public function setSender($sender): Email
+    {
 		$this->sender = $sender;
 		return $this;
-
 	}
 
 	/**
@@ -176,11 +172,10 @@ class Email {
 	 * @param string $text
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setMailText($text) {
-
+	public function setMailText($text): Email
+    {
 		$this->mailText = $text;
 		return $this;
-
 	}
 
 	/**
@@ -190,11 +185,10 @@ class Email {
 	 * @param string $signature
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSig($signature) {
-
+	public function setSig($signature): Email
+    {
 		$this->sig = $signature;
 		return $this;
-
 	}
 
 	/**
@@ -203,11 +197,10 @@ class Email {
 	 * @param string $subject
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSubject($subject) {
-
+	public function setSubject($subject): Email
+    {
 		$this->subject = $subject;
 		return $this;
-
 	}
 
 	/**
@@ -216,11 +209,10 @@ class Email {
 	 * @param array $bcc
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setBcc(array $bcc) {
-
+	public function setBcc(array $bcc): Email
+    {
 		$this->bcc = $bcc;
 		return $this;
-
 	}
 
 	/**
@@ -229,11 +221,10 @@ class Email {
 	 * @param array $cc
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setCc(array $cc) {
-
+	public function setCc(array $cc): Email
+    {
 		$this->cc = $cc;
 		return $this;
-
 	}
 
 	/**
@@ -243,11 +234,10 @@ class Email {
 	 * @param boolean $flag
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setHtmlMail($flag) {
-
+	public function setHtmlMail($flag): Email
+    {
 		$this->htmlMail = $flag;
 		return $this;
-
 	}
 
 	/**
@@ -258,14 +248,13 @@ class Email {
 	 * 
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function addAttachment($filePath, $filename = null) {
-
+	public function addAttachment($filePath, $filename = ''): Email
+    {
 		if(file_exists($filePath)) {
-			$this->attachments[] = ['path' => $filePath, 'filename' => $filename];
+			$this->attachments[] = ['path' => $filePath, 'filename' => $filename ?: basename($filePath)];
 		}
 		
 		return $this;
-
 	}
 
     /**
@@ -275,11 +264,10 @@ class Email {
      * @param string $filename
      * @return \vxPHP\Mail\Email
      */
-	public function addAttachmentData($data, $filename) {
-
+	public function addAttachmentData($data, $filename): Email
+    {
 	    $this->attachments[] = ['data' => $data, 'filename' => $filename];
 	    return $this;
-
     }
 
     /**
@@ -291,8 +279,8 @@ class Email {
      * @throws \ReflectionException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public function send()	{
-
+	public function send()
+    {
 		$this->buildHeaders();
 		$this->buildMsg();
 
@@ -310,7 +298,6 @@ class Email {
 		echo '</div>';
 
 		return true;
-
 	}
 
     /**
@@ -320,17 +307,17 @@ class Email {
      * @throws \ReflectionException
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function sendMail() {
-
+	private function sendMail()
+    {
 		// check for configured mailer
 
 		if(is_null($this->mailer) && !is_null(Application::getInstance()->getConfig()->mail->mailer)) {
 
 			$mailer = Application::getInstance()->getConfig()->mail->mailer;
 			$reflection = new \ReflectionClass(str_replace('/', '\\', $mailer->class));
-			
-			$port = isset($mailer->port) ? $mailer->port : null;
-			$encryption = isset($mailer->encryption) ? $mailer->encryption : null;
+
+			$port = $mailer->port ?? null;
+			$encryption = $mailer->encryption ?? null;
 
 			$this->mailer = $reflection->newInstanceArgs([$mailer->host, $port, $encryption]);
 
@@ -364,35 +351,32 @@ class Email {
 			);
 		}
 
-		else {
+        // send mail with configured mailer
 
-			// send mail with configured mailer
+        try {
+            $this->mailer->connect();
 
-			try {
-				$this->mailer->connect();
+            $this->mailer->setFrom($this->sender);
+            $this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
+            $this->mailer->setHeaders(array_merge(
+                [
+                    'To' => implode(',', (array) $this->receiver),
+                    'Subject' => $this->subject
+                ],
+                $this->headers
+            ));
+            $this->mailer->setMessage($this->msg);
+            $this->mailer->send();
 
-				$this->mailer->setFrom($this->sender);
-				$this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
-				$this->mailer->setHeaders(array_merge(
-					[
-						'To' => implode(',', (array) $this->receiver),
-						'Subject' => $this->subject
-					],
-					$this->headers
-				));
-				$this->mailer->setMessage($this->msg);
-				$this->mailer->send();
+            $this->mailer->close();
+            return true;
+        }
 
-				$this->mailer->close();
-				return true;
-			}
-
-			catch(MailerException $e) {
-				$this->mailer->close();
-				return $e->getMessage();
-			}
-		}
-	}
+        catch(MailerException $e) {
+            $this->mailer->close();
+            return $e->getMessage();
+        }
+    }
 
 	/**
 	 * explicitly set mailer
@@ -400,11 +384,10 @@ class Email {
 	 * @param MailerInterface $mailer
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setMailer(MailerInterface $mailer) {
-
+	public function setMailer(MailerInterface $mailer): Email
+    {
 		$this->mailer = $mailer;
 		return $this;
-
 	}
 	
 	/**
@@ -412,17 +395,16 @@ class Email {
 	 * 
 	 * @return MailerInterface
 	 */
-	public function getMailer() {
-
+	public function getMailer(): MailerInterface
+    {
 		return $this->mailer;
-
 	}
 
 	/**
 	 * fill headers array
 	 */
-	private function buildHeaders() {
-
+	private function buildHeaders(): void
+    {
 		$this->headers = [
 			'From' => $this->sender,
 			'Return-Path' => $this->sender,
@@ -449,14 +431,13 @@ class Email {
 		else {
 			$this->headers['Content-type'] = sprintf('text/%s; charset=%s', $this->htmlMail ? 'html' : 'plain', $this->encoding);
 		}
-
 	}
 	
 	/**
 	 * build message body
 	 */
-	private function buildMsg() {
-
+	private function buildMsg(): void
+    {
 		if(isset($this->boundary)) {
 			$this->msg = '--' . $this->boundary . self::CRLF;
 			$this->msg .= 'Content-type: text/' . ($this->htmlMail ? 'html' : 'plain') . '; charset=' .$this->encoding . self::CRLF;
@@ -500,7 +481,6 @@ class Email {
 			}
 			
 			$this->msg .= self::CRLF . '--'. $this->boundary . '--' . self::CRLF;
-
 		}
 	}
 }
