@@ -1,3 +1,7 @@
+## 2.2.6
+- bugfixes: mailer configuration, form checkbox validation, evaluation of conditions in form templates
+- refactored Email class
+
 ## 2.2.5
 - bugfixes: queries to obtain table metadata in the PostgreSQL adapter were incompatible with recent Postgres versions
 - refactored both the MySQL and Postgres adapters
