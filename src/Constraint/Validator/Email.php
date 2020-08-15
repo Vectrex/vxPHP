@@ -76,6 +76,10 @@ class Email extends AbstractConstraint
 		// put everything together
 
 		$this->regExp = '/^(' . $local_part . ')@(' . $domain .')$/';
+
+        // vee validate (and vuelidate)
+        $this->regExp = '/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
+
 	}
 	
 	/**
