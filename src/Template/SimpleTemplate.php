@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.1 2020-07-23
+ * @version 2.2.2 2020-09-01
  *
  */
 
@@ -282,7 +282,7 @@ class SimpleTemplate
             $this->bufferInstance->$var = htmlspecialchars($value->__toString());
         }
         else {
-            throw new SimpleTemplateException(sprintf("String value can not be evaluated for property '%s'", $var));
+            throw new SimpleTemplateException(sprintf("String value can not be evaluated for property '%s'.", $var));
         }
 
         return $this;
@@ -298,7 +298,7 @@ class SimpleTemplate
 	public function addFilter(SimpleTemplateFilterInterface $filter): self
     {
         if(array_key_exists(strtolower(get_class($filter)), $this->defaultFilters)) {
-            throw new SimpleTemplateException("Filter class '%s' is already configured as default filter.", get_class($filter));
+            throw new SimpleTemplateException(sprintf("Filter class '%s' is already configured as default filter.", get_class($filter)));
         }
 
         $this->filters[strtolower(get_class($filter))] = $filter;
@@ -425,9 +425,8 @@ class SimpleTemplate
 				);
 
 			}
-
 			else {
-				throw new SimpleTemplateException("Could not extend with '{$matches[1]}' at '{$matches[2]}'.", SimpleTemplateException::TEMPLATE_INVALID_NESTING);
+				throw new SimpleTemplateException(sprintf("Could not extend with '%s' at '%s'.", $matches[1], $matches[2]), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
 			}
 		}
 	}
