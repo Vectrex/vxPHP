@@ -11,6 +11,7 @@
 
 namespace vxPHP\Template\Filter;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\File\FilesystemFolder;
 use vxPHP\Image\Exception\ImageModifierException;
 use vxPHP\Template\Exception\SimpleTemplateException;
@@ -21,7 +22,7 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
- * @version 1.5.0 2019-10-01
+ * @version 1.5.1 2020-09-16
  * @author Gregor Kofler
  *
  * @todo parse inline url() style rule
@@ -41,7 +42,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * (non-PHPdoc)
      *
      * @param $templateString
-     * @see vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
+     * @see SimpleTemplateFilterInterface::apply()
      */
     public function apply(&$templateString): void
     {
@@ -61,10 +62,10 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @param array $matches
      * @return string
      * @throws SimpleTemplateException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      * @throws ImageModifierException
      */
-    private function filterCallBack($matches): ?string
+    private function filterCallBack(array $matches): ?string
     {
         // narrow down the type of replacement, matches[2] contains src attribute value
 
@@ -82,12 +83,11 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
                 $srcFile = $filestrings[1] . $filestrings[2];
                 $cachedActions = $this->sanitizeActions($filestrings[3]);
-
             }
 
             // <img src="...#{actions}">
 
-            if (preg_match('~(.*?)#([\w\s\.\|]+)~', $matches[2], $details)) {
+            if (preg_match('~(.*?)#([\w\s.|]+)~', $matches[2], $details)) {
 
                 $sanitizedActions = $this->sanitizeActions($details[2]);
 
@@ -99,9 +99,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                         return $matches[0];
                     } // create new thumb with new actions
 
-                    else {
-                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
-                    }
+                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+
                 } // no previously cached image detected
 
                 else {
@@ -140,9 +139,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                         return $matches[0];
                     } // create new thumb with new size
 
-                    else {
-                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
-                    }
+                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+
                 } // no previously cached image detected
 
                 else {
@@ -161,8 +159,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
                 // if width attribute is not set, this will evaluate to 0 and force a proportional scaling
 
-                $width = (int)$img->getAttribute('width');
-                $height = (int)$img->getAttribute('height');
+                $width = (int) $img->getAttribute('width');
+                $height = (int) $img->getAttribute('height');
 
                 $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
 
@@ -214,9 +212,9 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @param array $actions
      * @return string
      * @throws SimpleTemplateException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-    private function getCachedImagePath($src, array $actions): string
+    private function getCachedImagePath(string $src, array $actions): string
     {
         $pathinfo	= pathinfo($src);
         $extension	= isset($pathinfo['extension']) ? ('.' . $pathinfo['extension']) : '';
@@ -277,7 +275,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @param string $actionsString
      * @return array
      */
-    private function sanitizeActions($actionsString): array
+    private function sanitizeActions(string $actionsString): array
     {
         $actions = [];
         $actionsString = strtolower($actionsString);

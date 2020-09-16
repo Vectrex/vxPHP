@@ -18,8 +18,8 @@ namespace vxPHP\Image;
  * @version 0.1.0 2014-04-03
  */
 
-class ImageModifierFactory {
-	
+class ImageModifierFactory
+{
 	/**
 	 * @var array
 	 * 
@@ -28,14 +28,15 @@ class ImageModifierFactory {
 	private static $options = array('Gd' => 'gd', 'ImageMagick' => 'imagick');
 
 	private static $preferedOption;
-	
-	/**
-	 * @param string $path
-	 * @param string $preference
-	 * 
-	 * @return vxPHP\Image\ImageModifier
-	 */
-	public static function create($path, $preference = NULL) {
+
+    /**
+     * @param string $path
+     * @param null $preference
+     *
+     * @return ImageModifier
+     */
+	public static function create(string $path, $preference = null): ImageModifier
+    {
 		
 		// try to set prefered option to $preference ("available" and extension loaded) 
 
@@ -73,6 +74,5 @@ class ImageModifierFactory {
 		}
 		
 		throw new \RuntimeException('No graphics library support found.');
-
 	}
 }
