@@ -22,22 +22,13 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
- * @version 1.5.1 2020-09-16
+ * @version 1.6.0 2020-09-17
  * @author Gregor Kofler
  *
  * @todo parse inline url() style rule
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
 {
-    /**
-     * @var array
-     *
-     * markup possibilities to which the filter will be applied
-     */
-    private	$markupToMatch = [
-        '~<img\s+.*?src=(["\'])(.*?)\1.*?>~i'
-    ];
-
     /**
      * (non-PHPdoc)
      *
@@ -46,11 +37,30 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      */
     public function apply(&$templateString): void
     {
-        $templateString = preg_replace_callback(
-            $this->markupToMatch,
-            [$this, 'filterCallBack'],
+        $templateString = preg_replace_callback_array(
+            [
+                '~<img\s+[^>]*src=(["\'])(.*?)\1.*?>~is' => [$this, 'imgSrcCallback'],
+                '~<img\s+[^>]*srcset=(["\'])(.*?)\1.*?>~is' => [$this, 'imgSrcsetCallback']
+            ],
             $templateString
         );
+    }
+
+    private function imgSrcsetCallback(array $matches): ?string
+    {
+        $dest = $matches[2];
+
+        foreach(explode(',', trim($matches[2])) as $item) {
+            if(preg_match('~(.*?)#([\w.|]+)~', $item, $details)) {
+                $dest = str_replace(
+                    $details[1] . '#' . $details[2],
+                    $this->getCachedImagePath($details[1], $this->sanitizeActions($details[2])),
+                    $dest
+                );
+            }
+        }
+
+        return preg_replace('~srcset=([\'"]).*?\1~is', 'srcset="' . $dest . '"', $matches[0]);
     }
 
     /**
@@ -65,7 +75,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @throws ApplicationException
      * @throws ImageModifierException
      */
-    private function filterCallBack(array $matches): ?string
+    private function imgSrcCallback(array $matches): ?string
     {
         // narrow down the type of replacement, matches[2] contains src attribute value
 
@@ -129,7 +139,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                     $height = $dimensions[2];
                 }
 
-                $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
+                $sanitizedActions['resize'] = 'resize_' . $width . '_' . $height;
 
                 if (isset($cachedActions)) {
 
@@ -162,7 +172,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                 $width = (int) $img->getAttribute('width');
                 $height = (int) $img->getAttribute('height');
 
-                $sanitizedActions['resize'] = 'resize ' . $width . ' ' . $height;
+                $sanitizedActions['resize'] = 'resize_' . $width . '_' . $height;
 
                 if (isset($cachedActions)) {
 
@@ -172,9 +182,8 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
                         return $matches[0];
                     } // create new thumb with new size
 
-                    else {
-                        $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
-                    }
+                    $dest = $this->getCachedImagePath($srcFile, $sanitizedActions);
+
                 } // no previously cached image detected
 
                 else {
@@ -233,9 +242,9 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
         $path = Application::getInstance()->extendToAbsoluteAssetsPath(ltrim($dest, '/'));
 
-        // generate cache directory and file if necessary
+        // generate cache directory and file if necessary and not disabled by parameter
 
-        if(!file_exists($path)) {
+        if(empty($this->parameters['disable_image_creation']) && !file_exists($path)) {
 
             $cachePath = dirname($path);
 
@@ -253,7 +262,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
             foreach($actions as $a) {
 
-                $params = preg_split('~\s+~', $a);
+                $params = explode('_', $a);
                 $method = array_shift($params);
 
                 if(method_exists($imgEdit, $method)) {
@@ -262,7 +271,6 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
             }
 
             $imgEdit->export($path);
-
         }
 
         return $dest;
@@ -278,17 +286,16 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
     private function sanitizeActions(string $actionsString): array
     {
         $actions = [];
-        $actionsString = strtolower($actionsString);
+        $actionsString = str_replace([' ', '__'], '_', strtolower($actionsString));
 
         // with duplicate actions the latter ones overwrite previous ones
 
         foreach(explode('|', $actionsString) as $action) {
 
             $action = trim($action);
-            $actions[strstr($action, ' ', true)] = $action;
+            $actions[strstr($action, '_', true)] = $action;
 
         }
-
         return $actions;
     }
 }

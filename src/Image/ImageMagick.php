@@ -18,7 +18,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for Imagick
  *
  * @author Gregor Kofler
- * @version 0.3.2 2019-10-01
+ * @version 0.3.3 2020-09-17
  * 
  * @todo improve grayscale conversion
  * 
@@ -29,13 +29,13 @@ class ImageMagick extends ImageModifier
 	 * @var \stdClass
 	 */
 	private $src;
-	
-	/**
-	 * 
-	 * @param unknown $file
-	 * @throws ImageModifierException
-	 */
-	public function __construct($file)
+
+    /**
+     *
+     * @param string $file
+     * @throws ImageModifierException
+     */
+	public function __construct(string $file)
     {
 		if(!file_exists($file)) {
             throw new ImageModifierException(sprintf("File '%s' doesn't exist.", $file), ImageModifierException::FILE_NOT_FOUND);
@@ -72,12 +72,15 @@ class ImageMagick extends ImageModifier
 			$this->src->resource->clear();
 		}
 	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::export()
-	 */
-	public function export($path = null, $mimetype = null)
+
+    /**
+     * (non-PHPdoc)
+     * @param string|null $path
+     * @param string|null $mimetype
+     * @throws ImageModifierException
+     * @see \vxPHP\Image\ImageModifier::export()
+     */
+	public function export(string $path = null, string $mimetype = null): void
     {
 		
 		if(!$mimetype) {
@@ -123,16 +126,20 @@ class ImageMagick extends ImageModifier
 			
 			$this->src->resource->writeImage($path);
 		}
-		
 	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_crop()
-	 */
-	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right)
-    {
 
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param int $top
+     * @param int $left
+     * @param int $bottom
+     * @param int $right
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_crop()
+     */
+	protected function do_crop(\stdClass $src, int $top, int $left, int $bottom, int $right): \StdClass
+    {
 		$src->resource->cropImage($src->width - $right - $left, $src->height - $bottom - $top, $left, $top);
 
 		$src->width = $src->width - $right - $left;
@@ -141,11 +148,15 @@ class ImageMagick extends ImageModifier
 		return $src;
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_resize()
-	 */
-	protected function do_resize(\stdClass $src, $width, $height)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param int $width
+     * @param int $height
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_resize()
+     */
+	protected function do_resize(\stdClass $src, int $width, int $height): \StdClass
     {
 		$src->resource->resizeImage($width, $height, \Imagick::FILTER_CATROM, 1, false);
 		$src->resource->convolveImage([-1, -0.8, -1, -0.8, 16, -0.8, -1, -0.8, -1]);
@@ -155,12 +166,17 @@ class ImageMagick extends ImageModifier
 
 		return $src;
 	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_watermark()
-	 */
-	protected function do_watermark(\stdClass $src, $watermarkFile)
+
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param string $watermarkFile
+     * @return \StdClass
+     * @throws ImageModifierException
+     * @throws \ImagickException
+     * @see \vxPHP\Image\ImageModifier::do_watermark()
+     */
+	protected function do_watermark(\stdClass $src, string $watermarkFile): \StdClass
     {
 		
 		if(!file_exists($watermarkFile)) {
@@ -176,11 +192,13 @@ class ImageMagick extends ImageModifier
 		return $src;
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
-	 */
-	protected function do_greyscale(\stdClass $src)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_greyscale()
+     */
+	protected function do_greyscale(\stdClass $src): \StdClass
     {
 		$src->resource->modulateImage(100, 0, 100);
 

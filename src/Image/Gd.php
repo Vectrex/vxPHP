@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.5 2019-10-01
+ * @version 0.5.6 2020-09-17
  */
 class Gd extends ImageModifier
 {
@@ -40,7 +40,7 @@ class Gd extends ImageModifier
 	 * @param string $file
 	 * @throws ImageModifierException
 	 */
-	public function __construct($file)
+	public function __construct(string $file)
     {
 		$src = new \stdClass();
 
@@ -99,11 +99,17 @@ class Gd extends ImageModifier
 		}
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_crop()
-	 */
-	protected function do_crop(\stdClass $src, $top, $left, $bottom, $right)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param int $top
+     * @param int $left
+     * @param int $bottom
+     * @param int $right
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_crop()
+     */
+	protected function do_crop(\stdClass $src, int $top, int $left, int $bottom, int $right): \StdClass
     {
 		$dst = new \stdClass();
 		$dst->width = $src->width - $left - $right;
@@ -126,11 +132,15 @@ class Gd extends ImageModifier
 		return $dst;
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_resize()
-	 */
-	protected function do_resize(\stdClass $src, $width, $height)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param int $width
+     * @param int $height
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_resize()
+     */
+	protected function do_resize(\stdClass $src, int $width, int $height): \StdClass
     {
 		$dst = new \stdClass();
 		$dst->resource = imagecreatetruecolor($width, $height);
@@ -161,11 +171,15 @@ class Gd extends ImageModifier
 		return $dst;
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_watermark()
-	 */
-	protected function do_watermark(\stdClass $src, $watermarkFile)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @param string $watermarkFile
+     * @return \StdClass
+     * @throws ImageModifierException
+     * @see \vxPHP\Image\ImageModifier::do_watermark()
+     */
+	protected function do_watermark(\stdClass $src, string $watermarkFile): \StdClass
     {
         if(!file_exists($watermarkFile)) {
             throw new ImageModifierException(sprintf("Watermark file '%s' not found.", $watermarkFile), ImageModifierException::FILE_NOT_FOUND);
@@ -198,11 +212,13 @@ class Gd extends ImageModifier
 		return $dst;
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Image\ImageModifier::do_greyscale()
-	 */
-	protected function do_greyscale(\stdClass $src)
+    /**
+     * (non-PHPdoc)
+     * @param \stdClass $src
+     * @return \StdClass
+     * @see \vxPHP\Image\ImageModifier::do_greyscale()
+     */
+	protected function do_greyscale(\stdClass $src): \StdClass
     {
     	$dst = new \stdClass();
 		$dst->resource = imagecreatetruecolor($src->width, $src->height);
@@ -214,7 +230,7 @@ class Gd extends ImageModifier
 		return $dst;
 	}
 
-	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity)
+	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity): void
     {
 		$cut = imagecreatetruecolor($srcW, $srcH);
 		imagecopy($cut, $dst, 0, 0, $dstX, $dstY, $srcW, $srcH);
@@ -225,9 +241,12 @@ class Gd extends ImageModifier
 
     /**
      * (non-PHPdoc)
+     * @param string|null $path
+     * @param string|null $mimetype
+     * @throws ImageModifierException
      * @see \vxPHP\Image\ImageModifier::export()
      */
-	public function export($path = null, $mimetype = null)
+	public function export(string $path = null, string $mimetype = null): void
     {
 		if(!$mimetype) {
 			$mimetype = $this->mimeType;
@@ -246,7 +265,6 @@ class Gd extends ImageModifier
 		}
 
 		else {
-
 			$src = $this->src;
 			
 			foreach($this->queue as $step) {
@@ -270,6 +288,5 @@ class Gd extends ImageModifier
 					break;
 			}
 		}
-		
 	}
 }

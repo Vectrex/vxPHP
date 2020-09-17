@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.5.3 2019-10-01
+ * @version 0.5.4 2020-09-17
  */
 abstract class ImageModifier
 {
@@ -59,7 +59,7 @@ abstract class ImageModifier
 	/**
 	 * adds a crop-"command" to queue
 	 * parameters are validated
-	 * 
+	 *
 	 * @param float $aspectRatio
 	 * or
 	 * @param int $width
@@ -69,10 +69,10 @@ abstract class ImageModifier
 	 * @param int $left
 	 * @param int $bottom
 	 * @param int $right
-	 * 
+	 *
 	 * @throws ImageModifierException
 	 */
-	public function crop()
+	public function crop(): void
     {
 		$args = func_get_args();
 		
@@ -197,7 +197,7 @@ abstract class ImageModifier
 	 * 
 	 * @throws ImageModifierException
 	 */
-	public function resize()
+	public function resize(): void
     {
 		
 		$args = func_get_args();
@@ -328,11 +328,10 @@ abstract class ImageModifier
 
 		$todo = new \stdClass();
 
-		$todo->method		= __FUNCTION__;
-		$todo->parameters	= array();
+		$todo->method = __FUNCTION__;
+		$todo->parameters = [];
 
 		$this->queue[] = $todo;
-
 	}
 
 	/**
@@ -344,7 +343,7 @@ abstract class ImageModifier
 	 * @param int $bottom
 	 * @param int $right
 	 */
-	abstract protected function do_crop(\stdClass $src, $top, $left, $bottom, $right);
+	abstract protected function do_crop(\stdClass $src, int $top, int $left, int $bottom, int $right);
 
 	/**
 	 * performs resize-"command"
@@ -353,7 +352,7 @@ abstract class ImageModifier
 	 * @param int $width
 	 * @param int $height
 	 */
-	abstract protected function do_resize(\stdClass $src, $width, $height);
+	abstract protected function do_resize(\stdClass $src, int $width, int $height);
 		
 	/**
 	 * performs "watermark"-command
@@ -361,7 +360,7 @@ abstract class ImageModifier
 	 * @param \stdClass $src
 	 * @param string $watermarkFile
 	 */
-	abstract protected function do_watermark(\stdClass $src, $watermarkFile);
+	abstract protected function do_watermark(\stdClass $src, string $watermarkFile);
 	
 	/**
 	 * performs "bw"-command
@@ -370,15 +369,15 @@ abstract class ImageModifier
 	 */
 	abstract protected function do_greyscale(\stdClass $src);
 
-	/**
-	 * exports resulting image
-	 * all queued commands are applied to the source image
-	 *
-	 * file is then stored to $path, format $mimetype
-	 *
-	 * @param string $path, output filename, defaults to source filename
-	 * @param string $mimetype, output file mimetype, defaults to source mime type
-	 */
-	abstract public function export($path = NULL, $mimetype = NULL);
+    /**
+     * exports resulting image
+     * all queued commands are applied to the source image
+     *
+     * file is then stored to $path, format $mimetype
+     *
+     * @param string|null $path , output filename, defaults to source filename
+     * @param string|null $mimetype , output file mimetype, defaults to source mime type
+     */
+	abstract public function export(string $path = null, string $mimetype = null);
 
 }

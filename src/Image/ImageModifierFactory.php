@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Image;
 
 /**
@@ -37,8 +36,7 @@ class ImageModifierFactory
      */
 	public static function create(string $path, $preference = null): ImageModifier
     {
-		
-		// try to set prefered option to $preference ("available" and extension loaded) 
+		// try to set prefered option to $preference ("available" and extension loaded)
 
 		if($preference) {
 			if(
@@ -53,24 +51,19 @@ class ImageModifierFactory
 		// otherwise iterate over $options
 
 		if(!self::$preferedOption) {
-
 			foreach(self::$options as $class => $ext) {
-				
 				if(class_exists(__NAMESPACE__ . '\\' . $class) && extension_loaded($ext)) {
 					self::$preferedOption = $class;
 					break;
 				}
 			}
-			
 		}
 
 		// pick previously set $preferedOption
 
 		if(self::$preferedOption) {
-
 			$className = __NAMESPACE__ . '\\' . self::$preferedOption;
 			return new $className($path);
-
 		}
 		
 		throw new \RuntimeException('No graphics library support found.');
