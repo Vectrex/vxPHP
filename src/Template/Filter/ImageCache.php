@@ -22,7 +22,7 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
- * @version 1.6.0 2020-09-17
+ * @version 1.6.1 2020-09-18
  * @author Gregor Kofler
  *
  * @todo parse inline url() style rule
@@ -40,7 +40,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
         $templateString = preg_replace_callback_array(
             [
                 '~<img\s+[^>]*src=(["\'])(.*?)\1.*?>~is' => [$this, 'imgSrcCallback'],
-                '~<img\s+[^>]*srcset=(["\'])(.*?)\1.*?>~is' => [$this, 'imgSrcsetCallback']
+                '~<(?:img|source)\s+[^>]*srcset=(["\'])(.*?)\1.*?>~is' => [$this, 'imgSrcsetCallback']
             ],
             $templateString
         );
@@ -51,7 +51,7 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
         $dest = $matches[2];
 
         foreach(explode(',', trim($matches[2])) as $item) {
-            if(preg_match('~(.*?)#([\w.|]+)~', $item, $details)) {
+            if(preg_match('~(.*?)#([\w.|]+)~', trim($item), $details)) {
                 $dest = str_replace(
                     $details[1] . '#' . $details[2],
                     $this->getCachedImagePath($details[1], $this->sanitizeActions($details[2])),
