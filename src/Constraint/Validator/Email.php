@@ -16,7 +16,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check an email for validity
  *
- * @version 0.1.1 2020-04-30
+ * @version 0.1.2 2020-09-18
  * @author Gregor Kofler
  */
 class Email extends AbstractConstraint
@@ -35,13 +35,13 @@ class Email extends AbstractConstraint
 	 */
 	private $regExp;
 
-	/**
-	 * build regular expression against which
-	 * email is checked
-	 * 
-	 * @param string $type
-	 */
-	public function __construct($type = null)
+    /**
+     * build regular expression against which
+     * email is checked
+     *
+     * @param string|null $type
+     */
+	public function __construct(string $type = null)
     {
 		if($type) {
 			$allowedTypes = 'checkMX checkHost';
@@ -53,35 +53,11 @@ class Email extends AbstractConstraint
             $this->checkType = $type;
 		}
 		
-		$qtext          = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
-		$dtext          = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
-		$atom           = '[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]+';
-		$atom_umlaut    = '(?:[^\\x00-\\x20"(),.:;<>@\\x5b-\\x5d\\x7f-\\xff]|[äöüÄÖÜ])+';
-		$quoted_pair    = '\\x5c[\\x00-\\x7f]';
+        // taken the regexp from vee validate (and vuelidate)
 
-		$domain_literal = "\\x5b(?:$dtext|$quoted_pair)*\\x5d";
-		$quoted_string  = "\\x22(?:$qtext|$quoted_pair)*\\x22";
-		$domain_ref     = $atom_umlaut;
-		$sub_domain     = "(?:$domain_ref|$domain_literal)";
-		$word           = "(?:$atom|$quoted_string)";
-
-		//now a two-part domain identifier is required (not conforming to RFC822)
-
-		$domain         = "$sub_domain(?:\\x2e$sub_domain)+";	// "$sub_domain(\\x2e$sub_domain)*"
-		
-		//capturing parantheses added
-
-		$local_part     = "$word(?:\\x2e$word)*";
-		
-		// put everything together
-
-		$this->regExp = '/^(' . $local_part . ')@(' . $domain .')$/';
-
-        // vee validate (and vuelidate)
         $this->regExp = '/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
-
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
