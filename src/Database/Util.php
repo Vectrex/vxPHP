@@ -10,12 +10,14 @@
 
 namespace vxPHP\Database;
 
+use vxPHP\Util\Text;
+
 /**
  * utility functions supporting MysqlPDO with tasks common in vxPHP based web applications
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.2.0, 2017-03-10
+ * @version 0.3.0, 2020-09-20
  */
 class Util {
 	
@@ -31,13 +33,13 @@ class Util {
 	 *
 	 * @return string
 	 */
-	public static function unFormatDate($dateString, $locale = '') {
-	
+	public static function unFormatDate(string $dateString, string $locale = ''): string
+    {
 		if(empty($dateString)) {
 			return '';
 		}
 	
-		$tmp = preg_split('/( |\.|\/|-)/', $dateString);
+		$tmp = preg_split('/[ ./\-]/', $dateString);
 
 		if(count($tmp) === 3) {
 
@@ -78,9 +80,9 @@ class Util {
 	 * @param string $decimalString
 	 * @return float | NaN
 	 */
-	public static function unFormatDecimal($decimalString) {
-
-		if(trim($decimalString) == '') {
+	public static function unFormatDecimal(string $decimalString)
+    {
+		if(trim($decimalString) === '') {
 			return NAN;
 		}
 
@@ -90,20 +92,20 @@ class Util {
 
 		// only a decimal separator ("," or ".")
 
-		if(preg_match('/^\-?\d+([,.]\d+)?$/', $decimalString)) {
+		if(preg_match('/^-?\d+([,.]\d+)?$/', $decimalString)) {
 			return (float) (str_replace(',', '.', $decimalString));
 		}
 		
-		// "," as thousands separator "." as decimal separator
+		// "," or "'" as thousands separator "." as decimal separator
 
-		if(preg_match('/^\-?[1-9]\d{0,2}((,|\')\d{3})*(\.\d+)?$/', $decimalString)) {
-			return (float) (str_replace(array(',', '\''), array('', ''), $decimalString));
+		if(preg_match('/^-?[1-9]\d{0,2}([,\']\d{3})*(\.\d+)?$/', $decimalString)) {
+			return (float) (str_replace([',', "'"], ['', ''], $decimalString));
 		}
 		
 		// "." as thousands separator "," as decimal separator
 		
-		if(preg_match('/^\-?[1-9]\d{0,2}(\.\d{3})*(,\d+)?$/', $decimalString)) {
-			return (float) (str_replace(array('.', ','), array('', '.'), $decimalString));
+		if(preg_match('/^-?[1-9]\d{0,2}(\.\d{3})*(,\d+)?$/', $decimalString)) {
+			return (float) (str_replace(['.', ','], ['', '.'], $decimalString));
 		}
 		
 		// try type casting
@@ -127,24 +129,11 @@ class Util {
 	 *
 	 * @return string
 	 */
-	public static function getAlias(DatabaseInterface $connection, $aliasText, $tableName, $id = 0, $column = 'alias') {
-
-		$replace = [
-			'~(ä|&auml;)~'	=> 'ae',
-			'~(ö|&ouml;)~'	=> 'oe',
-			'~(ü|&uuml;)~'	=> 'ue',
-			'~(ß|&szlig;)~'	=> 'ss',
-			'~\W+~'			=> '_',
-			'~(^_+|_+$)~'	=> ''
-		];
-		
+	public static function getAlias(DatabaseInterface $connection, string $aliasText, string $tableName, $id = 0, $column = 'alias'): string
+    {
 		$primaryKeyName = $connection->getPrimaryKey($tableName);
 
-		$alias = preg_replace(
-			array_keys($replace),
-			array_values($replace),
-			strtolower($aliasText)
-		);
+		$alias = Text::toAlias($aliasText);
 
 		$statement = $connection->getConnection()->prepare(
 			sprintf(
@@ -162,11 +151,10 @@ class Util {
 
 		$ndx = 2;
 
-		while(in_array($alias . '_' . $ndx, $aliasValues)) {
+		while(in_array($alias . '-' . $ndx, $aliasValues, true)) {
 			++$ndx;
 		}
 
-		return $alias . '_' . $ndx;
+		return $alias . '-' . $ndx;
 	}
-
 }
