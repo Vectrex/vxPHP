@@ -14,7 +14,7 @@ namespace vxPHP\Util;
  * text related utility functions
  *
  * @package vxPHP\Util
- * @version 0.1.0 2020-09-20
+ * @version 0.2.0 2020-09-22
  *
  * @author Gregor Kofler
  */
@@ -76,11 +76,19 @@ class Text
      */
     public static function toAlias (string $from): string
     {
-        return strtolower(trim(preg_replace('/[^a-z0-9_-]/i', '', preg_replace('/\s+/', '-', self::toAscii($from))), '-'));
+        return strtolower(trim(preg_replace('/[^a-z0-9_-]/i', '', preg_replace(['/\s+/', '/-{2,}/'], '-', self::toAscii($from))), '-'));
     }
 
-    public static function sanitizeFilename (string $filename): string
+    /**
+     * create a simplified filename compatible with most file
+     * systems
+     * result contains only ASCII letters, numbers, dashes, underscores and dots
+     *
+     * @param string $filename
+     * @return string
+     */
+    public static function toSanitizedFilename (string $filename): string
     {
-
+        return trim(preg_replace('/[^a-z0-9._-]/i', '', preg_replace(['/\s+/', '/-{2,}/'], '-', self::toAscii($filename))), '-');
     }
 }

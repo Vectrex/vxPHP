@@ -50,7 +50,8 @@ class TextTest extends TestCase
             ],
             [
                 'ªºÀÁÂÃÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÙÚÛÝàáâãçèéêëìíîïðñòóôõùúûýÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİıĴĵĶķĸĹĺĻļĽľĿŀŁłŃńŅņŇňŉŊŋŌōŎŏŐőŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽžſȘșȚț€ƠơƯưẦầẰằỀềỒồỜờỪừỲỳẢảẨẩẲẳẺẻỂểỎỏỔổỞởỦủỬửỶỷẪẫẴẵẼẽỄễỖỗỠỡỮữỸỹẤấẮắẾếỐốỚớỨứẠạẬậẶặẸẹỆệỊịỌọỘộỢợỤụỰựỴỵɑǕǖǗǘǍǎǏǐǑǒǓǔǙǚǛǜ',
-                'aoaaaaceeeeiiiidnoooouuuyaaaaceeeeiiiidnoooouuuyyaaaaaaccccccccddddeeeeeeeeeegggggggghhhhiiiiiiiiiijjkkkllllllllllnnnnnnnnnoooooorrrrrrssssssssttttttuuuuuuuuuuuuwwyyyzzzzzzssstteoouuaaaaeeoooouuyyaaaaaaeeeeoooooouuuuyyaaaaeeeeoooouuyyaaaaeeoooouuaaaaaaeeeeiioooooouuuuyyauuuuaaiioouuuuuu'            ],
+                'aoaaaaceeeeiiiidnoooouuuyaaaaceeeeiiiidnoooouuuyyaaaaaaccccccccddddeeeeeeeeeegggggggghhhhiiiiiiiiiijjkkkllllllllllnnnnnnnnnoooooorrrrrrssssssssttttttuuuuuuuuuuuuwwyyyzzzzzzssstteoouuaaaaeeoooouuyyaaaaaaeeeeoooooouuuuyyaaaaeeeeoooouuyyaaaaeeoooouuaaaaaaeeeeiioooooouuuuyyauuuuaaiioouuuuuu'
+            ],
             [
                 'foobar *£* *₧*', 'foobar',
                 '☒☑☐', ''
@@ -58,6 +59,36 @@ class TextTest extends TestCase
             [
                 ' blö,d.-wirklich? Ja! ',
                 'bloed-wirklich-ja'
+            ],
+            [
+                ' foo - bar ',
+                'foo-bar'
+            ]
+        ];
+    }
+
+    public function toSanitizedFilenameStrings ()
+    {
+        return [
+            [
+                'fooBar123.jpeg',
+                'fooBar123.jpeg'
+            ],
+            [
+                ' foo  And bar .png ',
+                'foo-And-bar-.png'
+            ],
+            [
+                'fÖö - bar.',
+                'fOeoe-bar.'
+            ],
+            [
+                'foo . bar . png',
+                'foo-.-bar-.-png'
+            ],
+            [
+                '/my/path/foobar.png',
+                'mypathfoobar.png'
             ]
         ];
     }
@@ -77,4 +108,13 @@ class TextTest extends TestCase
     {
         $this->assertEquals($to, Text::toAlias($from));
     }
+
+    /**
+     * @dataProvider toSanitizedFilenameStrings
+     */
+    public function testToSanitizedFilename ($from, $to)
+    {
+        $this->assertEquals($to, Text::toSanitizedFilename($from));
+    }
+
 }
