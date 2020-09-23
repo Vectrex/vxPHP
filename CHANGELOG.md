@@ -1,3 +1,10 @@
+## 2.3.0
+- removed obsolete JSMin and accompanying exception class
+- introduced Text class to pool text utility functions
+- ImageCache filter now observes srcset attribute
+- FilesystemFolder received a move() method
+- minor bugfixes and refactoring 
+
 ## 2.2.6
 - bugfixes: mailer configuration, form checkbox validation, evaluation of conditions in form templates
 - refactored Email class
