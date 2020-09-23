@@ -14,7 +14,7 @@ namespace vxPHP\Util;
  * text related utility functions
  *
  * @package vxPHP\Util
- * @version 0.2.0 2020-09-22
+ * @version 0.3.0 2020-09-23
  *
  * @author Gregor Kofler
  */
@@ -82,13 +82,20 @@ class Text
     /**
      * create a simplified filename compatible with most file
      * systems
-     * result contains only ASCII letters, numbers, dashes, underscores and dots
+     * result excludes chr(0) to chr(31), '<', '>', ':', '"', '/', '\', '|', '?', '*'
+     * dots and whitepaces are trimmed
      *
      * @param string $filename
      * @return string
      */
     public static function toSanitizedFilename (string $filename): string
     {
-        return trim(preg_replace('/[^a-z0-9._-]/i', '', preg_replace(['/\s+/', '/-{2,}/'], '-', self::toAscii($filename))), '-');
+        // remove any illegal chars
+
+        $onlyLegalChars = preg_replace('~[<>:"\\\/|?*\\x00-\\x1F]~', '', $filename);
+
+        // trim whitespaces and dots
+
+        return trim($onlyLegalChars, ' .');
     }
 }

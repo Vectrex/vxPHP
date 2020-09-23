@@ -75,16 +75,20 @@ class TextTest extends TestCase
                 'fooBar123.jpeg'
             ],
             [
-                ' foo  And bar .png ',
-                'foo-And-bar-.png'
+                ' foo And bar .png ',
+                'foo And bar .png'
             ],
             [
-                'fÖö - bar.',
-                'fOeoe-bar.'
+                '.htaccess',
+                'htaccess'
             ],
             [
-                'foo . bar . png',
-                'foo-.-bar-.-png'
+                "foobar.png\r\n",
+                'foobar.png'
+            ],
+            [
+                'foo*bar\\n.png',
+                'foobarn.png'
             ],
             [
                 '/my/path/foobar.png',

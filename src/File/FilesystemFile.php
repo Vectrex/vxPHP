@@ -16,13 +16,14 @@ use SplFileInfo;
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\File\Exception\FilesystemFileException;
 use vxPHP\Observer\PublisherInterface;
+use vxPHP\Util\Text;
 
 /**
  * mapper for filesystem files
  *
  * @author Gregor Kofler
  *
- * @version 1.0.0 2020-02-05
+ * @version 1.0.1 2020-09-23
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -414,11 +415,11 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	 * @param integer $ndx starting index used in renamed file
 	 * @return string
 	 */
-	public static function sanitizeFilename($filename, FilesystemFolder $dir, $ndx = 2): string
+	public static function sanitizeFilename(string $filename, FilesystemFolder $dir, $ndx = 2): string
     {
 		// remove any characters which are not allowed in any file system
 
-		$filename = preg_replace('~[<>:"/|?*\\x00-\\x1F]~', '_', $filename);
+		$filename = Text::toSanitizedFilename($filename);
 
 		if(!file_exists($dir->getPath() . $filename)) {
 			return $filename;
