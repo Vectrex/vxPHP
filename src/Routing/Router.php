@@ -21,7 +21,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.0.0 2020-03-30
+ * @version 2.0.1 2020-10-06
  *
  */
 class Router
@@ -180,7 +180,7 @@ class Router
      * @param string $routeId
      * @return Router
      */
-    public function removeRoute($routeId): self
+    public function removeRoute(string $routeId): self
     {
 	    unset($this->routes[$routeId]);
         return $this;
@@ -258,7 +258,7 @@ class Router
      * @return \vxPHP\Routing\Route
      * @throws \RuntimeException
      */
-	public function getRoute($routeId): Route
+	public function getRoute(string $routeId): Route
     {
 	    if(!array_key_exists($routeId, $this->routes)) {
             throw new \RuntimeException(sprintf("No route with id '%s' configured.", $routeId));
@@ -306,10 +306,9 @@ class Router
      * find route which best matches the passed path segments
      *
      * @param string $requestMethod
-     * @param array $pathSegments
+     * @param array|null $pathSegments
      *
      * @return \vxPHP\Routing\Route
-     * @throws \RuntimeException
      */
 	private function findRoute(string $requestMethod, array $pathSegments = null): ?Route
     {
@@ -448,7 +447,7 @@ class Router
 	 * @param string $path
 	 * @return array
 	 */
-	private function getSatisfiedPlaceholders($route, $path): array
+	private function getSatisfiedPlaceholders(Route $route, string $path): array
     {
 		$placeholderNames = $route->getPlaceholderNames();
 		
