@@ -20,14 +20,14 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * manages a complete menu
  * 
  * @author Gregor Kofler
- * @version 0.9.1 2018-07-07
+ * @version 1.0.0 2020-10-09
  */
-class Menu {
-
+class Menu
+{
     /**
      * the id of a menu which has no id explicitly set
      */
-    const DEFAULT_ID = '__default__';
+    public const DEFAULT_ID = '__default__';
 
 	/**
 	 * @var string
@@ -89,45 +89,49 @@ class Menu {
 	 */
 	protected $showSubmenus;
 
-	public function __construct($script, $id = NULL, $type, $serviceId = NULL) {
+    /**
+     * misc attributes
+     * @var \stdClass
+     */
+    protected $attributes;
 
-		$this->script		= $script;
-		$this->id			= $id;
-		$this->type			= $type;
-		$this->serviceId	= $serviceId;
-
+    public function __construct($script, $id, $type, $serviceId = null)
+    {
+		$this->script = $script;
+		$this->id = $id;
+		$this->type = $type;
+		$this->serviceId = $serviceId;
+		$this->attributes = new \stdClass();
 	}
 
-	public function __destruct() {
-
+	public function __destruct()
+    {
 		if($this->type === 'dynamic') {
 			$this->clearSelectedEntry();
 			$this->purgeEntries();
 		}
-
 		else {
 
 			foreach($this->entries as $k => $e) {
 				if($e instanceOf DynamicMenuEntry) {
 					array_splice($this->entries, $k, 1);
-					$e = NULL;
+					$e = null;
 				}
 			}
 
 			$this->dynamicEntries = [];
-
 		}
 	}
 
-	/**
-	 * insert or append menu entry
-	 *
-	 * @param MenuEntry $entry
-	 * @param int $ndx
-	 * @return Menu
-	 */
-	protected function insertEntry(MenuEntry $entry, $ndx = NULL) {
-
+    /**
+     * insert or append menu entry
+     *
+     * @param MenuEntry $entry
+     * @param null $ndx
+     * @return Menu
+     */
+	protected function insertEntry(MenuEntry $entry, $ndx = null): Menu
+    {
 		if($entry instanceof DynamicMenuEntry) {
 			$this->dynamicEntries[] = $entry;
 		}
@@ -142,24 +146,22 @@ class Menu {
 		$entry->setMenu($this);
 		
 		return $this;
-
 	}
 
 	/**
 	 * insert or append several MenuEntry objects
 	 *
 	 * @param array $entries
-	 * @param insert $ndx
+	 * @param int $ndx
 	 * @return Menu
 	 */
-	public function insertEntries(array $entries, $ndx) {
-
+	public function insertEntries(array $entries, int $ndx): Menu
+    {
 		foreach($entries as $e) {
 			$this->insertEntry($e, $ndx++);
 		}
 
 		return $this;
-
 	}
 
 	/**
@@ -168,12 +170,10 @@ class Menu {
 	 * @param MenuEntry $entry
  	 * @return Menu
 	 */
-	public function appendEntry(MenuEntry $entry) {
-
+	public function appendEntry(MenuEntry $entry): Menu
+    {
 		$this->insertEntry($entry);
-
 		return $this;
-		
 	}
 
 	/**
@@ -182,14 +182,13 @@ class Menu {
 	 * @param array $entries
  	 * @return Menu
 	 */
-	public function appendEntries(array $entries) {
-		
+	public function appendEntries(array $entries): Menu
+    {
 		foreach($entries as $entry) {
 			$this->insertEntry($entry);
 		}
 
 		return $this;
-		
 	}
 
 	/**
@@ -199,8 +198,8 @@ class Menu {
 	 * @param MenuEntry $pos
  	 * @return Menu
 	 */
-	public function insertBeforeEntry(MenuEntry $new, MenuEntry $pos) {
-
+	public function insertBeforeEntry(MenuEntry $new, MenuEntry $pos): Menu
+    {
 		foreach($this->entries as $k => $e) {
 			if($e === $pos) {
 				$this->insertEntry($new, $k);
@@ -209,7 +208,6 @@ class Menu {
 		}
 		
 		return $this;
-
 	}
 
 	/**
@@ -218,10 +216,9 @@ class Menu {
 	 * @param int $ndx
 	 * @return MenuEntry
 	 */
-	public function getEntryAtPos($ndx) {
-
+	public function getEntryAtPos(int $ndx): MenuEntry
+    {
 		return $this->entries[$ndx];
-
 	}
 
 	/**
@@ -231,8 +228,8 @@ class Menu {
 	 * @param MenuEntry $toReplace
  	 * @return Menu
 	 */
-	public function replaceEntry(MenuEntry $new, MenuEntry $toReplace) {
-
+	public function replaceEntry(MenuEntry $new, MenuEntry $toReplace): Menu
+    {
 		foreach($this->entries as $k => $e) {
 			if($e === $toReplace) {
 				$this->insertEntry($new, $k);
@@ -242,7 +239,6 @@ class Menu {
 		}
 		
 		return $this;
-
 	}
 
 	/**
@@ -251,8 +247,8 @@ class Menu {
 	 * @param MenuEntry $toRemove
  	 * @return Menu
 	 */
-	public function removeEntry(MenuEntry $toRemove) {
-
+	public function removeEntry(MenuEntry $toRemove): Menu
+    {
 		foreach($this->entries as $k => $e) {
 
 			if($e === $toRemove) {
@@ -261,21 +257,18 @@ class Menu {
 
 				if($toRemove instanceof DynamicMenuEntry) {
 
-					$ndx = array_search($toRemove, $this->dynamicEntries, TRUE);
+					$ndx = array_search($toRemove, $this->dynamicEntries, true);
 
-					if($ndx !== FALSE) {
+					if($ndx !== false) {
 						array_splice($this->dynamicEntries, $ndx, 1);
 					}
 
 				}
-
-				$toRemove = NULL;
 				break;
 			}
 		}
 		
 		return $this;
-
 	}
 
 	/**
@@ -283,8 +276,8 @@ class Menu {
 	 * 
  	 * @return Menu
 	 */
-	public function purgeEntries() {
-
+	public function purgeEntries(): Menu
+    {
 		$this->entries = [];
 		$this->dynamicEntries = [];
 
@@ -296,10 +289,9 @@ class Menu {
 	 * 
 	 * @return string int
 	 */
-	public function getId() {
-
+	public function getId(): string
+    {
 		return $this->id ?: self::DEFAULT_ID;
-
 	}
 
 	/**
@@ -307,10 +299,9 @@ class Menu {
 	 * 
 	 * @return string
 	 */
-	public function getScript() {
-
+	public function getScript(): string
+    {
 		return $this->script;
-
 	}
 
 	/**
@@ -318,10 +309,9 @@ class Menu {
 	 * 
 	 * @return string type
 	 */
-	public function getType() {
-
+	public function getType(): string
+    {
 		return $this->type;
-
 	}
 
 	/**
@@ -329,10 +319,9 @@ class Menu {
 	 * 
 	 * @return string service id
 	 */
-	public function getServiceId() {
-	
+	public function getServiceId(): ?string
+    {
 		return $this->serviceId;
-
 	}
 
 	/**
@@ -340,10 +329,9 @@ class Menu {
 	 * 
 	 * @return MenuEntry[]
 	 */
-	public function getEntries() {
-
+	public function getEntries(): array
+    {
 		return $this->entries;
-
 	}
 
 	/**
@@ -351,10 +339,9 @@ class Menu {
 	 * 
 	 * @return MenuEntry
 	 */
-	public function getParentEntry() {
-
+	public function getParentEntry(): ?MenuEntry
+    {
 		return $this->parentEntry;
-
 	}
 
 	/**
@@ -363,11 +350,10 @@ class Menu {
 	 * @param MenuEntry $e
 	 * @return Menu
 	 */
-	public function setParentEntry(MenuEntry $e) {
-
+	public function setParentEntry(MenuEntry $e): Menu
+    {
 		$this->parentEntry = $e;
 		return $this;
-
 	}
 
 	/**
@@ -375,10 +361,9 @@ class Menu {
 	 * 
 	 * @return MenuEntry
 	 */
-	public function getSelectedEntry() {
-
+	public function getSelectedEntry(): ?MenuEntry
+    {
 		return $this->selectedEntry;
-
 	}
 
 	/**
@@ -387,11 +372,10 @@ class Menu {
 	 * @param MenuEntry $e
 	 * @return Menu
 	 */
-	public function setSelectedEntry(MenuEntry $e) {
-
+	public function setSelectedEntry(MenuEntry $e): Menu
+    {
 		$this->selectedEntry = $e;
 		return $this;
-
 	}
 
 	/**
@@ -399,11 +383,10 @@ class Menu {
 	 * 
 	 * @return Menu
 	 */
-	public function clearSelectedEntry() {
-
-		$this->selectedEntry = NULL;
+	public function clearSelectedEntry(): Menu
+    {
+		$this->selectedEntry = null;
 		return $this;
-
 	}
 
 	/**
@@ -411,10 +394,9 @@ class Menu {
 	 * 
 	 * @return string
 	 */
-	public function getAuth() {
-
+	public function getAuth(): ?string
+    {
 		return $this->auth;
-
 	}
 
 	/**
@@ -423,11 +405,10 @@ class Menu {
 	 * @param string $auth
 	 * @return Menu
 	 */
-	public function setAuth($auth) {
-
+	public function setAuth(string $auth): Menu
+    {
 		$this->auth = $auth;
 		return $this;
-		
 	}
 
 	/**
@@ -435,10 +416,9 @@ class Menu {
 	 * 
 	 * @return string
 	 */
-	public function getAuthParameters() {
-
+	public function getAuthParameters(): ?string
+    {
 		return $this->authParameters;
-
 	}
 
 	/**
@@ -448,11 +428,10 @@ class Menu {
 	 * 
 	 * @return Menu
 	 */
-	public function setAuthParameters($authParameters) {
-
+	public function setAuthParameters(string $authParameters): Menu
+    {
 		$this->authParameters = $authParameters;
 		return $this;
-
 	}
 
 	/**
@@ -461,10 +440,9 @@ class Menu {
 	 * @param string $privilege
 	 * @return boolean
 	 */
-	public function isAuthenticatedBy($privilege) {
-
+	public function isAuthenticatedBy(string $privilege): bool
+    {
 		return isset($this->auth) && $privilege <= $this->auth;
-
 	}
 
 	/**
@@ -472,10 +450,9 @@ class Menu {
 	 * 
 	 * @return boolean
 	 */
-	public function getForceActive() {
-
-		return !!$this->forceActive;
-
+	public function getForceActive(): bool
+    {
+		return (bool) $this->forceActive;
 	}
 
 	/**
@@ -484,11 +461,10 @@ class Menu {
 	 * @param boolean $state
 	 * @return Menu
 	 */
-	public function setForceActive($state) {
-
-		$this->forceActive = !!$state;
+	public function setForceActive(bool $state): Menu
+    {
+		$this->forceActive = $state;
 		return $this;
-
 	}
 
 	/**
@@ -496,10 +472,9 @@ class Menu {
 	 * 
 	 * @return boolean
 	 */
-	public function getShowSubmenus() {
-
-		return !!$this->showSubmenus;
-
+	public function getShowSubmenus(): bool
+    {
+		return (bool) $this->showSubmenus;
 	}
 
 	/**
@@ -509,11 +484,10 @@ class Menu {
 	 * @return Menu
 	 * 
 	 */
-	public function setShowSubmenus($state) {
-
-		$this->showSubmenus = !!$state;
+	public function setShowSubmenus(bool $state): Menu
+    {
+		$this->showSubmenus = $state;
 		return $this;
-
 	}
 
 	/**
@@ -521,10 +495,37 @@ class Menu {
 	 * 
 	 * @return DynamicMenuEntry[]
 	 */
-	public function getDynamicEntries() {
-
+	public function getDynamicEntries(): array
+    {
 		return $this->dynamicEntries;
-
 	}
 
+    /**
+     * @return \stdClass
+     */
+    public function getAttributes(): ?\stdClass
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * @param string $attr
+     * @param mixed $value
+     * @return Menu
+     */
+    public function setAttribute(string $attr, $value): Menu
+    {
+        $this->attributes->$attr = $value;
+        return $this;
+    }
+
+    /**
+     * @param string $attr
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getAttribute(string $attr, $default = null)
+    {
+        return $this->attributes->$attr ?? $default;
+    }
 }

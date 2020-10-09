@@ -110,6 +110,13 @@ class Menus implements XmlParserInterface
 
         }
 
+        foreach($menu->attributes as $attr) {
+            $nodeName = $attr->nodeName;
+            if(!in_array($nodeName, ['script', 'type', 'service', 'id', 'auth', 'auth_parameters'])) {
+                $m->setAttribute($attr->nodeName, $attr->nodeValue);
+            }
+        }
+
         $this->appendMenuEntries($menu->childNodes, $m);
 
         return $m;

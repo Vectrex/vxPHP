@@ -8,10 +8,9 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Webpage\Menu\Renderer;
 
-use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 
 /**
@@ -19,13 +18,13 @@ use vxPHP\Webpage\MenuEntry\MenuEntry;
  * submenus are nested
  * every menu entry wrapped in tags when a parameter 'wrappingTags', defining these tags, is set
  *
- * @version 0.2.0, 2017-10-18
+ * @version 0.3.0, 2020-10-09
  *
  * @author Gregor Kofler
  */
 
-class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
-
+class SimpleListRenderer extends MenuRenderer
+{
 	/**
 	 * stringified opening tags of the wrappingTags parameter
 	 *
@@ -42,13 +41,15 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 	 */
 	private $closingTags;
 
-	public function __construct(Menu $menu) {
-		
-		parent::__construct($menu);
-
-	}
-			
-	public function render() {
+    /**
+     * @return string
+     * @throws ApplicationException
+     */
+    public function render(): string
+    {
+        if ($this->menu->getAttribute('display') === 'none') {
+            return '';
+        }
 
 		// create seqeunce of opening tags and closing tags
 
@@ -73,14 +74,16 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 			isset($this->parameters['ulClass']) ? (' class="' . $this->parameters['ulClass'] . '"') : '',
 			$markup
 		);
-
 	}
 
-	/**
-	 * @see \vxPHP\Webpage\Menu\Renderer\MenuRenderer::renderEntry()
-	 */
-	protected function renderEntry(MenuEntry $entry) {
-
+    /**
+     * @param MenuEntry $entry
+     * @return string
+     * @throws ApplicationException
+     * @see \vxPHP\Webpage\Menu\Renderer\MenuRenderer::renderEntry()
+     */
+	protected function renderEntry (MenuEntry $entry): string
+    {
 		$attributes = $entry->getAttributes();
 		
 		// check display attribute
@@ -88,16 +91,13 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 		if(!isset($attributes->display) || $attributes->display !== 'none') {
 
 			if($this->rewriteActive) {
-
-				if(($script = basename($this->menu->getScript(), '.php')) == 'index') {
+				if(($script = basename($this->menu->getScript(), '.php')) === 'index') {
 					$script = '/';
 				}
 				else {
 					$script = '/'. $script . '/';
 				}
-
 			}
-
 			else {
 				$script = '/' . $this->menu->getScript() . '/';
 			}
@@ -118,7 +118,7 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 						empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 						$this->closingTags
 					);
-					
+
 					// ensure rendering of submenus, when a parameter "unfoldAll" is set
 
 					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
@@ -133,7 +133,6 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
 
 					if((!$entry->getSubMenu() || is_null($entry->getSubMenu()->getSelectedEntry())) && !$this->menu->getForceActive()) {
-
 						$markup = sprintf(
 							'<li class="active %s">%s<span>%s</span>%s',
 							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
@@ -141,11 +140,8 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
 						);
-
 					}
-
 					else {
-
 						$markup = sprintf(
 							'<li class="active %s">%s<a href="%s">%s</a>%s',
 							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
@@ -154,20 +150,19 @@ class SimpleListRenderer extends MenuRenderer implements MenuRendererInterface {
 							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
 							$this->closingTags
 						);
-
 					}
 
 					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
 
 					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
-
 						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
-
 					}
 				}
 
-				return $markup.'</li>';
+				return $markup . '</li>';
 			}
 		}
+
+		return '';
 	}
 }

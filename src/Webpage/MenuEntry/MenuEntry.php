@@ -304,7 +304,7 @@ class MenuEntry
      * @param mixed $value
      * @return MenuEntry
      */
-	public function setAttribute($attr, $value): MenuEntry
+	public function setAttribute(string $attr, $value): MenuEntry
     {
 		$this->attributes->$attr = $value;
 		return $this;
