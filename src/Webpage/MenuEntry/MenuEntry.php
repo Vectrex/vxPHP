@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.5.1 2020-07-11
+ * @version 0.6.0 2020-10-10
  */
 class MenuEntry
 {
@@ -83,7 +83,7 @@ class MenuEntry
 	 */
 	protected $href;
 
-	public function __construct($path, array $attributes, $localPage = true)
+	public function __construct($path, array $attributes = [], $localPage = true)
     {
 		$this->ndx = self::$count++;
 		$this->path = trim($path, '/');
@@ -92,7 +92,7 @@ class MenuEntry
 
 		foreach($attributes as $attr => $value) {
 			$attr = strtolower($attr);
-			$this->attributes->$attr = (string) $value;
+			$this->attributes->$attr = $value;
 		}
 	}
 
@@ -287,15 +287,18 @@ class MenuEntry
 		return $this->href;
 	}
 
-	/**
-	 * get all attributes
+    /**
+     * get a single attribute
      *
-	 * @return \stdClass
-	 */
-	public function getAttributes(): \stdClass
+     * @param string $attr
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getAttribute(string $attr, $default = null)
     {
-		return $this->attributes;
-	}
+        $attr = strtolower($attr);
+        return $this->attributes->$attr ?? $default;
+    }
 
     /**
      * set a single attribute
@@ -306,6 +309,7 @@ class MenuEntry
      */
 	public function setAttribute(string $attr, $value): MenuEntry
     {
+        $attr = strtolower($attr);
 		$this->attributes->$attr = $value;
 		return $this;
 	}

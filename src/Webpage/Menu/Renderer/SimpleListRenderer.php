@@ -18,7 +18,7 @@ use vxPHP\Webpage\MenuEntry\MenuEntry;
  * submenus are nested
  * every menu entry wrapped in tags when a parameter 'wrappingTags', defining these tags, is set
  *
- * @version 0.3.0, 2020-10-09
+ * @version 0.3.1, 2020-10-10
  *
  * @author Gregor Kofler
  */
@@ -84,27 +84,13 @@ class SimpleListRenderer extends MenuRenderer
      */
 	protected function renderEntry (MenuEntry $entry): string
     {
-		$attributes = $entry->getAttributes();
-		
 		// check display attribute
 
-		if(!isset($attributes->display) || $attributes->display !== 'none') {
-
-			if($this->rewriteActive) {
-				if(($script = basename($this->menu->getScript(), '.php')) === 'index') {
-					$script = '/';
-				}
-				else {
-					$script = '/'. $script . '/';
-				}
-			}
-			else {
-				$script = '/' . $this->menu->getScript() . '/';
-			}
+		if($entry->getAttribute('display') !== 'none') {
 
 			$sel = $this->menu->getSelectedEntry();
 
-			if(isset($attributes->text)) {
+			if($text = $entry->getAttribute('text')) {
 
 				// render a not selected menu entry
 
@@ -115,16 +101,14 @@ class SimpleListRenderer extends MenuRenderer
 						preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 						$this->openingTags,
 						$entry->getHref(),
-						empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
+						empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
 						$this->closingTags
 					);
 
 					// ensure rendering of submenus, when a parameter "unfoldAll" is set
 
 					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
-
 						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
-
 					}
 				}
 
@@ -137,7 +121,7 @@ class SimpleListRenderer extends MenuRenderer
 							'<li class="active %s">%s<span>%s</span>%s',
 							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 							$this->openingTags,
-							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
+							empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
 							$this->closingTags
 						);
 					}
@@ -147,7 +131,7 @@ class SimpleListRenderer extends MenuRenderer
 							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
 							$this->openingTags,
 							$entry->getHref(),
-							empty($this->parameters['rawText']) ? htmlspecialchars($attributes->text) : $attributes->text,
+							empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
 							$this->closingTags
 						);
 					}

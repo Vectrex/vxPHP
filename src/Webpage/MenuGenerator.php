@@ -11,26 +11,25 @@
 
 namespace vxPHP\Webpage;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
-use vxPHP\Routing\Router;
 use vxPHP\Routing\Route;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
-use vxPHP\Application\Config;
 
 /**
  * Wrapper class for rendering a menu
  *
  * @author Gregor Kofler
  *
- * @version 0.6.6, 2019-02-02
+ * @version 1.0.0, 2020-10-10
  *
  * @throws MenuGeneratorException
  */
-class MenuGenerator {
-
+class MenuGenerator
+{
 	/**
 	 * flag indicating that currently selected menu entries still stay
 	 * "active", i.e. still render as anchor elements which can be
@@ -117,17 +116,17 @@ class MenuGenerator {
      * $decorator identifies a decorator class - MenuDecorator{$decorator}
      * $renderArgs are additional parameters passed to Menu::render()
      *
-     * @param string $id
-     * @param bool $level (if NULL, the full menu tree is printed)
+     * @param string|null $id
+     * @param int|null $level (if NULL, the full menu tree is printed)
      * @param bool $forceActiveMenu
-     * @param string $decorator
+     * @param string|null $decorator
      * @param mixed $renderArgs
      *
      * @throws MenuGeneratorException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	public function __construct($id = null, $level = false, $forceActiveMenu = null, $decorator = null, $renderArgs = null) {
-
+	public function __construct(string $id = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null)
+    {
 		$application = Application::getInstance();
 
 		$config = $application->getConfig();
@@ -143,16 +142,18 @@ class MenuGenerator {
             if (array_key_exists(Menu::DEFAULT_ID, $config->menus)) {
                 $id = Menu::DEFAULT_ID;
             } else {
-                $id = array_shift(array_keys($config->menus));
+                $id = array_keys($config->menus)[0] ?? null;
             }
         }
 
 		if(
 			!isset($config->menus[$id]) ||
-			!count($config->menus[$id]->getEntries()) &&
-			$config->menus[$id]->getType() == 'static'
+            (
+                !count($config->menus[$id]->getEntries()) &&
+			    $config->menus[$id]->getType() === 'static'
+            )
 		) {
-			throw new MenuGeneratorException("Menu '" .$id. "' not found or empty.");
+			throw new MenuGeneratorException(sprintf("Menu '%s' not found or empty.", $id));
 		}
 
 		$this->menu = $config->menus[$id];
@@ -167,25 +168,23 @@ class MenuGenerator {
 		if(is_null(self::$forceActiveMenu)) {
 			self::$forceActiveMenu	= (boolean) $forceActiveMenu;
 		}
-
 	}
 
     /**
      * convenience method to allow chaining
      *
-     * @param string $id
-     * @param bool $level (if NULL, the full menu tree is printed)
+     * @param string|null $id
+     * @param int|null $level (if NULL, the full menu tree is printed)
      * @param bool $forceActiveMenu
-     * @param string $decorator
+     * @param string|null $decorator
      * @param mixed $renderArgs
      * @return MenuGenerator
+     * @throws ApplicationException
      * @throws MenuGeneratorException
-     * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	public static function create($id = null, $level = false, $forceActiveMenu = null, $decorator = null, $renderArgs = null) {
-
+	public static function create(string $id = null, int $level = null, bool $forceActiveMenu = null, string $decorator = null, $renderArgs = null): MenuGenerator
+    {
 		return new static($id, $level, $forceActiveMenu, $decorator, $renderArgs);
-
 	}
 
 	/**
@@ -195,10 +194,9 @@ class MenuGenerator {
 	 * @param boolean $state
 	 */
 
-	public static function setForceActiveMenu($state) {
-
-		self::$forceActiveMenu = (boolean) $state;
-
+	public static function setForceActiveMenu(bool $state): void
+    {
+		self::$forceActiveMenu = $state;
 	}
 	
 	/**
@@ -207,20 +205,19 @@ class MenuGenerator {
 	 * 
 	 * @param MenuAuthenticatorInterface $authenticator
 	 */
-	public static function setMenuAuthenticator(MenuAuthenticatorInterface $authenticator) {
-
+	public static function setMenuAuthenticator(MenuAuthenticatorInterface $authenticator): void
+    {
 		self::$authenticator = $authenticator;
-
 	}
 
     /**
      * render menu markup
      *
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	public function render() {
-
+	public function render(): string
+    {
 		// check authentication
 
 		if(!$this->authenticateMenu($this->menu)) {
@@ -247,7 +244,7 @@ class MenuGenerator {
 
 			// skip script name
 
-			if($this->rewriteActive && basename($request->getScriptName()) != 'index.php') {
+			if($this->rewriteActive && basename($request->getScriptName()) !== 'index.php') {
 				array_shift($this->pathSegments);
 			}
 
@@ -289,7 +286,6 @@ class MenuGenerator {
 				if($this->level >= 0) {
 					return '';
 				}
-
 			}
 		}
 
@@ -311,7 +307,7 @@ class MenuGenerator {
 
 		// enable or disable display of submenus
 
-		$m->setShowSubmenus($this->level === false);
+		$m->setShowSubmenus($this->level === null);
 
 		// enable or disable always active menu
 
@@ -335,7 +331,6 @@ class MenuGenerator {
 		}
 
 		return $renderer->render();
-
 	}
 
 
@@ -344,10 +339,10 @@ class MenuGenerator {
      * and invoke service to append dynamic menu entries
      *
      * @param Menu $m
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	protected function completeMenu(Menu $m) {
-		
+	protected function completeMenu(Menu $m): void
+    {
 		if($m->getType() === 'dynamic') {
 
 			// invoke service to build menu entries
@@ -362,7 +357,6 @@ class MenuGenerator {
 				$this->completeMenu($m);
 			}
 		}
-
 	}
 	
 	/**
@@ -372,13 +366,13 @@ class MenuGenerator {
 	 * @param Menu $m
 	 * @param array $pathSegments
 	 *
-	 * @return MenuEntry or void
+	 * @return MenuEntry
 	 *
 	 */
-	protected function walkMenuTree(Menu $m, array $pathSegments) {
-
+	protected function walkMenuTree(Menu $m, array $pathSegments): ?MenuEntry
+    {
 		if(!count($pathSegments)) {
-			return;
+			return null;
 		}
 
 		// return when matching entry in current menu
@@ -418,6 +412,8 @@ class MenuGenerator {
 				}
 			}
 		}
+
+		return null;
 	}
 
 	/**
@@ -425,13 +421,13 @@ class MenuGenerator {
 	 *
 	 * @param Menu $menu
 	 */
-	protected function clearSelectedMenuEntries(Menu $menu) {
-
+	protected function clearSelectedMenuEntries(Menu $menu): void
+    {
 		while(($e = $menu->getSelectedEntry())) {
 
 			// dynamic menus come either with unselected entry or have a selected entry explicitly set
 
-			if($menu->getType() == 'static') {
+			if($menu->getType() === 'static') {
 				$menu->clearSelectedEntry();
 			}
 			if(!($menu = $e->getSubMenu())) {
@@ -447,18 +443,14 @@ class MenuGenerator {
      *
      * @param Menu $menu
      * @return boolean
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	protected function authenticateMenu(Menu $menu) {
-
+	protected function authenticateMenu(Menu $menu): bool
+    {
 		if(!self::$authenticator) {
-				
 			self::$authenticator = new DefaultMenuAuthenticator();
-		
 		}
 		
 		return self::$authenticator->authenticate($menu, Application::getInstance()->getCurrentUser());
-
 	}
-
 }

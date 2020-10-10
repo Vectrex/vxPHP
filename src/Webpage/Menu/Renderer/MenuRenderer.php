@@ -27,11 +27,10 @@ abstract class MenuRenderer implements MenuRendererInterface {
      * @param Menu $menu
      * @throws ApplicationException
      */
-	public function __construct(Menu $menu) {
-
+	public function __construct(Menu $menu)
+    {
 		$this->menu = $menu;
 		$this->rewriteActive = Application::getInstance()->getRouter()->getServerSideRewrite();
-
 	}
 
     /**
@@ -72,5 +71,4 @@ abstract class MenuRenderer implements MenuRendererInterface {
      * @return string
      */
 	abstract protected function renderEntry(MenuEntry $e): string;
-
 }

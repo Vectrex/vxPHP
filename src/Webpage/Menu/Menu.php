@@ -20,7 +20,7 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * manages a complete menu
  * 
  * @author Gregor Kofler
- * @version 1.0.0 2020-10-09
+ * @version 1.0.1 2020-10-10
  */
 class Menu
 {
@@ -501,31 +501,29 @@ class Menu
 	}
 
     /**
-     * @return \stdClass
-     */
-    public function getAttributes(): ?\stdClass
-    {
-        return $this->attributes;
-    }
-
-    /**
+     * set a single attribute
+     *
      * @param string $attr
      * @param mixed $value
      * @return Menu
      */
     public function setAttribute(string $attr, $value): Menu
     {
+        $attr = strtolower($attr);
         $this->attributes->$attr = $value;
         return $this;
     }
 
     /**
+     * get a single attribute
+     *
      * @param string $attr
      * @param mixed $default
      * @return mixed
      */
     public function getAttribute(string $attr, $default = null)
     {
+        $attr = strtolower($attr);
         return $this->attributes->$attr ?? $default;
     }
 }

@@ -158,19 +158,14 @@ class Menus implements XmlParserInterface
                 $path = $entry->getAttribute('path');
 
                 if($route && $path) {
-
                     throw new ConfigException(sprintf("Menu entry with both route ('%s') and path ('%s') attribute found.", $route, $path));
-
                 }
 
                 // menu entry comes with a path attribute (which can also link an external resource)
 
                 if($path) {
-
                     $local = strpos($path, '/') !== 0 && !preg_match('~^[a-z]+://~', $path);
-
                     $e = new MenuEntry($path, $attributes, $local);
-
                 }
 
                 // menu entry comes with a page attribute, in this case the route path is used

@@ -44,7 +44,7 @@ class TemplateBuffer
      * @param string $templateFilename
      * @throws ApplicationException
      */
-    public function includeFile($templateFilename): void
+    public function includeFile(string $templateFilename): void
     {
         /* @deprecated use $this when accessing assigned variables */
 
@@ -63,14 +63,14 @@ class TemplateBuffer
      * additional arguments can be passed on to the controller constructor
      *
      * @param string $controllerPath
-     * @param string $methodName
-     * @param array $constructorArguments
+     * @param null $methodName
+     * @param array|null $constructorArguments
      *
      * @return string
-     * @throws ConfigException
      * @throws ApplicationException
+     * @throws ConfigException
      */
-    public function includeControllerResponse($controllerPath, $methodName = null, array $constructorArguments = null): ?string
+    public function includeControllerResponse(string $controllerPath, $methodName = null, array $constructorArguments = null): ?string
     {
         $namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 
@@ -81,7 +81,6 @@ class TemplateBuffer
         else {
             throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", $controllerPath));
         }
-
 
         // get instance and set method which will be called in render() method of controller
 
