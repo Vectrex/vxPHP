@@ -12,13 +12,14 @@
 namespace vxPHP\Mail;
 
 interface MailerInterface {
-	public function __construct($host, $port, $encryption);
+	public function __construct(string $host, int $port, string $encryption);
 	public function connect();
 	public function close();
-	public function setCredentials($user, $pwd, $authMethod = null);
-	public function setFrom($from);
+	public function setCredentials(string $user, string $pwd, string $authMethod);
+	public function setOAuthToken(string $token);
+	public function setFrom(string $from);
 	public function setTo($to);
 	public function setHeaders(array $headers);
-	public function setMessage($message);
+	public function setMessage(string $message);
 	public function send();
 }

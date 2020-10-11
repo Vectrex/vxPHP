@@ -11,7 +11,7 @@
 
 namespace vxPHP\Mail;
 
-use vxPHP\Mail\Exception\MailerException;
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Application\Application;
 
 /**
@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.5.1 2020-08-12
+ * @version 0.6.0 2020-10-11
  */
 
 class Email {
@@ -117,7 +117,7 @@ class Email {
      * @param string $sig
      * @param boolean $htmlMail
      */
-	public function __construct($receiver = null, $subject = '(no subject)', $mailText = '', $sender = '', array $cc = [], array $bcc = [], $sig = '', $htmlMail = false)
+	public function __construct($receiver = null, string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], $sig = '', $htmlMail = false)
     {
 		$this->receiver	= (array) $receiver;
 		$this->subject = $subject;
@@ -137,9 +137,9 @@ class Email {
 	 * 
 	 * @param boolean $state
 	 */
-	public static function setDebug($state): void
+	public static function setDebug(bool $state): void
     {
-		self::$debug = (boolean) $state;
+		self::$debug = $state;
 	}
 
 	/**
@@ -150,7 +150,7 @@ class Email {
 	 */
 	public function setReceiver($receiver): Email
     {
-		$this->receiver = $receiver;
+		$this->receiver = (array) $receiver;
 		return $this;
 	}
 
@@ -160,7 +160,7 @@ class Email {
 	 * @param string $sender
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSender($sender): Email
+	public function setSender(string $sender): Email
     {
 		$this->sender = $sender;
 		return $this;
@@ -172,7 +172,7 @@ class Email {
 	 * @param string $text
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setMailText($text): Email
+	public function setMailText(string $text): Email
     {
 		$this->mailText = $text;
 		return $this;
@@ -185,7 +185,7 @@ class Email {
 	 * @param string $signature
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSig($signature): Email
+	public function setSig(string $signature): Email
     {
 		$this->sig = $signature;
 		return $this;
@@ -197,7 +197,7 @@ class Email {
 	 * @param string $subject
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setSubject($subject): Email
+	public function setSubject(string $subject): Email
     {
 		$this->subject = $subject;
 		return $this;
@@ -234,7 +234,7 @@ class Email {
 	 * @param boolean $flag
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setHtmlMail($flag): Email
+	public function setHtmlMail(bool $flag): Email
     {
 		$this->htmlMail = $flag;
 		return $this;
@@ -248,7 +248,7 @@ class Email {
 	 * 
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function addAttachment($filePath, $filename = ''): Email
+	public function addAttachment(string $filePath, string $filename = ''): Email
     {
 		if(file_exists($filePath)) {
 			$this->attachments[] = ['path' => $filePath, 'filename' => $filename ?: basename($filePath)];
@@ -264,7 +264,7 @@ class Email {
      * @param string $filename
      * @return \vxPHP\Mail\Email
      */
-	public function addAttachmentData($data, $filename): Email
+	public function addAttachmentData(string $data, string $filename): Email
     {
 	    $this->attachments[] = ['data' => $data, 'filename' => $filename];
 	    return $this;
@@ -277,9 +277,9 @@ class Email {
      *
      * @return boolean
      * @throws \ReflectionException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	public function send()
+	public function send(): bool
     {
 		$this->buildHeaders();
 		$this->buildMsg();
@@ -305,9 +305,9 @@ class Email {
      *
      * @return boolean
      * @throws \ReflectionException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
-	private function sendMail()
+	private function sendMail(): bool
     {
 		// check for configured mailer
 
@@ -321,11 +321,14 @@ class Email {
 
 			$this->mailer = $reflection->newInstanceArgs([$mailer->host, $port, $encryption]);
 
-			if(isset($mailer->auth_type)) {
+			if(isset($mailer->oauth_token)) {
+			    $this->mailer->setOAuthToken($mailer->oauth_token);
+            }
+			else if(isset($mailer->auth_type, $mailer->user, $mailer->pass)) {
 				$this->mailer->setCredentials($mailer->user, $mailer->pass, $mailer->auth_type);
 			}
 			else {
-				$this->mailer->setCredentials($mailer->user, $mailer->pass);
+				$this->mailer->setCredentials('', '', 'NONE');
 			}
 		}
 
@@ -357,10 +360,10 @@ class Email {
             $this->mailer->connect();
 
             $this->mailer->setFrom($this->sender);
-            $this->mailer->setTo(array_merge((array) $this->receiver, $this->cc, $this->bcc));
+            $this->mailer->setTo(array_merge($this->receiver, $this->cc, $this->bcc));
             $this->mailer->setHeaders(array_merge(
                 [
-                    'To' => implode(',', (array) $this->receiver),
+                    'To' => implode(',', $this->receiver),
                     'Subject' => $this->subject
                 ],
                 $this->headers
@@ -372,9 +375,9 @@ class Email {
             return true;
         }
 
-        catch(MailerException $e) {
+        catch(\Exception $e) {
             $this->mailer->close();
-            return $e->getMessage();
+            throw $e;
         }
     }
 
@@ -412,7 +415,7 @@ class Email {
 			'Date' => (new \DateTime())->format('r'),
 			'Message-ID' => '<'.sha1(microtime()) . '@' . substr($this->sender, strpos($this->sender, '@') + 1) . '>',
 			'User-Agent' => 'vxPHP SmtpMailer',
-			'X-Mailer' => 'PHP' . phpversion(),
+			'X-Mailer' => 'PHP' . PHP_VERSION,
 			'MIME-Version' => '1.0'
 		];
 
