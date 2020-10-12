@@ -1,3 +1,9 @@
+## 2.4.0
+- additional attributes for menus allowed; the SimpleListRenderer observes a display attribute
+- added type hints to menu classes; improved code consistency, potentially breaking existing applications
+- SmtpMailer provides authentication via OAuth
+- removed MetaInformation class (for being useful this would require both a database connection and a database structure)
+
 ## 2.3.0
 - removed obsolete JSMin and accompanying exception class
 - introduced Text class to pool text utility functions
