@@ -143,7 +143,8 @@ class Routes implements XmlParserInterface
                 if (!$name) {
                     throw new ConfigException(sprintf("Placeholder for route '%s' has no name attribute.", $routeId));
                 }
-                $parameters['placeholders'][$name] = [
+                $parameters['placeholders'][] = [
+                    'name' => $name,
                     'match' => $placeholderNode->getAttribute('match'),
                     'default' => $placeholderNode->getAttribute('default')
                 ];

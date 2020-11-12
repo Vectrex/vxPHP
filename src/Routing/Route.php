@@ -181,31 +181,36 @@ class Route
                         $name = strtolower($name);
 
                         if(!empty($matches[2][$ndx])) {
-
                             $this->placeholders[$name] = [
                                 'name' => $name,
                                 'default' => substr($matches[2][$ndx], 1)
                             ];
                         }
                         else {
-
                             $this->placeholders[$name] = [
                                 'name' => $name
                             ];
-
                         }
 
                         // parse optional placeholder attributes which can overrule default option
 
-                        if (isset($parameters['placeholders'][$name])) {
-                           if ($match = ($parameters['placeholders'][$name]['match'] ?? null)) {
-                                if(@preg_match('/' . $match . '/', '') === false) {
-                                    throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $match));
-                                }
-                                $this->placeholders[$name]['match'] = '/' . $match . '/';
+                        if (isset($parameters['placeholders'])) {
+                            if (!is_array($parameters['placeholders']) || count(array_column($parameters['placeholders'], 'name')) !== count($parameters['placeholders'])) {
+                                throw new \InvalidArgumentException("Invalid placeholders array. Every item requires a 'name' attribute.");
                             }
-                            if ($default = ($parameters['placeholders'][$name]['default'] ?? null)) {
-                                $this->placeholders[$name]['default'] = $default;
+
+                            $ndx = array_search($name, array_column($parameters['placeholders'], 'name'));
+
+                            if (false !== $ndx) {
+                                if ($match = ($parameters['placeholders'][$ndx]['match'] ?? null)) {
+                                    if (@preg_match('/' . $match . '/', '') === false) {
+                                        throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $match));
+                                    }
+                                    $this->placeholders[$name]['match'] = '/' . $match . '/';
+                                }
+                                if ($default = ($parameters['placeholders'][$ndx]['default'] ?? null)) {
+                                    $this->placeholders[$name]['default'] = $default;
+                                }
                             }
                         }
 
