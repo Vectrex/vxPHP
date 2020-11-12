@@ -345,7 +345,13 @@ class Router
 		$pathMatchingRoutes = array_filter(
 		    $requestMatchingRoutes,
             static function(Route $route) use($pathToCheck) {
-		        return preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck);
+		        if (!preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck, $matches)) {
+		            return false;
+                }
+		        array_shift($matches);
+		        foreach($matches as $match) {
+                }
+		        return true;
 		    }
         );
 

@@ -10,7 +10,6 @@
 
 namespace vxPHP\Application;
 
-use http\Exception\RuntimeException;
 use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Webpage\Menu\Menu;
 
@@ -324,7 +323,7 @@ class Config {
                             $sections[] = $nodes;
                             break;
                         }
-                        throw new RuntimeException($e->getMessage());
+                        throw new \RuntimeException($e->getMessage());
                     }
 
                     if($result instanceof \stdClass) {

@@ -63,7 +63,7 @@ class Routes implements XmlParserInterface
             $routes[$scriptName] = [];
         }
 
-        foreach($node->getElementsByTagName($this->nodeName) as $route) {
+        foreach($node->getElementsByTagName($this->nodeName) as $routeNode) {
 
             $parameters = [
                 'redirect' => $redirect
@@ -71,7 +71,7 @@ class Routes implements XmlParserInterface
 
             // get route id
 
-            $routeId	= $route->getAttribute('id');
+            $routeId = $routeNode->getAttribute('id');
 
             if($routeId === null || trim($routeId) === '') {
                 throw new ConfigException('Route with missing or invalid id found.');
@@ -79,7 +79,7 @@ class Routes implements XmlParserInterface
 
             // read optional controller
 
-            if(($controller = $route->getAttribute('controller'))) {
+            if(($controller = $routeNode->getAttribute('controller'))) {
 
                 // clean path delimiters, prepend leading backslash, replace slashes with backslashes, apply ucfirst to all namespaces
 
@@ -88,7 +88,6 @@ class Routes implements XmlParserInterface
                 if(count($namespaces) && $namespaces[0]) {
                     $parameters['controller'] = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
                 }
-
                 else {
                     throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", (string) $controller));
                 }
@@ -96,13 +95,13 @@ class Routes implements XmlParserInterface
 
             // read optional controller method
 
-            if(($method = $route->getAttribute('method'))) {
+            if(($method = $routeNode->getAttribute('method'))) {
                 $parameters['method'] = $method;
             }
 
             // read optional allowed request methods
 
-            if(($requestMethods = $route->getAttribute('request_methods'))) {
+            if(($requestMethods = $routeNode->getAttribute('request_methods'))) {
                 $allowedMethods	= Route::KNOWN_REQUEST_METHODS;
                 $requestMethods	= preg_split('~\s*,\s*~', strtoupper($requestMethods));
 
@@ -114,17 +113,17 @@ class Routes implements XmlParserInterface
                 $parameters['requestMethods'] = $requestMethods;
             }
 
-            if(($path = $route->getAttribute('path'))) {
+            if(($path = $routeNode->getAttribute('path'))) {
                 $parameters['path'] = $path;
             }
 
             // extract optional authentication requirements
 
-            if(($auth = $route->getAttribute('auth'))) {
+            if(($auth = $routeNode->getAttribute('auth'))) {
 
                 $auth = strtolower(trim($auth));
 
-                if($auth && ($authParameters = $route->getAttribute('auth_parameters'))) {
+                if($auth && ($authParameters = $routeNode->getAttribute('auth_parameters'))) {
                     $parameters['authParameters'] = trim($authParameters);
                 }
 
@@ -133,6 +132,21 @@ class Routes implements XmlParserInterface
 
             if(isset($routes[$scriptName][$routeId])) {
                 throw new ConfigException(sprintf("Route '%s' for script '%s' found more than once.", $routeId, $scriptName));
+            }
+
+            // look for placeholder specifications
+
+            $parameters['placeholders'] = [];
+
+            foreach ($routeNode->getElementsByTagName('placeholder') as $placeholderNode) {
+                $name = $placeholderNode->getAttribute('name');
+                if (!$name) {
+                    throw new ConfigException(sprintf("Placeholder for route '%s' has no name attribute.", $routeId));
+                }
+                $parameters['placeholders'][$name] = [
+                    'match' => $placeholderNode->getAttribute('match'),
+                    'default' => $placeholderNode->getAttribute('default')
+                ];
             }
 
             $route = new Route($routeId, $scriptName, $parameters);

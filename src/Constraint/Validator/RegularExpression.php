@@ -35,7 +35,7 @@ class RegularExpression extends AbstractConstraint
 	 * @throws \InvalidArgumentException
 	 * 
 	 */
-	public function __construct($regExp)
+	public function __construct(string $regExp)
     {
 		if(@preg_match($regExp, '') === false) {
 			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $regExp));

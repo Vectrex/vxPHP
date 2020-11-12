@@ -148,7 +148,7 @@ class Route
 	 * @param array $parameters, collection of route parameters
      * @throws \InvalidArgumentException
 	 */
-	public function __construct($routeId, $scriptName, array $parameters = [])
+	public function __construct(string $routeId, string $scriptName, array $parameters = [])
     {
 		$this->routeId = $routeId;
 		$this->scriptName = $scriptName;
@@ -186,10 +186,6 @@ class Route
                                 'name' => $name,
                                 'default' => substr($matches[2][$ndx], 1)
                             ];
-
-                            // turn this path parameter into regexp and make it optional
-
-                            $rex = preg_replace('~/{.*?}~', '/?(?:([^/]+))?', $rex, 1);
                         }
                         else {
 
@@ -197,8 +193,28 @@ class Route
                                 'name' => $name
                             ];
 
-                            // turn this path parameter into regexp
+                        }
 
+                        // parse optional placeholder attributes which can overrule default option
+
+                        if (isset($parameters['placeholders'][$name])) {
+                           if ($match = ($parameters['placeholders'][$name]['match'] ?? null)) {
+                                if(@preg_match('/' . $match . '/', '') === false) {
+                                    throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $match));
+                                }
+                                $this->placeholders[$name]['match'] = '/' . $match . '/';
+                            }
+                            if ($default = ($parameters['placeholders'][$name]['default'] ?? null)) {
+                                $this->placeholders[$name]['default'] = $default;
+                            }
+                        }
+
+                        // turn this path parameter into regexp and make it optional if a default is set
+
+                        if (isset($this->placeholders[$name]['default'])) {
+                            $rex = preg_replace('~/{.*?}~', '/?(?:([^/]+))?', $rex, 1);
+                        }
+                        else {
                             $rex = preg_replace('~{.*?}~', '([^/]+)', $rex, 1);
                         }
                     }
@@ -230,12 +246,6 @@ class Route
 		if(isset($parameters['method'])) {
 			$this->methodName = $parameters['method'];
 		}
-        if(isset($parameters['placeholders'])) {
-            if (!is_array($parameters['placeholders'])) {
-                throw new \InvalidArgumentException("Route placeholders can't be a scalar.");
-            }
-            $this->placeholders = $parameters['placeholders'];
-        }
 	}
 
 	/**
@@ -316,7 +326,7 @@ class Route
 	 * @param string $auth
 	 * @return Route
 	 */
-	public function setAuth($auth): self
+	public function setAuth(string $auth): self
     {
 		$this->auth = $auth;
 		return $this;
@@ -338,7 +348,7 @@ class Route
 	 * @param string $authParameters
 	 * @return Route
 	 */
-	public function setAuthParameters($authParameters): self
+	public function setAuthParameters(string $authParameters): self
     {
 		$this->authParameters = $authParameters;
 		return $this;
@@ -367,26 +377,25 @@ class Route
 		return $this->methodName;
 	}
 
-	/**
-	 * get path of route
-	 * 
-	 * When path parameters are passed on to method a path using these
-	 * parameter values is generated, but path parameters are not
-	 * stored and do not overwrite previously set path parameters.
-	 * 
-	 * When no (or only some) path parameters are passed on previously
-	 * set path parameters are considered when generating the path.
-	 * 
-	 * expects path parameters when required by route
-	 * 
-	 * @param array $pathParameters
-	 * @return string
-     * @throws \RuntimeException
-	 */
+    /**
+     * get path of route
+     *
+     * When path parameters are passed on to method a path using these
+     * parameter values is generated, but path parameters are not
+     * stored and do not overwrite previously set path parameters.
+     *
+     * When no (or only some) path parameters are passed on previously
+     * set path parameters are considered when generating the path.
+     *
+     * expects path parameters when required by route
+     *
+     * @param array|null $pathParameters
+     * @return string
+     */
 	public function getPath(array $pathParameters = null): string
     {
 		$path = $this->path;
-		
+
 		//insert path parameters
 			
 		if(!empty($this->placeholders)) {
@@ -398,9 +407,7 @@ class Route
 				$regExp = '~\{' . $placeholder['name'] . '(=.*?)?\}~';
 				
 				if($pathParameters && array_key_exists($placeholder['name'], $pathParameters)) {
-					
 					$path = preg_replace($regExp, $pathParameters[$placeholder['name']], $path);
-					
 				}
 
 				// try to use previously set path parameter
@@ -442,10 +449,9 @@ class Route
      * an exception will be triggered, when the route has an absolute path
      * configured
      *
-     * @param array $pathParameters
+     * @param array|null $pathParameters
      * @param string $prefix
      * @return string
-     * @throws \RuntimeException
      */
 	public function getUrl(array $pathParameters = null, $prefix = ''): string
     {
@@ -507,7 +513,7 @@ class Route
 	 * @param string $className
 	 * @return Route
 	 */
-	public function setControllerClassName($className): self
+	public function setControllerClassName(string $className): self
     {
 		$this->controllerClassName = $className;
 		return $this;
@@ -540,7 +546,7 @@ class Route
 	 * @param string $redirectRouteId
 	 * @return Route
 	 */
-	public function setRedirect($redirectRouteId): self
+	public function setRedirect(string $redirectRouteId): self
     {
 		$this->redirect = $redirectRouteId;
 		return $this;
@@ -582,7 +588,7 @@ class Route
 	 * @param string $requestMethod
 	 * @return boolean
 	 */
-	public function allowsRequestMethod($requestMethod): bool
+	public function allowsRequestMethod(string $requestMethod): bool
     {
 		return empty($this->requestMethods) || in_array(strtoupper($requestMethod), $this->requestMethods, true);
 	}
@@ -601,16 +607,16 @@ class Route
 
 		return [];
 	}
-	
-	/**
-	 * get path parameter
-	 *
-	 * @param string $name
-	 * @param string $default
-	 *
-	 * @return string
-	 */
-	public function getPathParameter($name, $default = null): ?string
+
+    /**
+     * get path parameter
+     *
+     * @param string $name
+     * @param string|null $default
+     *
+     * @return string
+     */
+	public function getPathParameter(string $name, string $default = null): ?string
     {
 		// lazy initialization of parameters
 
@@ -678,13 +684,14 @@ class Route
 	/**
 	 * set path parameter $name
 	 * will only accept parameter names which have been previously defined
+     * and are matched by an optional match expression of the parameter
 	 * 
 	 * @param string $name
 	 * @param string $value
 	 * @throws InvalidArgumentException
 	 * @return Route
 	 */
-	public function setPathParameter($name, $value): self
+	public function setPathParameter(string $name, string $value): self
     {
 		// check whether path parameter $name exists
 
@@ -704,8 +711,12 @@ class Route
 		if(!$found) {
 			throw new InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
 		}
-		
-		$this->pathParameters[$name] = $value;
+
+        if (isset($placeholder['match']) && !preg_match($placeholder['match'], $value)) {
+            throw new InvalidArgumentException(sprintf("Invalid value '%s' for path parameter '%s'.", $value, $name));
+        }
+
+        $this->pathParameters[$name] = $value;
 
 		return $this;
 	}
