@@ -11,6 +11,7 @@
 namespace vxPHP\Application\Config\Parser\Xml;
 
 use vxPHP\Application\Exception\ConfigException;
+use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Plugins implements XmlParserInterface
 {

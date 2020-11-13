@@ -15,6 +15,7 @@ use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
+use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Menus implements XmlParserInterface
 {

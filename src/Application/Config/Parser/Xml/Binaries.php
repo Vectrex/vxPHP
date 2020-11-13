@@ -11,6 +11,7 @@
 namespace vxPHP\Application\Config\Parser\Xml;
 
 use vxPHP\Application\Config;
+use vxPHP\Application\Config\Parser\XmlParserInterface;
 use vxPHP\Application\Exception\ConfigException;
 
 class Binaries implements XmlParserInterface

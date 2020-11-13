@@ -8,7 +8,7 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Application\Config\Parser\Xml;
+namespace vxPHP\Application\Config\Parser;
 
 interface XmlParserInterface
 {

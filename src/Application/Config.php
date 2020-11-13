@@ -18,7 +18,7 @@ use vxPHP\Webpage\Menu\Menu;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 3.0.0 2020-07-07
+ * @version 3.1.0 2020-11-13
  */
 class Config {
 	/**
@@ -98,12 +98,10 @@ class Config {
 	 */
 	public $isLocalhost;
 
-	/**
-	 * holds sections of config file which are parsed
-	 *
- 	 * @var array
-	 */
-	private	$sections;
+    /**
+     * @var array
+     */
+    private $parserClasses = [];
 
 	/**
 	 * a list of already processed XML files
@@ -114,17 +112,17 @@ class Config {
 	 * @var array
 	 */
 	private $parsedXmlFiles = [];
-	/**
-	 * create config instance
-	 * if section is specified, only certain sections of the config file are parsed
-	 *
-	 * @param string $xmlFile
-	 * @param array $sections
-	 * @throws ConfigException
-	 */
-	public function __construct($xmlFile, array $sections = [])
+
+    /**
+     * create config instance
+     * additional XmlParserInterfaces can be passed to parse custom config settings
+     *
+     * @param string $xmlFile
+     * @param array $customXmlParsers
+     * @throws ConfigException
+     */
+	public function __construct(string $xmlFile, array $customXmlParsers = [])
     {
-		$this->sections	= $sections;
 		$xmlFile = realpath($xmlFile);
 
 		$previousUseErrors = libxml_use_internal_errors(true);
@@ -149,7 +147,28 @@ class Config {
 		// recursively add all includes to main document
 
 		$this->includeIncludes($config, $xmlFile);
-		$this->parseConfig($config);
+
+		// set up default parsers
+
+        foreach (glob (__DIR__ . '/Config/Parser/Xml/*.php') as $filename) {
+            $className = basename($filename, '.php');
+            $sectionName = substr(preg_replace_callback('/([A-Z])/', static function ($match) { return '_' . strtolower($match[1]); }, $className), 1);
+            $this->parserClasses[$sectionName] = __NAMESPACE__ . '\\Config\\Parser\\Xml\\' . $className;
+        }
+
+        // add custom parsers
+
+        foreach ($customXmlParsers as $section => $classname) {
+            $reflectionClass = new \ReflectionClass($classname);
+
+            if (!$reflectionClass->implementsInterface(__NAMESPACE__ . '\\Config\\Parser\\Xml\\XmlParserInterface')) {
+                throw new \InvalidArgumentException(sprintf("Class '%s' does not implement XmlParserInterface.", $classname));
+            }
+
+            $this->parserClasses[strtolower($section)] = $classname;
+        }
+
+        $this->parseConfig($config);
 		$this->getServerConfig();
 
 		libxml_use_internal_errors($previousUseErrors);
@@ -161,7 +180,7 @@ class Config {
 	 * @param string $xmlFile
 	 * @throws ConfigException
 	 */
-	private function dumpXmlErrors($xmlFile): void
+	private function dumpXmlErrors(string $xmlFile): void
     {
 		$severity = [LIBXML_ERR_WARNING => 'Warning', LIBXML_ERR_ERROR => 'Error', LIBXML_ERR_FATAL => 'Fatal'];
 		$errors = [];
@@ -181,7 +200,7 @@ class Config {
 	 * @param string $filepath
 	 * @throws ConfigException
 	 */
-	private function includeIncludes(\DOMDocument $doc, $filepath): void
+	private function includeIncludes(\DOMDocument $doc, string $filepath): void
     {
 		$path = rtrim(dirname(realpath($filepath)), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
@@ -277,15 +296,13 @@ class Config {
             // collect all top-level node names and allow parsing of specific sections
 
 			foreach($rootNode->childNodes as $node) {
-                if ($node->nodeType === XML_ELEMENT_NODE && (empty($this->sections) || in_array($node->nodeName, $this->sections, true))) {
+                if ($node->nodeType === XML_ELEMENT_NODE) {
                     if(!array_key_exists($node->nodeName, $sections)) {
                         $sections[$node->nodeName] = [];
                     }
                     $sections[$node->nodeName][] = $node;
                 }
             }
-
-			$namespace = __NAMESPACE__ . '\\Config\\Parser\\Xml\\';
 
 			$keys = array_keys($sections);
 			$sections = array_values($sections);
@@ -294,43 +311,43 @@ class Config {
 			while($section = array_shift($keys)) {
 			    $nodes = array_shift($sections);
 
-                $className = $namespace . ucfirst(preg_replace_callback('/_([a-z])/', static function($match) { return strtoupper($match[1]); }, $section));
-                $parser = new $className($this);
+                if (array_key_exists($section, $this->parserClasses)) {
 
-                /**
-                 * work around deprecated pages configuration
-                 */
-                if($section === 'pages') {
-                    $section = 'routes';
-                }
+                    $parser = new $this->parserClasses[$section]($this);
 
-                foreach($nodes as $node) {
-                    try {
-                        $result = $parser->parse($node);
-                    }
-                    catch(\RuntimeException $e) {
-                        /*
-                         * a RuntimeException may occur when a certain section
-                         * requires other already parsed sections. In this case
-                         * a section is queued at the end again; if this section encounters
-                         * a RuntimeException a second time the parsing is cancelled to
-                         * avoid a potentially endless loop (e.g. parsing menus without any
-                         * routes configured)
-                         */
-                        if(!in_array($section, $faultySections, true)) {
-                            $faultySections[] = $section;
-                            $keys[] = $section;
-                            $sections[] = $nodes;
-                            break;
+                    foreach ($nodes as $node) {
+                        try {
+                            $result = $parser->parse($node);
+                        } catch (\RuntimeException $e) {
+                            /*
+                             * a RuntimeException may occur when a certain section
+                             * requires other already parsed sections. In this case
+                             * a section is queued at the end again; if this section encounters
+                             * a RuntimeException a second time the parsing is cancelled to
+                             * avoid a potentially endless loop (e.g. parsing menus without any
+                             * routes configured)
+                             */
+                            if (!in_array($section, $faultySections, true)) {
+                                $faultySections[] = $section;
+                                $keys[] = $section;
+                                $sections[] = $nodes;
+                                break;
+                            }
+                            throw new \RuntimeException($e->getMessage());
                         }
-                        throw new \RuntimeException($e->getMessage());
-                    }
 
-                    if($result instanceof \stdClass) {
-                        $this->$section = $result;
-                    }
-                    if(is_array($result)) {
-                        $this->$section = array_merge($this->$section ?? [], $result);
+                        /**
+                         * work around deprecated pages configuration and merge pages with routes
+                         */
+                        if($section === 'pages') {
+                            $section = 'routes';
+                        }
+                        if ($result instanceof \stdClass) {
+                            $this->$section = $result;
+                        }
+                        if (is_array($result)) {
+                            $this->$section = array_merge($this->$section ?? [], $result);
+                        }
                     }
                 }
 			}
