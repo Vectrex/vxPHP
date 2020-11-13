@@ -21,7 +21,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.0.1 2020-10-06
+ * @version 2.1.0 2020-11-13
  *
  */
 class Router
@@ -348,8 +348,14 @@ class Router
 		        if (!preg_match('~^' . $route->getMatchExpression() . '$~', $pathToCheck, $matches)) {
 		            return false;
                 }
+
 		        array_shift($matches);
-		        foreach($matches as $match) {
+
+		        foreach($matches as $ndx => $placeholderValue) {
+		            $placeholder = $route->getPlaceHolderByIndex($ndx);
+                    if (!empty($placeholder['match']) && !preg_match($placeholder['match'], $placeholderValue)) {
+                        return false;
+                    }
                 }
 		        return true;
 		    }
@@ -358,14 +364,24 @@ class Router
 		// check for routes with relative path matches
 
 		if(!count($pathMatchingRoutes)) {
-
             $pathMatchingRoutes = array_filter(
                 $requestMatchingRoutes,
                 static function(Route $route) use($pathToCheck) {
-                    return $route->hasRelativePath() && preg_match('~' . $route->getMatchExpression() . '$~', $pathToCheck);
+                    if (!$route->hasRelativePath() || !preg_match('~' . $route->getMatchExpression() . '$~', $pathToCheck, $matches)) {
+                        return false;
+                    }
+
+                    array_shift($matches);
+
+                    foreach($matches as $ndx => $placeholderValue) {
+                        $placeholder = $route->getPlaceHolderByIndex($ndx);
+                        if (!empty($placeholder['match']) && !preg_match($placeholder['match'], $placeholderValue)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
             );
-
         }
 
         if(count($pathMatchingRoutes)) {

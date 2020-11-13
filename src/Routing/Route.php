@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.0.0 2020-04-03
+ * @version 2.1.0 2020-11-12
  *
  */
 
@@ -199,7 +199,7 @@ class Route
                                 throw new \InvalidArgumentException("Invalid placeholders array. Every item requires a 'name' attribute.");
                             }
 
-                            $ndx = array_search($name, array_column($parameters['placeholders'], 'name'));
+                            $ndx = array_search($name, array_column($parameters['placeholders'], 'name'), true);
 
                             if (false !== $ndx) {
                                 if ($match = ($parameters['placeholders'][$ndx]['match'] ?? null)) {
@@ -208,8 +208,8 @@ class Route
                                     }
                                     $this->placeholders[$name]['match'] = '/' . $match . '/';
                                 }
-                                if ($default = ($parameters['placeholders'][$ndx]['default'] ?? null)) {
-                                    $this->placeholders[$name]['default'] = $default;
+                                if (isset($parameters['placeholders'][$ndx]['default'])) {
+                                    $this->placeholders[$name]['default'] = $parameters['placeholders'][$ndx]['default'];
                                 }
                             }
                         }
@@ -614,6 +614,22 @@ class Route
 	}
 
     /**
+     * get placeholder at "position" of index
+     *
+     * @param int $ndx
+     * @return array
+     */
+	public function getPlaceHolderByIndex (int $ndx): array
+    {
+        $found = current(array_slice($this->placeholders, $ndx, 1));
+
+        if ($found === false) {
+            throw new InvalidArgumentException(sprintf("No placeholder at position %d for route '%s' found.", $ndx, $this->routeId));
+        }
+        return $found;
+    }
+
+    /**
      * get path parameter
      *
      * @param string $name
@@ -698,15 +714,11 @@ class Route
 	 */
 	public function setPathParameter(string $name, string $value): self
     {
-		// check whether path parameter $name exists
+        // check whether path parameter $name exists
 
-		if(empty($this->placeholders)) {
-			throw new InvalidArgumentException(sprintf("Unknown path parameter '%s'.", $name));
-		}
-		
 		$found = false;
 
-		foreach($this->placeholders as $placeholder) {
+		foreach(($this->placeholders ?? []) as $placeholder) {
 			if($placeholder['name'] === $name) {
 				$found = true;
 				break;

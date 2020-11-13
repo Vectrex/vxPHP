@@ -21,6 +21,42 @@ class RouteTest extends TestCase {
         new Route('foo', 'index.php', ['requestMethods' => 'foo']);
     }
 
+    public function testConstructorWithPlaceHolders ()
+    {
+        $this->expectException('InvalidArgumentException');
+        new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['match' => '[1-9][0-9]*']]]);
+    }
+
+    public function testConstructorWithInvalidPlaceholderMatch ()
+    {
+        $this->expectException('InvalidArgumentException');
+        new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9*']]]);
+    }
+
+    public function testSetPathParameterValue ()
+    {
+        $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
+        $route->setPathParameter('bar', '123');
+        $this->assertEquals('123', $route->getPathParameter('bar'));
+        $this->expectException('InvalidArgumentException');
+        $route->setPathParameter('bar', 'abc');
+    }
+
+    public function testSetPathParameterName ()
+    {
+        $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
+        $this->expectException('InvalidArgumentException');
+        $route->setPathParameter('baz', '123');
+    }
+
+    public function testGetPlaceholderByIndex ()
+    {
+        $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}/{baz}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
+        $this->assertEquals('baz', $route->getPlaceHolderByIndex(1)['name']);
+        $this->expectException('InvalidArgumentException');
+        $route->getPlaceHolderByIndex(2);
+    }
+
     public function testSetRequestMethods()
     {
         $route = new Route('foo', 'index.php');

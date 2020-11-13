@@ -73,7 +73,30 @@ class RouterTest extends TestCase {
         $routes = [
             new Route('route00', 'index.php', ['path' => '/foo/{bar}', 'requestMethods' => ['get', 'post']]),
             new Route('route01', 'index.php', ['path' => 'foo', 'requestMethods' => ['get']]),
-            new Route('route02', 'index.php', ['path' => 'foo/{bar=xyz}', 'requestMethods' => ['post']])
+            new Route('route02', 'index.php', ['path' => 'foo/{bar=xyz}', 'requestMethods' => ['post']]),
+            new Route('route03', 'index.php', [
+                'path' => '/abc/{text}/{num}',
+                'requestMethods' => ['get'],
+                'placeholders' => [
+                    ['name' => 'num', 'match' => '[0-9]+'],
+                    ['name' => 'text', 'match' => '[a-zA-Z]+']
+                ]
+            ]),
+            new Route('route04', 'index.php', [
+                'path' => '/abc/{num}/{text}',
+                'requestMethods' => ['get'],
+                'placeholders' => [
+                    ['name' => 'num', 'match' => '[0-9]+'],
+                    ['name' => 'text', 'match' => '[a-zA-Z]+', 'default' => '']
+                ]
+            ]),
+            new Route('route05', 'index.php', [
+                'path' => '/abc/{num}',
+                'requestMethods' => ['get'],
+                'placeholders' => [
+                    ['name' => 'num', 'match' => '[0-9]+']
+                ]
+            ]),
         ];
 
         $_SERVER['SCRIPT_NAME'] = '/index.php';
@@ -103,11 +126,30 @@ class RouterTest extends TestCase {
 
         $req4 = Request::createFromGlobals();
 
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/index.php/abc/abc/123';
+        $_SERVER['PATH_INFO'] = '/abc/abc/123';
+
+        $req5 = Request::createFromGlobals();
+
+        $_SERVER['REQUEST_URI'] = '/index.php/abc/123';
+        $_SERVER['PATH_INFO'] = '/abc/123';
+
+        $req6 = Request::createFromGlobals();
+
+        $_SERVER['REQUEST_URI'] = '/index.php/abc/123/abc';
+        $_SERVER['PATH_INFO'] = '/abc/123/abc';
+
+        $req7 = Request::createFromGlobals();
+
         return [
             [$routes, $req1, 'route00'],
             [$routes, $req2, 'route01'],
             [$routes, $req3, 'route02'],
             [$routes, $req4, 'route02'], // matches 0 and 2 - latter one wins
+            [$routes, $req5, 'route03'],
+            [$routes, $req6, 'route05'],
+            [$routes, $req7, 'route04'],
         ];
     }
 
