@@ -10,6 +10,7 @@
 
 namespace vxPHP\Application;
 
+use vxPHP\Application\Config\Parser\XmlParserInterface;
 use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Webpage\Menu\Menu;
 
@@ -18,7 +19,7 @@ use vxPHP\Webpage\Menu\Menu;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 3.1.0 2020-11-13
+ * @version 3.2.0 2020-11-14
  */
 class Config {
 	/**
@@ -115,13 +116,14 @@ class Config {
 
     /**
      * create config instance
-     * additional XmlParserInterfaces can be passed to parse custom config settings
+     * possible options are currently
+     * parsers: array of additional XmlParserInterfaces to parse custom config settings
      *
      * @param string $xmlFile
-     * @param array $customXmlParsers
-     * @throws ConfigException
+     * @param array $options
+     * @throws ConfigException|\ReflectionException
      */
-	public function __construct(string $xmlFile, array $customXmlParsers = [])
+	public function __construct(string $xmlFile, array $options = [])
     {
 		$xmlFile = realpath($xmlFile);
 
@@ -158,10 +160,10 @@ class Config {
 
         // add custom parsers
 
-        foreach ($customXmlParsers as $section => $classname) {
+        foreach ($options['parsers'] ?? [] as $section => $classname) {
             $reflectionClass = new \ReflectionClass($classname);
 
-            if (!$reflectionClass->implementsInterface(__NAMESPACE__ . '\\Config\\Parser\\Xml\\XmlParserInterface')) {
+            if (!$reflectionClass->implementsInterface(XmlParserInterface::class)) {
                 throw new \InvalidArgumentException(sprintf("Class '%s' does not implement XmlParserInterface.", $classname));
             }
 
