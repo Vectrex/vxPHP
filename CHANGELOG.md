@@ -1,3 +1,8 @@
+## 2.5.0
+- path parameters can now have validators: route declarations can now contain placeholder elements with name, match and default attributes; matches are a regular expressions applied to the placeholder when matching routes
+- the Config constructor drops the "section" argument and replaces it with a generic "options" array; default config parsers are the parsers found in the Application\Config\Parser\Xml namespace
+- additional config parsers can be passed to the Config constructor in the options array under the "parser" key
+
 ## 2.4.0
 - additional attributes for menus allowed; the SimpleListRenderer observes a display attribute
 - added type hints to menu classes; improved code consistency, potentially breaking existing applications
