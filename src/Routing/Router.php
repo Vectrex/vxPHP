@@ -21,7 +21,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.1.0 2020-11-13
+ * @version 2.2.0 2020-11-27
  *
  */
 class Router
@@ -191,13 +191,16 @@ class Router
      * the first path fragment can be a locale string,
      * which is then skipped for determining the route
      *
-     * configured routes are first checked whether they fulfill the
+     * configured routes are first checked whether their script name matches
+     * the script name of the request
+     *
+     * in the next step routes are checked whether they fulfill the
      * request method and whether they match the path
      *
      * if more than one route matches these requirements the one which
      * is more specific about the request method is preferred
      *
-     * if more than one route match the requirements and are equally
+     * if more than one route matches the requirements and are equally
      * specific about the request methods the one with less
      * placeholders is preferred
      *
@@ -235,7 +238,7 @@ class Router
 
 		// find route
 
-        $route = $this->findRoute($request->getMethod(), $pathSegments);
+        $route = $this->findRoute($script, $request->getMethod(), $pathSegments);
 
 		// no route found
 
@@ -305,21 +308,35 @@ class Router
     /**
      * find route which best matches the passed path segments
      *
+     * @param string $scriptName
      * @param string $requestMethod
      * @param array|null $pathSegments
      *
      * @return \vxPHP\Routing\Route
      */
-	private function findRoute(string $requestMethod, array $pathSegments = null): ?Route
+	private function findRoute(string $scriptName, string $requestMethod, array $pathSegments = null): ?Route
     {
 	    if(!count($this->routes)) {
-	        throw new \RuntimeException('Routing aborted: No routes defined.');
+	        throw new \RuntimeException('Routing aborted: No routes assigned.');
+        }
+
+	    // filter routes with matching script name (or no script name)
+
+        $scriptMatchingRoutes = array_filter(
+            $this->routes,
+            static function(Route $route) use($scriptName) {
+                return !$route->getScriptName() || $route->getScriptName() === $scriptName;
+            }
+        );
+
+        if(!count($scriptMatchingRoutes)) {
+            throw new \RuntimeException(sprintf("Routing aborted: No routes assigned for script name '%s'.", $scriptName));
         }
 
 		// if no page given try to get the first from list
 
 		if(empty($pathSegments)) {
-			return reset($this->routes);
+			return reset($scriptMatchingRoutes);
 		}
 
 		$requestMatchingRoutes = [];
@@ -327,7 +344,7 @@ class Router
 
 		// filter for request method first and retrieve default route
 
-		foreach($this->routes as $id => $route) {
+		foreach($scriptMatchingRoutes as $id => $route) {
 
 		    if(!$default && 'default' === $id) {
 		        $default = $route;
