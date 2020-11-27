@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.7.0, 2019-12-11
+ * @version 0.7.1, 2020-11-17
  *
  */
 interface DatabaseInterface {
@@ -39,7 +39,7 @@ interface DatabaseInterface {
 	 *
 	 * @return mixed
 	 */
-	public function insertRecord($tableName, array $rowData);
+	public function insertRecord(string $tableName, array $rowData);
 	
 	/**
 	 * insert several records in table $tableName
@@ -57,7 +57,7 @@ interface DatabaseInterface {
 	 * 
 	 * @return integer
 	 */
-	public function insertRecords($tableName, array $rowsData);
+	public function insertRecords(string $tableName, array $rowsData): int;
 	
 	/**
 	 * update a record in table $tableName, identified by $keyValue
@@ -74,7 +74,7 @@ interface DatabaseInterface {
 	 *
 	 * @return integer
 	 */
-	public function updateRecord($tableName, $keyValue, array $data);
+	public function updateRecord(string $tableName, $keyValue, array $data): int;
 
 	/**
 	 * delete a record in table $tableName, identified by $keyValue
@@ -89,7 +89,7 @@ interface DatabaseInterface {
 	 *
 	 * @return NULL|int
 	 */
-	public function deleteRecord($tableName, $keyValue);
+	public function deleteRecord(string $tableName, $keyValue): ?int;
 
 	/**
 	 * wrap prepare(), execute() and fetchAll()
@@ -103,7 +103,7 @@ interface DatabaseInterface {
 	 * 
 	 * @return RecordsetIteratorInterface
 	 */
-	public function doPreparedQuery($statementString, array $parameters);
+	public function doPreparedQuery(string $statementString, array $parameters): RecordsetIteratorInterface;
 
 	/**
 	 * wrap prepare(), execute() and rowCount()
@@ -117,7 +117,7 @@ interface DatabaseInterface {
 	 *
 	 * @return integer
 	 */
-	public function execute($statementString, array $parameters);
+	public function execute(string $statementString, array $parameters): int;
 
 	/**
 	 * ignore lastUpdated attribute when creating or updating record
@@ -126,14 +126,14 @@ interface DatabaseInterface {
 	 *
 	 * @return DatabaseInterface
 	 */
-	public function ignoreLastUpdated();
+	public function ignoreLastUpdated(): DatabaseInterface;
 	
 	/**
 	 * set lastUpdated attribute when creating or updating record
 	 *
 	 * @return DatabaseInterface
 	 */
-	public function updateLastUpdated();
+	public function updateLastUpdated(): DatabaseInterface;
 	
 	/**
 	 * checks whether a table exists
@@ -141,7 +141,7 @@ interface DatabaseInterface {
 	 * @param string $tableName
 	 * @return boolean
 	 */
-	public function tableExists($tableName);
+	public function tableExists(string $tableName): bool;
 	
 	/**
 	 * checks whether a column in table exists
@@ -152,7 +152,7 @@ interface DatabaseInterface {
 	 *
 	 * @return boolean
 	 */
-	public function columnExists($tableName, $columnName);
+	public function columnExists(string $tableName, string $columnName): bool;
 	
 	/**
 	 * get name(s) of primary key columns
@@ -164,7 +164,7 @@ interface DatabaseInterface {
 	 * @param string $tableName
 	 * @return mixed
 	 */
-	public function getPrimaryKey($tableName);
+	public function getPrimaryKey(string $tableName);
 
 	/**
 	 * get default value of a column, depending on adapter further
@@ -174,7 +174,7 @@ interface DatabaseInterface {
 	 * @param string $columnName
 	 * @return mixed
 	 */
-	public function getColumnDefaultValue($tableName, $columnName);
+	public function getColumnDefaultValue(string $tableName, string $columnName);
 
     /**
      * set connection of database class
@@ -189,7 +189,6 @@ interface DatabaseInterface {
      * adapter's type; if not a PDOException is raised
      *
      * @param ConnectionInterface $connection
-     * @param string $dbName
      */
 	public function setConnection(ConnectionInterface $connection);
 	
@@ -198,27 +197,27 @@ interface DatabaseInterface {
 	 * 
 	 * @return PDOConnection
 	 */
-	public function getConnection();
+	public function getConnection(): PDOConnection;
 	
 	/**
 	 * initiate a transaction
 	 * 
 	 * @return bool success
 	 */
-	public function beginTransaction();
+	public function beginTransaction(): bool;
 	
 	/**
 	 * commit a pending transaction
 	 * 
 	 * @return bool success
 	 */
-	public function commit();
+	public function commit(): bool;
 
     /**
      * wrap identifier with database specific quote char
      *
      * @param string $identifier
-     * @return DatabaseInterface
+     * @return string
      */
-	public function quoteIdentifier($identifier);
+	public function quoteIdentifier(string $identifier): string;
 }

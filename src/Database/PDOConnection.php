@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.12.1, 2018-04-21
+ * @version 1.12.2, 2020-11-27
  */
 class PDOConnection extends \PDO implements ConnectionInterface
 {
@@ -61,7 +61,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
     /**
      * @param string $name The datasource name associated to this connection
      */
-    public function setName($name)
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
@@ -69,7 +69,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
     /**
      * @return string The datasource name associated to this connection
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -79,7 +79,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
      *
      * @return string
      */
-    public function getDbName(): string
+    public function getDbName(): ?string
     {
         return $this->dbName;
     }
@@ -89,7 +89,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
      *
      * @param string $dbName
      */
-    public function setDbName($dbName): void
+    public function setDbName(string $dbName): void
     {
         $this->dbName = $dbName;
     }

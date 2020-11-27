@@ -14,7 +14,7 @@ namespace vxPHP\Database;
  * Interface for PDO connection
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0, 2018-04-21
+ * @version 0.3.0, 2020-11-27
  *
  */
 interface ConnectionInterface
@@ -22,50 +22,50 @@ interface ConnectionInterface
     /**
      * @param string $name The datasource name associated to this connection
      */
-    public function setName($name);
+    public function setName(string $name);
 
     /**
      * @return string The datasource name associated to this connection
      */
-    public function getName(): string;
+    public function getName(): ?string;
 
     /**
      * @param string $dbName The database name of the connection
      */
-    public function setDbName($dbName);
+    public function setDbName(string $dbName);
 
     /**
      * @return string The database name of the connection
      */
-    public function getDbName(): string;
+    public function getDbName(): ?string;
 
     /**
      * @see \PDO::beginTransaction()
      *
      * @return boolean
      */
-    public function beginTransaction();
+    public function beginTransaction(): bool;
 
     /**
      * @see \PDO::commit()
      *
      * @return boolean
      */
-    public function commit();
+    public function commit(): bool;
 
     /**
      * @see \PDO::rollBack()
      *
      * @return boolean
      */
-    public function rollBack();
+    public function rollBack(): bool;
 
     /**
      * @see \PDO::inTransaction()
      *
      * @return boolean
      */
-    public function inTransaction();
+    public function inTransaction(): bool;
 
     /**
      * @see \PDO::getAttribute()
@@ -73,32 +73,32 @@ interface ConnectionInterface
      * @param string $attribute
      * @return mixed
      */
-    public function getAttribute($attribute);
+    public function getAttribute(string $attribute);
 
     /**
      * @see \PDO::setAttribute()
      *
-     * @param string $attribute
+     * @param int $attribute
      * @param mixed $value
      * @return boolean
      */
-    public function setAttribute($attribute, $value);
+    public function setAttribute(int $attribute, $value): bool;
 
     /**
+     * @param string|null $name
+     * @return string
      * @see \PDO::lastInsertId()
      *
-     * @param string $name
-     * @return string
      */
-    public function lastInsertId($name = null);
+    public function lastInsertId(string $name = null): string;
 
     /**
      * @see \PDO::exec()
      *
      * @param string $statement
-     * @return int
+     * @return bool|int
      */
-    public function exec($statement);
+    public function exec(string $statement);
 
     /**
      * @see \PDO::prepare()
@@ -107,15 +107,7 @@ interface ConnectionInterface
      * @param array  $driver_options
      * @return \PDOStatement
      */
-    public function prepare($statement, $driver_options = []);
-
-    /**
-     * @see \PDO::query
-     *
-     * @param string $statement
-     * @return \PDOStatement
-     */
-    public function query();
+    public function prepare(string $statement, $driver_options = []): \PDOStatement;
 
     /**
      *
@@ -125,5 +117,5 @@ interface ConnectionInterface
      * @param int
      * @return string
      */
-    public function quote($string, $parameter_type = \PDO::PARAM_STR);
+    public function quote(string $string, $parameter_type = \PDO::PARAM_STR): string;
 }

@@ -17,7 +17,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.3.0, 2020-09-20
+ * @version 0.3.1, 2020-11-27
  */
 class Util {
 	
@@ -78,9 +78,9 @@ class Util {
 	 * and returns the result as float
 	 * 
 	 * @param string $decimalString
-	 * @return float | NaN
+	 * @return float
 	 */
-	public static function unFormatDecimal(string $decimalString)
+	public static function unFormatDecimal(string $decimalString): float
     {
 		if(trim($decimalString) === '') {
 			return NAN;

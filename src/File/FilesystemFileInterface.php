@@ -19,7 +19,7 @@ use vxPHP\File\Exception\FilesystemFileException;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.0 2020-02-05
+ * @version 0.1.1 2020-11-27
  */
 interface FilesystemFileInterface
 {
@@ -35,7 +35,7 @@ interface FilesystemFileInterface
      * @param bool $force forces re-read of mime type
      * @return string
      */
-    public function getMimetype($force = false): string;
+    public function getMimetype(bool $force = false): string;
 
     /**
      * check whether mime type indicates web image
@@ -44,7 +44,7 @@ interface FilesystemFileInterface
      * @param bool $force forces re-read of mime type
      * @return bool
      */
-    public function isWebImage($force = false): bool;
+    public function isWebImage(bool $force = false): bool;
 
     /**
      * retrieve filename
@@ -63,7 +63,7 @@ interface FilesystemFileInterface
      * @return string
      * @throws ApplicationException
      */
-    public function getRelativePath($force = false): string;
+    public function getRelativePath(bool $force = false): string;
 
     /**
      * return filesystem folder of file
@@ -77,7 +77,7 @@ interface FilesystemFileInterface
      * @return FilesystemFileInterface
      * @throws FilesystemFileException
      */
-    public function rename($to): FilesystemFileInterface;
+    public function rename(string $to): FilesystemFileInterface;
 
     /**
      * move file into new folder,

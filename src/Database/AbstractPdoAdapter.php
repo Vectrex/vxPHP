@@ -15,15 +15,15 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.12.0, 2019-12-11
+ * @version 0.13.0, 2020-11-27
  */
-abstract class AbstractPdoAdapter implements DatabaseInterface {
-
+abstract class AbstractPdoAdapter implements DatabaseInterface
+{
     /**
      * character for quoting identifiers
      *
      */
-    const QUOTE_CHAR = '´';
+    public const QUOTE_CHAR = '´';
 
     /**
      * attribute which stores the timestamp of the last update of the
@@ -32,7 +32,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
      *
      * @var string
      */
-    const UPDATE_FIELD = 'lastupdated';
+    public const UPDATE_FIELD = 'lastupdated';
 
     /**
      * attribute which stores the timestamp of the creation timestamp of
@@ -41,56 +41,56 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
      *
      * @var string
      */
-    const CREATE_FIELD = 'firstcreated';
+    public const CREATE_FIELD = 'firstcreated';
 
     /**
 	 * host address of connection
 	 * 
 	 * @var string
 	 */
-	protected	$host;
+	protected $host;
 	
 	/**
 	 * port of database connection
 	 * 
 	 * @var int
 	 */
-	protected	$port;
+	protected $port;
 	
 	/**
 	 * username for connection
 	 * 
 	 * @var string
 	 */
-	protected	$user;
+	protected $user;
 	
 	/**
 	 * password of configured user
 	 * 
 	 * @var string
 	 */
-	protected	$password;
+	protected $password;
 	
 	/**
 	 * name of database for connection
 	 * 
 	 * @var string
 	 */
-	protected	$dbname;
+	protected $dbname;
 	
 	/**
 	 * datasource string of connection
 	 * 
 	 * @var string
 	 */
-	protected	$dsn;
+	protected $dsn;
 	
 	/**
 	 * holds the wrapped PDO connection
 	 * 
-	 * @var \PDO
+	 * @var PDOConnection
 	 */
-	protected	$connection;
+	protected $connection;
 
 	/**
 	 * holds last prepared or executed statement
@@ -113,7 +113,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @var boolean
 	 */
-	protected	$touchLastUpdated = true;
+	protected $touchLastUpdated = true;
 
 	/**
 	 *
@@ -142,12 +142,11 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 
             if(!preg_match('/dbname=(.*?)(?:;|$)/', $this->dsn, $matches)) {
                 throw new \PDOException('Database name missing in DSN string.');
-            };
+            }
             if($this->dbname && $matches[1] !== $this->dbname) {
                 throw new \PDOException(sprintf("Mismatch of database name: DSN states '%s', dbname element states '%s'.", $matches[1], $this->dbname));
-            } else {
-                $this->dbname = $matches[1];
             }
+            $this->dbname = $matches[1];
 
             // set host
 
@@ -156,22 +155,18 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
             };
             if($this->host && $matches[1] !== $this->host) {
                 throw new \PDOException(sprintf("Mismatch of host: DSN states '%s', host element states '%s'.", $matches[1], $this->host));
-            } else {
-                $this->host = $matches[1];
             }
+            $this->host = $matches[1];
 
             // set port
 
             if(preg_match('/port=(.*?)(?:;|$)/', $this->dsn, $matches)) {
                 if ($this->port && (int)$matches[1] !== $this->port) {
                     throw new \PDOException(sprintf("Mismatch of port: DSN states '%s', host element states '%s'.", $matches[1], $this->port));
-                } else {
-                    $this->port = (int)$matches[1];
                 }
+                $this->port = (int)$matches[1];
             }
-
         }
-
 	}
 	
 	/**
@@ -180,7 +175,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::getConnection()
 	 */
-	public function getConnection() {
+	public function getConnection(): PDOConnection {
 	
 		return $this->connection;
 	
@@ -192,10 +187,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::beginTransaction()
 	 */
-	public function beginTransaction() {
-	
+	public function beginTransaction(): bool
+    {
 		return $this->connection->beginTransaction();
-	
 	}
 	
 	/**
@@ -204,10 +198,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::commit()
 	 */
-	public function commit() {
-	
+	public function commit(): bool
+    {
 		return $this->connection->commit();
-	
 	}
 	
 	/**
@@ -216,9 +209,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @throws \PDOException
 	 */
-	public function getPrimaryKey($tableName) {
-	
-		// check whether table exists
+	public function getPrimaryKey(string $tableName)
+    {
+        // check whether table exists
 	
 		if(!$this->tableExists($tableName)) {
 			throw new \PDOException(sprintf("Unknown table '%s'.", $tableName));
@@ -268,8 +261,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
 	 */
-	public function columnExists($tableName, $columnName) {
-	
+	public function columnExists(string $tableName, string $columnName): bool
+    {
 		// fill cache with table information
 	
 		if(empty($this->tableStructureCache)) {
@@ -281,7 +274,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		return
 		array_key_exists($tableName, $this->tableStructureCache) &&
 		array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
-	
 	}
 
 	/**
@@ -290,16 +282,15 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::tableExists()
 	 */
-	public function tableExists($tableName) {
-	
-		// fill cache with table names
+	public function tableExists(string $tableName): bool
+    {
+        // fill cache with table names
 	
 		if(empty($this->tableStructureCache)) {
 			$this->fillTableStructureCache($tableName);
 		}
 	
 		return array_key_exists($tableName, $this->tableStructureCache);
-	
 	}
 
 	/**
@@ -309,11 +300,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @return self
 	 */
-	public function clearTableStructureCache() {
-	
+	public function clearTableStructureCache(): self
+    {
 		$this->tableStructureCache = [];
 		return $this;
-	
 	}
 
 	/**
@@ -321,15 +311,14 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * required after changes to a tables structure
 	 *
 	 * @param string $tableName
-	 * @return self
+	 * @return DatabaseInterface
 	 */
-	public function refreshTableStructureCache($tableName) {
-	
+	public function refreshTableStructureCache(string $tableName): DatabaseInterface
+    {
 		unset ($this->tableStructureCache[$tableName]);
 		$this->fillTableStructureCache($tableName);
 	
 		return $this;
-	
 	}
 
 	/**
@@ -338,9 +327,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @throws \PDOException
 	 */
-	public function insertRecord($tableName, array $data) {
-	
-		$data = array_change_key_case($data, CASE_LOWER);
+	public function insertRecord(string $tableName, array $data)
+    {
+        $data = array_change_key_case($data, CASE_LOWER);
 	
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
@@ -376,8 +365,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		// append create timestamp when applicable
 	
 		if(
-			in_array(static::CREATE_FIELD, $attributes) &&
-			!in_array(static::CREATE_FIELD, array_keys($data))
+            !array_key_exists(static::CREATE_FIELD, $data) &&
+			in_array(static::CREATE_FIELD, $attributes, true)
 		) {
 					
 			// for compatibility purposes get the real column name
@@ -393,12 +382,12 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				sprintf("
                         INSERT INTO
                             %s
-                        (%s%s%s)
+                            (%s)
                         VALUES
-                        (%s)
+                            (%s)
                         ",
                     static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-                    static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
+                    static::QUOTE_CHAR . implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names) . static::QUOTE_CHAR,
                     $valuePlaceholders
                 ),
                 $values
@@ -406,12 +395,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		) {
 			return $this->connection->lastInsertId();
 		}
-
 		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-	
 	}
-	
-	
+
 	/**
 	 * 
 	 * {@inheritDoc}
@@ -421,8 +407,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @throws \PDOException
 	 * @throws \InvalidArgumentException
 	 */
-	public function insertRecords($tableName, array $rowsData) {
-
+	public function insertRecords(string $tableName, array $rowsData): int
+    {
 	    $firstRow = current($rowsData);
 
 	    // empty array, nothing to do, no rows inserted
@@ -468,7 +454,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 
 		foreach(array_keys($firstRow) as $attribute) {
 		
-			if (in_array($attribute, $attributes)) {
+			if (in_array($attribute, $attributes, true)) {
 				$names[] = $columns[$attribute]['columnName'];
 			}
 			
@@ -518,8 +504,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		// append create field, if not already covered
 
 		if(
-			in_array(strtolower(static::CREATE_FIELD), $attributes) &&
-			!in_array(strtolower(static::CREATE_FIELD), array_keys($firstRow))
+            !array_key_exists(strtolower(static::CREATE_FIELD), $firstRow) &&
+			in_array(strtolower(static::CREATE_FIELD), $attributes, true)
 		) {
 			$names[] = $columns[static::CREATE_FIELD]['columnName'];
 			$valuePlaceholders .= ', NOW()';
@@ -534,12 +520,12 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
                 sprintf("
                     INSERT INTO
                         %s
-                            (%s%s%s)
-                        VALUES
-                            %s
+                        (%s)
+                    VALUES
+                        %s
                     ",
                     static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-                    static::QUOTE_CHAR, implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names), static::QUOTE_CHAR,
+                    static::QUOTE_CHAR . implode(static::QUOTE_CHAR . ', ' . static::QUOTE_CHAR, $names) . static::QUOTE_CHAR,
                     implode(',', array_fill(0, count($rowsData), $valuePlaceholders))
                 ),
                 $values
@@ -549,7 +535,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		}
 
 		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-
 	}
 	
 	/**
@@ -559,8 +544,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * 
 	 * @throws \PDOException
 	 */
-	public function updateRecord($tableName, $keyValue, array $data) {
-
+	public function updateRecord(string $tableName, $keyValue, array $data): int
+    {
 		$data = array_change_key_case($data, CASE_LOWER);
 		
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
@@ -578,12 +563,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		$values	= [];
 		
 		foreach($attributes as $attribute) {
-		
 			if (array_key_exists($attribute, $data)) {
-				$names[]	= $columns[$attribute]['columnName'];
-				$values[]	= $data[$attribute];
+				$names[] = $columns[$attribute]['columnName'];
+				$values[] = $data[$attribute];
 			}
-
 		}
 
 		// are there any fields to update?
@@ -597,9 +580,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		// append update timestamp when applicable
 		
 		if(
-			in_array(strtolower(static::UPDATE_FIELD), $attributes) &&
-			!in_array(strtolower(static::UPDATE_FIELD), array_keys($data)) &&
-			$this->touchLastUpdated
+            $this->touchLastUpdated &&
+            !array_key_exists(strtolower(static::UPDATE_FIELD), $data) &&
+            in_array(strtolower(static::UPDATE_FIELD), $attributes, true)
 		) {
 			$setPlaceholders .= ', ' . static::QUOTE_CHAR . $columns[static::UPDATE_FIELD]['columnName'] . static::QUOTE_CHAR . ' = NOW()';
 		}
@@ -611,7 +594,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			// do we have only one pk column?
 	
 			if(count($columns['_primaryKeyColumns']) === 1) {
-
 			    $sqlString = sprintf("
                         UPDATE
                             %s
@@ -628,15 +610,11 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				// add pk as parameter
 
 				$values[] = $keyValue;
-				
 			}
-			
 			else {
 				throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
 			}
-
 		}
-		
 		else {
 			
 			// record identified with one or more specific attributes
@@ -648,7 +626,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 				
 			foreach($keyValue as $whereName => $whereValue) {
 				
-				if (!in_array($whereName, $attributes)) {
+				if (!in_array($whereName, $attributes, true)) {
 					throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
 				}
 				$whereNames[] = $columns[$whereName]['columnName'];
@@ -671,7 +649,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 			// add filtering values as parameter
 
 			$values = array_merge($values, $whereValues);
-
 		}
 
 		if(
@@ -681,7 +658,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 		}
 		
 		throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-
 	}
 	
 	/**
@@ -691,12 +667,12 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * 
 	 * @throws \PDOException
 	 */
-	public function deleteRecord($tableName, $keyValue)
+	public function deleteRecord(string $tableName, $keyValue): int
     {
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
-		
+
 		if(!array_key_exists($tableName, $this->tableStructureCache)) {
 			throw new \PDOException(sprintf("Table '%s' not found.", $tableName));
 		}
@@ -726,61 +702,54 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
                 }
 
                 throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
+			}
 
-			}
-			
-			else {
-				throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
-			}
-				
+            throw new \PDOException(sprintf("Table '%s' has more than one or no primary key column.", $tableName));
 		}
 
-		else {
-			
-			// record identified with one or more specific attributes
-			
-			$keyValue = array_change_key_case($keyValue, CASE_LOWER);
+        // record identified with one or more specific attributes
 
-            $wheres = [];
-			$whereValues = [];
+        $keyValue = array_change_key_case($keyValue, CASE_LOWER);
 
-			foreach($keyValue as $whereName => $whereValue) {
-				if (!in_array($whereName, $attributes)) {
-					throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
-				}
+        $wheres = [];
+        $whereValues = [];
 
-				$where = static::QUOTE_CHAR . $whereName . static::QUOTE_CHAR;
+        foreach($keyValue as $whereName => $whereValue) {
+            if (!in_array($whereName, $attributes, true)) {
+                throw new \PDOException(sprintf("Unknown column '%s' for WHERE clause.", $whereName));
+            }
 
-				if(is_array($whereValue)) {
-				    $where .=  sprintf(' IN (%s)', implode(',', array_fill(0, count($whereValue), '?')));
-                    $whereValues = array_merge($whereValues, $whereValue);
-                }
-				else {
-				    $where .= ' = ?';
-				    $whereValues[] = $whereValue;
-                }
-				$wheres[] = $where;
-			}
+            $where = static::QUOTE_CHAR . $whereName . static::QUOTE_CHAR;
 
-			if(
-			    $this->primeQuery(
-                    sprintf("
-                            DELETE FROM
-                                %s
-                            WHERE
-                                %s
-                        ",
-                        static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
-                        implode(' AND ', $wheres)
-                    ),
-                    $whereValues
-                )->execute()
-			) {
-				return $this->statement->rowCount();
-			}
-			
-			throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
-		}
+            if(is_array($whereValue)) {
+                $where .=  sprintf(' IN (%s)', implode(',', array_fill(0, count($whereValue), '?')));
+                $whereValues = array_merge($whereValues, $whereValue);
+            }
+            else {
+                $where .= ' = ?';
+                $whereValues[] = $whereValue;
+            }
+            $wheres[] = $where;
+        }
+
+        if(
+            $this->primeQuery(
+                sprintf("
+                        DELETE FROM
+                            %s
+                        WHERE
+                            %s
+                    ",
+                    static::QUOTE_CHAR . $tableName . static::QUOTE_CHAR,
+                    implode(' AND ', $wheres)
+                ),
+                $whereValues
+            )->execute()
+        ) {
+            return $this->statement->rowCount();
+        }
+
+        throw new \PDOException(vsprintf('ERROR: %s, %s, %s', $this->statement->errorInfo()));
 	}
 
 	/**
@@ -788,11 +757,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::execute()
 	 */
-	public function execute($statementString, array $parameters = []) {
-
+	public function execute(string $statementString, array $parameters = []): int
+    {
 	    $this->primeQuery($statementString, $parameters)->execute();
 		return $this->statement->rowCount();
-
 	}
 	
 	/**
@@ -800,18 +768,17 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::doPreparedQuery()
 	 */
-	public abstract function doPreparedQuery($statementString, array $parameters = []);
+	abstract public function doPreparedQuery(string $statementString, array $parameters = []): RecordsetIteratorInterface;
 
 	/**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::ignoreLastUpdated()
 	 */
-	public function ignoreLastUpdated() {
-	
-		$this->touchLastUpdated = false;
+	public function ignoreLastUpdated(): DatabaseInterface
+    {
+        $this->touchLastUpdated = false;
 		return $this;
-	
 	}
 	
 	/**
@@ -819,11 +786,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::updateLastUpdated()
 	 */
-	public function updateLastUpdated() {
-	
+	public function updateLastUpdated(): DatabaseInterface
+    {
 		$this->touchLastUpdated = true;
 		return $this;
-	
 	}
 
 	/**
@@ -834,8 +800,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @return \PDOStatement
 	 */
-	protected function primeQuery($statementString, array $parameters) {
-	
+	protected function primeQuery(string $statementString, array $parameters): \PDOStatement
+    {
 		$statement = $this->connection->prepare($statementString);
 	
 		foreach($parameters as $name => $value) {
@@ -882,12 +848,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
             }
 
 			$statement->bindValue($name, $value, $type);
-
 		}
 
         $this->statement = $statement;
         return $statement;
-
     }
 
     /**
@@ -896,10 +860,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
      *
      * @see \vxPHP\Database\DatabaseInterface::quoteIdentifier()
      */
-    public function quoteIdentifier($identifier) {
-
+    public function quoteIdentifier(string $identifier): string
+    {
 	    return static::QUOTE_CHAR . $identifier . static::QUOTE_CHAR;
-
     }
 
 	/**
@@ -908,7 +871,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::setConnection()
 	 */
-	public abstract function setConnection(ConnectionInterface $connection);
+	abstract public function setConnection(ConnectionInterface $connection);
 
 	/**
 	 * analyze column metadata of table $tableName
@@ -917,6 +880,5 @@ abstract class AbstractPdoAdapter implements DatabaseInterface {
 	 * @param string $tableName
 	 * @return void
 	 */
-	protected abstract function fillTableStructureCache($tableName);
-
+	abstract protected function fillTableStructureCache(string $tableName): void;
 }

@@ -14,7 +14,7 @@ use vxPHP\Database\ConnectionInterface;
 /**
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.0, 2018-04-21
+ * @version 0.3.0, 2020-11-27
  */
 class Propel2ConnectionWrapper implements ConnectionInterface {
 
@@ -42,10 +42,9 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * Propel2ConnectionWrapper constructor.
      * @param \Propel\Runtime\Connection\ConnectionInterface $propelConnection
      */
-    public function __construct(\Propel\Runtime\Connection\ConnectionInterface $propelConnection) {
-
+    public function __construct(\Propel\Runtime\Connection\ConnectionInterface $propelConnection)
+    {
         $this->connection = $propelConnection->getWrappedConnection();
-
     }
 
     /**
@@ -53,7 +52,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return string
      */
-    public function getDbName(): string
+    public function getDbName(): ?string
     {
         return $this->dbName;
     }
@@ -63,25 +62,25 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @param string $dbName
      */
-    public function setDbName($dbName): void
+    public function setDbName(string $dbName): void
     {
         $this->dbName = $dbName;
     }
-
-
 
     /**
      * set name of datasource
      * @param string $name
      */
-    public function setName($name) {
+    public function setName (string $name): void
+    {
         $this->name = $name;
     }
 
     /**
      * @return string The datasource name associated to this connection
      */
-    public function getName(): string {
+    public function getName(): ?string
+    {
         return $this->name;
     }
 
@@ -90,7 +89,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return bool
      */
-    public function beginTransaction(): bool {
+    public function beginTransaction(): bool
+    {
         return $this->connection->beginTransaction();
     }
 
@@ -99,7 +99,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return bool
      */
-    public function commit(): bool {
+    public function commit(): bool
+    {
         return $this->connection->commit();
     }
 
@@ -108,7 +109,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return bool
      */
-    public function rollBack(): bool {
+    public function rollBack(): bool
+    {
         return $this->connection->rollBack();
     }
 
@@ -117,7 +119,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return bool
      */
-    public function inTransaction(): bool {
+    public function inTransaction(): bool
+    {
         return $this->connection->inTransaction();
     }
 
@@ -127,7 +130,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * @param string $attribute
      * @return mixed
      */
-    public function getAttribute($attribute) {
+    public function getAttribute(string $attribute)
+    {
         return $this->connection->getAttribute($attribute);
     }
 
@@ -138,17 +142,19 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * @param mixed $value
      * @return bool
      */
-    public function setAttribute($attribute, $value) {
+    public function setAttribute(int $attribute, $value): bool
+    {
         return $this->connection->setAttribute($attribute, $value);
     }
 
     /**
+     * @param string|null $name
+     * @return string
      * @see \PDO::lastInsertId()
      *
-     * @param string $name
-     * @return string
      */
-    public function lastInsertId($name = null): string {
+    public function lastInsertId(string $name = null): string
+    {
         return $this->connection->lastInsertId($name);
     }
 
@@ -158,7 +164,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * @param string $statement
      * @return int
      */
-    public function exec($statement): int {
+    public function exec(string $statement): int
+    {
         return $this->connection->exec($statement);
     }
 
@@ -169,7 +176,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * @param array $driver_options
      * @return \PDOStatement
      */
-    public function prepare($statement, $driver_options = []): \PDOStatement {
+    public function prepare(string $statement, $driver_options = []): \PDOStatement
+    {
         return $this->connection->prepare($statement, $driver_options);
     }
 
@@ -181,8 +189,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      *
      * @return \PDOStatement
      */
-    public function query(): \PDOStatement {
-
+    public function query(): \PDOStatement
+    {
         $args = func_get_args();
 
         if(!count($args)) {
@@ -197,7 +205,6 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
         }
 
         return $stmt;
-
     }
 
     /**
@@ -207,9 +214,8 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
      * @param int $parameter_type
      * @return string
      */
-    public function quote($string, $parameter_type = \PDO::PARAM_STR): string {
+    public function quote(string $string, $parameter_type = \PDO::PARAM_STR): string
+    {
         return $this->connection->quote($string, $parameter_type);
     }
-
-
 }

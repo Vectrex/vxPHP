@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.5.4 2020-09-17
+ * @version 0.5.5 2020-11-27
  */
 abstract class ImageModifier
 {
@@ -308,7 +308,6 @@ abstract class ImageModifier
 		}
 		
 		if(!file_exists(realpath($args[0]))) {
-            throw new ImageModifierException('Insufficient arguments for watermarking.', ImageModifierException::MISSING_PARAMETERS);
 			throw new ImageModifierException('Watermark file not found.');
 		}
 		

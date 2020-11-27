@@ -22,7 +22,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.13.0, 2020-07-11
+ * @version 1.13.1, 2020-11-27
  */
 class Mysql extends AbstractPdoAdapter
 {
@@ -42,16 +42,15 @@ class Mysql extends AbstractPdoAdapter
 		'utf-8' => 'utf8',
 		'iso-8859-15' => 'latin1'
 	];
-				
-	/**
-	 * initiate connection
-	 * 
-	 * @todo parse unix_socket settings
-	 * 
-	 * @param array $config
+
+    /**
+     * initiate connection
+     *
+     * @param array|null $config
      * @param array $connectionAttributes
-	 * @throws \PDOException
-	 */
+     * @todo parse unix_socket settings
+     *
+     */
 	public function __construct(array $config = null, array $connectionAttributes = [])
     {
 		if($config) {
@@ -70,9 +69,7 @@ class Mysql extends AbstractPdoAdapter
 			}
 	
 			else {
-			
 				$charset = 'utf8';
-			
 			}
 			
 			if(!$this->dsn) {
@@ -94,13 +91,11 @@ class Mysql extends AbstractPdoAdapter
 				if($this->port) {
 					$this->dsn .= ';port=' . $this->port;
 				}
-	
-			}
+            }
 
 			// check whether charset encoding matches
 
 			else {
-
 			    if(preg_match('/charset=([0-9a-z]+)(?:;|$)/i', $this->dsn, $matches)) {
 			        if(strtolower($matches[1]) !== $charset) {
 			            throw new \PDOException(sprintf("Charset mismatch; site configuration says '%s', DSN says '%s'.", $charset, $matches[1]));
@@ -109,7 +104,6 @@ class Mysql extends AbstractPdoAdapter
                 else {
 			        $this->dsn .= ';charset=' . $charset;
                 }
-
             }
 
 			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
@@ -153,7 +147,7 @@ class Mysql extends AbstractPdoAdapter
 	 * 
 	 * @throws \PDOException
 	 */
-	public function getEnumValues($tableName, $columnName): array
+	public function getEnumValues(string $tableName, string $columnName): array
     {
 		// check whether column exists
 
@@ -189,7 +183,7 @@ class Mysql extends AbstractPdoAdapter
      * {@inheritDoc}
      * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
      */
-    public function doPreparedQuery($statementString, array $parameters = []): RecordsetIteratorInterface
+    public function doPreparedQuery(string $statementString, array $parameters = []): RecordsetIteratorInterface
     {
         $statement = $this->primeQuery($statementString, $parameters);
         $statement->execute();
@@ -229,7 +223,7 @@ class Mysql extends AbstractPdoAdapter
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()
 	 */
-	protected function fillTableStructureCache($tableName): void
+	protected function fillTableStructureCache(string $tableName): void
     {
 		// get all table names
 

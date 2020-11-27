@@ -11,6 +11,7 @@
 
 namespace vxPHP\Orm;
 
+use vxPHP\Database\RecordsetIteratorInterface;
 use vxPHP\Orm\QueryInterface;
 use vxPHP\Database\DatabaseInterface;
 
@@ -333,13 +334,11 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @todo caching/do not prepare statement again, if query hasn't changed
 	 *
-	 * @return array
-	 */
-	protected function executeQuery() {
-
+	 * @return RecordsetIteratorInterface
+     */
+	protected function executeQuery(): RecordsetIteratorInterface
+    {
 		$this->lastQuerySql = $this->sql;
 		return $this->dbConnection->doPreparedQuery($this->sql, $this->valuesToBind);
-
 	}
-
 }

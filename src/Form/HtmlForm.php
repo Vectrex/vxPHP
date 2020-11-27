@@ -11,6 +11,7 @@
 
 namespace vxPHP\Form;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Form\Exception\HtmlFormException;
 
 use vxPHP\Form\FormElement\CheckboxElement;
@@ -22,14 +23,16 @@ use vxPHP\Form\FormElement\InputElement;
 use vxPHP\Http\Request;
 use vxPHP\Http\ParameterBag;
 use vxPHP\Application\Application;
+use vxPHP\Security\Csrf\Exception\CsrfTokenException;
 use vxPHP\Session\Session;
 use vxPHP\Security\Csrf\CsrfTokenManager;
 use vxPHP\Security\Csrf\CsrfToken;
+use vxPHP\Template\Exception\SimpleTemplateException;
 
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.4 2020-07-28
+ * @version 1.9.5 2020-11-27
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -179,15 +182,15 @@ class HtmlForm
 	 */
 	private $onlyAssignedElements = false;
 
-	/**
-	 * Constructor
-	 *
-	 * @param string $template filename
-	 * @param string $action attribute
-	 * @param string $method form method attribute
-	 * @param string $encodingType
-	 */
-	public function __construct($template = null, $action = null, $method = 'POST', $encodingType = null)
+    /**
+     * Constructor
+     *
+     * @param string|null $template filename
+     * @param string|null $action attribute
+     * @param string $method form method attribute
+     * @param string|null $encodingType
+     */
+	public function __construct(string $template = null, string $action = null, string $method = 'POST', string $encodingType = null)
     {
 		$this->method = strtoupper($method);
 		$this->encType = $encodingType;
@@ -198,31 +201,30 @@ class HtmlForm
 		$this->setAction($action ?: $this->request->getRequestUri());
 	}
 
-	/**
-	 * Create instance
-	 * allows chaining
-	 *
-	 * @param string $template filename
-	 * @param string $action attribute
-	 * @param string $method request method attribute
-	 * @param string $encType encoding type attribute
-	 *
-	 * @return HtmlForm
-	 */
+    /**
+     * Create instance
+     * allows chaining
+     *
+     * @param string|null $template filename
+     * @param string|null $action attribute
+     * @param string $method request method attribute
+     * @param string|null $encType encoding type attribute
+     *
+     * @return HtmlForm
+     */
 
-	public static function create($template = null, $action = null, $method = 'POST', $encType = null): HtmlForm
+	public static function create(string $template = null, string $action = null, string $method = 'POST', string $encType = null): HtmlForm
     {
 		return new static($template, $action, $method, $encType);
 	}
 
-	/**
-	 * initialize parameter bag
-	 * parameter bag is either supplied, or depending on request method retrieved from request object
-	 *
-	 * @param ParameterBag $bag
-	 * @return HtmlForm
-	 *
-	 */
+    /**
+     * initialize parameter bag
+     * parameter bag is either supplied, or depending on request method retrieved from request object
+     *
+     * @param ParameterBag|null $bag
+     * @return HtmlForm
+     */
 	public function bindRequestParameters(ParameterBag $bag = null): HtmlForm
     {
 		if($bag) {
@@ -261,7 +263,7 @@ class HtmlForm
 	 * @throws HtmlFormException
 	 *
 	 */
-	public function setMethod($method): HtmlForm
+	public function setMethod(string $method): HtmlForm
     {
 		$method = strtoupper($method);
 		if($method !== 'GET' && $method !== 'POST') {
@@ -272,29 +274,27 @@ class HtmlForm
 		return $this;
 	}
 
-	/**
-	 * set form action
-	 *
-	 * @param string $action
-	 * @return HtmlForm
-	 *
-	 */
-	public function setAction($action): HtmlForm
+    /**
+     * set form action
+     *
+     * @param string $action
+     * @return HtmlForm
+     */
+	public function setAction(string $action): HtmlForm
     {
 		$this->action = htmlspecialchars($action, ENT_QUOTES);
 		return $this;
 	}
 
-	/**
-	 * set encoding type of form
-	 * 'application/x-www-form-urlencoded' and 'multipart/form-data' are the only allowed values
-	 *
-	 * @param string $type
-	 * @return HtmlForm
-	 * @throws HtmlFormException
-	 *
-	 */
-	public function setEncType($type): HtmlForm
+    /**
+     * set encoding type of form
+     * 'application/x-www-form-urlencoded' and 'multipart/form-data' are the only allowed values
+     *
+     * @param string $type
+     * @return HtmlForm
+     * @throws HtmlFormException
+     */
+	public function setEncType(string $type): HtmlForm
     {
 		$type = strtolower($type);
 
@@ -338,16 +338,16 @@ class HtmlForm
 
 		return $this;
 	}
-	
-	/**
-	 * get an attribute, if the attribute was not set previously a
-	 * default value can be supplied
-	 * 
-	 * @param string $attr
-	 * @param string $default
-	 * @return string
-	 */
-	public function getAttribute($attr, $default = null): string
+
+    /**
+     * get an attribute, if the attribute was not set previously a
+     * default value can be supplied
+     *
+     * @param string $attr
+     * @param string|null $default
+     * @return string
+     */
+	public function getAttribute(string $attr, string $default = null): string
     {
 		return ($attr && array_key_exists($attr, $this->attributes)) ? $this->attributes[$attr] : $default;
 	}
@@ -414,15 +414,15 @@ class HtmlForm
 						return $ee;
 					}
 
-					else if(
-						$ee->canSubmit() &&
-						($arr = $this->requestValues->get($name)) &&
-						isset($arr[$k])
-					) {
-						$this->clickedSubmit = $ee;
-						return $ee;
-					}
-				}
+                    if(
+                        $ee->canSubmit() &&
+                        ($arr = $this->requestValues->get($name)) &&
+                        isset($arr[$k])
+                    ) {
+                        $this->clickedSubmit = $ee;
+                        return $ee;
+                    }
+                }
 			}
 
 			else if($e instanceof ImageElement && $this->requestValues->get($name . '_x') !== null) {
@@ -443,7 +443,7 @@ class HtmlForm
 	 * @param string $name, name of element
 	 * @return boolean result
 	 */
-	public function wasSubmittedByName($name): bool
+	public function wasSubmittedByName(string $name): bool
     {
 		if($this->getSubmittingElement() !== null) {
 			return $this->getSubmittingElement()->getName() === $name;
@@ -455,14 +455,14 @@ class HtmlForm
     /**
      * renders complete form markup
      *
+     * @return string|null
      * @throws HtmlFormException
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException|CsrfTokenException
      */
 	public function render(): ?string
     {
 		if($this->loadTemplate())	{
-
 			$this
 				->primeTemplate()
 				->insertFormFields()
@@ -471,10 +471,8 @@ class HtmlForm
 				->insertFormEnd()
 				->cleanupHtml()
 			;
-
-			return $this->html;
-
 		}
+        return $this->html;
 	}
 
 	/**
@@ -596,7 +594,7 @@ class HtmlForm
      * @param array $keys
      * @return array $error_texts
      * @throws HtmlFormException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
 	public function getErrorTexts(array $keys = []): ?array
     {
@@ -604,12 +602,14 @@ class HtmlForm
 
 			$pattern = empty($keys) ? '.*?' : implode('|', $keys);
 
-			preg_match_all("/\{\s*error_({$pattern}):(.*?)\}/", $this->template, $hits);
+			preg_match_all("/{\s*error_({$pattern}):(.*?)}/", $this->template, $hits);
 
 			if(!empty($hits[1]) && !empty($hits[2]) && count($hits[1]) === count($hits[2])) {
 				return (array_combine($hits[1], array_map('strip_tags', $hits[2])));
 			}
 		}
+
+		return null;
 	}
 
     /**
@@ -619,16 +619,14 @@ class HtmlForm
      *
      * @return HtmlForm
      * @throws HtmlFormException
-     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     * @throws CsrfTokenException
      */
 	public function validate(): HtmlForm
     {
 		// check whether a CSRF token was tainted
 		
 		if($this->enableCsrfToken && !$this->checkCsrfToken()) {
-
 			throw new HtmlFormException('CSRF token mismatch.', HtmlFormException::CSRF_TOKEN_MISMATCH);
-
 		}
 
 		$this->formErrors = [];
@@ -663,22 +661,21 @@ class HtmlForm
 	 * @return HtmlForm
 	 *
 	 */
-	public function initVar($name, $value): HtmlForm
+	public function initVar(string $name, $value): HtmlForm
     {
 		$this->vars[$name] = $value;
 		return $this;
 	}
 
-	/**
-	 * add custom error and force error message in template
-	 *
-	 * @param string $errorName
-	 * @param mixed $errorNameIndex
-     * @param string message
+    /**
+     * add custom error and force error message in template
      *
- 	 * @return HtmlForm
-	 */
-	public function setError($errorName, $errorNameIndex = null, $message = null): HtmlForm
+     * @param string $errorName
+     * @param mixed $errorNameIndex
+     * @param string|null $message
+     * @return HtmlForm
+     */
+	public function setError(string $errorName, $errorNameIndex = null, string $message = null): HtmlForm
     {
 		if($errorNameIndex === null) {
 			$this->formErrors[$errorName] = new FormError($message);
@@ -707,7 +704,7 @@ class HtmlForm
 	 * @return FormElement|array
      * @throws \InvalidArgumentException
 	 */
-	public function getElementsByName($name) {
+	public function getElementsByName(string $name) {
 
 		if(isset($this->elements[$name])) {
 			return $this->elements[$name];
@@ -761,9 +758,7 @@ class HtmlForm
 			$name = preg_replace('~\[\w*\]$~i', '', $name);
 
 			if(!empty($this->elements[$name])) {
-
 				throw new HtmlFormException(sprintf("Element '%s' already assigned.", $name));
-
 			}
 
 			$arrayName = $name . '[]';
@@ -777,9 +772,7 @@ class HtmlForm
 			foreach($elements as $e) {
 				
 				if(get_class($e) !== get_class($firstElement)) {
-
 					throw new HtmlFormException(sprintf("Class mismatch of form elements array. Expected '%s', found '%s'.", get_class($firstElement), get_class($e)));
-
 				}
 				
 				// check whether names of element arrays match
@@ -787,9 +780,7 @@ class HtmlForm
 				$nameToCheck = preg_replace('~\[\w*\]$~i', '', $e->getName());
 
 				if($nameToCheck && $nameToCheck !== $name) {
-					
 					throw new HtmlFormException(sprintf("Name mismatch of form elements array. Expected '%s' or empty name, found '%s'.", $name, $e->getName()));
-
 				}
 
 				$e
@@ -864,14 +855,13 @@ class HtmlForm
 		foreach($this->elements[$name] as $k => $e) {
 
 			if($e instanceof CheckboxElement) {
-				$e->setChecked(in_array($e->getValue(), $values));
+				$e->setChecked(in_array($e->getValue(), $values, true));
 			}
-
 			else {
 				if(isset($values[$k])) {
 					$e->setValue($values[$k]);
 				}
-				elseif($e->getValue() === null && isset($this->initFormValues[$name][$k])) {
+				elseif(isset($this->initFormValues[$name][$k]) && $e->getValue() === null) {
 					$e->setValue($this->initFormValues[$name][$k]);
 				}
 			}
@@ -886,7 +876,7 @@ class HtmlForm
 	 *
 	 * @return HtmlForm
 	 */
-	public function addMiscHtml($id, $value): HtmlForm
+	public function addMiscHtml(string $id, string $value): HtmlForm
     {
 		$this->miscHtml[$id] = $value;
 		return $this;
@@ -947,9 +937,9 @@ class HtmlForm
      * the token will use the form action as id
      *
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
-     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
+     * @throws CsrfTokenException
      */
 	private function renderCsrfToken(): string
     {
@@ -967,7 +957,7 @@ class HtmlForm
      * compares the stored token with the request value
      *
      * @return bool
-     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     * @throws CsrfTokenException
      */
 	private function checkCsrfToken(): bool
     {
@@ -986,8 +976,8 @@ class HtmlForm
      *
      * @return string
      * @throws HtmlFormException
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
 	private function renderAntiSpam(): string
     {
@@ -1038,10 +1028,10 @@ class HtmlForm
 		}
 
 		foreach($fields as $f) {
-			if(preg_match_all('~<\s*a\s+href\s*\=\s*(\\\\*"|\\\\*\'){0,1}http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
+			if(preg_match_all('~<\s*a\s+href\s*\=\s*(\\\\*"|\\\\*\')?http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
 				return true;
 			}
-			if(preg_match('~\[\s*url.*?\]~i', $this->requestValues->get($f))) {
+			if(preg_match('~\[\s*url.*?]~i', $this->requestValues->get($f))) {
 				return true;
 			}
 		}
@@ -1054,10 +1044,10 @@ class HtmlForm
      * a single element can be picked by declaring an additional index
      *
      * @param string $name of element
-     * @param int $index of element if an array of elements is handled
+     * @param int|null $index of element if an array of elements is handled
      * @return HtmlForm
      */
-	public function removeElementByName($name, $index = null): HtmlForm
+	public function removeElementByName(string $name, int $index = null): HtmlForm
     {
 		if($index !== null) {
 			unset($this->elements[$name][$index]);
@@ -1074,10 +1064,10 @@ class HtmlForm
      * a single snippet can be picked by declaring an index
      *
      * @param string $id of markup
-     * @param int $index of markup if an array of markups is handled
+     * @param int|null $index of markup if an array of markups is handled
      * @return HtmlForm
      */
-	public function removeHtmlByName($id, $index = null): HtmlForm
+	public function removeHtmlByName(string $id, int $index = null): HtmlForm
     {
 		if(null !== $index && isset($this->miscHtml[$id][$index])) {
 			unset($this->miscHtml[$id][$index]);
@@ -1093,7 +1083,7 @@ class HtmlForm
      *
      * @return bool $success
      * @throws HtmlFormException
-     * @throws \vxPHP\Application\Exception\ApplicationException
+     * @throws ApplicationException
      */
 	private function loadTemplate(): bool
     {
@@ -1154,22 +1144,22 @@ class HtmlForm
 	/*
 	 * unroll loops
 	 */
-	private function doLoop($tpl): string
+	private function doLoop(string $tpl): string
     {
 		$stack = $this->loopRecursion($tpl, 0);
 		$tpl = $this->unrollLoops($stack);
 		return $tpl;
 	}
 
-	private function parseLoopVar($tpl, $counters): string
+	private function parseLoopVar(string $tpl, array $counters): string
     {
 		foreach($counters as $c => $v) {
-			$tpl = preg_replace('~\044'.$c.'~', $v, $tpl);
+			$tpl = preg_replace('~\044' . $c . '~', $v, $tpl);
 		}
 		return $tpl;
 	}
 
-	private function unrollLoops($stack, $counters = []): string
+	private function unrollLoops(array $stack, array $counters = []): string
     {
 		$markup = '';
 
@@ -1188,7 +1178,7 @@ class HtmlForm
 			if(!empty($s['ndx'])) {
 				$ndxs = explode('][', trim($s['ndx'], '[]$'));
 				foreach($ndxs as $n) {
-					$counter = is_array($counter) && isset($counters[$n]) && isset($counter[$counters[$n]]) ? $counter[$counters[$n]] : 0;
+					$counter = is_array($counter) && isset($counters[$n], $counter[$counters[$n]]) ? $counter[$counters[$n]] : 0;
 				}
 			}
 
@@ -1211,9 +1201,8 @@ class HtmlForm
 		return $markup;
 	}
 
-	private function loopRecursion($tpl, $level): ?array
+	private function loopRecursion(string $tpl, int $level): ?array
     {
-
 		$stack = [];
 
 		while(true) {
@@ -1249,7 +1238,7 @@ class HtmlForm
 		}
 	}
 
-	private function doInsertVars($tpl): string
+	private function doInsertVars(string $tpl): string
     {
 		foreach($this->vars as $k => $v) {
 			if(is_array($v)) {
@@ -1267,7 +1256,7 @@ class HtmlForm
 	/*
 	 * handle {if (cond)} .. {else} .. {end_if}
 	 */
-	private function doIfElseEndif($tpl): string
+	private function doIfElseEndif(string $tpl): string
     {
 		$stack = [];
 		$nesting = 0;
@@ -1349,7 +1338,7 @@ class HtmlForm
 		return empty($stack[0]['left']) ? $tpl : $stack[0]['left'] . $right;
 	}
 
-	private function evalCondition($cond): ?bool
+	private function evalCondition(string $cond): ?bool
     {
 		if(!preg_match('/(.*?)\s*(==|!=|<|>|<=|>=)\s*(.*)/', $cond, $terms) || count($terms) !== 4) {
 		    return null;
@@ -1384,18 +1373,21 @@ class HtmlForm
 		return null;
 	}
 
-	/**
-	 * insert form fields into template
-	 * 
-	 * form fields are expected in the following form
-	 * {element: <name> [ {attributes}]}
-	 * 
-	 * the optional attributes are provided as JSON encoded key-value pairs
+    /**
+     * insert form fields into template
+     *
+     * form fields are expected in the following form
+     * {element: <name> [ {attributes}]}
+     *
+     * the optional attributes are provided as JSON encoded key-value pairs
      * future versions may observe *only* the "element" string and deprecate
      * specific element types
      *
-	 * @return HtmlForm
-	 */
+     * @return HtmlForm
+     * @throws ApplicationException
+     * @throws HtmlFormException
+     * @throws SimpleTemplateException|\JsonException
+     */
 	private function insertFormFields(): HtmlForm
     {
 		$this->html = preg_replace_callback(
@@ -1407,20 +1399,17 @@ class HtmlForm
 				// check whether element was assigned
 
 				if(empty($this->elements[$matches[2]])) {
-
 					if($this->onlyAssignedElements) {
 						throw new HtmlFormException(sprintf("Element '%s' not assigned to form.", $matches[2]), HtmlFormException::INVALID_MARKUP);
 					}
-
 				}
-
 				else {
 
                     // validate JSON attribute string
 
                     if (!empty($matches[3])) {
 
-                        $attributes = json_decode($matches[3], true, 2);
+                        $attributes = json_decode($matches[3], true, 2, JSON_THROW_ON_ERROR);
 
                         if ($attributes === null) {
                             throw new HtmlFormException(sprintf("Could not parse JSON attributes for element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
@@ -1431,7 +1420,6 @@ class HtmlForm
                         if (isset($attributes['name'])) {
                             throw new HtmlFormException(sprintf("Attribute 'name' is not allowed with element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
                         }
-
                     }
 
                     // insert rendered element or label
@@ -1444,18 +1432,15 @@ class HtmlForm
                             $this->formElementIndexes[$matches[2]] = 0;
                         }
                         if ('label' === strtolower($matches[1])) {
-
                             $e = $this->elements[$matches[2]][(int) ($this->formElementIndexes[$matches[2]] / 2)]->getLabel();
-
-                        } else {
-
+                        }
+                        else {
                             $e = $this->elements[$matches[2]][(int) ($this->formElementIndexes[$matches[2]] / 2)];
-
                         }
 
                         ++$this->formElementIndexes[$matches[2]];
-
-                    } else {
+                    }
+                    else {
 
                         // insert element
 
@@ -1466,27 +1451,21 @@ class HtmlForm
                             // insert label
 
                             $e = $e->getLabel();
-
                         }
                     }
 
                     if($e) {
-
                         if (isset($attributes)) {
                             $e->setAttributes($attributes);
                         }
-
                         return $e->render();
                     }
-
                 }
 			},
-
 			$this->template
 		);
 		
 		return $this;
-
 	}
 
     /**
@@ -1499,9 +1478,9 @@ class HtmlForm
      *
      * @return HtmlForm
      * @throws HtmlFormException
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
-     * @throws \vxPHP\Security\Csrf\Exception\CsrfTokenException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
+     * @throws CsrfTokenException|\JsonException
      */
 	private function insertFormStart(): HtmlForm
     {
@@ -1515,7 +1494,7 @@ class HtmlForm
 
 				if(!empty($matches[1])) {
 
-					$attributes = json_decode($matches[1], true, 2);
+					$attributes = json_decode($matches[1], true, 2, JSON_THROW_ON_ERROR);
 
 					if($attributes === null) {
 						throw new HtmlFormException("Could not parse JSON attributes for '{form}'.", HtmlFormException::INVALID_MARKUP);
@@ -1534,13 +1513,9 @@ class HtmlForm
 					// override attributes which were set with HtmlForm::setAttribute()
 
 					$attributes = array_merge($this->attributes, $attributes);
-
 				}
-				
 				else {
-
 					$attributes = $this->attributes;
-
 				}
 
 				$attr = [];
@@ -1620,9 +1595,7 @@ class HtmlForm
 		// more than one closing tag found
 
 		if($count > 1) {
-
 			throw new HtmlFormException("Found more than one closing {end_form} tags.", HtmlFormException::INVALID_MARKUP);
-
 		}
 
 		// no closing tag

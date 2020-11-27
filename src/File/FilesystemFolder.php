@@ -154,7 +154,7 @@ class FilesystemFolder {
 		}
 
 		foreach(array_filter(glob($glob), 'is_file') as $f) {
-			$result[] = FilesystemFile::getInstance($f, $this);
+			$result[] = FilesystemFile::getInstance($f);
 		}
 
 		return $result;

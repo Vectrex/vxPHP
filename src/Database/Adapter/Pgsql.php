@@ -22,7 +22,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.4.0, 2020-07-11
+ * @version 1.4.1, 2020-11-27
  */
 class Pgsql extends AbstractPdoAdapter
 {
@@ -135,7 +135,7 @@ class Pgsql extends AbstractPdoAdapter
      * {@inheritDoc}
      * @see \vxPHP\Database\AbstractPdoAdapter::doPreparedQuery()
      */
-    public function doPreparedQuery($statementString, array $parameters = []): RecordsetIteratorInterface
+    public function doPreparedQuery(string $statementString, array $parameters = []): RecordsetIteratorInterface
     {
         $statement = $this->primeQuery($statementString, $parameters);
         $statement->execute();
@@ -164,7 +164,7 @@ class Pgsql extends AbstractPdoAdapter
      * {@inheritDoc}
      * @see \vxPHP\Database\AbstractPdoAdapter::fillTableStructureCache()
      */
-    protected function fillTableStructureCache($tableName): void
+    protected function fillTableStructureCache(string $tableName): void
     {
         if(empty($this->tableStructureCache)) {
 

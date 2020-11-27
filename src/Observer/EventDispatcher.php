@@ -14,12 +14,12 @@ namespace vxPHP\Observer;
 /**
  * simple dispatcher-listener implementation
  *
- * @version 0.4.0 2018-07-05
+ * @version 0.4.1 2020-11-27
  * @author Gregor Kofler
  *
  */
-class EventDispatcher {
-
+class EventDispatcher
+{
 	/**
 	 * lookup for all registered subscribers
 	 * eventName -> priority -> callable
@@ -73,14 +73,13 @@ class EventDispatcher {
 	 * 
 	 * @return EventDispatcher
 	 */
-	public static function getInstance() {
-
+	public static function getInstance(): EventDispatcher
+    {
 		if(is_null(self::$instance)) {
 			self::$instance = new static();
 		}
 
 		return self::$instance;
-
 	}
 
 	/**
@@ -88,11 +87,11 @@ class EventDispatcher {
 	 * 
 	 * @param SubscriberInterface $instance
 	 */
-	public function removeSubscriber(SubscriberInterface $instance) {
-
+	public function removeSubscriber(SubscriberInterface $instance): void
+    {
 		// check for object hash
 
-		if(FALSE !== ($pos = array_search(spl_object_hash($instance), $this->registeredHashes))) {
+		if(false !== ($pos = array_search(spl_object_hash($instance), $this->registeredHashes, true))) {
 		
 			// remove instance from registry before re-inserting
 			
@@ -122,8 +121,8 @@ class EventDispatcher {
 	 * 
 	 * @param SubscriberInterface $instance
 	 */
-	public function addSubscriber(SubscriberInterface $instance) {
-
+	public function addSubscriber(SubscriberInterface $instance): void
+    {
 		// make sure that an already registered object is removed before re-registering
 		
 		$this->removeSubscriber($instance);
@@ -146,7 +145,7 @@ class EventDispatcher {
 				$priority = 0;
 			}
 
-			if(!isset($this->registry[$eventName]) || !isset($this->registry[$eventName][$priority])) {
+			if(!isset($this->registry[$eventName][$priority])) {
 				$this->registry[$eventName][$priority] = [];
 			}
 
@@ -155,9 +154,7 @@ class EventDispatcher {
 			// force re-sort upon next dispatch
 
 			unset ($this->sortedRegistry[$eventName]);
-
 		}
-		
 	}
 
 	/**
@@ -165,19 +162,17 @@ class EventDispatcher {
 	 * 
 	 * @param Event $event
 	 */
-	public function dispatch(Event $event) {
-
+	public function dispatch(Event $event): void
+    {
 		$this->lastEvent = $event;
 		$eventName = $event->getName();
 
 		if (isset($this->registry[$eventName])) {
 
 			foreach ($this->getSortedRegistry($eventName) as $listener) {
-				call_user_func($listener, $event);
+				$listener($event);
 			}
-			
 		}
-
 	}
 
 	/**
@@ -185,10 +180,9 @@ class EventDispatcher {
      *
 	 * @return string
 	 */
-	public function getLastEvent() {
-
+	public function getLastEvent(): ?Event
+    {
 		return $this->lastEvent;
-
 	}
 
     /**
@@ -196,27 +190,24 @@ class EventDispatcher {
      * if no event name is supplied this will return all registered
      * listeners grouped by event name and sorted by priority
      *
-     * @param null $eventName
+     * @param string|null $eventName
      * @return array
      */
-    public function getListeners($eventName = null) {
-
+    public function getListeners(string $eventName = null): array
+    {
         if ($eventName) {
-
             if (empty($this->registry[$eventName])) {
                 return [];
             }
 
             return $this->getSortedRegistry($eventName);
-
         }
 
-        foreach ($this->registry as $eventName => $listeners) {
-            $this->getSortedRegistry($eventName);
+        foreach ($this->registry as $name => $listeners) {
+            $this->getSortedRegistry($name);
         }
 
         return $this->sortedRegistry;
-
     }
 
     /**
@@ -224,23 +215,22 @@ class EventDispatcher {
      * if no event name is supplied this will evaluate to true if
      * there any listeners registered
      *
-     * @param string $eventName
+     * @param string|null $eventName
      * @return bool
      */
-    public function hasListeners($eventName = null) {
-
+    public function hasListeners(string $eventName = null): bool
+    {
 	    if($eventName) {
             return !empty($this->registry[$eventName]);
         }
 
-        foreach($this->registry as $eventName => $listeners) {
+        foreach($this->registry as $listeners) {
             if(!empty($listeners)) {
                 return true;
             }
         }
 
         return false;
-
     }
 
 
@@ -251,8 +241,8 @@ class EventDispatcher {
      * @param string $eventName
      * @return array
      */
-	private function getSortedRegistry($eventName) {
-		
+	private function getSortedRegistry(string $eventName): array
+    {
 		if(!isset($this->sortedRegistry[$eventName])) {
 			
 			$this->sortedRegistry[$eventName] = [];
@@ -270,7 +260,5 @@ class EventDispatcher {
 		}
 
 		return $this->sortedRegistry[$eventName];
-
 	}
-
 }

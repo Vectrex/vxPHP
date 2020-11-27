@@ -23,7 +23,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.1 2020-09-23
+ * @version 1.0.2 2020-11-27
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -61,7 +61,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * @throws FilesystemFileException
      * @throws Exception\FilesystemFolderException
      */
-	public static function getInstance($path): FilesystemFile
+	public static function getInstance(string $path): FilesystemFile
     {
 		if(!isset(self::$instances[$path])) {
 			self::$instances[$path] = new self($path);
@@ -81,12 +81,12 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * if folder is provided a bulk generation is assumed and certain checks are omitted
      *
      * @param string $path
-     * @param FilesystemFolder $folder
+     * @param FilesystemFolder|null $folder
      *
-     * @throws FilesystemFileException
      * @throws Exception\FilesystemFolderException
+     * @throws FilesystemFileException
      */
-	public function __construct($path, FilesystemFolder $folder = null)
+	public function __construct(string $path, FilesystemFolder $folder = null)
     {
 		if($folder) {
 			$path = $folder->getPath() . $path;
@@ -119,7 +119,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * @param bool $force forces re-read of mime type
      * @return string
      */
-	public function getMimetype($force = false): string
+	public function getMimetype(bool $force = false): string
     {
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
@@ -134,7 +134,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * @param bool $force forces re-read of mime type
      * @return bool
      */
-	public function isWebImage($force = false): bool
+	public function isWebImage(bool $force = false): bool
     {
 		if(!isset($this->mimetype) || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
@@ -165,7 +165,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * @return string
      * @throws ApplicationException
      */
-	public function getRelativePath($force = false): string
+	public function getRelativePath(bool $force = false): string
     {
         return $this->folder->getRelativePath($force) . $this->filename;
 	}
@@ -185,7 +185,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	 * @return FilesystemFileInterface
 	 * @throws FilesystemFileException
 	 */
-	public function rename($to): FilesystemFileInterface
+	public function rename(string $to): FilesystemFileInterface
     {
 		$from = $this->filename;
 
@@ -277,7 +277,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	 *
  	 * @param string $to new filename
 	 */
-	protected function renameCacheEntries($to): void
+	protected function renameCacheEntries(string $to): void
     {
 		if(($cachePath = $this->folder->getCachePath(true))) {
 
@@ -302,6 +302,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 	/**
 	 * deletes file and removes instance from lookup array
+     *
 	 * @throws FilesystemFileException
 	 */
 	public function delete(): void
