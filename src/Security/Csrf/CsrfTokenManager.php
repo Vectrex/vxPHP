@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
  * simple wrapper for CSRF token management
  *  
  * @author Gregor Kofler
- * @version 0.3.1 2017-05-04
+ * @version 0.4.0 2020-11-27
  */
 class CsrfTokenManager
 {
@@ -52,7 +52,7 @@ class CsrfTokenManager
      * @return CsrfToken
      * @throws Exception\CsrfTokenException
      */
-	public function getToken($tokenId): CsrfToken
+	public function getToken(string $tokenId): CsrfToken
     {
 		if($this->storage->hasToken($tokenId)) {
 			return $this->storage->getToken($tokenId);
@@ -78,7 +78,7 @@ class CsrfTokenManager
      * @return CsrfToken
      * @throws \Exception
      */
-	public function refreshToken($tokenId): CsrfToken
+	public function refreshToken(string $tokenId): CsrfToken
     {
 		$this->storage->removeToken($tokenId);
 
@@ -100,7 +100,7 @@ class CsrfTokenManager
 	 * @param string $tokenId
      * @return CsrfToken
      */
-	public function removeToken($tokenId): ?CsrfToken
+	public function removeToken(string $tokenId): ?CsrfToken
     {
 		return $this->storage->removeToken($tokenId);
 	}
@@ -134,28 +134,8 @@ class CsrfTokenManager
      * @throws \BadFunctionCallException
      * @throws \Exception
      */
-	protected function generateValue($length)
+	protected function generateValue(int $length = 16): string
     {
-		if(!(int) $length) {
-			throw new \InvalidArgumentException('CSRF token length not set or too short.');
-		}
-	
-		if (function_exists('random_bytes')) {
-			$randomBytes = random_bytes($length);
-		}
-	
-		else if (function_exists('mcrypt_create_iv')) {
-			$randomBytes = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
-		}
-
-		else if (function_exists('openssl_random_pseudo_bytes')) {
-			$randomBytes = openssl_random_pseudo_bytes($length);
-		}
-
-		else {
-			throw new \BadFunctionCallException('No suitable function for generating a CSRF token available.');
-		}
-
-		return rtrim(strtr(base64_encode($randomBytes), '+/', '-_'), '=');
+		return rtrim(strtr(base64_encode(random_bytes($length)), '+/', '-_'), '=');
 	}
 }
