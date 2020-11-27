@@ -44,28 +44,28 @@ interface ConnectionInterface
      *
      * @return boolean
      */
-    public function beginTransaction(): bool;
+    public function beginTransaction();
 
     /**
      * @see \PDO::commit()
      *
      * @return boolean
      */
-    public function commit(): bool;
+    public function commit();
 
     /**
      * @see \PDO::rollBack()
      *
      * @return boolean
      */
-    public function rollBack(): bool;
+    public function rollBack();
 
     /**
      * @see \PDO::inTransaction()
      *
      * @return boolean
      */
-    public function inTransaction(): bool;
+    public function inTransaction();
 
     /**
      * @see \PDO::getAttribute()
@@ -82,7 +82,7 @@ interface ConnectionInterface
      * @param mixed $value
      * @return boolean
      */
-    public function setAttribute(int $attribute, $value): bool;
+    public function setAttribute(int $attribute, $value);
 
     /**
      * @param string|null $name
@@ -90,7 +90,7 @@ interface ConnectionInterface
      * @see \PDO::lastInsertId()
      *
      */
-    public function lastInsertId(string $name = null): string;
+    public function lastInsertId(string $name = null);
 
     /**
      * @see \PDO::exec()
@@ -107,7 +107,7 @@ interface ConnectionInterface
      * @param array  $driver_options
      * @return \PDOStatement
      */
-    public function prepare(string $statement, $driver_options = []): \PDOStatement;
+    public function prepare(string $statement, $driver_options = []);
 
     /**
      *
@@ -117,5 +117,5 @@ interface ConnectionInterface
      * @param int
      * @return string
      */
-    public function quote(string $string, $parameter_type = \PDO::PARAM_STR): string;
+    public function quote(string $string, $parameter_type = \PDO::PARAM_STR);
 }
