@@ -73,7 +73,7 @@ interface ConnectionInterface
      * @param string $attribute
      * @return mixed
      */
-    public function getAttribute(string $attribute);
+    public function getAttribute(int $attribute);
 
     /**
      * @see \PDO::setAttribute()
@@ -107,7 +107,7 @@ interface ConnectionInterface
      * @param array  $driver_options
      * @return \PDOStatement
      */
-    public function prepare(string $statement, $driver_options = []);
+    public function prepare(string $statement, array $driver_options = []);
 
     /**
      *
@@ -117,5 +117,5 @@ interface ConnectionInterface
      * @param int
      * @return string
      */
-    public function quote(string $string, $parameter_type = \PDO::PARAM_STR);
+    public function quote(string $string, int $parameter_type = \PDO::PARAM_STR);
 }
