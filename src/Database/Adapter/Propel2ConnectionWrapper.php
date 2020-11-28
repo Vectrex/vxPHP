@@ -14,10 +14,10 @@ use vxPHP\Database\ConnectionInterface;
 /**
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.0, 2020-11-27
+ * @version 0.3.1, 2020-11-28
  */
-class Propel2ConnectionWrapper implements ConnectionInterface {
-
+class Propel2ConnectionWrapper implements ConnectionInterface
+{
     /**
      * the PDO connection wrapped by the Propel connection
      *
@@ -127,10 +127,10 @@ class Propel2ConnectionWrapper implements ConnectionInterface {
     /**
      * @see \PDO::getAttribute()
      *
-     * @param string $attribute
+     * @param int $attribute
      * @return mixed
      */
-    public function getAttribute(string $attribute)
+    public function getAttribute(int $attribute)
     {
         return $this->connection->getAttribute($attribute);
     }
