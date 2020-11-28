@@ -97,6 +97,20 @@ class RouterTest extends TestCase {
                     ['name' => 'num', 'match' => '[0-9]+']
                 ]
             ]),
+            new Route('route06', 'foo.php', [
+                'path' => '/abc/{num}',
+                'requestMethods' => ['get'],
+                'placeholders' => [
+                    ['name' => 'num', 'match' => '[0-9]+']
+                ]
+            ]),
+            new Route('route07', 'foo.php', [
+                'path' => '/abc/{num}',
+                'requestMethods' => ['get'],
+                'placeholders' => [
+                    ['name' => 'num', 'match' => '[a-zA-z-]+']
+                ]
+            ]),
         ];
 
         $_SERVER['SCRIPT_NAME'] = '/index.php';
@@ -142,6 +156,20 @@ class RouterTest extends TestCase {
 
         $req7 = Request::createFromGlobals();
 
+        $_SERVER['SCRIPT_NAME'] = '/foo.php';
+        $_SERVER['SCRIPT_FILENAME'] = '/foo.php';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/foo.php/abc/1';
+        $_SERVER['PATH_INFO'] = '/abc/1';
+
+        $req8 = Request::createFromGlobals();
+
+        $_SERVER['REQUEST_URI'] = '/foo.php/abc/A-b-c';
+        $_SERVER['PATH_INFO'] = '/abc/A-b-c';
+
+        $req9 = Request::createFromGlobals();
+
         return [
             [$routes, $req1, 'route00'],
             [$routes, $req2, 'route01'],
@@ -150,6 +178,8 @@ class RouterTest extends TestCase {
             [$routes, $req5, 'route03'],
             [$routes, $req6, 'route05'],
             [$routes, $req7, 'route04'],
+            [$routes, $req8, 'route06'],
+            [$routes, $req9, 'route07'],
         ];
     }
 
@@ -162,5 +192,37 @@ class RouterTest extends TestCase {
 
         $route = $router->getRouteFromPathInfo($request);
         $this->assertEquals($matchingId, $route->getRouteId());
+    }
+
+    public function testNoRoutesConfiguredException ()
+    {
+        $router = new Router();
+
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['SCRIPT_FILENAME'] = '/index.php';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/index.php/foo/abc';
+        $_SERVER['PATH_INFO'] = '/foo/abc';
+
+        $request = Request::createFromGlobals();
+
+        $this->expectException('RuntimeException');
+        $router->getRouteFromPathInfo($request);
+    }
+
+    public function testNoRoutesForScriptConfiguredException ()
+    {
+        $router = new Router([new Route('route', 'foo.php', ['path' => '/foo', 'requestMethods' => ['get', 'post']])]);
+
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['SCRIPT_FILENAME'] = '/index.php';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/index.php/foo/abc';
+        $_SERVER['PATH_INFO'] = '/foo/abc';
+
+        $request = Request::createFromGlobals();
+
+        $this->expectException('RuntimeException');
+        $router->getRouteFromPathInfo($request);
     }
 }
