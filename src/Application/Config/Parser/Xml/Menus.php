@@ -155,7 +155,7 @@ class Menus implements XmlParserInterface
 
             if('menuentry' === $entry->nodeName) {
 
-                $route = $entry->getAttribute('page') ?? $entry->getAttribute('route');
+                $route = $entry->getAttribute('page') ?: $entry->getAttribute('route');
                 $path = $entry->getAttribute('path');
 
                 if($route && $path) {
@@ -174,7 +174,7 @@ class Menus implements XmlParserInterface
                 else if($route) {
                     if(!isset($this->routes[$menu->getScript()][$route])) {
 
-                        throw new ConfigException(sprintf(
+                        throw new \RuntimeException(sprintf(
                             "No route for menu entry ('%s') found. Available routes for script '%s' are '%s'.",
                             $route,
                             $menu->getScript(),
