@@ -24,7 +24,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.0, 2020-10-10
+ * @version 1.0.1, 2020-11-30
  *
  * @throws MenuGeneratorException
  */
@@ -182,7 +182,7 @@ class MenuGenerator
      * @throws ApplicationException
      * @throws MenuGeneratorException
      */
-	public static function create(string $id = null, int $level = null, bool $forceActiveMenu = null, string $decorator = null, $renderArgs = null): MenuGenerator
+	public static function create(string $id = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null): MenuGenerator
     {
 		return new static($id, $level, $forceActiveMenu, $decorator, $renderArgs);
 	}
