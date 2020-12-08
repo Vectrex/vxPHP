@@ -17,7 +17,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.5.0 2020-10-11
+ * @version 0.5.1 2020-12-08
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -467,7 +467,12 @@ class SmtpMailer implements MailerInterface
 					break;
 		
 				case 'subject':
-					$rows[] = iconv_mime_encode($k, $this->headers[$k], $this->mimeEncodingPreferences);
+				    if (preg_match('/^[\x20-\x7F]+$/', $this->headers[$k]) !== false) {
+				        $rows[] = sprintf('%s: %s', $k, $this->headers[$k]);
+                    }
+                    else {
+                        $rows[] = iconv_mime_encode($k, $this->headers[$k], $this->mimeEncodingPreferences);
+                    }
 					break;
 		
 				case 'cc':
