@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.13.0, 2020-11-27
+ * @version 0.13.1, 2020-12-15
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -121,8 +121,8 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::__construct()
 	 */
-	public function __construct(array $config, array $connectionAttributes = []) {
-		
+	public function __construct(array $config, array $connectionAttributes = [])
+    {
 		$config = array_change_key_case($config, CASE_LOWER);
 		
 		$this->host = $config['host'];
@@ -175,10 +175,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @see \vxPHP\Database\DatabaseInterface::getConnection()
 	 */
-	public function getConnection(): PDOConnection {
-	
+	public function getConnection(): ConnectionInterface
+    {
 		return $this->connection;
-	
 	}
 
 	/**

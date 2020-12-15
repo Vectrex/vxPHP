@@ -15,11 +15,11 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.7.1, 2020-11-17
+ * @version 0.7.2, 2020-12-15
  *
  */
-interface DatabaseInterface {
-	
+interface DatabaseInterface
+{
 	/**
 	 * initiate connection
 	 * 
@@ -197,7 +197,7 @@ interface DatabaseInterface {
 	 * 
 	 * @return PDOConnection
 	 */
-	public function getConnection(): PDOConnection;
+	public function getConnection(): ConnectionInterface;
 	
 	/**
 	 * initiate a transaction
