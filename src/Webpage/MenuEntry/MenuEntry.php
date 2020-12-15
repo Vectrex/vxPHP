@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.6.0 2020-10-10
+ * @version 0.7.0 2020-12-15
  */
 class MenuEntry
 {
@@ -83,11 +83,18 @@ class MenuEntry
 	 */
 	protected $href;
 
-	public function __construct($path, array $attributes = [], $localPage = true)
+    /**
+     * MenuEntry constructor.
+     *
+     * @param string $path
+     * @param array $attributes
+     * @param bool $localPage
+     */
+	public function __construct(string $path, array $attributes = [], bool $localPage = true)
     {
 		$this->ndx = self::$count++;
-		$this->path = trim($path, '/');
-		$this->localPage = (boolean) $localPage;
+		$this->setPath($path);
+		$this->localPage = $localPage;
 		$this->attributes = new \stdClass();
 
 		foreach($attributes as $attr => $value) {
@@ -105,7 +112,7 @@ class MenuEntry
 		}
 	}
 
-	public function __toString()
+	public function __toString(): string
     {
 		return $this->path;
 	}
@@ -241,7 +248,21 @@ class MenuEntry
 		return $this->path;
 	}
 
-	/**
+    /**
+     * @param string $path
+     * @return MenuEntry
+     */
+    public function setPath(string $path): MenuEntry
+    {
+        $this->path = trim($path, '/');
+
+        // ensure href (re-)evaluation
+
+        $this->href = null;
+        return $this;
+    }
+
+    /**
 	 * get href attribute value of menu entry
 	 */
 	public function getHref(): string
