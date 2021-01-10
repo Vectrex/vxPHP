@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.2 2020-09-01
+ * @version 2.2.3 2021-01-09
  *
  */
 
@@ -131,9 +131,9 @@ class SimpleTemplate
 	 * @param string $contents
 	 * @return SimpleTemplate
 	 */
-	public function setRawContents($contents): self
+	public function setRawContents(string $contents): self
     {
-		$this->bufferInstance->__rawContents = (string) $contents;
+		$this->bufferInstance->__rawContents = $contents;
 		return $this;
 	}
 	
@@ -182,7 +182,7 @@ class SimpleTemplate
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-	public function insertTemplateAt(SimpleTemplate $childTemplate, $blockName): self
+	public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
     {
 		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
@@ -311,7 +311,7 @@ class SimpleTemplate
      * @param string $filterId
      * @return $this
      */
-	public function blockFilter($filterId): self
+	public function blockFilter(string $filterId): self
     {
 	    if(!in_array($filterId, $this->blockedFilters, true)) {
 	        $this->blockedFilters[] = $filterId;
