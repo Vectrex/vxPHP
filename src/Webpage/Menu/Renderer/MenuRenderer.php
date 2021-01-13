@@ -15,8 +15,8 @@ use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
 
-abstract class MenuRenderer implements MenuRendererInterface {
-
+abstract class MenuRenderer implements MenuRendererInterface
+{
 	protected $menu;
 	protected $rewriteActive;
 	protected $parameters;

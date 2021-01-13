@@ -18,7 +18,7 @@ use vxPHP\Webpage\MenuEntry\MenuEntry;
  * submenus are nested
  * every menu entry wrapped in tags when a parameter 'wrappingTags', defining these tags, is set
  *
- * @version 0.3.1, 2020-10-10
+ * @version 0.4.0, 2021-01-13
  *
  * @author Gregor Kofler
  */
@@ -47,7 +47,7 @@ class SimpleListRenderer extends MenuRenderer
      */
     public function render(): string
     {
-        if ($this->menu->getAttribute('display') === 'none') {
+        if (!$this->menu->getDisplay()) {
             return '';
         }
 
@@ -59,8 +59,8 @@ class SimpleListRenderer extends MenuRenderer
 				$tags = preg_split('/\s*,\s*/', $tags);
 			}
 
-			$this->openingTags = strtolower('<'.implode('><', $tags).'>');
-			$this->closingTags = strtolower('</'.implode('></', array_reverse($tags)).'>');
+			$this->openingTags = strtolower('<' . implode('><', $tags) . '>');
+			$this->closingTags = strtolower('</' . implode('></', array_reverse($tags)) . '>');
 		}
 
 		$markup = '';
@@ -86,67 +86,66 @@ class SimpleListRenderer extends MenuRenderer
     {
 		// check display attribute
 
-		if($entry->getAttribute('display') !== 'none') {
+		if(!$entry->getDisplay()) {
+		    return '';
+        }
 
-			$sel = $this->menu->getSelectedEntry();
+        $sel = $this->menu->getSelectedEntry();
 
-			if($text = $entry->getAttribute('text')) {
+        if($text = $entry->getAttribute('text')) {
 
-				// render a not selected menu entry
+            // render a not selected menu entry
 
-				if(!isset($sel) || $sel !== $entry) {
+            if(!isset($sel) || $sel !== $entry) {
 
-					$markup = sprintf(
-						'<li class="%s">%s<a href="%s">%s</a>%s',
-						preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
-						$this->openingTags,
-						$entry->getHref(),
-						empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
-						$this->closingTags
-					);
+                $markup = sprintf(
+                    '<li class="%s">%s<a href="%s">%s</a>%s',
+                    preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
+                    $this->openingTags,
+                    $entry->getHref(),
+                    empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
+                    $this->closingTags
+                );
 
-					// ensure rendering of submenus, when a parameter "unfoldAll" is set
+                // ensure rendering of submenus, when a parameter "unfoldAll" is set
 
-					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
-						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
-					}
-				}
+                if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
+                    $markup .= static::create($subMenu)->setParameters($this->parameters)->render();
+                }
+            }
 
-				else {
+            else {
 
-					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
+                // ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
 
-					if((!$entry->getSubMenu() || is_null($entry->getSubMenu()->getSelectedEntry())) && !$this->menu->getForceActive()) {
-						$markup = sprintf(
-							'<li class="active %s">%s<span>%s</span>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
-							$this->openingTags,
-							empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
-							$this->closingTags
-						);
-					}
-					else {
-						$markup = sprintf(
-							'<li class="active %s">%s<a href="%s">%s</a>%s',
-							preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
-							$this->openingTags,
-							$entry->getHref(),
-							empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
-							$this->closingTags
-						);
-					}
+                if((!$entry->getSubMenu() || is_null($entry->getSubMenu()->getSelectedEntry())) && !$this->menu->getForceActive()) {
+                    $markup = sprintf(
+                        '<li class="active %s">%s<span>%s</span>%s',
+                        preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
+                        $this->openingTags,
+                        empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
+                        $this->closingTags
+                    );
+                }
+                else {
+                    $markup = sprintf(
+                        '<li class="active %s">%s<a href="%s">%s</a>%s',
+                        preg_replace('~[^\w]~', '_', $entry->getPath()) . (isset($this->parameters['liClass']) ? (' ' . $this->parameters['liClass']) : ''),
+                        $this->openingTags,
+                        $entry->getHref(),
+                        empty($this->parameters['rawText']) ? htmlspecialchars($text) : $text,
+                        $this->closingTags
+                    );
+                }
 
-					// ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
+                // ensure rendering of submenus, when a parameter "unfoldAll" is set, this overrides the showSubmenus property of the menu
 
-					if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
-						$markup .= static::create($subMenu)->setParameters($this->parameters)->render();
-					}
-				}
+                if(!empty($this->parameters['unfoldAll']) && ($subMenu = $entry->getSubMenu())) {
+                    $markup .= static::create($subMenu)->setParameters($this->parameters)->render();
+                }
+            }
 
-				return $markup . '</li>';
-			}
-		}
-
-		return '';
+            return $markup . '</li>';
+        }
 	}
 }

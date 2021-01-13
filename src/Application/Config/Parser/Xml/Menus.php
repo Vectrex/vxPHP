@@ -111,9 +111,11 @@ class Menus implements XmlParserInterface
 
         }
 
+        $m->setDisplay(!($display = $menu->getAttribute('display')) || 'none' !== strtolower(trim($display)));
+
         foreach($menu->attributes as $attr) {
             $nodeName = $attr->nodeName;
-            if(!in_array($nodeName, ['script', 'type', 'service', 'id', 'auth', 'auth_parameters'])) {
+            if(!in_array($nodeName, ['script', 'type', 'service', 'id', 'auth', 'auth_parameters', 'display'])) {
                 $m->setAttribute($attr->nodeName, $attr->nodeValue);
             }
         }
@@ -147,7 +149,7 @@ class Menus implements XmlParserInterface
 
                 $nodeName = $attr->nodeName;
 
-                if(!in_array($nodeName, ['page', 'path', 'auth', 'auth_parameters'])) {
+                if(!in_array($nodeName, ['page', 'path', 'auth', 'auth_parameters', 'display'])) {
                     $attributes[$attr->nodeName] = $attr->nodeValue;
                 }
 
@@ -157,10 +159,6 @@ class Menus implements XmlParserInterface
 
                 $route = $entry->getAttribute('page') ?: $entry->getAttribute('route');
                 $path = $entry->getAttribute('path');
-
-                if($route && $path) {
-                    throw new ConfigException(sprintf("Menu entry with both route ('%s') and path ('%s') attribute found.", $route, $path));
-                }
 
                 // menu entry comes with a path attribute (which can also link an external resource)
 
@@ -187,6 +185,10 @@ class Menus implements XmlParserInterface
 
                 }
 
+                else {
+                    throw new ConfigException(sprintf("Menu entry with both route ('%s') and path ('%s') attribute found.", $route, $path));
+                }
+
                 // handle authentication settings of menu entry
 
                 if(($auth = strtolower(trim($entry->getAttribute('auth'))))) {
@@ -200,8 +202,9 @@ class Menus implements XmlParserInterface
                     if(($authParameters = $entry->getAttribute('auth_parameters'))) {
                         $e->setAuthParameters($authParameters);
                     }
-
                 }
+
+                $e->setDisplay(!($display = $entry->getAttribute('display')) || 'none' !== strtolower(trim($display)));
 
                 $menu->appendEntry($e);
 

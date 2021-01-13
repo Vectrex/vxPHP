@@ -20,7 +20,7 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * manages a complete menu
  * 
  * @author Gregor Kofler
- * @version 1.0.1 2020-10-10
+ * @version 1.1.0 2021-01-13
  */
 class Menu
 {
@@ -88,6 +88,11 @@ class Menu
 	 * @var boolean
 	 */
 	protected $showSubmenus;
+
+    /**
+     * @var boolean
+     */
+    protected $display = true;
 
     /**
      * misc attributes
@@ -499,6 +504,28 @@ class Menu
     {
 		return $this->dynamicEntries;
 	}
+
+    /**
+     * get display setting of menu
+     *
+     * @return bool
+     */
+    public function getDisplay(): bool
+    {
+        return $this->display;
+    }
+
+    /**
+     * set rendering of entire menu
+     *
+     * @param bool $display
+     * @return Menu
+     */
+    public function setDisplay(bool $display): Menu
+    {
+        $this->display = $display;
+        return $this;
+    }
 
     /**
      * set a single attribute
