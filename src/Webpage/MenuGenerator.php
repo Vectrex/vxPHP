@@ -24,7 +24,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.1, 2020-11-30
+ * @version 1.1.0, 2021-01-13
  *
  * @throws MenuGeneratorException
  */
@@ -313,24 +313,32 @@ class MenuGenerator
 
 		$m->setForceActive(self::$forceActiveMenu);
 
-		// if no container tag was specified, use a DIV element
+		$markup = $renderer->render();
 
-		if(!isset($this->renderArgs['containerTag'])) {
-			$this->renderArgs['containerTag'] = 'div';
-		}
+		// if no markup was generated avoid any empty wrappers
 
-		// omit wrapper, if a falsy container tag was specified
+		if (!$markup) {
+		    return '';
+        }
 
-		if($this->renderArgs['containerTag']) {
-			return sprintf(
-				'<%1$s%2$s>%3$s</%1$s>',
-				$this->renderArgs['containerTag'],
-				(isset($this->renderArgs['omitId']) && $this->renderArgs['omitId']) ? '' : (' id="' . $htmlId . '"'),
-				$renderer->render()
-			);
-		}
+        // if no container tag was specified, use a DIV element
 
-		return $renderer->render();
+        if(!isset($this->renderArgs['containerTag'])) {
+            $this->renderArgs['containerTag'] = 'div';
+        }
+
+        // if container tag is not an empty string wrap menu
+
+        if($this->renderArgs['containerTag']) {
+            return sprintf(
+                '<%1$s%2$s>%3$s</%1$s>',
+                $this->renderArgs['containerTag'],
+                (isset($this->renderArgs['omitId']) && $this->renderArgs['omitId']) ? '' : (' id="' . $htmlId . '"'),
+                $markup
+            );
+        }
+
+        return $markup;
 	}
 
 

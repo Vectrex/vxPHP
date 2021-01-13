@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.7.0 2020-12-15
+ * @version 0.8.0 2021-01-13
  */
 class MenuEntry
 {
@@ -52,7 +52,13 @@ class MenuEntry
 	 * @var \stdClass
 	 */
 	protected $attributes;
-	
+
+    /**
+     * display attribute
+     * @var boolean
+     */
+    protected $display = true;
+
 	/**
 	 * unique index of menu entry
 	 * @var integer
@@ -307,6 +313,24 @@ class MenuEntry
 
 		return $this->href;
 	}
+
+    /**
+     * @return bool
+     */
+    public function getDisplay(): bool
+    {
+        return $this->display;
+    }
+
+    /**
+     * @param bool $display
+     * @return MenuEntry
+     */
+    public function setDisplay(bool $display): MenuEntry
+    {
+        $this->display = $display;
+        return $this;
+    }
 
     /**
      * get a single attribute
