@@ -23,19 +23,33 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.3 2021-01-09
+ * @version 2.2.99 2021-01-13
  *
  */
 
 class SimpleTemplate
 {
     /**
-     * the actual PHP content which will be passed
-     * to the output buffer
+     * template buffers which hold a part of the template each
      *
      * @var TemplateBuffer
      */
 	private $bufferInstance;
+
+    /**
+     * the raw string of the template contents
+     * will split into one or more template buffer instances
+     *
+     * @var string
+     */
+    private $rawContents;
+
+    /**
+     * associative array of blocks
+     *
+     * @var array
+     */
+    private $blocks;
 
     /**
      * @var string
@@ -92,6 +106,7 @@ class SimpleTemplate
 	public function __construct($file = null)
     {
         $this->bufferInstance = new TemplateBuffer();
+
         $this->defaultFilters = [
             strtolower(AnchorHref::class) => new AnchorHref(),
             strtolower(ImageCache::class) => new ImageCache(),
@@ -125,15 +140,17 @@ class SimpleTemplate
 		return new static($file);
 	}
 
-	/**
-	 * set or overwrite the raw contents of the template
-	 * 
-	 * @param string $contents
-	 * @return SimpleTemplate
-	 */
+    /**
+     * set or overwrite the raw contents of the template
+     *
+     * @param string $contents
+     * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     */
 	public function setRawContents(string $contents): self
     {
-		$this->bufferInstance->__rawContents = $contents;
+        $this->rawContents = $contents;
+        $this->extractBlocks ($contents);
 		return $this;
 	}
 	
@@ -147,7 +164,7 @@ class SimpleTemplate
 	 */
 	public function containsPHP(): bool
     {
-		return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->bufferInstance->__rawContents);
+		return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->rawContents);
 	}
 
 	/**
@@ -157,7 +174,7 @@ class SimpleTemplate
 	 */
 	public function getRawContents(): string
     {
-		return $this->bufferInstance->__rawContents;
+        return $this->rawContents;
 	}
 
     /**
@@ -167,10 +184,6 @@ class SimpleTemplate
      */
 	public function getParentTemplateFilename(): ?string
     {
-		if(empty($this->parentTemplateFilename) && preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
-            $this->parentTemplateFilename = $matches[1];
-        }
-
 		return $this->parentTemplateFilename;
 	}
 
@@ -186,12 +199,9 @@ class SimpleTemplate
     {
 		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
-		if(preg_match($blockRegExp, $this->bufferInstance->__rawContents)) {
-
-			$this->bufferInstance->__rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->bufferInstance->__rawContents);
-
+		if(preg_match($blockRegExp, $this->rawContents)) {
+			$this->rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents);
 		}
-
 		else {
 			throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
 		}
@@ -406,29 +416,26 @@ class SimpleTemplate
      */
 	private function extend(): void
     {
-		if(preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
+        if ($this->parentTemplateFilename) {
+            $path = Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $this->parentTemplateFilename;
 
-			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
+            if (!file_exists($path)) {
+                throw new SimpleTemplateException(sprintf("Parent template file '%s' not assigned.", $path), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+            }
 
-			$extendedContent = file_get_contents(Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $matches[1]);
+            $this->contents = file_get_contents($path);
 
-			if(preg_match($blockRegExp, $extendedContent)) {
+            foreach ($this->blocks as $blockName => $markup) {
+                $blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
-				$this->bufferInstance->__rawContents = preg_replace(
-					$blockRegExp,
-					preg_replace(
-						$this->extendRex,
-						'',
-						$this->bufferInstance->__rawContents
-					),
-					$extendedContent
-				);
-
-			}
-			else {
-				throw new SimpleTemplateException(sprintf("Could not extend with '%s' at '%s'.", $matches[1], $matches[2]), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
-			}
-		}
+                if (preg_match($blockRegExp, $this->contents)) {
+                    $this->contents = preg_replace($blockRegExp, $markup, $this->contents);
+                }
+            }
+        }
+        else {
+            $this->contents = implode('', $this->blocks);
+        }
 	}
 
     /**
@@ -451,6 +458,8 @@ class SimpleTemplate
     {
 	    // wrap bufferInstance in closure to allow the use of $this in template
 
+        $this->bufferInstance->__rawContents = $this->contents;
+
 	    $closure = function($outer) {
 
             ob_start();
@@ -468,4 +477,32 @@ class SimpleTemplate
 	    $boundClosure = $closure->bindTo($this->bufferInstance);
 	    $boundClosure($this);
 	}
+
+    /**
+     * extract all blocks of the template
+     * all blocks must point to the same parent template
+     *
+     * @param string $contents
+     * @throws SimpleTemplateException
+     */
+	private function extractBlocks (string $contents): void
+    {
+        preg_match_all($this->extendRex, $this->rawContents, $matches);
+
+        if ($matches) {
+            if (!isset($matches[1]) || count(array_unique($matches[1])) !== 1) {
+                throw new SimpleTemplateException('No support of multiple parent templates.');
+            }
+
+            $this->parentTemplateFilename = $matches[1][0];
+
+            $blocks = array_filter(preg_split ($this->extendRex, $this->rawContents), 'trim');
+
+            if (!isset($matches[2]) || count($matches[2]) !== count($blocks)) {
+                throw new SimpleTemplateException('Mismatch of block markers and block contents.');
+            }
+
+            $this->blocks = array_combine($matches[2], array_map('trim', $blocks));
+        }
+    }
 }
