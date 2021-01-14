@@ -93,7 +93,12 @@ class SimpleTemplate
      *
      * @var string
      */
-	private $extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
+	protected const EXTEND_REX = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
+
+    /**
+     * the regular expression format to search for "block" directives
+     */
+    protected const BLOCK_REX_FORMAT = '~<!--\s*\{\s*block\s*:\s*%s\s*\}\s*-->~';
 
     /**
      * initialize template based on $file
@@ -150,7 +155,7 @@ class SimpleTemplate
 	public function setRawContents(string $contents): self
     {
         $this->rawContents = $contents;
-        $this->extractBlocks ($contents);
+        $this->extractBlocks ();
 		return $this;
 	}
 	
@@ -197,10 +202,10 @@ class SimpleTemplate
      */
 	public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
     {
-		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
+		$blockRegExp = sprintf(self::BLOCK_REX_FORMAT, $blockName);
 
 		if(preg_match($blockRegExp, $this->rawContents)) {
-			$this->rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents);
+			$this->setRawContents(preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents));
 		}
 		else {
 			throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
@@ -451,8 +456,8 @@ class SimpleTemplate
 	}
 
 	/**
-	 * fetches template file and evals content
-	 * immediate output supressed by output buffering
+	 * fetches template file and evaluates content
+	 * immediate output suppressed by output buffering
 	 */
 	private function fillBuffer(): void
     {
@@ -482,12 +487,11 @@ class SimpleTemplate
      * extract all blocks of the template
      * all blocks must point to the same parent template
      *
-     * @param string $contents
      * @throws SimpleTemplateException
      */
-	private function extractBlocks (string $contents): void
+	private function extractBlocks (): void
     {
-        preg_match_all($this->extendRex, $this->rawContents, $matches);
+        preg_match_all(self::EXTEND_REX, $this->rawContents, $matches);
 
         if ($matches) {
             if (!isset($matches[1]) || count(array_unique($matches[1])) !== 1) {
@@ -496,7 +500,7 @@ class SimpleTemplate
 
             $this->parentTemplateFilename = $matches[1][0];
 
-            $blocks = array_filter(preg_split ($this->extendRex, $this->rawContents), 'trim');
+            $blocks = array_filter(preg_split (self::EXTEND_REX, $this->rawContents), 'trim');
 
             if (!isset($matches[2]) || count($matches[2]) !== count($blocks)) {
                 throw new SimpleTemplateException('Mismatch of block markers and block contents.');
