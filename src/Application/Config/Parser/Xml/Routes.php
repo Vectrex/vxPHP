@@ -66,9 +66,7 @@ class Routes implements XmlParserInterface
 
         foreach($node->getElementsByTagName($this->nodeName) as $routeNode) {
 
-            $parameters = [
-                'redirect' => $redirect
-            ];
+            $parameters = [];
 
             // get route id
 
@@ -77,6 +75,10 @@ class Routes implements XmlParserInterface
             if($routeId === null || trim($routeId) === '') {
                 throw new ConfigException('Route with missing or invalid id found.');
             }
+
+            // read redirect
+
+            $parameters['redirect'] = $routeNode->getAttribute('redirect') ?: $redirect;
 
             // read optional controller
 
