@@ -491,22 +491,39 @@ class SimpleTemplate
      */
 	private function extractBlocks (): void
     {
-        preg_match_all(self::EXTEND_REX, $this->rawContents, $matches);
+        preg_match_all(self::EXTEND_REX, ltrim($this->rawContents), $matches, PREG_OFFSET_CAPTURE);
 
-        if ($matches) {
-            if (!isset($matches[1]) || count(array_unique($matches[1])) !== 1) {
+        // blocks got identified
+
+        if ($matches[0]) {
+
+            // first extend is preceeded by chars
+
+            if ($matches[0][0][1]) {
+                throw new SimpleTemplateException('First extend directive preceeded by non-whitespace characters.');
+            }
+
+            // check for single parent template name
+
+            if (count(array_unique(array_column($matches[1], 0))) !== 1) {
                 throw new SimpleTemplateException('No support of multiple parent templates.');
             }
 
-            $this->parentTemplateFilename = $matches[1][0];
+            $this->parentTemplateFilename = $matches[1][0][0];
 
             $blocks = array_filter(preg_split (self::EXTEND_REX, $this->rawContents), 'trim');
 
-            if (!isset($matches[2]) || count($matches[2]) !== count($blocks)) {
-                throw new SimpleTemplateException('Mismatch of block markers and block contents.');
+            if (count($matches[2]) !== count($blocks)) {
+                throw new SimpleTemplateException('Mismatch of block markers and block contents. Block contents must not be empty.');
             }
 
-            $this->blocks = array_combine($matches[2], array_map('trim', $blocks));
+            $this->blocks = array_combine(array_column($matches[2], 0), array_map('trim', $blocks));
+        }
+
+        // no blocks
+
+        else {
+            $this->blocks = [trim($this->rawContents)];
         }
     }
 }
