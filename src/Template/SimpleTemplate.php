@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.99 2021-01-13
+ * @version 2.2.99 2021-02-01
  *
  */
 
@@ -120,15 +120,20 @@ class SimpleTemplate
             // new AssetsPath()
         ];
 
-		if($file) {
-            $application = Application::getInstance();
-			$path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
+		if ($file) {
+		    if (file_exists($file)) {
+                $this->setRawContents(file_get_contents($file));
+            }
+		    else {
+                $application = Application::getInstance();
+                $path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
-			if (!file_exists($path . $file)) {
-				throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
-			}
+                if (!file_exists($path . $file)) {
+                    throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+                }
 
-			$this->setRawContents(file_get_contents($path . $file));
+                $this->setRawContents(file_get_contents($path . $file));
+            }
 		}
 	}
 
@@ -422,10 +427,15 @@ class SimpleTemplate
 	private function extend(): void
     {
         if ($this->parentTemplateFilename) {
-            $path = Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $this->parentTemplateFilename;
+            if (file_exists($this->parentTemplateFilename)) {
+                $path = $this->parentTemplateFilename;
+            }
+            else {
+                $path = Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $this->parentTemplateFilename;
 
-            if (!file_exists($path)) {
-                throw new SimpleTemplateException(sprintf("Parent template file '%s' not assigned.", $path), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+                if (!file_exists($path)) {
+                    throw new SimpleTemplateException(sprintf("Parent template file '%s' not assigned.", $path), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+                }
             }
 
             $this->contents = file_get_contents($path);

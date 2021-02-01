@@ -80,4 +80,65 @@ class SimpleTemplateTest extends TestCase
         $template->setRawContents("<!-- {extend: path_to/parent.php @ content }--> Not empty");
         $this->assertEquals('path_to/parent.php', $template->getParentTemplateFilename());
     }
+
+    public function testMultipleBlocks()
+    {
+        $parentTemplate = $this->createParentTplFile();
+        $childTemplate = sprintf('<!-- { extend: %1$s @ header_block } -->
+<h1>header</h1>
+<!-- { extend: %1$s @ content_block } -->
+<p>content</p>
+<!-- { extend: %1$s @ footer_block } -->
+<p>footer</p>', $parentTemplate);
+
+        $tpl = SimpleTemplate::create()->setRawContents($childTemplate);
+
+        $this->assertEquals( <<<EOD
+<head><title>Parent</title></head><body></body><header>
+<h1>header</h1>
+</header>
+<main>
+<p>content</p>
+</main>
+<footer>
+<p>footer</p>
+</footer>
+EOD,
+            $tpl->display([])
+        );
+    }
+
+    protected function createParentTplFile()
+    {
+        $parentTempFile = tempnam(sys_get_temp_dir() . '/tpl_test', 'parent');
+        file_put_contents($parentTempFile, <<<EOD
+<head><title>Parent</title></head><body></body><header>
+<!-- { block: header_block } -->
+</header>
+<main>
+<!-- { block: content_block } -->
+</main>
+<footer>
+<!-- { block: footer_block } -->
+</footer>
+EOD
+        );
+
+        return $parentTempFile;
+    }
+
+    protected function setUp(): void
+    {
+        mkdir(sys_get_temp_dir() . '/tpl_test', 0777, true);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach (glob(sys_get_temp_dir() . '/tpl_test/*') as $file) {
+            unlink($file);
+        }
+
+        rmdir(sys_get_temp_dir() . '/tpl_test');
+    }
+
 }
