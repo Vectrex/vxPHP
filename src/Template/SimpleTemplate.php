@@ -93,12 +93,12 @@ class SimpleTemplate
      *
      * @var string
      */
-	protected const EXTEND_REX = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
+	protected const EXTEND_REX = '~<!--\s*{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*}\s*-->~';
 
     /**
      * the regular expression format to search for "block" directives
      */
-    protected const BLOCK_REX_FORMAT = '~<!--\s*\{\s*block\s*:\s*%s\s*\}\s*-->~';
+    protected const BLOCK_REX_FORMAT = '<!--\s*{\s*block\s*:\s*%s\s*}\s*-->';
 
     /**
      * initialize template based on $file
@@ -367,6 +367,7 @@ class SimpleTemplate
             }
 
             $this->applyFilters($filters);
+		    $this->removeEmptyBlocks();
             return $this->contents;
 		}
 
@@ -458,12 +459,20 @@ class SimpleTemplate
      *
      * @param SimpleTemplateFilterInterface[] $filters
      */
-	private function applyFilters(array $filters): void
+	private function applyFilters (array $filters): void
     {
         foreach ($filters as $filter) {
             $filter->apply($this->contents);
         }
 	}
+
+    /**
+     * remove any orphaned <!-- { block: ... } --> comments
+     */
+	private function removeEmptyBlocks (): void
+    {
+        $this->contents = preg_replace ('~<!--\s*{\s*block\s*:\s*.*?\s*}\s*-->~', '', $this->contents);
+    }
 
 	/**
 	 * fetches template file and evaluates content

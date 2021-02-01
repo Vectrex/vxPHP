@@ -81,7 +81,32 @@ class SimpleTemplateTest extends TestCase
         $this->assertEquals('path_to/parent.php', $template->getParentTemplateFilename());
     }
 
-    public function testMultipleBlocks()
+    public function testMultipleBlocksNotAllFilled ()
+    {
+        $parentTemplate = $this->createParentTplFile();
+        $childTemplate = sprintf('<!-- { extend: %1$s @ header_block } -->
+<h1>header</h1>
+<!-- { extend: %1$s @ footer_block } -->
+<p>footer</p>', $parentTemplate);
+
+        $tpl = SimpleTemplate::create()->setRawContents($childTemplate);
+
+        $this->assertEquals( <<<EOD
+<head><title>Parent</title></head><body></body><header>
+<h1>header</h1>
+</header>
+<main>
+
+</main>
+<footer>
+<p>footer</p>
+</footer>
+EOD,
+            $tpl->display([])
+        );
+    }
+
+    public function testMultipleBlocks ()
     {
         $parentTemplate = $this->createParentTplFile();
         $childTemplate = sprintf('<!-- { extend: %1$s @ header_block } -->
