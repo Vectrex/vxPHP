@@ -23,19 +23,33 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.3 2021-01-09
+ * @version 2.3.0 2021-02-02
  *
  */
 
 class SimpleTemplate
 {
     /**
-     * the actual PHP content which will be passed
-     * to the output buffer
+     * template buffers which hold a part of the template each
      *
      * @var TemplateBuffer
      */
 	private $bufferInstance;
+
+    /**
+     * the raw string of the template contents
+     * will split into one or more template buffer instances
+     *
+     * @var string
+     */
+    private $rawContents;
+
+    /**
+     * associative array of blocks
+     *
+     * @var array
+     */
+    private $blocks;
 
     /**
      * @var string
@@ -79,7 +93,12 @@ class SimpleTemplate
      *
      * @var string
      */
-	private $extendRex = '~<!--\s*\{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*\}\s*-->~';
+	protected const EXTEND_REX = '~<!--\s*{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*}\s*-->~';
+
+    /**
+     * the regular expression format to search for "block" directives
+     */
+    protected const BLOCK_REX_FORMAT = '<!--\s*{\s*block\s*:\s*%s\s*}\s*-->';
 
     /**
      * initialize template based on $file
@@ -92,6 +111,7 @@ class SimpleTemplate
 	public function __construct($file = null)
     {
         $this->bufferInstance = new TemplateBuffer();
+
         $this->defaultFilters = [
             strtolower(AnchorHref::class) => new AnchorHref(),
             strtolower(ImageCache::class) => new ImageCache(),
@@ -100,15 +120,20 @@ class SimpleTemplate
             // new AssetsPath()
         ];
 
-		if($file) {
-            $application = Application::getInstance();
-			$path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
+		if ($file) {
+		    if (file_exists($file)) {
+                $this->setRawContents(file_get_contents($file));
+            }
+		    else {
+                $application = Application::getInstance();
+                $path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
-			if (!file_exists($path . $file)) {
-				throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
-			}
+                if (!file_exists($path . $file)) {
+                    throw new SimpleTemplateException(sprintf("Template file '%s' does not exist.", $path . $file), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+                }
 
-			$this->setRawContents(file_get_contents($path . $file));
+                $this->setRawContents(file_get_contents($path . $file));
+            }
 		}
 	}
 
@@ -125,15 +150,17 @@ class SimpleTemplate
 		return new static($file);
 	}
 
-	/**
-	 * set or overwrite the raw contents of the template
-	 * 
-	 * @param string $contents
-	 * @return SimpleTemplate
-	 */
+    /**
+     * set or overwrite the raw contents of the template
+     *
+     * @param string $contents
+     * @return SimpleTemplate
+     * @throws SimpleTemplateException
+     */
 	public function setRawContents(string $contents): self
     {
-		$this->bufferInstance->__rawContents = $contents;
+        $this->rawContents = $contents;
+        $this->extractBlocks ();
 		return $this;
 	}
 	
@@ -147,7 +174,7 @@ class SimpleTemplate
 	 */
 	public function containsPHP(): bool
     {
-		return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->bufferInstance->__rawContents);
+		return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->rawContents);
 	}
 
 	/**
@@ -157,7 +184,7 @@ class SimpleTemplate
 	 */
 	public function getRawContents(): string
     {
-		return $this->bufferInstance->__rawContents;
+        return $this->rawContents;
 	}
 
     /**
@@ -167,10 +194,6 @@ class SimpleTemplate
      */
 	public function getParentTemplateFilename(): ?string
     {
-		if(empty($this->parentTemplateFilename) && preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
-            $this->parentTemplateFilename = $matches[1];
-        }
-
 		return $this->parentTemplateFilename;
 	}
 
@@ -184,14 +207,11 @@ class SimpleTemplate
      */
 	public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
     {
-		$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
+		$blockRegExp = sprintf(self::BLOCK_REX_FORMAT, $blockName);
 
-		if(preg_match($blockRegExp, $this->bufferInstance->__rawContents)) {
-
-			$this->bufferInstance->__rawContents = preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->bufferInstance->__rawContents);
-
+		if(preg_match($blockRegExp, $this->rawContents)) {
+			$this->setRawContents(preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents));
 		}
-
 		else {
 			throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
 		}
@@ -347,6 +367,7 @@ class SimpleTemplate
             }
 
             $this->applyFilters($filters);
+		    $this->removeEmptyBlocks();
             return $this->contents;
 		}
 
@@ -406,29 +427,31 @@ class SimpleTemplate
      */
 	private function extend(): void
     {
-		if(preg_match($this->extendRex, $this->bufferInstance->__rawContents, $matches)) {
+        if ($this->parentTemplateFilename) {
+            if (file_exists($this->parentTemplateFilename)) {
+                $path = $this->parentTemplateFilename;
+            }
+            else {
+                $path = Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $this->parentTemplateFilename;
 
-			$blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $matches[2] . '\s*\}\s*-->~';
+                if (!file_exists($path)) {
+                    throw new SimpleTemplateException(sprintf("Parent template file '%s' not assigned.", $path), SimpleTemplateException::TEMPLATE_FILE_DOES_NOT_EXIST);
+                }
+            }
 
-			$extendedContent = file_get_contents(Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $matches[1]);
+            $this->contents = file_get_contents($path);
 
-			if(preg_match($blockRegExp, $extendedContent)) {
+            foreach ($this->blocks as $blockName => $markup) {
+                $blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
 
-				$this->bufferInstance->__rawContents = preg_replace(
-					$blockRegExp,
-					preg_replace(
-						$this->extendRex,
-						'',
-						$this->bufferInstance->__rawContents
-					),
-					$extendedContent
-				);
-
-			}
-			else {
-				throw new SimpleTemplateException(sprintf("Could not extend with '%s' at '%s'.", $matches[1], $matches[2]), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
-			}
-		}
+                if (preg_match($blockRegExp, $this->contents)) {
+                    $this->contents = preg_replace($blockRegExp, $markup, $this->contents);
+                }
+            }
+        }
+        else {
+            $this->contents = implode('', $this->blocks);
+        }
 	}
 
     /**
@@ -436,20 +459,30 @@ class SimpleTemplate
      *
      * @param SimpleTemplateFilterInterface[] $filters
      */
-	private function applyFilters(array $filters): void
+	private function applyFilters (array $filters): void
     {
         foreach ($filters as $filter) {
             $filter->apply($this->contents);
         }
 	}
 
+    /**
+     * remove any orphaned <!-- { block: ... } --> comments
+     */
+	private function removeEmptyBlocks (): void
+    {
+        $this->contents = preg_replace ('~<!--\s*{\s*block\s*:\s*.*?\s*}\s*-->~', '', $this->contents);
+    }
+
 	/**
-	 * fetches template file and evals content
-	 * immediate output supressed by output buffering
+	 * fetches template file and evaluates content
+	 * immediate output suppressed by output buffering
 	 */
 	private function fillBuffer(): void
     {
 	    // wrap bufferInstance in closure to allow the use of $this in template
+
+        $this->bufferInstance->__rawContents = $this->contents;
 
 	    $closure = function($outer) {
 
@@ -468,4 +501,48 @@ class SimpleTemplate
 	    $boundClosure = $closure->bindTo($this->bufferInstance);
 	    $boundClosure($this);
 	}
+
+    /**
+     * extract all blocks of the template
+     * all blocks must point to the same parent template
+     *
+     * @throws SimpleTemplateException
+     */
+	private function extractBlocks (): void
+    {
+        preg_match_all(self::EXTEND_REX, ltrim($this->rawContents), $matches, PREG_OFFSET_CAPTURE);
+
+        // blocks got identified
+
+        if ($matches[0]) {
+
+            // first extend is preceeded by chars
+
+            if ($matches[0][0][1]) {
+                throw new SimpleTemplateException('First extend directive preceeded by non-whitespace characters.');
+            }
+
+            // check for single parent template name
+
+            if (count(array_unique(array_column($matches[1], 0))) !== 1) {
+                throw new SimpleTemplateException('No support of multiple parent templates.');
+            }
+
+            $this->parentTemplateFilename = $matches[1][0][0];
+
+            $blocks = array_filter(preg_split (self::EXTEND_REX, $this->rawContents), 'trim');
+
+            if (count($matches[2]) !== count($blocks)) {
+                throw new SimpleTemplateException('Mismatch of block markers and block contents. Block contents must not be empty.');
+            }
+
+            $this->blocks = array_combine(array_column($matches[2], 0), array_map('trim', $blocks));
+        }
+
+        // no blocks
+
+        else {
+            $this->blocks = [trim($this->rawContents)];
+        }
+    }
 }
