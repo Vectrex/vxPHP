@@ -1,5 +1,11 @@
+## 2.6.0
+- SimpleTemplate allows several marked blocks in a child template which are inserted in a single parent template
+- redirects can now be configured both on route level
+- display of single menu entries can be configured with a display attribute set to "none"; menu entries expose setDisplay() and getDisplay() methods
+- bug fixes
+
 ## 2.5.0
-- path parameters can now have validators: route declarations can now contain placeholder elements with name, match and default attributes; matches are a regular expressions applied to the placeholder when matching routes
+- path parameters can now have validators: route declarations can now contain placeholder elements with name, match and default attributes; matches are regular expressions applied to the placeholder when matching routes
 - the Config constructor drops the "section" argument and replaces it with a generic "options" array; default config parsers are the parsers found in the Application\Config\Parser\Xml namespace
 - additional config parsers can be passed to the Config constructor in the options array under the "parser" key
 

@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.2.99 2021-02-01
+ * @version 2.3.0 2021-02-02
  *
  */
 
