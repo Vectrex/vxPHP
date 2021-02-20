@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.1.0 2020-11-12
+ * @version 2.1.1 2021-02-20
  *
  */
 
@@ -649,7 +649,7 @@ class Route
 
 			// extract values
 
-			if(preg_match('~' . $this->match . '~', ltrim(Request::createFromGlobals()->getPathInfo(), '/'), $values)) {
+			if(preg_match('~' . $this->match . '~', urldecode(ltrim(Request::createFromGlobals()->getPathInfo(), '/')), $values)) {
 
 				array_shift($values);
 

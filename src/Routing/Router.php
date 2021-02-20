@@ -21,7 +21,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.2.0 2020-11-27
+ * @version 2.2.1 2021-02-20
  *
  */
 class Router
@@ -238,7 +238,7 @@ class Router
 
 		// find route
 
-        $route = $this->findRoute($script, $request->getMethod(), $pathSegments);
+        $route = $this->findRoute($script, $request->getMethod(), array_map('urldecode', $pathSegments));
 
 		// no route found
 
