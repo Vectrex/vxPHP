@@ -1,3 +1,6 @@
+## 2.6.1
+- bug fixes for menu authentication and route parameter encoding
+
 ## 2.6.0
 - SimpleTemplate allows several marked blocks in a child template which are inserted in a single parent template
 - redirects can now be configured both on route level
