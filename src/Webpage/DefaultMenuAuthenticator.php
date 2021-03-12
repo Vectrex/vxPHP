@@ -26,25 +26,22 @@ use vxPHP\Webpage\Menu\Menu;
  * is hidden by setting it's display property to none
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.1, 2017-07-07
+ * @version 0.3.0, 2021-03-12
  * 
  */
 class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
-	
 	/**
 	 *
 	 * {@inheritdoc}
 	 *
 	 * @see \vxPHP\Webpage\Menu\MenuAuthenticatorInterface::authenticate()
 	 */
-	public function authenticate(Menu $menu, UserInterface $user = NULL) {
-
+	public function authenticate(Menu $menu, UserInterface $user = null): bool
+    {
 		// retrieve roles of current user
 		
 		if(!$user || !$user->isAuthenticated()) {
-		
 			$userRoles = [];
-		
 		}
 		
 		else {
@@ -60,49 +57,43 @@ class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
 			else {
 				$userRoles = $user->getRoles();
 			}
-		
 		}
 		
 		// menu needs no authentication, then check all its entries
-		
+
 		if(is_null($menu->getAuth())) {
-
 			$this->authenticateMenuEntries($menu, $userRoles);
-			return TRUE;
-
+			return true;
 		}
 		
 		// no user, user not authenticated or no roles assigned and menu needs authentication
 		
 		if(empty($userRoles)) {
-			return FALSE;
+			return false;
 		}
 		
 		// check all roles against menu auth configuration
 
 		$auth = $menu->getAuth();
-		$authenticates = FALSE;
+		$authenticates = false;
 		
 		foreach($userRoles as $role) {
 		
 			if($role->getRoleName() === $auth) {
-				$authenticates = TRUE;
+				$authenticates = true;
 				break;
 			}
 		
 		}
 		
 		// if user's role allows to access the menu proceed with checking menu entries
-		
+
 		if($authenticates) {
-		
 			$this->authenticateMenuEntries($menu, $userRoles);
-			return TRUE;
-		
+			return true;
 		}
 		
-		return FALSE;
-
+		return false;
 	}
 	
 	/**
@@ -112,29 +103,24 @@ class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
 	 * @param Menu $menu
 	 * @param Role[] $userRoles
 	 */
-	private function authenticateMenuEntries(Menu $menu, array $userRoles) {
-	
+	private function authenticateMenuEntries(Menu $menu, array $userRoles): void
+    {
 		foreach($menu->getEntries() as $e) {
-	
+
 			if(!$e->getAuth()) {
-				$e->setAttribute('display', NULL);
+				$e->setDisplay(true);
 			}
-	
+
 			else {
-				$e->setAttribute('display', 'none');
+				$e->setDisplay(false);
 	
 				foreach($userRoles as $role) {
-						
 					if($e->isAuthenticatedByRole($role)) {
-						$e->setAttribute('display', NULL);
+						$e->setDisplay(true);
 						break;
 					}
-
 				}
 			}
-	
 		}
-	
 	}
-	
 }
