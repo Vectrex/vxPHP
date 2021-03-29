@@ -1,3 +1,6 @@
+## 2.6.2
+- bug fix: SimpleTemplate::insertTemplateAt() left angle bracket artifacts
+
 ## 2.6.1
 - bug fixes for menu authentication and route parameter encoding
 

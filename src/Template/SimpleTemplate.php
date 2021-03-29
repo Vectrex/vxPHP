@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.3.0 2021-02-02
+ * @version 2.3.1 2021-03-29
  *
  */
 
@@ -98,7 +98,7 @@ class SimpleTemplate
     /**
      * the regular expression format to search for "block" directives
      */
-    protected const BLOCK_REX_FORMAT = '<!--\s*{\s*block\s*:\s*%s\s*}\s*-->';
+    protected const BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*%s\s*}\s*-->~';
 
     /**
      * initialize template based on $file
