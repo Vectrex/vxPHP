@@ -19,10 +19,10 @@ use vxPHP\Database\DatabaseInterface;
  * abstract class for ORM queries
  *
  * @author Gregor Kofler
- * @version 0.4.0 2017-03-09
+ * @version 0.4.1 2021-04-28
  */
-abstract class Query implements QueryInterface {
-
+abstract class Query implements QueryInterface
+{
 	/**
 	 * @var DatabaseInterface
 	 */
@@ -50,8 +50,8 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param DatabaseInterface $dbConnection
 	 */
-	public function __construct(DatabaseInterface $dbConnection) {
-
+	public function __construct(DatabaseInterface $dbConnection)
+    {
 		$this->dbConnection = $dbConnection;
 
 		if(defined(get_class($dbConnection) . '::QUOTE_CHAR')) {
@@ -60,7 +60,6 @@ abstract class Query implements QueryInterface {
 		else {
 			$this->quoteChar = ' ';
 		}
-
 	}
 
 	/**
@@ -69,10 +68,10 @@ abstract class Query implements QueryInterface {
 	 * @param string $columnName
 	 * @param string|number|array $value
 	 * 
-	 * @return \vxPHP\Orm\Query
+	 * @return \vxPHP\Orm\QueryInterface
 	 */
-	public function filter($columnName, $value) {
-
+	public function filter(string $columnName, $value): QueryInterface
+    {
 		if(is_array($value)) {
 			$this->addCondition($columnName, $value, 'IN');
 		}
@@ -81,7 +80,6 @@ abstract class Query implements QueryInterface {
 			$this->addCondition($columnName, $value, '=');
 		}
 		return $this;
-
 	}
 
 	/**
@@ -89,33 +87,32 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param string $table
 	 * @param string $on
-	 * 
-	 * @return \vxPHP\Orm\Query
+	 *
+	 * @return \vxPHP\Orm\QueryInterface
 	 */
-	public function innerJoin($table, $on) {
-
-		$join			= new \stdClass();
-		$join->table	= $table;
-		$join->on		= $on;
+	public function innerJoin(string $table, string $on): QueryInterface
+    {
+		$join = new \stdClass();
+		$join->table = $table;
+		$join->on = $on;
 
 		$this->innerJoins[] = $join;
 		
 		return $this;
 	}
 
-	/**
-	 * add an "arbitrary" WHERE clause and values to bind
-	 *
-	 * @param string $whereClause
-	 * @param array $valuesToBind
-	 * 
-	 * @return \vxPHP\Orm\Query
-	 */
-	public function where($whereClause, array $valuesToBind = NULL) {
-
+    /**
+     * add an "arbitrary" WHERE clause and values to bind
+     *
+     * @param string $whereClause
+     * @param array|null $valuesToBind
+     *
+     * @return \vxPHP\Orm\QueryInterface
+     */
+	public function where(string $whereClause, array $valuesToBind = null): QueryInterface
+    {
 		$this->addCondition($whereClause, $valuesToBind);
 		return $this;
-
 	}
 
 	/**
@@ -124,19 +121,18 @@ abstract class Query implements QueryInterface {
 	 * @param string $columnName
 	 * @param boolean $asc
 	 * 
-	 * @return \vxPHP\Orm\Query
+	 * @return \vxPHP\Orm\QueryInterface
 	 */
-	public function sortBy($columnName, $asc = TRUE) {
-
+	public function sortBy(string $columnName, bool $asc = true): QueryInterface
+    {
 		$sort = new \stdClass();
 
 		$sort->column = $columnName;
-		$sort->asc = !!$asc;
+		$sort->asc = $asc;
 
 		$this->columnSorts[] = $sort;
 
 		return $this;
-
 	}
 
 	/**
@@ -146,12 +142,11 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @param DatabaseInterface $dbConnection
 	 * 
-	 * @return \vxPHP\Orm\Query
+	 * @return \vxPHP\Orm\QueryInterface
 	 */
-	public static function create(DatabaseInterface $dbConnection) {
-
+	public static function create(DatabaseInterface $dbConnection): QueryInterface
+    {
 		return new static($dbConnection);
-
 	}
 
 	/**
@@ -159,43 +154,41 @@ abstract class Query implements QueryInterface {
 	 *
 	 * @return int
 	 */
-	abstract public function count();
+	abstract public function count(): int;
 
 	/**
 	 * executes query and returns array of (custom) row instances
 	 *
 	 * @return array
 	 */
-	abstract public function select();
+	abstract public function select(): array;
 
 	/**
 	 * adds LIMIT clause, executes query and returns array of (custom) row instances
 	 *
-	 * @param number $rows
+	 * @param int $count
 	 * @return array
 	 */
-	abstract public function selectFirst($rows = 1);
+	abstract public function selectFirst(int $count = 1): array;
 
 	/**
 	 * adds LIMIT clause with offset and count, executes query and returns array of (custom) row instances
 	 *
 	 * @see \vxPHP\Orm\QueryInterface::selectFromTo()
 	 */
-	abstract public function selectFromTo($from, $to);
+	abstract public function selectFromTo(int $from, int $to): array;
 
 	/**
 	 * @see \vxPHP\Orm\QueryInterface::dumpSql()
 	 */
-	public function dumpSql() {
-
+	public function dumpSql(): string
+    {
 		if(!$this->sql) {
 			$this->buildQueryString();
 		}
 
 		return $this->sql;
-
 	}
-
 
 	/**
 	 * stores WHERE clause and values which must be bound
@@ -206,24 +199,23 @@ abstract class Query implements QueryInterface {
 	 * @param string|number|array $value
 	 * @param string $operator
 	 */
-	protected function addCondition($conditionOrColumn, $value = NULL, $operator = NULL) {
-
+	protected function addCondition(string $conditionOrColumn, $value = null, $operator = null): void
+    {
 		$condition = new \stdClass();
 
-		$condition->conditionOrColumn	= $conditionOrColumn;
-		$condition->value				= $value;
-		$condition->operator			= strtoupper($operator);
+		$condition->conditionOrColumn = $conditionOrColumn;
+		$condition->value = $value;
+		$condition->operator = strtoupper($operator);
 
 		$this->whereClauses[] = $condition;
-
 	}
 
 	/**
 	 * builds query string by parsing WHERE and ORDER BY clauses
 	 * @todo incomplete masking (e.g. ON clauses)
 	 */
-	protected function buildQueryString() {
-
+	protected function buildQueryString(): void
+    {
 		$w = [];
 		$s = [];
 
@@ -239,9 +231,7 @@ abstract class Query implements QueryInterface {
 			$this->sql .= '*';
 		}
 		else {
-			
 			$this->sql .= $qc . str_replace('.', $qc . '.' . $qc, implode($qc . ',' . $qc, $this->columns)) . $qc;
-				
 		}
 
 		// add table
@@ -304,28 +294,25 @@ abstract class Query implements QueryInterface {
 		if(count($s)) {
 			$this->sql .= ' ORDER BY ' . implode(', ', $s);
 		}
-
 	}
 
 	/**
 	 * prepares array containing values which must be bound to prepared statement
 	 */
-	protected function buildValuesArray() {
-
+	protected function buildValuesArray(): void
+    {
 		foreach($this->whereClauses as $where) {
 
 			if(is_null($where->value)) {
 				continue;
 			}
 			if(is_array($where->value)) {
-				$this->valuesToBind = array_merge($this->valuesToBind, $where->value);
+				array_push($this->valuesToBind, ...$where->value);
 			}
 			else {
 				$this->valuesToBind[] = $where->value;
 			}
-
 		}
-
 	}
 
 	/**

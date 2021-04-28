@@ -15,24 +15,11 @@ namespace vxPHP\Form\FormElement\FormElementWithOptions;
  * a select element of type multiple
  *
  * @author Gregor Kofler
- * @version 0.8.0 2019-01-06
+ * @version 0.8.1 2021-04-28
  */
 class MultipleSelectElement extends SelectElement
 {
-
-	/**
-	 * initialize element with name and value
-	 * value can be string or array
-	 * 
-	 * @param string $name
-	 * @param string|array $value
-	 */
-	public function __construct($name, $value = null)
-    {
-		parent::__construct($name, $value);
-	}
-
-	/**
+    /**
 	 * @see SelectElement::appendOption()
      * @param FormElementFragmentInterface $option
      * @return $this|FormElementWithOptionsInterface|SelectElement
@@ -53,7 +40,6 @@ class MultipleSelectElement extends SelectElement
 		}
 
 		return $this;
-
 	}
 
     /**
@@ -65,7 +51,6 @@ class MultipleSelectElement extends SelectElement
      */
 	public function setValue($value = null)
     {
-
 		if(isset($value)) {
 
 			//ENT_QUOTES not set
@@ -86,7 +71,6 @@ class MultipleSelectElement extends SelectElement
 		}
 		
 		return $this;
-
 	}
 
     /**
@@ -96,9 +80,8 @@ class MultipleSelectElement extends SelectElement
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
-	public function render($force = false)
+	public function render($force = false): string
     {
-
         if(empty($this->html) || $force) {
 
             $attr = [];
@@ -119,6 +102,5 @@ class MultipleSelectElement extends SelectElement
         }
 
         return $this->html;
-
 	}
 }

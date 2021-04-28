@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.8.0 2021-01-13
+ * @version 0.8.1 2021-04-28
  */
 class MenuEntry
 {
@@ -258,7 +258,7 @@ class MenuEntry
      * @param string $path
      * @return MenuEntry
      */
-    public function setPath(string $path): MenuEntry
+    public function setPath(string $path)
     {
         $this->path = trim($path, '/');
 

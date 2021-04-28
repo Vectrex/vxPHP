@@ -17,8 +17,8 @@ namespace vxPHP\Form\FormElement;
  * 
  * @author Gregor Kofler
  */
-class ButtonElement extends InputElement {
-
+class ButtonElement extends InputElement
+{
 	private	$innerHTML = '';
 	
 	/**
@@ -30,8 +30,8 @@ class ButtonElement extends InputElement {
 	 * @param string $value
 	 * @param string $type
 	 */
-	public function __construct($name, $value = NULL, $type = NULL) {
-
+	public function __construct(string $name, string $value = null, string $type = null)
+    {
 		parent::__construct($name, $value);
 
 		if(isset($type)) {
@@ -42,14 +42,15 @@ class ButtonElement extends InputElement {
 		}
 	}
 
-	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::setType()
-	 * 
-	 * @return vxPHP\Form\FormElement\ButtonElement
-	 */
-	public function setType($type) {
-
+    /**
+     * (non-PHPdoc)
+     * @param string $type
+     * @return ButtonElement
+     * @see \vxPHP\Form\FormElement\InputElement::setType()
+     *
+     */
+	public function setType(string $type)
+    {
 		$type = strtolower($type);
 
 		if(in_array($type, array('button', 'submit', 'reset'))) {
@@ -57,7 +58,6 @@ class ButtonElement extends InputElement {
 		}
 
 		return $this;
-
 	}
 
 	/**
@@ -66,19 +66,18 @@ class ButtonElement extends InputElement {
 	 * @param string $html
 	 * @return \vxPHP\Form\FormElement\ButtonElement
 	 */
-	public function setInnerHTML($html) {
-
+	public function setInnerHTML($html)
+    {
 		$this->innerHTML = $html;
 		return $this;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = FALSE) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 			$attr = array();
 			foreach($this->attributes as $k => $v) {

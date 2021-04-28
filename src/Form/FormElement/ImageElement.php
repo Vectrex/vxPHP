@@ -24,19 +24,18 @@ class ImageElement extends InputElement {
 	 * @param string $name
 	 * @param string $src
 	 */
-	public function __construct($name, $src = null) {
-
+	public function __construct(string $name, string $src)
+    {
 		parent::__construct($name, $src);
 		$this->setAttribute('alt', pathinfo($src, PATHINFO_FILENAME));
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
         if(empty($this->html) || $force) {
 
             $attr = [
@@ -61,6 +60,5 @@ class ImageElement extends InputElement {
         }
 
         return $this->html;
-
 	}
 }

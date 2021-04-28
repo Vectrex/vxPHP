@@ -15,7 +15,7 @@ use vxPHP\Security\Exception\CaptchaException;
 
 /**
  * Captcha
- * @version 0.2.3, 2020-11-27
+ * @version 0.2.4, 2021-04-28
  * @author Gregor Kofler
  */
 class Captcha {
@@ -91,12 +91,10 @@ class Captcha {
 	
 	public function setFontColor($color): Captcha
     {
-		$colors = (array) $color;
+		foreach((array) $color as $c) {
 
-		foreach($colors as $color) {
-
-			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($color), $matches)) {
-				throw new CaptchaException(sprintf("Invalid font color '%s'.", trim($color)));
+			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
+				throw new CaptchaException(sprintf("Invalid font color '%s'.", trim($c)));
 			}
 
 			$this->fontColors[] = [
@@ -111,12 +109,10 @@ class Captcha {
 
 	public function setGridColor($color): Captcha
     {
-		$colors = (array) $color;
+		foreach((array) $color as $c) {
 
-		foreach($colors as $color) {
-
-			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($color), $matches)) {
-				throw new CaptchaException(sprintf("Invalid grid color '%s'.", trim($color)));
+			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
+				throw new CaptchaException(sprintf("Invalid grid color '%s'.", trim($c)));
 			}
 			
 			$this->gridColors[] = [
@@ -245,7 +241,6 @@ class Captcha {
 			imagettftext($image, $this->fontSize, $angle, $x, $y, $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string[$i]);
 			$x += $this->fontSize + random_int(-$this->fontSize, $this->fontSize) / 5;
 			$y += random_int(-$this->fontSize, $this->fontSize) / 4;
-
 		}
 
 		if($this->gridColors) {

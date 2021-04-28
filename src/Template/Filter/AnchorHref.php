@@ -32,13 +32,13 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 	public function apply(&$templateString): void
     {
 		$templateString = preg_replace_callback(
-			'~<a(.*?)\s+href=("|\')\$([a-z0-9_]+[a-z0-9_.\/-]*)(.*?)\2(.*?)>~i',
+			'~<a(.*?)\s+href=(["\'])\$([a-z0-9_]+[a-z0-9_./-]*)(.*?)\2(.*?)>~i',
 			array($this, 'filterHrefWithPath'),
 			$templateString
 		);
 
 		$templateString = preg_replace_callback(
-			'~<a(.*?)\s+href=("|\')\$\/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
+			'~<a(.*?)\s+href=(["\'])\$/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
 			array($this, 'filterHref'),
 			$templateString
 		);
@@ -55,7 +55,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function filterHrefWithPath($matches): string
+	private function filterHrefWithPath(array $matches): string
     {
 		static $script;
 		static $observeRewrite;
@@ -76,21 +76,16 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 		$matchSegments = explode('/', $matches[3]);
 		$pathToFind = array_shift($matchSegments);
 		
-		$recursiveFind = function(Menu $m) use (&$recursiveFind, $pathToFind) {
-
+		$recursiveFind = static function(Menu $m) use (&$recursiveFind, $pathToFind)
+        {
 			foreach($m->getEntries() as $e) {
 
-				if($e->getPath() === $pathToFind) {
-					return $e;
-				}
-
-				if(($sm = $e->getSubMenu()) && $sm->getType() !== 'dynamic') {
-					if($e = $recursiveFind($sm)) {
-						return $e;
-					}
-				}
+				if($e->getPath() === $pathToFind || (($sm = $e->getSubMenu()) && $sm->getType() !== 'dynamic' && $e = $recursiveFind($sm))) {
+                    return $e;
+                }
 			}
 
+			return null;
 		};
 
 		foreach($config->menus as $menu) {
@@ -131,7 +126,6 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 			$uri = implode('/', $uriParts) . $matches[4];
 
 			return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
-
 		}
 	}
 
@@ -144,7 +138,7 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function filterHref($matches)
+	private function filterHref(array $matches): string
     {
 		static $script;
 		static $observeRewrite;

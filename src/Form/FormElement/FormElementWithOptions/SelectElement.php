@@ -22,20 +22,18 @@ class SelectElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::appendOption()
 	 */
-	public function appendOption(FormElementFragmentInterface $option) {
-
+	public function appendOption(FormElementFragmentInterface $option)
+    {
 		parent::appendOption($option);
-		
 		return $this;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::createOptions()
 	 */
-	public function createOptions(Array $options) {
-
+	public function createOptions(Array $options)
+    {
 		$this->options = [];
 
 		foreach($options as $k => $v) {
@@ -43,17 +41,15 @@ class SelectElement extends FormElementWithOptions {
 		}
 
 		$this->setValue();
-
 		return $this;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
 			$attr = [];

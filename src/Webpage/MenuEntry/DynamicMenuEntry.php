@@ -17,13 +17,13 @@ class DynamicMenuEntry extends MenuEntry
 		parent::__construct($path, $attributes);
 	}
 
-	public function setPath($path): DynamicMenuEntry
+	public function setPath($path)
     {
 		$this->path = $path;
 		return $this;
 	}
 
-	public function setAttributes(Array $attributes): DynamicMenuEntry
+	public function setAttributes(Array $attributes)
     {
 		foreach($attributes as $attr => $value) {
 			$this->attributes->$attr = $value;

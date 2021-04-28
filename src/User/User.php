@@ -17,10 +17,10 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 2.1.1 2017-07-07 
+ * @version 2.1.2 2021-04-28
  */
-class User implements UserInterface {
-	
+class User implements UserInterface
+{
 	/**
 	 * name of user
 	 * 
@@ -68,8 +68,8 @@ class User implements UserInterface {
 	 * @param array $attributes
 	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($username, $hashedPassword = '', array $roles = [], array $attributes = []) {
-		
+	public function __construct(string $username, string $hashedPassword = '', array $roles = [], array $attributes = [])
+    {
 		$username = trim($username);
 		
 		if(!$username) {
@@ -80,17 +80,15 @@ class User implements UserInterface {
 		$this->setHashedPassword($hashedPassword);
 		$this->setRoles($roles);
 		$this->attributes = array_change_key_case($attributes, CASE_LOWER);
-
-	}
+    }
 
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::getUsername()
 	 */
-	public function getUsername() {
-
+	public function getUsername(): string
+    {
 		return $this->username;
-
 	}
 
 	/**
@@ -98,20 +96,18 @@ class User implements UserInterface {
 	 *
 	 * @return string
 	 */
-	public function ___toString() {
-
+	public function __toString()
+    {
 		return $this->username;
-
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::getHashedPassword()
 	 */
-	public function getHashedPassword() {
-
+	public function getHashedPassword(): string
+    {
 		return $this->hashedPassword;
-
 	}
 
 	/**
@@ -122,28 +118,26 @@ class User implements UserInterface {
 	 * @param string $hashedPassword
 	 * @return \vxPHP\User\User
 	 */
-	public function setHashedPassword($hashedPassword) {
-
+	public function setHashedPassword(string $hashedPassword): User
+    {
 		if($hashedPassword !== $this->hashedPassword) {
-			$this->authenticated = FALSE;
+			$this->authenticated = false;
 			$this->hashedPassword = $hashedPassword;
 		}
 
 		return $this;
-
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::getAttribute()
 	 */
-	public function getAttribute($attribute, $default = NULL) {
-
+	public function getAttribute(string $attribute, $default = null): string
+    {
 		if (!$this->attributes || !array_key_exists(strtolower($attribute), $this->attributes)) {
 			return $default;
 		}
 		return $this->attributes[strtolower($attribute)];
-	
 	}
 
 	/**
@@ -163,36 +157,33 @@ class User implements UserInterface {
 	 * @see \vxPHP\User\UserInterface::replaceAttributes()
 	 * @return \vxPHP\User\User
 	 */
-	public function replaceAttributes(array $attributes) {
-		
+	public function replaceAttributes(array $attributes): User
+    {
 		$this->attributes = array_change_key_case($attributes, CASE_LOWER);
 		return $this;
-		
 	}
 	
 	/**
 	 * compare passed plain text password with
 	 * stored hashed password and store result
 	 * 
-	 * @param unknown $plaintextPassword
+	 * @param string $plaintextPassword
 	 * @return \vxPHP\User\User
 	 */
-	public function authenticate($plaintextPassword) {
-		
+	public function authenticate(string $plaintextPassword): User
+    {
 		$encrypter = new PasswordEncrypter();
 		$this->authenticated = $encrypter->isPasswordValid($plaintextPassword, $this->hashedPassword);
 		return $this;
-
-	}
+    }
 
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::isAuthenticated()
 	 */
-	public function isAuthenticated() {
-		
+	public function isAuthenticated(): ?bool
+    {
 		return $this->authenticated;
-		
 	}
 
 	/**
@@ -202,10 +193,9 @@ class User implements UserInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::hasRole()
 	 */
-	public function hasRole($roleName) {
-
+	public function hasRole(string $roleName): bool
+    {
 		return array_key_exists(strtolower($roleName), $this->roles);
-
 	}
 
 	/**
@@ -215,8 +205,8 @@ class User implements UserInterface {
 	 * @throws \InvalidArgumentException
 	 * @return \vxPHP\User\User
 	 */
-	public function setRoles(array $roles) {
-		
+	public function setRoles(array $roles): User
+    {
 		$this->roles = [];
 		
 		foreach($roles as $role) {
@@ -241,10 +231,9 @@ class User implements UserInterface {
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::getRoles()
 	 */
-	public function getRoles() {
-	
-		return array_values($this->roles);
-
+	public function getRoles(): array
+    {
+        return array_values($this->roles);
 	}
 
 	/**
@@ -254,19 +243,15 @@ class User implements UserInterface {
 	 * @param RoleHierarchy $roleHierarchy
 	 * @return Role[]
 	 */
-	public function getRolesAndSubRoles(RoleHierarchy $roleHierarchy) {
-
+	public function getRolesAndSubRoles(RoleHierarchy $roleHierarchy): array
+    {
 		$possibleRoles = [];
 		
 		foreach($this->roles as $role) {
-			
 			$possibleRoles[] = $role;
-			$possibleRoles = array_merge($possibleRoles, $roleHierarchy->getSubRoles($role));
-			
-			return $possibleRoles;
-
+			array_push ($possibleRoles, ...$roleHierarchy->getSubRoles($role));
 		}
+
+        return $possibleRoles;
 	}
-	
-	
 }

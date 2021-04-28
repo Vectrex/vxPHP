@@ -15,22 +15,11 @@ use vxPHP\Http\Request;
 class FileInputElement extends InputElement
 {
     /**
-     * initialize element with name and value
-     *
-     * @param string $name
-     * @param string $value
-     */
-    public function __construct($name, $value = null)
-    {
-        parent::__construct($name, $value);
-    }
-
-    /**
      * return type of element
      *
      * @return string
      */
-    public function getType()
+    public function getType(): string
     {
         return 'file';
     }
@@ -41,7 +30,7 @@ class FileInputElement extends InputElement
      *
      * @return string
      */
-    public function getValue()
+    public function getValue(): ?string
     {
         $file = $this->getFile();
 
@@ -74,10 +63,9 @@ class FileInputElement extends InputElement
      *
      * @return UploadedFile | UploadedFile[]
      */
-    public function getFile() {
-
+    public function getFile()
+    {
         return Request::createFromGlobals()->files->get($this->name);
-
     }
 
     /**
@@ -87,7 +75,7 @@ class FileInputElement extends InputElement
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
      */
-    public function render($force = false)
+    public function render($force = false): string
     {
         if(empty($this->html) || $force) {
 
@@ -118,8 +106,5 @@ class FileInputElement extends InputElement
         }
 
         return $this->html;
-
     }
-
-
 }

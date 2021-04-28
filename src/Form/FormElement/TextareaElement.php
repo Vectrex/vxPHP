@@ -22,8 +22,8 @@ class TextareaElement extends FormElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
 	 */
-	public function render($force = FALSE) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
 			$attr = array();
@@ -35,10 +35,7 @@ class TextareaElement extends FormElement {
 				implode(' ', $attr),
 				$this->getModifiedValue()
 			);
-
 		}
-
 		return $this->html;
-
 	}
 }

@@ -22,8 +22,8 @@ class PasswordInputElement extends InputElement {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
 			$this->attributes['type'] = 'password';
@@ -32,6 +32,5 @@ class PasswordInputElement extends InputElement {
 		}
 
 		return $this->html;
-
 	}
 }

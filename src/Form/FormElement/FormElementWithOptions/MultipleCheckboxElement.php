@@ -19,7 +19,7 @@ class MultipleCheckboxElement extends FormElementWithOptions {
 
 	}
 
-	public function render() {
+	public function render(): string {
 
 	}
 }

@@ -14,33 +14,22 @@ namespace vxPHP\Form\FormElement;
 /**
  * generic input element
  *
- * @version 0.11.1 2018-01-06
+ * @version 0.11.2 2021-04-28
  * @author Gregor Kofler
  */
-class InputElement extends FormElement {
-
-	/**
-	 * initialize element with name and value
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 */
-	public function __construct($name, $value = null) {
-		parent::__construct($name, $value);
-	}
-
+class InputElement extends FormElement
+{
 	/**
 	 * return type of element
 	 * 
 	 * @return string
 	 */
-	public function getType() {
-
+	public function getType(): string
+    {
 		if(!isset($this->attributes['type'])) {
 			$this->attributes['type'] = 'text';
 		}
 		return $this->attributes['type'];
-
 	}
 	
 	/**
@@ -50,8 +39,8 @@ class InputElement extends FormElement {
 	 * @param string $type
 	 * @return \vxPHP\Form\FormElement\InputElement
 	 */
-	public function setType($type) {
-
+	public function setType(string $type)
+    {
 		if(empty($type)) {
 			$type = 'text';
 		}
@@ -59,7 +48,6 @@ class InputElement extends FormElement {
 		$this->attributes['type'] = $type;
 		
 		return $this;
-
 	}
 
 	/**
@@ -69,17 +57,14 @@ class InputElement extends FormElement {
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @throws \vxPHP\Template\Exception\SimpleTemplateException
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
             if($this->template) {
-
                 parent::render();
             }
-
             else {
-
                 if(!isset($this->attributes['type'])) {
                     $this->attributes['type'] = 'text';
                 }
@@ -96,12 +81,9 @@ class InputElement extends FormElement {
                     htmlspecialchars($this->getModifiedValue()),
                     implode(' ', $attr)
                 );
-
             }
-
         }
 
 		return $this->html;
-
 	}
 }

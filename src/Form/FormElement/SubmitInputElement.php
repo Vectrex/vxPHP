@@ -16,14 +16,14 @@ namespace vxPHP\Form\FormElement;
  *
  * @author Gregor Kofler
  */
-class SubmitInputElement extends InputElement {
-	
+class SubmitInputElement extends InputElement
+{
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
 			$this->attributes['type'] = 'submit';
@@ -32,6 +32,5 @@ class SubmitInputElement extends InputElement {
 		}
 
 		return $this->html;
-
 	}
 }

@@ -24,8 +24,8 @@ class RadioElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::createOptions()
 	 */
-	public function createOptions(Array $options) {
-
+	public function createOptions(Array $options)
+    {
 		$this->options = [];
 
 		foreach($options as $value => $label) {
@@ -33,15 +33,14 @@ class RadioElement extends FormElementWithOptions {
 		}
 		
 		return $this;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
             //@TODO flexible rendering of options
@@ -60,14 +59,10 @@ class RadioElement extends FormElementWithOptions {
                     implode(' ', $attr),
                     $o->render()
                 );
-
             }
 
             $this->html = implode("\n", $options);
-
 		}
-
 		return $this->html;
-
 	}
 }

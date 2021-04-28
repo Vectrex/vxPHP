@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  * in addition allowing only future dates can be configured
  * handles currently dates in german, us and iso style
  * 
- * @version 0.3.1 2017-10-04
+ * @version 0.3.2 2021-04-28
  * @author Gregor Kofler
  */
 class Date extends AbstractConstraint
@@ -105,7 +105,7 @@ class Date extends AbstractConstraint
 				
 				// e.g. nn.n.nn or n-nn-nnnn or nn/nn/nnnn 
 
-				$rex = '\d{1,2}([\.\/-])\d{1,2}\1(?:\d{2}|\d{4})';
+				$rex = '\d{1,2}([./-])\d{1,2}\1(?:\d{2}|\d{4})';
 
 				if(!preg_match('~^' . $rex . '$~', $value, $matches))	{
 					
@@ -154,7 +154,7 @@ class Date extends AbstractConstraint
 				
 				// e.g. yyyy.mm.dd or yy-mm-dd
 
-				$rex = '(?:\d{2}|\d{4})(\.|/|\-)\d{1,2}\1\d{1,2}';
+				$rex = '(?:\d{2}|\d{4})([./\-])\d{1,2}\1\d{1,2}';
 
 				if(!preg_match('~^' . $rex . '$~', $value, $matches))	{
 

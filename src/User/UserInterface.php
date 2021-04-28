@@ -18,7 +18,7 @@ namespace vxPHP\User;
  * any assumptions how the users are generated or authenticated
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0, 2017-02-21
+ * @version 0.2.1, 2021-04-28
  *
  */
 interface UserInterface {
@@ -29,7 +29,7 @@ interface UserInterface {
 	 *
 	 * @return string
 	 */
-	public function getUsername();
+	public function getUsername(): string;
 	
 	/**
 	 * return the hashed password, a plain text password should never be
@@ -39,7 +39,7 @@ interface UserInterface {
 	 *
 	 * @return string
 	 */
-	public function getHashedPassword();
+	public function getHashedPassword(): string;
 	
 	/**
 	 * return an additional attribute associated with the user (e.g.
@@ -49,7 +49,7 @@ interface UserInterface {
 	 * @param mixed $default
 	 * @return mixed the attribute value
 	 */
-	public function getAttribute($attribute, $default);
+	public function getAttribute(string $attribute, $default);
 	
 	/**
 	 * sets an additional attribute associated with the user
@@ -57,7 +57,7 @@ interface UserInterface {
 	 * @param string $attribute
 	 * @param mixed $value
 	 */
-	public function setAttribute($attribute, $value);
+	public function setAttribute(string $attribute, $value);
 	
 	/**
 	 * replaces all additional attributes associated with the user
@@ -71,7 +71,7 @@ interface UserInterface {
 	 *
 	 * @return boolean
 	 */
-	public function isAuthenticated();
+	public function isAuthenticated(): ?bool;
 
 	/**
 	 * returns all roles the user can take
@@ -80,7 +80,7 @@ interface UserInterface {
 	 *
 	 * @return Role[]
 	 */
-	public function getRoles();
+	public function getRoles(): array;
 	
 	/**
 	 * check whether a role has been assigned to the user
@@ -90,5 +90,5 @@ interface UserInterface {
 	 * @param string $roleName
 	 * @return boolean
 	 */
-	public function hasRole($roleName);
+	public function hasRole(string $roleName): bool;
 }

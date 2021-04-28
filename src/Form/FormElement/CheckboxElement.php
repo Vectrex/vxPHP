@@ -14,7 +14,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.11.0 2018-12-15
+ * @version 0.11.1 2021-04-21
  * @author Gregor Kofler
  *
  */
@@ -25,15 +25,15 @@ class CheckboxElement extends InputElement {
      */
 	private $checked;
 
-	/**
-	 * inialize a <input type="checkbox"> element instance
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 * @param boolean $checked
-	 * @param LabelElement $label
-	 */
-	public function __construct($name, $value = null, $checked = false, LabelElement $label = null) {
+    /**
+     * inialize a <input type="checkbox"> element instance
+     *
+     * @param string $name
+     * @param mixed $value
+     * @param boolean $checked
+     * @param LabelElement|null $label
+     */
+	public function __construct(string $name, $value = null, bool $checked = false, LabelElement $label = null) {
 
 		parent::__construct($name, $value);
 		$this->setChecked($checked);
@@ -41,7 +41,6 @@ class CheckboxElement extends InputElement {
 		if($label) {
             $this->setLabel($label);
         }
-
 	}
 
 	/**
@@ -50,30 +49,28 @@ class CheckboxElement extends InputElement {
 	 * @param boolean $state
 	 * @return \vxPHP\Form\FormElement\CheckboxElement
 	 */
-	public function setChecked($state) {
-		
-		$this->checked = !!$state;
+	public function setChecked(bool $state)
+    {
+		$this->checked = $state;
 		return $this;
-
-	}
+    }
 
     /**
 	 * get checked state of checkbox
 	 * 
 	 * @return boolean
 	 */
-	public function getChecked() {
-
+	public function getChecked(): bool
+    {
 		return $this->checked;
-
 	}
 
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()
 	 */
-	public function render($force = false) {
-
+	public function render($force = false): string
+    {
 		if(empty($this->html) || $force) {
 
 			if($this->checked) {
@@ -89,6 +86,5 @@ class CheckboxElement extends InputElement {
 		}
 
 		return $this->html;
-
 	}
 }

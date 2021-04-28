@@ -32,7 +32,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.5 2020-11-27
+ * @version 1.9.6 2021-04-28
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -1028,7 +1028,7 @@ class HtmlForm
 		}
 
 		foreach($fields as $f) {
-			if(preg_match_all('~<\s*a\s+href\s*\=\s*(\\\\*"|\\\\*\')?http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
+			if(preg_match_all('~<\s*a\s+href\s*=\s*(\\\\*"|\\\\*\')?http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
 				return true;
 			}
 			if(preg_match('~\[\s*url.*?]~i', $this->requestValues->get($f))) {
@@ -1129,11 +1129,11 @@ class HtmlForm
 		// insert misc html
 		foreach($this->miscHtml as $k => $v) {
 			if(!is_array($v)) {
-				$this->template = preg_replace("/\{html:$k\}/i", $v, $this->template);
+				$this->template = preg_replace("/{html:$k}/i", $v, $this->template);
 			}
 			else {
 				foreach($v as $vv) {
-					$this->template = preg_replace("/\{html:$k\}/i", $vv, $this->template, 1);
+					$this->template = preg_replace("/{html:$k}/i", $vv, $this->template, 1);
 				}
 			}
 		}
