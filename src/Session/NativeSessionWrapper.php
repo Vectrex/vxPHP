@@ -12,87 +12,35 @@
 namespace vxPHP\Session;
 
 /**
- * wraps native \SessionHandler on PHP 5.4+
+ * wraps native \SessionHandler
  * 
  * @author Gregor Kofler
  * 
- * @version 0.1.0 2015-03-14
+ * @version 0.2.0 2021-05-08
  */
-class NativeSessionWrapper implements \SessionHandlerInterface {
-
-			/**
-			 * @var \SessionHandler
-			 */
-	private $handler;
-	
-			/**
-			 * @var boolean
-			 */
+class NativeSessionWrapper extends \SessionHandler
+{
+    /**
+     * @var boolean
+     */
 	private	$active;
 
 	/**
-	 * 
-	 */
-	public function __construct() {
-		
-		$this->handler = new \SessionHandler();
-		
-	}
-
-	/**
 	 * {@inheritdoc }
 	 */  
-	public function open($savePath, $sessionName) {
-
-		$this->active = (bool) $this->handler->open($savePath, $sessionName);
+	public function open($path, $name): bool
+    {
+		$this->active = parent::open($path, $name);
 		return $this->active;
-
 	}
 
 	/**
 	 * {@inheritdoc }
 	 */  
-	public function close() {
-
+	public function close(): bool
+    {
 		$this->active = false;
-		return (bool) $this->handler->close();
-
-	}
-	
-	/**
-	 * {@inheritdoc }
-	 */  
-	public function read($sessionId) {
-
-		return (string) $this->handler->read($sessionId);
-
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function write($sessionId, $data) {
-
-		return (bool) $this->handler->write($sessionId, $data);
-
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function destroy($sessionId) {
-
-		return (bool) $this->handler->destroy($sessionId);
-
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function gc($maxlifetime) {
-
-		return (bool) $this->handler->gc($maxlifetime);
-
+		return parent::close();
 	}
 	
     /**
@@ -100,10 +48,9 @@ class NativeSessionWrapper implements \SessionHandlerInterface {
      *
      * @return string
      */
-    public function getId() {
-
+    public function getId(): string
+    {
     	return session_id();
-
     }
 
     /**
@@ -111,9 +58,8 @@ class NativeSessionWrapper implements \SessionHandlerInterface {
      *
      * @return string
      */
-    public function getName() {
-
+    public function getName(): string
+    {
     	return session_name();
-
     }
 }

@@ -15,24 +15,23 @@ namespace vxPHP\Session;
  * 
  *  @author Gregor Kofler
  *  
- *  @version 0.1.0 2015-03-14
+ *  @version 0.1.1 2021-05-08
  */
-class Session {
-
+class Session
+{
 	private static $storage;
 
 	/**
 	 * initialize session storage mechanism
 	 * currently only wraps PHP native session storage
 	 */
-	public static function init() {
-
+	public static function init(): void
+    {
 		if(is_null(self::$storage)) {
 			self::$storage = new NativeSessionStorage();
 		}
 
 		self::$storage->start();
-		
 	}
 	
 	/**
@@ -41,14 +40,11 @@ class Session {
 	 * 
 	 * @return SessionDataBag
 	 */
-	public static function getSessionDataBag() {
-
+	public static function getSessionDataBag(): SessionDataBag
+    {
 		if(is_null(self::$storage)) {
 			self::init();
 		}
-
 		return self::$storage->getSessionDataBag();
-
 	}
-
 }
