@@ -291,6 +291,7 @@ class Application {
      *
      * @return DatabaseInterface
      * @throws Exception
+     * @deprecated
      */
 	public function getDb(): ?DatabaseInterface
     {
