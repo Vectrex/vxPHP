@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.7.2, 2020-12-15
+ * @version 0.7.3, 2021-05-22
  *
  */
 interface DatabaseInterface
@@ -103,7 +103,7 @@ interface DatabaseInterface
 	 * 
 	 * @return RecordsetIteratorInterface
 	 */
-	public function doPreparedQuery(string $statementString, array $parameters): RecordsetIteratorInterface;
+	public function doPreparedQuery(string $statementString, array $parameters = []): RecordsetIteratorInterface;
 
 	/**
 	 * wrap prepare(), execute() and rowCount()
@@ -117,7 +117,7 @@ interface DatabaseInterface
 	 *
 	 * @return integer
 	 */
-	public function execute(string $statementString, array $parameters): int;
+	public function execute(string $statementString, array $parameters = []): int;
 
 	/**
 	 * ignore lastUpdated attribute when creating or updating record
