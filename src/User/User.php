@@ -17,7 +17,7 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 2.1.2 2021-04-28
+ * @version 2.1.3 2021-05-22
  */
 class User implements UserInterface
 {
@@ -132,7 +132,7 @@ class User implements UserInterface
 	 * {@inheritDoc}
 	 * @see \vxPHP\User\UserInterface::getAttribute()
 	 */
-	public function getAttribute(string $attribute, $default = null): string
+	public function getAttribute(string $attribute, $default = null): ?string
     {
 		if (!$this->attributes || !array_key_exists(strtolower($attribute), $this->attributes)) {
 			return $default;
