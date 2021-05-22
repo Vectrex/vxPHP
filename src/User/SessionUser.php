@@ -17,18 +17,18 @@ use vxPHP\Session\Session;
  * session
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0 2017-02-15
+ * @version 0.2.1 2021-05-22
  *        
  */
-class SessionUser extends User {
-	
+class SessionUser extends User
+{
 	/**
 	 * the default key name under which a session user stored in the
 	 * session
 	 * 
 	 * @var string
 	 */
-	const DEFAULT_KEY_NAME = 'user';
+	public const DEFAULT_KEY_NAME = 'user';
 	
 	/**
 	 * they key under which the user is stored in the session
@@ -37,23 +37,22 @@ class SessionUser extends User {
 	 */
 	private $sessionKey;
 
-	/**
-	 * Constructor
-	 * 
-	 * additional arguments are a session key under which the user is
-	 * stored and a flag which marks user as authenticated
-	 * 
-	 * @param string $username
-	 * @param string $hashedPassword
-	 * @param Role[] $roles
-	 * @param array $attributes
-	 * @param string $sessionKey
-	 * @param boolean $authenticated
-	 * 
-	 * @throws \Exception
-	 */
-	public function __construct($username, $hashedPassword = '', array $roles = [], array $attributes = [], $sessionKey = NULL, $authenticated = FALSE) {
-	
+    /**
+     * Constructor
+     *
+     * additional arguments are a session key under which the user is
+     * stored and a flag which marks user as authenticated
+     *
+     * @param string $username
+     * @param string $hashedPassword
+     * @param Role[] $roles
+     * @param array $attributes
+     * @param string|null $sessionKey
+     * @param boolean $authenticated
+     *
+     */
+	public function __construct(string $username, string $hashedPassword = '', array $roles = [], array $attributes = [], string $sessionKey = null, bool $authenticated = false)
+    {
 		$sessionKey = $sessionKey ?: self::DEFAULT_KEY_NAME;
 		
 		if(($stored = Session::getSessionDataBag()->get($sessionKey))) {
@@ -71,19 +70,17 @@ class SessionUser extends User {
 		$this->authenticated = $authenticated;
 		
 		Session::getSessionDataBag()->set($sessionKey, $this);
-
 	}
 
 	/**
 	 * set or unset authentication flag without checking any credentials
 	 * 
 	 * @param boolean $authenticated
-	 * @return \vxPHP\User\SessionUser
+	 * @return SessionUser
 	 */
-	public function setAuthenticated($authenticated) {
-		
-		$this->authenticated = (boolean) $authenticated;
+	public function setAuthenticated(bool $authenticated): self
+    {
+		$this->authenticated = $authenticated;
 		return $this;
-
 	}
 }

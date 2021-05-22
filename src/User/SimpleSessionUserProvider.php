@@ -19,21 +19,20 @@ use vxPHP\Session\Session;
  * a session user instance from the session 
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0 2017-08-18
+ * @version 0.1.1 2021-05-22
  * 
  */
-class SimpleSessionUserProvider implements UserProviderInterface {
-	
+class SimpleSessionUserProvider implements UserProviderInterface
+{
 	/**
 	 * (non-PHPdoc)
 	 *
 	 * @see \vxPHP\User\UserProviderInterface::refreshUser()
 	 *
 	 */
-	public function refreshUser(UserInterface $user) {
-		
+	public function refreshUser(UserInterface $user): UserInterface
+    {
 		return $user;
-		
 	}
 	
 	/**
@@ -42,22 +41,21 @@ class SimpleSessionUserProvider implements UserProviderInterface {
 	 * @see \vxPHP\User\UserProviderInterface::instanceUserByUsername()
 	 *
 	 */
-	public function instanceUserByUsername($username) {
-
+	public function instanceUserByUsername($username): UserInterface
+    {
 		return new SessionUser($username);
-
 	}
-	
-	/**
-	 * remove session user from session
-	 * returns the removed session user
-	 *
-	 * @param string $sessionKey
-	 * @throws UserException
-	 * @return \vxPHP\User\SessionUser|mixed
-	 */
-	public function unsetSessionUser($sessionKey = NULL) {
-		
+
+    /**
+     * remove session user from session
+     * returns the removed session user
+     *
+     * @param string|null $sessionKey
+     * @return null|UserInterface
+     * @throws UserException
+     */
+	public function unsetSessionUser(string $sessionKey = null): ?UserInterface
+    {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
 		$user = Session::getSessionDataBag()->get($sessionKey);
@@ -72,18 +70,17 @@ class SimpleSessionUserProvider implements UserProviderInterface {
 		}
 		
 		return $user;
-		
 	}
 
-	/**
-	 * retrieve a stored session user stored under a session key
-	 * returns stored value only, when it is a SessionUser instance
-	 *
-	 * @param string $sessionKey
-	 * @return \vxPHP\User\SessionUser
-	 */
-	public function getSessionUser($sessionKey = NULL) {
-		
+    /**
+     * retrieve a stored session user stored under a session key
+     * returns stored value only, when it is a SessionUser instance
+     *
+     * @param string|null $sessionKey
+     * @return SessionUser|null
+     */
+	public function getSessionUser(string $sessionKey = null): ?UserInterface
+    {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
 		$sessionUser = Session::getSessionDataBag()->get($sessionKey);
@@ -91,9 +88,7 @@ class SimpleSessionUserProvider implements UserProviderInterface {
 		if($sessionUser instanceof SessionUser) {
 			return $sessionUser;
 		}
-		
+		return null;
 	}
-	
-	
 }
 
