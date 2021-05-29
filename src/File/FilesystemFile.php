@@ -23,12 +23,12 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.2 2020-11-27
+ * @version 1.1.0 2021-05-29
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 {
-    public const WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif'];
+    public const WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
     /**
      * @var array
@@ -129,7 +129,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
     /**
      * check whether mime type indicates web image
-     * (i.e. image/jpeg, image/gif, image/png)
+     * (i.e. image/jpeg, image/gif, image/png, image/webp)
      *
      * @param bool $force forces re-read of mime type
      * @return bool

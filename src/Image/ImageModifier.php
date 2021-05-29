@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.5.5 2020-11-27
+ * @version 0.6.0 2021-05-29
  */
 abstract class ImageModifier
 {
@@ -34,7 +34,7 @@ abstract class ImageModifier
     /**
      * @var array
      */
-    protected $supportedFormats = ['jpeg', 'gif', 'png'];
+    protected $supportedFormats = ['jpeg', 'gif', 'png', 'webp'];
 
     /**
      * @var string

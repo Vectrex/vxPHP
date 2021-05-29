@@ -19,7 +19,7 @@ use vxPHP\File\Exception\FilesystemFileException;
  *
  * @author Gregor Kofler
  *
- * @version 0.1.1 2020-11-27
+ * @version 0.1.1 2021-05-29
  */
 interface FilesystemFileInterface
 {
@@ -39,7 +39,7 @@ interface FilesystemFileInterface
 
     /**
      * check whether mime type indicates web image
-     * (i.e. image/jpeg, image/gif, image/png)
+     * (i.e. image/jpeg, image/gif, image/png, image/webp)
      *
      * @param bool $force forces re-read of mime type
      * @return bool

@@ -19,7 +19,7 @@ namespace vxPHP\File;
  * or alternative
  * 
  * @version 1.0 by Bartlomiej Pohl, 2008-09-24
- * @version 2.0.0 by Gregor Kofler, 2017-10-21
+ * @version 2.1.0 by Gregor Kofler, 2021-05-29
  * 
  * @author Bartlomiej Pohl <badek@gmx.de>
  * @author Gregor Kofler <info@gregorkofler.com>
@@ -33,7 +33,7 @@ class MimeTypeGetter {
 	 *
 	 * @var string
 	 */
-	const DEFAULT_MIME_TYPE = 'application/octet-stream';
+	public const DEFAULT_MIME_TYPE = 'application/octet-stream';
 
 	/**
 	 * Array that associates file extensions with MIME types
@@ -1039,18 +1039,10 @@ class MimeTypeGetter {
 	 * @param string $file the path to the File
 	 * @return string the Mime Type
 	 */
-	protected static function getTypeFinfoExt($file) {
-
+	protected static function getTypeFinfoExt(string $file): string
+    {
 		$type = (new \finfo(FILEINFO_MIME_TYPE))->file($file);
-
-		if($type) {
-			return $type;
-		}
-
-		else {
-			return self::getTypeFileExtList($file);
-		}
-
+		return $type ?: self::getTypeFileExtList($file);
 	}
 	
 	/**
@@ -1061,18 +1053,11 @@ class MimeTypeGetter {
 	 * @param string $file the path to the file
 	 * @return string
 	 */
-	protected static function getTypeFileExtList($file) {
-
+	protected static function getTypeFileExtList(string $file): string
+    {
 		$info = pathinfo(strtolower($file));
-
-		if(isset(self::$extensionToMime[$info['extension']])) {
-			return self::$extensionToMime[$info['extension']];
-		}
-		else {
-			return self::DEFAULT_MIME_TYPE;
-		}
-
-	}
+        return self::$extensionToMime[$info['extension']] ?? self::DEFAULT_MIME_TYPE;
+    }
 	
 	/**
 	 * Gets the MIME type for a given file. It first checks whether the
@@ -1084,16 +1069,12 @@ class MimeTypeGetter {
 	 * @param boolean $skipExtension use extension lookup table
 	 * @return string the Mime Type
 	 */
-	public static function get($file, $skipExtension = false) {
-
-		if (extension_loaded('fileinfo') && !$skipExtension) {
+	public static function get(string $file, bool $skipExtension = false): string
+    {
+		if (!$skipExtension && extension_loaded('fileinfo')) {
 			return self::getTypeFinfoExt($file);
 		}
-
-		else {
-			return self::getTypeFileExtList($file);
-		}
-
+        return self::getTypeFileExtList($file);
 	}
 
 	/**
@@ -1107,14 +1088,13 @@ class MimeTypeGetter {
 	 * 
 	 * @throws \RuntimeException
 	 */
-	public static function getForBuffer($buffer) {
-		
+	public static function getForBuffer(string $buffer): string
+    {
 		if (!extension_loaded('fileinfo')) {
 			throw new \RuntimeException("'Fileinfo' extension not found. Analyzing of buffers not supported.");
 		}
 
 		return (new \finfo(FILEINFO_MIME_TYPE))->buffer($buffer);
-
 	}
 	
 	/**
@@ -1128,13 +1108,12 @@ class MimeTypeGetter {
 	 * @return string
 	 * 
 	 */
-	public static function getDefaultFileExtension($mime) {
-
+	public static function getDefaultFileExtension($mime): string
+    {
 		if(empty(self::$mimeToExtension)) {
 			self::$mimeToExtension = array_flip(self::$extensionToMime);
 		}
 
-		return isset(self::$mimeToExtension[$mime]) ? self::$mimeToExtension[$mime] : '';
-
+		return self::$mimeToExtension[$mime] ?? '';
 	}
 }

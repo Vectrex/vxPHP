@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.5.6 2020-09-17
+ * @version 0.6.0 2021-05-29
  */
 class Gd extends ImageModifier
 {
@@ -56,10 +56,6 @@ class Gd extends ImageModifier
 		$this->file = $file;
 		$this->mimeType = $info['mime'];
 
-		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
-			throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
-		}
-
 		switch($this->mimeType) {
 			case 'image/jpeg':
 				$src->resource = imagecreatefromjpeg($file);
@@ -70,6 +66,11 @@ class Gd extends ImageModifier
 			case 'image/gif':
 				$src->resource = imagecreatefromgif($file);
 				break;
+            case 'image/webp':
+                $src->resource = imagecreatefromwebp($file);
+                break;
+            default:
+                throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
 		}
 		
 		$this->srcWidth = $info[0];
@@ -252,7 +253,7 @@ class Gd extends ImageModifier
 			$mimetype = $this->mimeType;
 		}
 		
-		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $mimetype)) {
+		if(!preg_match('#^image/(?:' . implode('|', $this->supportedFormats) . ')$#', $mimetype)) {
 			throw new ImageModifierException(sprintf("%s not supported by export.", $mimetype), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
@@ -276,7 +277,7 @@ class Gd extends ImageModifier
 			switch($mimetype) {
 
 				case 'image/jpeg':
-					imagejpeg($src->resource, $this->path, 90);
+					imagejpeg($src->resource, $this->path, 95);
 					break;
 
 				case 'image/png':
@@ -286,6 +287,10 @@ class Gd extends ImageModifier
 				case 'image/gif':
 					imagegif($src->resource, $this->path);
 					break;
+
+                case 'image/webp':
+                    imagewebp($src->resource, $this->path, 95);
+                    break;
 			}
 		}
 	}

@@ -18,7 +18,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for Imagick
  *
  * @author Gregor Kofler
- * @version 0.3.3 2020-09-17
+ * @version 0.4.0 2021-05-29
  * 
  * @todo improve grayscale conversion
  * 
@@ -33,7 +33,7 @@ class ImageMagick extends ImageModifier
     /**
      *
      * @param string $file
-     * @throws ImageModifierException
+     * @throws ImageModifierException|\ImagickException
      */
 	public function __construct(string $file)
     {
@@ -87,7 +87,7 @@ class ImageMagick extends ImageModifier
 			$mimetype = $this->mimeType;
 		}
 
-		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $mimetype)) {
+		if(!preg_match('#^image/(?:' . implode('|', $this->supportedFormats) . ')$#', $mimetype)) {
             throw new ImageModifierException(sprintf("%s not supported by export.", $mimetype), ImageModifierException::WRONG_FILE_TYPE);
 		}
 		
@@ -122,6 +122,11 @@ class ImageMagick extends ImageModifier
 				case 'image/gif':
 					$this->src->resource->setFormat('gif');
 					break;
+
+                case 'image/webp':
+                    $this->src->resource->setFormat('webp');
+                    $this->src->resource->setImageCompressionQuality(90);
+                    break;
 			}
 			
 			$this->src->resource->writeImage($path);
@@ -178,7 +183,6 @@ class ImageMagick extends ImageModifier
      */
 	protected function do_watermark(\stdClass $src, string $watermarkFile): \StdClass
     {
-		
 		if(!file_exists($watermarkFile)) {
             throw new ImageModifierException(sprintf("Watermark file '%s' not found.", $watermarkFile), ImageModifierException::FILE_NOT_FOUND);
 		}
