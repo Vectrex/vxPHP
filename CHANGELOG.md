@@ -1,3 +1,6 @@
+## 2.6.3
+- web image related functionality (ImageCache) now handles (lossy) WebP images
+
 ## 2.6.2
 - bug fix: SimpleTemplate::insertTemplateAt() left angle bracket artifacts
 
