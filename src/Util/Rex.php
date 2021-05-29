@@ -15,7 +15,7 @@ namespace vxPHP\Util;
  * Collection of regular expressions used througout the framework
  * class merely provides "namespace"
  * 
- * @version 0.2.6 2015-09-30
+ * @version 0.2.7 2021-05-29
  * @author Gregor Kofler
  */
 
@@ -130,7 +130,7 @@ class Rex {
 	
 	const NOT_EMPTY_TEXT			= '/\w+/';
 	const MD5_HASH					= '/^[0-9a-fA-F]{32}$/';
-	const IMAGE_MIMETYPE			= '~^image/(?:png|gif|jpeg)$~';
+	const IMAGE_MIMETYPE			= '~^image/(?:png|gif|jpeg|webp)$~';
 	const ALIAS_OR_INT				= '/^(?:[1-9][0-9]*|[A-Za-z0-9_]+)$/';
 
 }

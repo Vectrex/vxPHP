@@ -14,7 +14,7 @@ namespace vxPHP\Image;
  * simple factory for returning an ImageModifier class
  *
  * @author Gregor Kofler
- * @version 0.1.0 2014-04-03
+ * @version 0.1.1 2021-05-29
  */
 
 class ImageModifierFactory
@@ -24,45 +24,44 @@ class ImageModifierFactory
 	 * 
 	 * associative array containing possible class => required extension combinations
 	 */
-	private static $options = array('Gd' => 'gd', 'ImageMagick' => 'imagick');
+	private static $options = ['Gd' => 'gd', 'ImageMagick' => 'imagick'];
 
-	private static $preferedOption;
+	private static $preferredOption;
 
     /**
      * @param string $path
-     * @param null $preference
+     * @param string|null $preference
      *
      * @return ImageModifier
      */
-	public static function create(string $path, $preference = null): ImageModifier
+	public static function create(string $path, string $preference = null): ImageModifier
     {
-		// try to set prefered option to $preference ("available" and extension loaded)
+		// try to set preferred option to $preference ("available" and extension loaded)
 
-		if($preference) {
-			if(
-				isset(self::$options[$preference]) &&
-				class_exists(__NAMESPACE__ . '\\' . $preference) &&
-				extension_loaded(self::$options[$preference])
-			){
-				self::$preferedOption = $preference;
-			}
-		}
+		if(
+		    $preference &&
+            isset(self::$options[$preference]) &&
+            class_exists(__NAMESPACE__ . '\\' . $preference) &&
+            extension_loaded(self::$options[$preference]))
+		{
+            self::$preferredOption = $preference;
+        }
 
 		// otherwise iterate over $options
 
-		if(!self::$preferedOption) {
+		if(!self::$preferredOption) {
 			foreach(self::$options as $class => $ext) {
 				if(class_exists(__NAMESPACE__ . '\\' . $class) && extension_loaded($ext)) {
-					self::$preferedOption = $class;
+					self::$preferredOption = $class;
 					break;
 				}
 			}
 		}
 
-		// pick previously set $preferedOption
+		// pick previously set $preferredOption
 
-		if(self::$preferedOption) {
-			$className = __NAMESPACE__ . '\\' . self::$preferedOption;
+		if(self::$preferredOption) {
+			$className = __NAMESPACE__ . '\\' . self::$preferredOption;
 			return new $className($path);
 		}
 		
