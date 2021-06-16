@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.6.0 2021-05-29
+ * @version 0.6.2 2021-06-16
  */
 abstract class ImageModifier
 {
@@ -60,22 +60,22 @@ abstract class ImageModifier
 	 * adds a crop-"command" to queue
 	 * parameters are validated
 	 *
-	 * @param float $aspectRatio
+     * @param mixed $args,...
+     * arguments are either
+	 * float $aspectRatio
 	 * or
-	 * @param int $width
-	 * @param int $height
+	 * int $width
+	 * int $height
 	 * or
-	 * @param int $top
-	 * @param int $left
-	 * @param int $bottom
-	 * @param int $right
+	 * int $top
+	 * int $left
+	 * int $bottom
+	 * int $right
 	 *
 	 * @throws ImageModifierException
 	 */
-	public function crop(): void
+	public function crop(...$args): void
     {
-		$args = func_get_args();
-		
 		$srcAspectRatio = $this->srcWidth / $this->srcHeight;
 		
 		// single float value given, represents aspect ratio of cropped image
@@ -188,27 +188,20 @@ abstract class ImageModifier
 	/**
 	 * adds a resize-"command" to queue
 	 * paramaters are "normalized" and validated
-	 * when supplying $width and $height a prefixed "max_" will keep the respective dimension flexible within this value
-	 * 
-	 * @param float $percentage
-	 * or
-	 * @param mixed $width 
-	 * @param mixed $height
-	 * 
+	 * when supplying $width and $height a prefixed "max" will keep the respective dimension flexible within this value
+	 *
+	 * @param mixed $args,... either single float percentage or width and height
 	 * @throws ImageModifierException
 	 */
-	public function resize(): void
+	public function resize(...$args): void
     {
-		
-		$args = func_get_args();
-		
 		// width and/or height given
 		
 		if(count($args) >= 2) {
 		
 			// max limit for width?
 		
-			if(preg_match('/max_([1-9]\d*)/i', $args[0], $matches)) {
+			if(preg_match('/max([1-9]\d*)/i', $args[0], $matches)) {
 		
 				$maxWidth = $matches[1];
 				$height = (int) $args[1];
@@ -222,7 +215,7 @@ abstract class ImageModifier
 		
 			// max limit for height?
 		
-			else if(preg_match('/max_([1-9]\d*)/i', $args[1], $matches)) {
+			else if(preg_match('/max([1-9]\d*)/i', $args[1], $matches)) {
 		
 				$maxHeight = $matches[1];
 				$width = (int) $args[0];
@@ -262,7 +255,7 @@ abstract class ImageModifier
 		
 		else if(count($args) === 1) {
 
-			if(!is_numeric($args[0]) || $args[0] == 0) {
+			if(!is_numeric($args[0]) || (float) $args[0] <= 0) {
                 throw new ImageModifierException(sprintf("Invalid dimension(s) for resizing: %s.", $args[0]), ImageModifierException::INVALID_PARAMETERS);
 			}
 
@@ -296,10 +289,9 @@ abstract class ImageModifier
 	 * adds a watermark-"command" to queue
 	 * 
 	 * @param string $filename
-	 * 
 	 * @throws ImageModifierException
 	 */
-	public function watermark()
+	public function watermark(string $filename): void
     {
 		$args = func_get_args();
 
@@ -313,18 +305,17 @@ abstract class ImageModifier
 		
 		$todo = new \stdClass();
 
-		$todo->method		= __FUNCTION__;
-		$todo->parameters	= array($args[0]);
+		$todo->method = __FUNCTION__;
+		$todo->parameters = [$args[0]];
 
 		$this->queue[] = $todo;
-
 	}
 
 	/**
 	 * turns image into b/w
 	 */
-	public function greyscale() {
-
+	public function greyscale(): void
+    {
 		$todo = new \stdClass();
 
 		$todo->method = __FUNCTION__;
