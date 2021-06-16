@@ -23,7 +23,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.0 2021-05-29
+ * @version 1.1.1 2021-06-16
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -392,9 +392,8 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 			foreach($glob as $f) {
 				if(!is_dir($f)) {
-
 					if(!isset(self::$instances[$f])) {
-						self::$instances[$f] = new self(basename($f), $folder);
+						self::$instances[$f] = new self($f);
 					}
 
 					$files[] = self::$instances[$f];
@@ -416,7 +415,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	 * @param integer $ndx starting index used in renamed file
 	 * @return string
 	 */
-	public static function sanitizeFilename(string $filename, FilesystemFolder $dir, $ndx = 2): string
+	public static function sanitizeFilename(string $filename, FilesystemFolder $dir, int $ndx = 2): string
     {
 		// remove any characters which are not allowed in any file system
 
