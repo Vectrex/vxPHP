@@ -1,3 +1,6 @@
+## 2.6.4
+- bug fix: image modifier resizing of images with *max* limits was broken
+
 ## 2.6.3
 - web image related functionality (ImageCache) now handles (lossy) WebP images
 
