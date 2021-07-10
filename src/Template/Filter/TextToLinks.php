@@ -48,13 +48,13 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 		$this->encoding = strtoupper(Application::getInstance()->getConfig()->site->default_encoding);
 
 		$templateString = preg_replace_callback(
-			'~(^|\s|>|(?:<a [^>]*?>.*?))'.Rex::URI_STRICT.'(<|\s|$)~i',
+			'~(^|\s|>|<a [^>]*?>.*?)' . Rex::URI_STRICT . '(<|\s|$)~i',
 			array($this, 'urlAnchors'),
 			$templateString
 		);
 
 		$templateString = preg_replace_callback(
-			'~(<a [^>]*?>.*?|)('.Rex::EMAIL.')([^<]*</a>|)~i',
+			'~(<a [^>]*?>.*?|)(' . Rex::EMAIL . ')([^<]*</a>|)~i',
 			array($this, 'obfuscatedMailAnchors'),
 			$templateString
 		);
@@ -65,26 +65,26 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
 	 *
 	 * @param boolean $showProtocol
 	 */
-	public function setShowProtocol($showProtocol)
+	public function setShowProtocol(bool $showProtocol): void
     {
 		$this->showProtocol = $showProtocol;
 	}
 
-	private function urlAnchors($matches)
+	private function urlAnchors($matches): string
     {
-		if(substr($matches[1], 0, 2) == '<a') {
+		if(strpos($matches[1], '<a') === 0) {
 			return $matches[0];
 		}
 
 		return
 			$matches[1] .
-			'<a class="link_http" href="' . $matches[2] . $matches[3] . $matches[6] . '">' .
+			'<a class="link_http" href="' . $matches[2] . $matches[3] . $matches[6] . '" rel="noreferrer">' .
 			($this->showProtocol ? $matches[2] : '') . $matches[3] . $matches[6] .
 			'</a>' .
 			$matches[9];
 	}
 
-	private function obfuscatedMailAnchors($matches)
+	private function obfuscatedMailAnchors($matches): string
     {
 		if($matches[1] !== '' || $matches[5] !== '') {
 			return $matches[0];
