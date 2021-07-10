@@ -11,21 +11,20 @@
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
 use vxPHP\Form\FormElement\FormElementInterface;
-use vxPHP\Form\FormElement\FormElementWithOptions\FormElementFragmentInterface;
 
 /**
  * @author Gregor Kofler
- * @version 0.4.0 2015-01-24 
+ * @version 0.5.0 2021-07-10
  */
-interface FormElementWithOptionsInterface extends FormElementInterface {
-
+interface FormElementWithOptionsInterface extends FormElementInterface
+{
 	/**
 	 * append a form element fragment
 	 * 
 	 * @param FormElementFragmentInterface $option
 	 * @return \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface
 	 */
-	public function appendOption(FormElementFragmentInterface $option);
+	public function appendOption(FormElementFragmentInterface $option): FormElementWithOptionsInterface;
 
 	/**
 	 * create an array of fragments
@@ -33,12 +32,12 @@ interface FormElementWithOptionsInterface extends FormElementInterface {
 	 * @param array $options
 	 * @return \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptionsInterface
 	 */
-	public function createOptions(Array $options);
+	public function createOptions(Array $options): FormElementWithOptionsInterface;
 	
 	/**
 	 * retrieve selected option
 	 * 
-	 * @return FormElementFragmentInterface
+	 * @return null|FormElementFragmentInterface
 	 */
-	public function getSelectedOption();
+	public function getSelectedOption(): ?FormElementFragmentInterface;
 }

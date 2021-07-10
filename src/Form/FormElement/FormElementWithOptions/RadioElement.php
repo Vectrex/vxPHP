@@ -24,7 +24,7 @@ class RadioElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::createOptions()
 	 */
-	public function createOptions(Array $options)
+	public function createOptions(Array $options): FormElementWithOptionsInterface
     {
 		$this->options = [];
 

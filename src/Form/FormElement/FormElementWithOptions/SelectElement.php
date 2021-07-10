@@ -22,7 +22,7 @@ class SelectElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::appendOption()
 	 */
-	public function appendOption(FormElementFragmentInterface $option)
+	public function appendOption(FormElementFragmentInterface $option): FormElementWithOptionsInterface
     {
 		parent::appendOption($option);
 		return $this;
@@ -32,7 +32,7 @@ class SelectElement extends FormElementWithOptions {
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::createOptions()
 	 */
-	public function createOptions(Array $options)
+	public function createOptions(Array $options): FormElementWithOptionsInterface
     {
 		$this->options = [];
 

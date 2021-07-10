@@ -113,7 +113,7 @@ public static function create(string $type, string $name, $value = null, array $
 				break;
 
 			case 'image':
-				$elem = new ImageElement($name);
+				$elem = new ImageElement($name, $value);
 				break;
 
 			case 'button':

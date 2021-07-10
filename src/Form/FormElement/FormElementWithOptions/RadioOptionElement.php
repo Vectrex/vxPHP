@@ -20,18 +20,18 @@ use vxPHP\Template\Exception\SimpleTemplateException;
  * sharing the same name
  *
  * @author Gregor Kofler
- * @version 0.9.1 2020-04-05
+ * @version 0.9.2 2021-07-10
  */
 class RadioOptionElement extends FormElementFragment
 {
-	/**
-	 * initialize option with value, label and parent RadioElement
-	 * 
-	 * @param string $value
-	 * @param LabelElement $label
-	 * @param RadioElement $formElement
-	 */
-	public function __construct($value, LabelElement $label, RadioElement $formElement = null)
+    /**
+     * initialize option with value, label and parent RadioElement
+     *
+     * @param string $value
+     * @param LabelElement $label
+     * @param RadioElement|null $formElement
+     */
+	public function __construct(string $value, LabelElement $label, RadioElement $formElement = null)
     {
 		parent::__construct($value, $label, $formElement);
 	}
@@ -85,9 +85,7 @@ class RadioOptionElement extends FormElementFragment
 
                     $this->html .= $this->label->render();
                 }
-
             }
-
 		}
 
 		return $this->html;

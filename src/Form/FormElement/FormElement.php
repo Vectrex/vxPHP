@@ -18,7 +18,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.12.2 2021-04-28
+ * @version 0.13.0 2021-07-10
  * @author Gregor Kofler
  * 
  */
@@ -130,9 +130,9 @@ abstract class FormElement implements FormElementInterface
 	 * set value of form element
 	 *
 	 * @param mixed $value
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function setValue($value)
+	public function setValue($value): self
     {
 		$this->value = $value;
 		return $this;
@@ -143,7 +143,7 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @return string
 	 */
-	public function getValue()
+	public function getValue(): ?string
     {
 		return $this->value;
 	}
@@ -153,18 +153,18 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @return string
 	 */
-	public function getModifiedValue()
+	public function getModifiedValue(): string
     {
-		return $this->applyModifiers($this->value);
+		return $this->applyModifiers((string) $this->value);
 	}
 
 	/**
 	 * set name of form element
 	 * 
 	 * @param string $name
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function setName(string $name)
+	public function setName(string $name): self
     {
 		$this->name = $name;
 		return $this;
@@ -185,9 +185,9 @@ abstract class FormElement implements FormElementInterface
      * "for" attribute of label is set if form element has an "id" attribute
      *
      * @param LabelElement $label
-     * @return $this
+     * @return FormElement
      */
-    public function setLabel(LabelElement $label)
+    public function setLabel(LabelElement $label): self
     {
         $this->label = $label;
 
@@ -203,7 +203,7 @@ abstract class FormElement implements FormElementInterface
      *
      * @return LabelElement
      */
-    public function getLabel()
+    public function getLabel(): ?LabelElement
     {
         return $this->label;
     }
@@ -213,31 +213,31 @@ abstract class FormElement implements FormElementInterface
 	 * attributes 'value', 'name' are treated by calling the according setters
      * setting 'id' will update 'for' when a label element is assigned
 	 *  
-	 * @param string $attr
+	 * @param string $attributeName
 	 * @param mixed $value
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function setAttribute(string $attr, $value)
+	public function setAttribute(string $attributeName, $value): self
     {
-		$attr = strtolower($attr);
+		$attributeName = strtolower($attributeName);
 
-		if($attr === 'value') {
+		if($attributeName === 'value') {
 			return $this->setValue($value);
 		}
 
-		if($attr === 'name') {
+		if($attributeName === 'name') {
 			return $this->setName($value);
 		}
 
-		if($attr === 'id' && $this->label) {
+		if($attributeName === 'id' && $this->label) {
 		    $this->label->setAttribute('for', $value);
         }
 
 		if(is_null($value)) {
-			unset($this->attributes[$attr]);
+			unset($this->attributes[$attributeName]);
 		}
 		else {
-			$this->attributes[$attr] = $value;
+			$this->attributes[$attributeName] = $value;
 		}
 		return $this;
 	}
@@ -246,9 +246,9 @@ abstract class FormElement implements FormElementInterface
 	 * sets several attributes with an associative array
 	 * 
 	 * @param array $attributes
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function setAttributes(Array $attributes)
+	public function setAttributes(Array $attributes): self
     {
 		foreach($attributes as $k => $v) {
 			$this->setAttribute($k, $v);
@@ -261,7 +261,7 @@ abstract class FormElement implements FormElementInterface
      * name and value attributes are redirected to
      * the respective getter methods
      *
-     * @param $attributeName
+     * @param string $attributeName
      * @return string|null
      */
 	public function getAttribute(string $attributeName)
@@ -274,13 +274,7 @@ abstract class FormElement implements FormElementInterface
         if('name' === $key) {
             return $this->getName();
         }
-
-
-	    if(array_key_exists($key, $this->attributes)) {
-	        return $this->attributes[strtolower($attributeName)];
-        }
-
-	    return null;
+        return $this->attributes[$key] ?? null;
     }
 
 	/**
@@ -288,9 +282,9 @@ abstract class FormElement implements FormElementInterface
 	 * disallow empty values when $required is TRUE
 	 * 
 	 * @param boolean $required
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function setRequired(bool $required)
+	public function setRequired(bool $required): self
     {
 		$this->required = $required;
 		return $this;
@@ -314,9 +308,9 @@ abstract class FormElement implements FormElementInterface
 	 * the FormElement::$valid flag is reset
 	 * 
 	 * @param mixed $validatingRule
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function addValidator($validatingRule)
+	public function addValidator($validatingRule): self
     {
 		$this->validators[] = $validatingRule;
 		$this->valid = null;
@@ -327,10 +321,10 @@ abstract class FormElement implements FormElementInterface
 	 * set form to which an element is assigned
 	 * automatically called by HtmlForm::addElement()
 	 *
-	 * @param \vxPHP\Form\HtmlForm $form
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @param HtmlForm $form
+	 * @return FormElement
 	 */
-	public function setForm(HtmlForm $form)
+	public function setForm(HtmlForm $form): self
     {
 		$this->form = $form;
 		return $this;
@@ -339,7 +333,7 @@ abstract class FormElement implements FormElementInterface
     /**
      * @return string
      */
-    public function getValidationErrorMessage()
+    public function getValidationErrorMessage(): ?string
     {
         return $this->validationErrorMessage;
     }
@@ -350,7 +344,7 @@ abstract class FormElement implements FormElementInterface
      * @param string $validationErrorMessage
      * @return FormElement
      */
-    public function setValidationErrorMessage(string $validationErrorMessage)
+    public function setValidationErrorMessage(string $validationErrorMessage): self
     {
         $this->validationErrorMessage = $validationErrorMessage;
         return $this;
@@ -365,9 +359,9 @@ abstract class FormElement implements FormElementInterface
 	 * currently 'trim', 'uppercase', 'lowercase', 'strip_tags' are supported
 	 * 
 	 * @param mixed $modifier
-	 * @return \vxPHP\Form\FormElement\FormElement
+	 * @return FormElement
 	 */
-	public function addModifier($modifier)
+	public function addModifier($modifier): self
     {
 		$this->modifiers[] = $modifier;
 		return $this;
@@ -382,7 +376,7 @@ abstract class FormElement implements FormElementInterface
     {
 		if(!isset($this->valid)) {
             $this->valid = $this->applyValidators(
-                $this->applyModifiers($this->getValue())
+                $this->applyModifiers((string) $this->getValue())
             );
 		}
 
@@ -523,7 +517,7 @@ abstract class FormElement implements FormElementInterface
      * @param SimpleTemplate $template
      * @return $this
      */
-    public function setSimpleTemplate(SimpleTemplate $template)
+    public function setSimpleTemplate(SimpleTemplate $template): self
     {
         $this->template = $template;
         return $this;
