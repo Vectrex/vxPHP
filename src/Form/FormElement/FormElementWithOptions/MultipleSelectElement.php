@@ -11,11 +11,13 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
+use vxPHP\Form\FormElement\FormElement;
+
 /**
  * a select element of type multiple
  *
  * @author Gregor Kofler
- * @version 0.8.1 2021-04-28
+ * @version 0.8.2 2021-07-10
  */
 class MultipleSelectElement extends SelectElement
 {
@@ -24,9 +26,8 @@ class MultipleSelectElement extends SelectElement
      * @param FormElementFragmentInterface $option
      * @return $this|FormElementWithOptionsInterface|SelectElement
 	 */
-	public function appendOption(FormElementFragmentInterface $option)
+	public function appendOption(FormElementFragmentInterface $option): FormElementWithOptionsInterface
     {
-
 		$this->options[] = $option;
 		$option->setParentElement($this);
 
@@ -49,7 +50,7 @@ class MultipleSelectElement extends SelectElement
      * @param mixed $value
      * @return MultipleSelectElement
      */
-	public function setValue($value = null)
+	public function setValue($value = null): FormElement
     {
 		if(isset($value)) {
 

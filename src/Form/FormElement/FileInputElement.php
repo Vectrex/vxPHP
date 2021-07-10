@@ -53,7 +53,7 @@ class FileInputElement extends InputElement
      * @return $this|FormElement
      */
 
-    public function setValue($value)
+    public function setValue($value): FormElement
     {
         return $this;
     }

@@ -16,8 +16,8 @@ namespace vxPHP\Form\FormElement;
  * 
  * @author Gregor Kofler
  */
-class ImageElement extends InputElement {
-	
+class ImageElement extends InputElement
+{
 	/**
 	 * inialize a <input type="image"> element instance
 	 * 

@@ -9,6 +9,7 @@
 
 ## 2.6.2
 - bug fix: SimpleTemplate::insertTemplateAt() left angle bracket artifacts
+- fixes to form element classes hierarchy
 
 ## 2.6.1
 - bug fixes for menu authentication and route parameter encoding
