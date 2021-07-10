@@ -1,3 +1,6 @@
+## 2.6.5
+- bug fix: form element factory cast wrong error message type
+
 ## 2.6.4
 - bug fix: image modifier resizing of images with *max* limits was broken
 
