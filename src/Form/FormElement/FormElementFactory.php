@@ -24,7 +24,7 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is an array, the factory returns a collection of elements
  *
  * @author Gregor Kofler
- * @version 0.5.1 2019-02-14
+ * @version 0.6.0 2021-07-10
  */
 class FormElementFactory {
 
@@ -44,8 +44,8 @@ class FormElementFactory {
      * @return FormElement | FormElement[]
      * @throws FormElementFactoryException
      */
-public static function create($type, $name, $value = null, array $attributes = [], array $options = [], $required = false, array $modifiers = [], array $validators = [], $validationErrorMessage = null) {
-
+public static function create(string $type, string $name, $value = null, array $attributes = [], array $options = [], bool $required = false, array $modifiers = [], array $validators = [], string $validationErrorMessage = '')
+{
 		$type = strtolower($type);
 
 		if(is_array($value) && $type !== 'multipleselect') {
@@ -66,9 +66,7 @@ public static function create($type, $name, $value = null, array $attributes = [
 			return $elements;
 		}
 
-		else {
-			return self::createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
-		}
+        return self::createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage);
 	}
 
     /**
@@ -87,8 +85,8 @@ public static function create($type, $name, $value = null, array $attributes = [
      *
      * @throws FormElementFactoryException
      */
-	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage) {
-
+	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage)
+    {
 		switch($type) {
 			case 'input':
 				$elem = new InputElement($name);
