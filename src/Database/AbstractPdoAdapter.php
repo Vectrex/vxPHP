@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.13.2, 2021-04-28
+ * @version 0.13.3, 2021-07-14
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -264,15 +264,15 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
     {
 		// fill cache with table information
 	
-		if(empty($this->tableStructureCache)) {
+		if(empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
 		}
 	
 		// return FALSE when either table or column can not be found
 	
 		return
-		array_key_exists($tableName, $this->tableStructureCache) &&
-		array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
+            array_key_exists($tableName, $this->tableStructureCache) &&
+            array_key_exists(strtolower($columnName), $this->tableStructureCache[$tableName]);
 	}
 
 	/**
@@ -326,9 +326,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @throws \PDOException
 	 */
-	public function insertRecord(string $tableName, array $data)
+	public function insertRecord(string $tableName, array $rowData)
     {
-        $data = array_change_key_case($data, CASE_LOWER);
+        $rowData = array_change_key_case($rowData, CASE_LOWER);
 	
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
@@ -345,12 +345,10 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 		$values = [];
 	
 		foreach($attributes as $attribute) {
-	
-			if (array_key_exists($attribute, $data)) {
-				$names[]	= $columns[$attribute]['columnName'];
-				$values[]	= $data[$attribute];
+				if (array_key_exists($attribute, $rowData)) {
+				$names[] = $columns[$attribute]['columnName'];
+				$values[] = $rowData[$attribute];
 			}
-	
 		}
 	
 		// nothing to do
@@ -364,7 +362,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 		// append create timestamp when applicable
 	
 		if(
-            !array_key_exists(static::CREATE_FIELD, $data) &&
+            !array_key_exists(static::CREATE_FIELD, $rowData) &&
 			in_array(static::CREATE_FIELD, $attributes, true)
 		) {
 					
