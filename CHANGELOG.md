@@ -1,3 +1,6 @@
+## 2.6.6
+- bug fix: checking for a table column in a database failed if the table structure cache had not been filled by a previous database operation
+
 ## 2.6.5
 - bug fix: form element factory cast wrong error message type
 
