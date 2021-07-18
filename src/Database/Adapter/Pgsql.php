@@ -10,7 +10,6 @@
 
 namespace vxPHP\Database\Adapter;
 
-use vxPHP\Application\Application;
 use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
@@ -22,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.4.1, 2020-11-27
+ * @version 1.5.0, 2021-07-18
  */
 class Pgsql extends AbstractPdoAdapter
 {
@@ -58,44 +57,34 @@ class Pgsql extends AbstractPdoAdapter
             parent::__construct($config);
 
             if(defined('DEFAULT_ENCODING')) {
-
                 if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
                     $charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
                 }
                 else {
                     throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
                 }
-
             }
-
             else {
-
                 $charset = 'UTF8';
-
             }
 
-            if(!$this->dsn) {
-
-                if(!$this->host) {
-                    throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
-                }
-                if(!$this->dbname) {
-                    throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
-                }
-
-                $this->dsn = sprintf(
-                    "%s:dbname=%s;host=%s",
-                    'pgsql',
-                    $this->dbname,
-                    $this->host
-                );
-                if($this->port) {
-                    $this->dsn .= ';port=' . $this->port;
-                }
-
+            if(!$this->host) {
+                throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+            }
+            if(!$this->dbname) {
+                throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
             }
 
-            $this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
+            $dsn = sprintf(
+                "%s:dbname=%s;host=%s",
+                'pgsql',
+                $this->dbname,
+                $this->host
+            );
+            if($this->port) {
+                $dsn .= ';port=' . $this->port;
+            }
+            $this->connection = new PDOConnection($dsn, $this->user, $this->password, $connectionAttributes);
             $this->connection->exec(sprintf("SET NAMES '%s'", strtoupper($charset)));
 
             $this->setDefaultConnectionAttributes();
