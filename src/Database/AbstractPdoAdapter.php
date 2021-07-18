@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.13.3, 2021-07-14
+ * @version 0.14.0, 2021-07-21
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -79,12 +79,19 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	protected $dbname;
 	
 	/**
-	 * datasource string of connection
+	 * charset to be used by connection
 	 * 
 	 * @var string
 	 */
-	protected $dsn;
-	
+	protected $charset;
+
+    /**
+     * DSN string
+     *
+     * @var string
+     */
+    protected $dsn;
+
 	/**
 	 * holds the wrapped PDO connection
 	 * 
@@ -124,51 +131,74 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	public function __construct(array $config, array $connectionAttributes = [])
     {
 		$config = array_change_key_case($config, CASE_LOWER);
-		
-		$this->host = $config['host'];
-		$this->dbname = $config['dbname'];
-		$this->user = $config['user'];
-		$this->password	= $config['password'];
 
-        if(isset($config['port'])) {
-            $this->port = (int) $config['port'];
+		if (isset($config['dsn'])) {
+		    $dsnData = $this->parseDsn($config['dsn']);
+
+            foreach ($dsnData as $key => $value) {
+                if (isset($config[$key]) && $config[$key] !== $value) {
+                    throw new \PDOException(sprintf("Mismatch of connection parameter: DSN states '%s', config element states '%s'.", $value, $config[$key]));
+                }
+            }
+            $config = array_merge($config, $dsnData);
         }
 
-		if(isset($config['dsn'])) {
-
-			$this->dsn = $config['dsn'];
-
-			// set dbname
-
-            if(!preg_match('/dbname=(.*?)(?:;|$)/', $this->dsn, $matches)) {
-                throw new \PDOException('Database name missing in DSN string.');
+		foreach ($config as $key => $value) {
+		    if (!property_exists($this, $key)) {
+                throw new \PDOException(sprintf("Invalid connection parameter '%s'.", $key));
             }
-            if($this->dbname && $matches[1] !== $this->dbname) {
-                throw new \PDOException(sprintf("Mismatch of database name: DSN states '%s', dbname element states '%s'.", $matches[1], $this->dbname));
-            }
-            $this->dbname = $matches[1];
-
-            // set host
-
-            if(!preg_match('/host=(.*?)(?:;|$)/', $this->dsn, $matches)) {
-                throw new \PDOException('Host missing in DSN string.');
-            };
-            if($this->host && $matches[1] !== $this->host) {
-                throw new \PDOException(sprintf("Mismatch of host: DSN states '%s', host element states '%s'.", $matches[1], $this->host));
-            }
-            $this->host = $matches[1];
-
-            // set port
-
-            if(preg_match('/port=(.*?)(?:;|$)/', $this->dsn, $matches)) {
-                if ($this->port && (int)$matches[1] !== $this->port) {
-                    throw new \PDOException(sprintf("Mismatch of port: DSN states '%s', host element states '%s'.", $matches[1], $this->port));
-                }
-                $this->port = (int)$matches[1];
-            }
+		    $this->$key = $value;
         }
 	}
-	
+
+    /**
+     * tries to extract all allowed elements from a
+     * DSN string and return all found elements as
+     * array
+     *
+     * @param string $dsn
+     * @return array
+     */
+	public function parseDsn (string $dsn): array
+    {
+        /*
+         * according to PDO doc the following DSN strings are valid
+         *
+         * pgsql:host=...;port=...;dbname=...;user=...;password=...
+         * mysql:host=...;port=...;dbname=...;charset=...
+         *
+         * @todo oci:dbname=...;charset=...
+         * @todo mssql:host=...;dbname=...;charset=...;appname=...
+         * @todo sqlite?
+         */
+        $allowedElements = [
+            'pgsql' => ['host', 'port', 'dbname', 'user', 'password'],
+            'mysql' => ['host', 'port', 'dbname', 'charset'],
+        ];
+
+        $prefix = strstr($dsn, ':', true);
+
+        if (!isset($allowedElements[$prefix])) {
+            throw new \PDOException(sprintf("Prefix '%s' not supported. Supported DSN prefixes are '%s'.", $prefix, implode ("', '", array_keys([$allowedElements]))));
+        }
+
+        $elements = [];
+
+        foreach (explode(';', substr($dsn, strlen($prefix) + 1)) as $frag) {
+            if (!preg_match('/^([a-z]+)=(.*)$/', $frag, $matches)) {
+                throw new \PDOException(sprintf("Invalid DSN element '%s'", $frag));
+            }
+
+            if (!in_array($matches[1], $allowedElements[$prefix], true)) {
+                throw new \PDOException(sprintf("Element '%s' not allowed. Allowed elements are '%s'.", $matches[1], implode ("', '", $allowedElements[$prefix])));
+            }
+
+            $elements[$matches[1]] = $matches[2];
+        }
+
+        return $elements;
+    }
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -454,11 +484,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 			if (in_array($attribute, $attributes, true)) {
 				$names[] = $columns[$attribute]['columnName'];
 			}
-			
 			else {
 				unset($firstRow[$attribute]);
 			}
-		
 		}
 
 		// nothing to do, when no intersection exists

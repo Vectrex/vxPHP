@@ -10,7 +10,6 @@
 
 namespace vxPHP\Database\Adapter;
 
-use vxPHP\Application\Application;
 use vxPHP\Database\ConnectionInterface;
 use vxPHP\Database\DatabaseInterface;
 use vxPHP\Database\AbstractPdoAdapter;
@@ -22,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.13.1, 2020-11-27
+ * @version 1.14.0, 2021-07-18
  */
 class Mysql extends AbstractPdoAdapter
 {
@@ -54,59 +53,39 @@ class Mysql extends AbstractPdoAdapter
 	public function __construct(array $config = null, array $connectionAttributes = [])
     {
 		if($config) {
-
 			parent::__construct($config);
 	
 			if(defined('DEFAULT_ENCODING')) {
-			
 				if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
-					$charset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+					$fallbackCharset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
 				}
 				else {
 					throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
 				}
-			
 			}
-	
 			else {
-				$charset = 'utf8';
+                $fallbackCharset = 'utf8';
 			}
 			
-			if(!$this->dsn) {
+            if(!$this->host) {
+                throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
+            }
+            if(!$this->dbname) {
+                throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
+            }
 	
-				if(!$this->host) {
-					throw new \PDOException("Missing parameter 'host' in datasource connection configuration.");
-				}
-				if(!$this->dbname) {
-					throw new \PDOException("Missing parameter 'dbname' in datasource connection configuration.");
-				}
-	
-				$this->dsn = sprintf(
-					"%s:dbname=%s;host=%s;charset=%s",
-					'mysql',
-					$this->dbname,
-					$this->host,
-					$charset
-				);
-				if($this->port) {
-					$this->dsn .= ';port=' . $this->port;
-				}
+            $dsn = sprintf(
+                "%s:dbname=%s;host=%s;charset=%s",
+                'mysql',
+                $this->dbname,
+                $this->host,
+                $this->charset ?: $fallbackCharset
+            );
+            if($this->port) {
+                $dsn .= ';port=' . $this->port;
             }
 
-			// check whether charset encoding matches
-
-			else {
-			    if(preg_match('/charset=([0-9a-z]+)(?:;|$)/i', $this->dsn, $matches)) {
-			        if(strtolower($matches[1]) !== $charset) {
-			            throw new \PDOException(sprintf("Charset mismatch; site configuration says '%s', DSN says '%s'.", $charset, $matches[1]));
-                    }
-                }
-                else {
-			        $this->dsn .= ';charset=' . $charset;
-                }
-            }
-
-			$this->connection = new PDOConnection($this->dsn, $this->user, $this->password, $connectionAttributes);
+			$this->connection = new PDOConnection($dsn, $this->user, $this->password, $connectionAttributes);
             $this->setDefaultConnectionAttributes();
         }
 	}
@@ -167,7 +146,7 @@ class Mysql extends AbstractPdoAdapter
 
 		if(!isset($this->tableStructureCache[$tableName][$columnName]['enumValues'])) {
 			preg_match_all(
-				"~'(.*?)'~i",
+				"~'(.*?)'~",
 				$this->tableStructureCache[$tableName][$columnName]['columnType'],
 				$matches
 			);
