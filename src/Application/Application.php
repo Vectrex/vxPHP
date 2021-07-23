@@ -10,7 +10,7 @@
 
 namespace vxPHP\Application;
 
-use Exception;
+use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Http\Response;
 use vxPHP\Observer\EventDispatcher;
 use vxPHP\Application\Locale\Locale;
@@ -31,10 +31,10 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.12.1 2020-04-30
+ * @version 1.13.0 2020-07-23
  */
-class Application {
-
+class Application
+{
 	/**
 	 * this application instance
 	 * 
@@ -199,7 +199,7 @@ class Application {
 			}
 		}
 
-		catch (Exception $e) {
+		catch (\Exception $e) {
 			if (strpos(PHP_SAPI, 'cli') === 0) {
 				printf(
 					"Application error!\r\nMessage: %s",
@@ -223,7 +223,7 @@ class Application {
     /**
      * Get Application instance.
      *
-     * @param Config $config
+     * @param Config|null $config
      * @return Application
      * @throws ApplicationException
      */
@@ -290,7 +290,7 @@ class Application {
      * configured default vxpdo datasource
      *
      * @return DatabaseInterface
-     * @throws Exception
+     * @throws \Exception
      * @deprecated
      */
 	public function getDb(): ?DatabaseInterface
@@ -330,11 +330,10 @@ class Application {
 	 * name
 	 * 
 	 * @param string $name
-	 * @throws ApplicationException
-	 * 
 	 * @return DatabaseInterface
+     * @throws ApplicationException|ConfigException
 	 */
-	public function getVxPDO ($name = 'default'): DatabaseInterface
+	public function getVxPDO (string $name = 'default'): DatabaseInterface
     {
 		if(!array_key_exists($name, $this->vxPDOInstances)) {
 
@@ -353,7 +352,6 @@ class Application {
 					'dbname' => $dsConfig->dbname,
 					'user' => $dsConfig->user,
 					'password' => $dsConfig->password,
-					'name' => $name
 				]
 			);
 		}
@@ -381,7 +379,7 @@ class Application {
      * @return ServiceInterface :ServiceInterface
      * @throws ApplicationException
      */
-	public function getService($serviceId): ServiceInterface
+	public function getService(string $serviceId): ServiceInterface
     {
 		$args = func_get_args();
 		$service = $this->initializeService($serviceId, array_splice($args, 1));
@@ -394,10 +392,10 @@ class Application {
      * checks whether a service identified by service id is configured
      * no further checks whether service can be invoked are conducted
      *
-     * @param $serviceId
+     * @param string $serviceId
      * @return bool
      */
-	public function hasService($serviceId): bool
+	public function hasService(string $serviceId): bool
     {
 	    return !empty($this->config->services) && array_key_exists($serviceId, $this->config->services);
     }
@@ -484,7 +482,7 @@ class Application {
 	 * @return Application
 	 * @throws ApplicationException
 	 */
-	public function setAbsoluteAssetsPath($path): Application
+	public function setAbsoluteAssetsPath(string $path): Application
     {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
@@ -515,7 +513,7 @@ class Application {
 	 * @param string $path
 	 * @return Application
 	 */
-	public function setRelativeAssetsPath($path): Application
+	public function setRelativeAssetsPath(string $path): Application
     {
 	    $path = trim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
 
@@ -557,7 +555,7 @@ class Application {
 	 * @return Application
 	 * @throws ApplicationException
 	 */
-	public function setRootPath($path): Application
+	public function setRootPath(string $path): Application
     {
 		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
@@ -566,7 +564,7 @@ class Application {
 		}
 
 		$this->rootPath = $path;
-		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', (string) $this->absoluteAssetsPath));
+		$this->relativeAssetsPath = str_replace(DIRECTORY_SEPARATOR, '/', str_replace($this->rootPath, '', $this->absoluteAssetsPath));
 
 		return $this;
 	}
@@ -634,7 +632,7 @@ class Application {
      * @param string $path
      * @return string
      */
-	public function extendToAbsoluteAssetsPath($path): string
+	public function extendToAbsoluteAssetsPath(string $path): string
     {
 		if(strpos($path, DIRECTORY_SEPARATOR) === 0 || strpos($path, ':\\') === 1) {
 			return $path;
@@ -676,7 +674,7 @@ class Application {
 	 * @param string $localeId
 	 * @return boolean
 	 */
-	public function hasLocale($localeId): bool
+	public function hasLocale(string $localeId): bool
     {
 		return array_key_exists(strtolower($localeId), $this->locales);
 	}
@@ -687,7 +685,7 @@ class Application {
      * @return Locale
      * @throws ApplicationException
      */
-	public function getLocale($localeId): Locale
+	public function getLocale(string $localeId): Locale
     {
 		$localeId = strtolower($localeId);
 
@@ -775,7 +773,7 @@ class Application {
 	 * @throws ApplicationException
 	 * @return ServiceInterface
 	 */
-	private function initializeService($serviceId, array $constructorArguments): ServiceInterface
+	private function initializeService(string $serviceId, array $constructorArguments): ServiceInterface
     {
 		if(!isset($this->config->services[$serviceId])) {
 			throw new ApplicationException(sprintf("Service '%s' not configured.", $serviceId));
@@ -792,7 +790,7 @@ class Application {
 		try {
 			$service = new $class(...$constructorArguments);
 		}
-		catch(Exception $e) {
+		catch(\Exception $e) {
 			throw new ApplicationException(sprintf("Instancing of service '%s' failed. Error: %s", $serviceId, $e->getMessage()));
 		}
 
@@ -816,7 +814,7 @@ class Application {
 	 * @throws ApplicationException
 	 * @return SubscriberInterface
 	 */
-	private function initializePlugin($pluginId): SubscriberInterface
+	private function initializePlugin(string $pluginId): SubscriberInterface
     {
 		$configData = $this->config->plugins[$pluginId];
 
@@ -827,7 +825,7 @@ class Application {
 		try {
 		    $plugin = new $class();
         }
-        catch(Exception $e) {
+        catch(\Exception $e) {
             throw new ApplicationException(sprintf("Instancing of plugin '%s' failed. Error: %s", $pluginId, $e->getMessage()));
         }
 
