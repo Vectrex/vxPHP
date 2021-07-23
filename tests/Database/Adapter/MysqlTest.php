@@ -75,6 +75,62 @@ EOD;
         $this->assertIsString($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'enum_field' => 'val1', 'varchar_field' => 'foo']));
     }
 
+    public function testInsertRecordsWithScalar ()
+    {
+        $this->expectException('InvalidArgumentException');
+        $rows = [
+            ['varchar_field' => 'a', 'f2' => 'b', 'f4' => 'c'],
+            'foobar',
+        ];
+        $this->mysql->insertRecords(self::TEST_TABLE, $rows);
+    }
+
+    public function testInsertRecordsPartialColumnMismatch ()
+    {
+        $this->expectException('InvalidArgumentException');
+        $rows = [
+            ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
+            ['varchar_field_2' => 'a', 'f2' => 'b', 'f3' => 'c']
+        ];
+        $this->mysql->insertRecords(self::TEST_TABLE, $rows);
+    }
+
+    public function testInsertRecordsCompleteColumnMismatch ()
+    {
+        $rows = [
+            ['f1' => 'a', 'f2' => 'b', 'f3' => 'c'],
+            ['f1' => 'a', 'f2' => 'b', 'f3' => 'c']
+        ];
+        $this->assertEquals(0, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
+    }
+
+    public function testInsertRecords ()
+    {
+        $rows = [
+            ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
+            ['varchar_field' => 'b', 'f2' => 'b', 'f3' => 'c'],
+            ['varchar_field' => 'c', 'f2' => 'b', 'f3' => 'c']
+        ];
+
+        $this->assertEquals(3, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
+    }
+
+    public function testInsertRecordsOrder ()
+    {
+        $rows = [
+            ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
+            ['varchar_field' => 'b', 'f2' => 'b', 'f3' => 'c'],
+            ['varchar_field' => 'c', 'f2' => 'b', 'f3' => 'c']
+        ];
+
+        $this->mysql->insertRecords(self::TEST_TABLE, $rows);
+
+        foreach ($this->mysql->doPreparedQuery(sprintf('SELECT * FROM %s ORDER BY id', self::TEST_TABLE)) as $ndx => $row) {
+            $this->assertEquals($rows[$ndx]['varchar_field'], $row['varchar_field']);
+        }
+    }
+
+
     public function testInsertRecordFails ()
     {
         $this->assertNull($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'a' => 'b']));
