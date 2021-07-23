@@ -1,3 +1,7 @@
+## 2.6.8
+- bug fix: DatabaseInterface::insertRecords() failed
+- bug fix: DatabaseInterfaceFactory failed to initialize an interface
+
 ## 2.6.7
 - improved DSN parsing for PDO connections
 
