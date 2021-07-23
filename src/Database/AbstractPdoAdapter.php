@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.14.0, 2021-07-21
+ * @version 0.15.0, 2021-07-23
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -518,7 +518,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 			// collect values (in consistent order) for statement execution
 
 			ksort($matchedRow);
-			array_push ($values, ...$matchedRow);
+			array_push ($values, ...array_values($matchedRow));
 		}
 
 		// generate a single placeholder row

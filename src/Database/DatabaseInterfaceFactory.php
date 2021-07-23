@@ -18,29 +18,27 @@ use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.5.1, 2018-04-21
+ * @version 0.6.0, 2021-07-21
  */
-class DatabaseInterfaceFactory {
+class DatabaseInterfaceFactory
+{
+	private function __construct() {}
 	
-	private function __construct() {
-	}
-	
-	private function __clone() {
-	}
+	private function __clone() {}
 
-	/**
-	 * get a PDO wrapper/extension class depending on $type
+    /**
+     * get a PDO wrapper/extension class depending on $type
      * if no type is provided DSN string in the configuration
      * is searched for a type definition
-	 * 
-	 * @param string $type
+     *
+     * @param string|null $type
      * @param array $config
-	 * @return DatabaseInterface
-	 * 
-	 * @throws \Exception
-	 */
-	public static function create($type = null, array $config = []) {
-
+     * @return DatabaseInterface
+     *
+     * @throws ConfigException
+     */
+	public static function create(string $type = null, array $config = []): DatabaseInterface
+    {
 	    if(!$type) {
 
 	        if(!isset($config['dsn'])) {
@@ -103,27 +101,21 @@ class DatabaseInterfaceFactory {
             $vxPDO->setConnection($pdoConnection);
 
             return $vxPDO;
-
 		}
 
-		else {
+        $className =
+            __NAMESPACE__ .
+            '\\Adapter\\' .
+            ucfirst($type);
 
-			$className =
-				__NAMESPACE__ .
-				'\\Adapter\\' .
-				ucfirst($type);
-	
-			// check whether driver is available
-				
-			if(!class_exists($className)) {
-	
-				throw new ConfigException(sprintf("No class for driver '%s' supported.", $type));
-	
-			}
-				
-			return new $className($config);
+        // check whether driver is available
 
-		}
+        if(!class_exists($className)) {
 
+            throw new ConfigException(sprintf("No class for driver '%s' supported.", $type));
+
+        }
+
+        return new $className($config);
 	}
 }
