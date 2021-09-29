@@ -1,4 +1,7 @@
 ## 2.6.8
+- bug fix: SmtpMailer did not encode subject with non-ASCII characters
+
+## 2.6.8
 - bug fix: DatabaseInterface::insertRecords() failed
 - bug fix: DatabaseInterfaceFactory failed to initialize an interface
 

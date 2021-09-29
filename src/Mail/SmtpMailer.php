@@ -17,7 +17,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.5.1 2020-12-08
+ * @version 0.5.2 2021-09-30
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -197,7 +197,7 @@ class SmtpMailer implements MailerInterface
 	 * 
 	 * @throws SmtpMailerException
 	 */
-	public function connect($timeout = 10): void
+	public function connect(int $timeout = 10): void
     {
 		if($this->smtpEncryption === 'ssl') {
 			$protocol = $this->smtpEncryption . '://';
@@ -467,7 +467,7 @@ class SmtpMailer implements MailerInterface
 					break;
 		
 				case 'subject':
-				    if (preg_match('/^[\x20-\x7F]+$/', $this->headers[$k]) !== false) {
+				    if (preg_match('/^[\x20-\x7F]+$/', $this->headers[$k]) === 1) {
 				        $rows[] = sprintf('%s: %s', $k, $this->headers[$k]);
                     }
                     else {
@@ -743,7 +743,7 @@ class SmtpMailer implements MailerInterface
 			else {
 				$message .= $tmp;
 				//if(preg_match('~^[0-9]{3}~', $message)) {
-				if(preg_match('~^([0-9]{3})(-(.*[\r\n]{1,2})+\\1)? [^\r\n]+[\r\n]{1,2}$~', $message)) {
+				if(preg_match('~^(\d{3})(-(.*[\r\n]{1,2})+\\1)? [^\r\n]+[\r\n]{1,2}$~', $message)) {
 					$continue = false;
 				}
 			}
