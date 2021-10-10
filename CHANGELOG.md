@@ -1,4 +1,9 @@
-## 2.6.8
+## 2.6.10
+- refactored and simplified menu renderer; menus are no longer automatically wrapped with divs and get specific id attributes
+- the SimpleList menu renderer now accepts additional aClass, spanClass, activeClass parameters to allow for easier styling (particularly with utility-first CSS frameworks)
+- PHP7.4 is now the minimum supported version
+
+## 2.6.9
 - bug fix: SmtpMailer did not encode subject with non-ASCII characters
 
 ## 2.6.8
