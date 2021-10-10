@@ -14,8 +14,8 @@ namespace vxPHP\Webpage\Menu\Renderer;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 
-interface MenuRendererInterface {
-
+interface MenuRendererInterface
+{
 	/**
 	 * convenience method; allow chaining of renderer instantiation parameter setting and rendering
 	 *
@@ -30,13 +30,12 @@ interface MenuRendererInterface {
 	 * @param array $parameters
 	 * @return MenuRendererInterface
 	 */
-	public function setParameters(Array $parameters);
+	public function setParameters(Array $parameters): self;
 
 	/**
 	 * render menu with its menu entries
 	 *
 	 * @return string
 	 */
-	public function render();
-
+	public function render(): string;
 }

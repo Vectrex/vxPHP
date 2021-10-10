@@ -36,7 +36,7 @@ class Router
     /**
      * @var Route[]
      */
-	protected $routes = [];
+	protected array $routes = [];
 
     /**
      * locale prefixes ("en", "de",...) which should be observed when parsing paths
@@ -65,7 +65,7 @@ class Router
      *
      * @var string
      */
-    protected $relativeAssetsPath = '';
+    protected string $relativeAssetsPath = '';
 
     /**
      * Router constructor.
