@@ -21,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.5.0, 2021-07-18
+ * @version 1.5.1, 2021-11-29
  */
 class Pgsql extends AbstractPdoAdapter
 {
@@ -37,7 +37,7 @@ class Pgsql extends AbstractPdoAdapter
      *
      * @var array
      */
-    protected $charsetMap = [
+    protected array $charsetMap = [
         'utf-8' => 'UTF8',
         'iso-8859-15' => 'LATIN1'
     ];

@@ -21,7 +21,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 {
     /**
      * character for quoting identifiers
-     *
      */
     public const QUOTE_CHAR = '´';
 
@@ -29,8 +28,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
      * attribute which stores the timestamp of the last update of the
      * record; must be an all lowercase string, though the attribute in
      * the database might be not
-     *
-     * @var string
      */
     public const UPDATE_FIELD = 'lastupdated';
 
@@ -38,8 +35,6 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
      * attribute which stores the timestamp of the creation timestamp of
      * a record; must be an all lowercase string, though the attribute
      * in the database might be not
-     *
-     * @var string
      */
     public const CREATE_FIELD = 'firstcreated';
 
@@ -836,7 +831,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 				++$name;
 			}
 	
-			// otherwise ensure colons
+			// otherwise, ensure colons
 	
 			else {
 				$name = ':' . ltrim($name, ':');

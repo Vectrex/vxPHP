@@ -15,24 +15,24 @@ namespace vxPHP\Security\Csrf;
  * a CSRF token
  * 
  * @author Gregor Kofler
- * @version 0.2.0 2016-04-10
+ * @version 0.2.1 2021-11-28
  *
  */
-class CsrfToken {
-
+class CsrfToken
+{
 	/**
 	 * allows identification of token
 	 * 
 	 * @var string
 	 */
-	private $id;
+	private string $id;
 	
 	/**
 	 * the random value of the token
 	 * 
 	 * @var string
 	 */
-	private $value;
+	private string $value;
 	
 	/**
 	 * constructor
@@ -40,10 +40,10 @@ class CsrfToken {
 	 * @param string $id
 	 * @param string $value
 	 */
-	public function __construct($id, $value)
+	public function __construct(string $id, string $value)
     {
-		$this->value = (string) $value;
-		$this->id = (string) $id;
+		$this->value = $value;
+		$this->id = $id;
 	}
 
 	public function __toString()

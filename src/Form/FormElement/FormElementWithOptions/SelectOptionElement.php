@@ -19,8 +19,8 @@ use vxPHP\Form\FormElement\LabelElement;
  * @author Gregor Kofler
  * @version 0.8.2 2021-07-10
  */
-class SelectOptionElement extends FormElementFragment {
-
+class SelectOptionElement extends FormElementFragment
+{
     /**
      * initialize value and label and establish reference to SelectElement
      *

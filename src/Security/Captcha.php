@@ -15,28 +15,25 @@ use vxPHP\Security\Exception\CaptchaException;
 
 /**
  * Captcha
- * @version 0.2.4, 2021-04-28
+ * @version 0.2.5, 2021-11-28
  * @author Gregor Kofler
  */
 class Captcha {
-	private $charCount;
-	private $fontSize;
-	private	$bgColor;
-	private $fontColors;
-	private $fonts;
-	private $gridColors;
-	private $gridSpacing = 8;
-	private $tiltedLetters = true;
+	private int $charCount;
+	private int $fontSize;
+	private	array $bgColor = [];
+	private array $fontColors = [];
+	private array $fonts = [];
+	private array $gridColors = [];
+	private int $gridSpacing = 8;
+	private bool $tiltedLetters = true;
 	
-	private $type;
-	private $imgType;
-	private $string;
-	private $height;
-	private $width;
-	private $debug	= false;
-	
-	public $filename;
-
+	private string $type;
+	private string $imgType;
+	private string $string;
+	private int $height;
+	private int $width;
+	private bool $debug	= false;
 
 	/**
 	 * @param int character count
@@ -45,7 +42,7 @@ class Captcha {
 	 * @param string text contain digits, chars or mixed
 	 * @return void
 	 */
-	public function __construct($charCount = 6, $fontSize = 32, $imgType = 'png', $type = 'mixed')
+	public function __construct(int $charCount = 6, int $fontSize = 32, string $imgType = 'png', string $type = 'mixed')
     {
 		$this->charCount = $charCount;
 		$this->fontSize = $fontSize;
@@ -68,9 +65,9 @@ class Captcha {
 		return $this;
 	}
 	
-	public function setFonts($font): Captcha
+	public function setFonts($fonts): Captcha
     {
-		$this->fonts = (array) $font;
+		$this->fonts = (array) $fonts;
 		return $this;
 	}
 	
@@ -125,9 +122,9 @@ class Captcha {
 		return $this;
 	}
 
-	public function setGridSpacing($gridSpacing): Captcha
+	public function setGridSpacing(int $gridSpacing): Captcha
     {
-		$this->gridSpacing = max(2, (int) $gridSpacing);
+		$this->gridSpacing = max(2, $gridSpacing);
 		return $this;
 	}
 	
@@ -157,7 +154,7 @@ class Captcha {
 		}
 	}
 
-	public function save($path, $filename = null)
+	public function save($path, $filename = null): bool
     {
 		if(empty($this->fonts)) {
 			throw new CaptchaException('No font(s) set.');
@@ -168,8 +165,6 @@ class Captcha {
 		}
 
 		$filename = rtrim($path, '/') . '/' . $filename;
-
-		$this->filename = $filename;
 
 		$image = $this->generate();
 
@@ -182,7 +177,7 @@ class Captcha {
 		}
 	}
 
-	public function getString()
+	public function getString(): string
     {
 		return $this->string;
 	}

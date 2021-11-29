@@ -12,18 +12,18 @@ namespace vxPHP\Webpage\MenuEntry;
 
 class DynamicMenuEntry extends MenuEntry
 {
-	public function __construct($path, $attributes)
+	public function __construct (string $path, array $attributes = [])
     {
-		parent::__construct($path, $attributes);
+		parent::__construct ($path, $attributes);
 	}
 
-	public function setPath($path)
+	public function setPath ($path): self
     {
 		$this->path = $path;
 		return $this;
 	}
 
-	public function setAttributes(Array $attributes)
+	public function setAttributes (array $attributes): self
     {
 		foreach($attributes as $attr => $value) {
 			$this->attributes->$attr = $value;

@@ -15,7 +15,7 @@ namespace vxPHP\Constraint;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.1, 2020-04-30
+ * @version 0.2.2, 2021-11-28
  */
 abstract class AbstractConstraint implements ConstraintInterface
 {
@@ -25,7 +25,7 @@ abstract class AbstractConstraint implements ConstraintInterface
 	 * 
 	 * @var string
 	 */
-	protected $errorMessage;
+	protected string $errorMessage = '';
 	
 	/**
 	 *

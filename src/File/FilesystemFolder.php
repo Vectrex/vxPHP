@@ -19,41 +19,41 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2020-09-15
+ * @version 0.7.1 2021-12-01
  */
 
-class FilesystemFolder {
-
+class FilesystemFolder
+{
 	public const CACHE_PATH = '.cache';
 
 	/**
 	 * caches instances of folders
 	 * @var FilesystemFolder[]
 	 */
-	private static $instances = [];
+	private static array $instances = [];
 
 	/**
 	 * absolute path
 	 * @var string
 	 */
-	private	$path;
+	private	string $path;
 	
 	/**
 	 * flags presence of a cache folder
-	 * @var boolean
+	 * @var boolean|null
 	 */
-	private $cacheFound;
+	private ?bool $cacheFound = null;
 	
 	/**
 	 * relative path with application assets path as root
-	 * @var string
-	 */
-	private $relPath;
+	 * @var string|null
+     */
+	private ?string $relPath = null;
 	
 	/**
      * the folder containing the current instance
-	 * @var FilesystemFolder
-	 */
+	 * @var FilesystemFolder|null|false
+     */
 	private $parentFolder;
 
     /**
@@ -127,7 +127,7 @@ class FilesystemFolder {
      */
 	public function getRelativePath(bool $force = false): string
     {
-		if(!isset($this->relPath) || $force) {
+		if($this->relPath === null || $force) {
 			$relPath = preg_replace('~^' . preg_quote(Application::getInstance()->getAbsoluteAssetsPath(), '~').'~', '', $this->path, -1, $replaced);
 			$this->relPath = $replaced === 0 ? null : $relPath;
 		}
@@ -190,7 +190,7 @@ class FilesystemFolder {
      */
 	public function getParentFolder(bool $force = false): ?FilesystemFolder
     {
-		if(!isset($this->parentFolder) || $force) {
+		if($this->parentFolder === null || $force) {
 			
 			$parentPath = realpath($this->path . '..');
 			
@@ -218,7 +218,7 @@ class FilesystemFolder {
 	 */
 	public function hasCache(bool $force = false): bool
     {
-		if(!isset($this->cacheFound) || $force) {
+		if($this->cacheFound === null || $force) {
 			$this->cacheFound = is_dir($this->path . self::CACHE_PATH);
 		}
 
@@ -262,7 +262,7 @@ class FilesystemFolder {
 			throw new FilesystemFolderException(sprintf("Folder %s cannot be created within folder %s.", $folderName, $this->path));
 		}
 		
-		// recursively create folder(s) when when path not already exists
+		// recursively create folder(s) when path not already exists
 		
 		if(!is_dir($path)) {
 

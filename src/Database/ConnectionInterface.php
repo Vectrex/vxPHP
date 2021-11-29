@@ -14,7 +14,7 @@ namespace vxPHP\Database;
  * Interface for PDO connection
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.3.0, 2020-11-27
+ * @version 0.3.1, 2021-11-29
  *
  */
 interface ConnectionInterface
@@ -70,7 +70,7 @@ interface ConnectionInterface
     /**
      * @see \PDO::getAttribute()
      *
-     * @param string $attribute
+     * @param int $attribute
      * @return mixed
      */
     public function getAttribute(int $attribute);
@@ -86,7 +86,7 @@ interface ConnectionInterface
 
     /**
      * @param string|null $name
-     * @return string
+     * @return string|false
      * @see \PDO::lastInsertId()
      *
      */

@@ -10,16 +10,14 @@
 
 namespace vxPHP\Http;
 
-use vxPHP\Http\Response;
-
 /**
- * RedirectResponse represents a HTTP response doing a redirect
+ * RedirectResponse represents an HTTP response doing a redirect
  *
  * @author Fabien Potencier <fabien@symfony.com>, Gregor Kofler
  */
 class RedirectResponse extends Response
 {
-    protected $targetUrl;
+    protected ?string $targetUrl = null;
 
     /**
      * Creates a redirect response so that it conforms to the rules defined for a redirect status code.
@@ -57,7 +55,7 @@ class RedirectResponse extends Response
      *
      * @return static
      */
-    public static function create($url = '', $status = 302, $headers = []): Response
+    public static function create($url = '', int $status = 302, array $headers = []): Response
     {
         return new static($url, $status, $headers);
     }
@@ -67,7 +65,7 @@ class RedirectResponse extends Response
      *
      * @return string target URL
      */
-    public function getTargetUrl(): string
+    public function getTargetUrl(): ?string
     {
         return $this->targetUrl;
     }
@@ -75,13 +73,12 @@ class RedirectResponse extends Response
     /**
      * Sets the redirect target of this response.
      *
-     * @param string $url The URL to redirect to
+     * @param string|null $url The URL to redirect to
      *
      * @return $this
      *
-     * @throws \InvalidArgumentException
      */
-    public function setTargetUrl($url): self
+    public function setTargetUrl(?string $url): self
     {
         if ('' === ($url ?? '')) {
             throw new \InvalidArgumentException('Cannot redirect to an empty URL.');
@@ -91,7 +88,7 @@ class RedirectResponse extends Response
 
         $this->setContent(
             sprintf('<!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta http-equiv="refresh" content="0;url=\'%1$s\'" />
@@ -101,7 +98,7 @@ class RedirectResponse extends Response
     <body>
         Redirecting to <a href="%1$s">%1$s</a>.
     </body>
-</html>', htmlspecialchars($url, ENT_QUOTES, 'UTF-8')));
+</html>', htmlspecialchars($url, ENT_QUOTES)));
 
         $this->headers->set('Location', $url);
 

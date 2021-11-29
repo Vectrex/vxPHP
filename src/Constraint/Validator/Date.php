@@ -20,7 +20,7 @@ use vxPHP\Application\Application;
  * in addition allowing only future dates can be configured
  * handles currently dates in german, us and iso style
  * 
- * @version 0.3.2 2021-04-28
+ * @version 0.3.3 2021-11-28
  * @author Gregor Kofler
  */
 class Date extends AbstractConstraint
@@ -29,24 +29,24 @@ class Date extends AbstractConstraint
 	 * the locale applied to the validation
 	 * 
 	 * @var Locale
-	 */
-	private $locale;
+     */
+	private Locale $locale;
 	
 	/**
 	 * only dates after this date are considered valid
 	 * ignored when NULL
 	 * 
-	 * @var \DateTime
-	 */
-	private $validFrom;
+	 * @var \DateTime|null
+     */
+	private ?\DateTime $validFrom = null;
 	
 	/**
 	 * only dates before this date are considered valid
 	 * ignored when NULL
 	 *
-	 * @var \DateTime
-	 */
-	private $validUntil;
+	 * @var \DateTime|null
+     */
+	private ?\DateTime $validUntil = null;
 
     /**
      * constructor, parses options
@@ -57,13 +57,19 @@ class Date extends AbstractConstraint
      */
 	public function __construct(array $options = [])
     {
-		$this->locale = $options['locale'] ?? Application::getInstance()->getCurrentLocale();
-		
-		if(!$this->locale instanceof Locale) {
-			throw new \InvalidArgumentException("Date validator option 'locale' is not a Locale instance.");
-		}
+        if (isset($options['locale']) && !$options['locale'] instanceof Locale) {
+            throw new \InvalidArgumentException("Date validator option 'locale' is not a Locale instance.");
+        }
 
-		if(isset($options['validFrom'])) {
+        $appLocale = Application::getInstance()->getCurrentLocale();
+
+        if (!isset($options['locale']) && !$appLocale) {
+            throw new \InvalidArgumentException('Date validator requires either a valid locale, either passed to constructor or configured in application.');
+        }
+
+        $this->locale = $options['locale'] ?? $appLocale;
+
+        if(isset($options['validFrom'])) {
 
 			if(!$options['validFrom'] instanceof \DateTime) {
 				throw new \InvalidArgumentException("Date validator option 'validFrom' is not a DateTime instance.");
@@ -80,11 +86,6 @@ class Date extends AbstractConstraint
 			}
 
 			$this->validUntil = $options['validUntil'];
-
-		}
-
-		if(is_null($this->locale)) {
-			throw new \InvalidArgumentException('Date validator requires either a valid locale, either passed to constructor or configured in application.');
 		}
 	}
 	
@@ -120,14 +121,14 @@ class Date extends AbstractConstraint
 				// expand to 4 digit year
 
 				if(strlen($tmp[2]) === 2) {
-					$tmp[2]	=  substr(date('Y'), 0, 2) . $tmp[2];
+					$tmp[2]	= substr(date('Y'), 0, 2) . $tmp[2];
 				}
 		
 				if($localeId === 'de') {
 
 					// dd.mm.yyyy
 
-					if(!checkdate($tmp[1], $tmp[0], $tmp[2])) {
+					if(!checkdate((int) $tmp[1], (int) $tmp[0], (int) $tmp[2])) {
 
 						$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
 						return false;
@@ -140,7 +141,7 @@ class Date extends AbstractConstraint
 
 				// mm.dd.yyyy
 
-                if(!checkdate($tmp[0], $tmp[1], $tmp[2])) {
+                if(!checkdate((int) $tmp[0], (int) $tmp[1], (int) $tmp[2])) {
 
                     $this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
                     return false;
@@ -172,11 +173,10 @@ class Date extends AbstractConstraint
 					$tmp[0]	=  substr(date('Y'), 0, 2) . $tmp[0];
 				}
 		
-				if(!checkdate($tmp[1], $tmp[2], $tmp[0])) {
+				if(!checkdate((int) $tmp[1], (int) $tmp[2], (int) $tmp[0])) {
 					
 					$this->setErrorMessage(sprintf("'%s' is not a valid date value.", $value));
 					return false;
-				
 				}
 
 				$isoFormat = sprintf('%04d-%02d-%02d', $tmp[0], $tmp[1], $tmp[2]);
@@ -197,7 +197,6 @@ class Date extends AbstractConstraint
 
 			$this->setErrorMessage(sprintf("'%s' is not within validUntil boundary.", $value));
 			return false;
-
 		}
 
 		// all checks passed

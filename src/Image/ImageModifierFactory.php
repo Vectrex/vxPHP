@@ -24,9 +24,15 @@ class ImageModifierFactory
 	 * 
 	 * associative array containing possible class => required extension combinations
 	 */
-	private static $options = ['Gd' => 'gd', 'ImageMagick' => 'imagick'];
+	private static array $options = ['Gd' => 'gd', 'ImageMagick' => 'imagick'];
 
-	private static $preferredOption;
+    /**
+     * holds the preferred option of image manipulation
+     * either Gd or ImageMagick
+     *
+     * @var string|null
+     */
+	private static ?string $preferredOption = null;
 
     /**
      * @param string $path
@@ -47,7 +53,7 @@ class ImageModifierFactory
             self::$preferredOption = $preference;
         }
 
-		// otherwise iterate over $options
+		// otherwise, iterate over $options
 
 		if(!self::$preferredOption) {
 			foreach(self::$options as $class => $ext) {

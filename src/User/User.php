@@ -17,7 +17,7 @@ use vxPHP\Security\Password\PasswordEncrypter;
  * wraps authentication and role assignment
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 2.1.3 2021-05-22
+ * @version 2.1.4 2021-11-28
  */
 class User implements UserInterface
 {
@@ -26,14 +26,14 @@ class User implements UserInterface
 	 * 
 	 * @var string
 	 */
-	protected $username;
+	protected string $username;
 	
 	/**
 	 * the hashed password
 	 * 
 	 * @var string
 	 */
-	protected $hashedPassword;
+	protected string $hashedPassword = '';
 	
 	/**
 	 * additional attributes of user
@@ -42,22 +42,22 @@ class User implements UserInterface
 	 * 
 	 * @var array
 	 */
-	protected $attributes;
+	protected array $attributes;
 	
 	/**
 	 * all roles of user
 	 * 
 	 * @var Role[]
 	 */
-	protected $roles;
+	protected array $roles;
 	
 	/**
 	 * indicate whether a previous authentication
 	 * of the user was successful
 	 * 
-	 * @var boolean
+	 * @var bool
 	 */
-	protected $authenticated;
+	protected bool $authenticated;
 
 	/**
 	 * constructor
@@ -145,11 +145,10 @@ class User implements UserInterface
 	 * @see \vxPHP\User\UserInterface::setAttribute()
 	 * @return \vxPHP\User\User
 	 */
-	public function setAttribute($attribute, $value) {
-		
+	public function setAttribute($attribute, $value): User
+    {
 		$this->attributes[strtolower($attribute)] = $value;
 		return $this;
-
 	}
 	
 	/**

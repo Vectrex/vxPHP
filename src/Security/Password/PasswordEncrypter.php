@@ -15,7 +15,7 @@
  * @todo add options to enforce password requirements
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.1 2020-07-09
+ * @version 0.1.3 2021-11-29
  */
 namespace vxPHP\Security\Password;
 
@@ -30,25 +30,19 @@ class PasswordEncrypter
 	 * 
 	 * @var integer
 	 */
-	private $cost;
-	
-	/**
-	 * the constructor
-	 * 
-	 * @throws \InvalidArgumentException
-	 * @param integer $cost
-	 */
-	public function __construct($cost = null)
+	private int $cost;
+
+    /**
+     * the constructor
+     *
+     * @param int $cost
+     */
+	public function __construct(int $cost = 10)
     {
-		if(!function_exists('password_hash')) {
-			throw new \RuntimeException("password_hash() not supported by current PHP version, but required by " . __CLASS__);
-		}
-
-		$this->cost = (int) $cost ?: 10;
-
-		if($this->cost < self::MIN_COST) {
-			throw new \InvalidArgumentException(sprintf("Cost is too small. Cost must be at least %d.", self::MIN_COST));
-		}
+        if ($cost < self::MIN_COST) {
+            throw new \InvalidArgumentException(sprintf("Cost is too small. Cost must be at least %d.", self::MIN_COST));
+        }
+		$this->cost = $cost;
 	}
 	
 	/**
@@ -58,21 +52,19 @@ class PasswordEncrypter
 	 * @param string $hashedPassword
 	 * @return boolean
 	 */
-	public function isPasswordValid($plaintextPassword, $hashedPassword): bool
+	public function isPasswordValid(string $plaintextPassword, string $hashedPassword): bool
     {
 		return password_verify($plaintextPassword, $hashedPassword);
 	}
 
 	/**
 	 * hashes a plain text password
-	 * uses PHP's own password_hash() function
-	 * and requires therefore PHP version 5.5+
 	 *
 	 * @param string $plainTextPassword
 	 * @throws \InvalidArgumentException when password ist too short or too long
 	 * @return string hashed password
 	 */
-	public function hashPassword($plainTextPassword): string
+	public function hashPassword(string $plainTextPassword): string
     {
 		if(strlen($plainTextPassword) < self::MIN_LENGTH) {
 			throw new \InvalidArgumentException(sprintf("Password too short. Minimum length is %d.", self::MIN_LENGTH));

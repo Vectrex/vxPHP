@@ -23,16 +23,16 @@ namespace vxPHP\Http;
  */
 class AcceptHeaderItem
 {
-    private $value;
-    private $quality = 1.0;
-    private $index = 0;
-    private $attributes = [];
+    private string $value;
+    private float $quality = 1.0;
+    private int $index = 0;
+    private array $attributes = [];
 
     public function __construct(string $value, array $attributes = [])
     {
         $this->value = $value;
-        foreach ($attributes as $name => $value) {
-            $this->setAttribute($name, $value);
+        foreach ($attributes as $name => $v) {
+            $this->setAttribute($name, $v);
         }
     }
 
@@ -43,7 +43,7 @@ class AcceptHeaderItem
      *
      * @return self
      */
-    public static function fromString($itemValue): self
+    public static function fromString(string $itemValue): self
     {
         $parts = HeaderUtils::split($itemValue, ';=');
 
@@ -75,7 +75,7 @@ class AcceptHeaderItem
      *
      * @return $this
      */
-    public function setValue($value): self
+    public function setValue(string $value): self
     {
         $this->value = $value;
 
@@ -99,7 +99,7 @@ class AcceptHeaderItem
      *
      * @return $this
      */
-    public function setQuality($quality): self
+    public function setQuality(float $quality): self
     {
         $this->quality = $quality;
 
@@ -123,7 +123,7 @@ class AcceptHeaderItem
      *
      * @return $this
      */
-    public function setIndex($index): self
+    public function setIndex(int $index): self
     {
         $this->index = $index;
 
@@ -147,7 +147,7 @@ class AcceptHeaderItem
      *
      * @return bool
      */
-    public function hasAttribute($name): bool
+    public function hasAttribute(string $name): bool
     {
         return isset($this->attributes[$name]);
     }
@@ -160,7 +160,7 @@ class AcceptHeaderItem
      *
      * @return mixed
      */
-    public function getAttribute($name, $default = null)
+    public function getAttribute(string $name, $default = null)
     {
         return $this->attributes[$name] ?? $default;
     }
@@ -179,11 +179,11 @@ class AcceptHeaderItem
      * Set an attribute.
      *
      * @param string $name
-     * @param string $value
+     * @param mixed $value
      *
      * @return $this
      */
-    public function setAttribute($name, $value): self
+    public function setAttribute(string $name, $value): self
     {
         if ('q' === $name) {
             $this->quality = (float) $value;

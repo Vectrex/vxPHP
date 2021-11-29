@@ -26,16 +26,16 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * @author Gregor Kofler
  * @version 0.6.0 2021-07-10
  */
-class FormElementFactory {
-
+class FormElementFactory
+{
     /**
      * create either single FormElement or array of FormElements
      *
-     * @param string $type , type of element
-     * @param string $name , name of element
+     * @param string $type type of element
+     * @param string $name name of element
      * @param mixed $value
      * @param array $attributes
-     * @param array $options , array for initializing SelectOptionElements or RadioOptionElements
+     * @param array $options array for initializing SelectOptionElements or RadioOptionElements
      * @param boolean $required
      * @param array $modifiers
      * @param array $validators

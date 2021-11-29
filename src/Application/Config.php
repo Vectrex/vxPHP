@@ -19,90 +19,90 @@ use vxPHP\Webpage\Menu\Menu;
  * creates a configuration singleton by parsing an XML configuration
  * file
  *
- * @version 3.2.0 2020-11-14
+ * @version 3.2.1 2021-12-01
  */
 class Config {
 	/**
-	 * @var \stdClass
-	 */
-	public $site;
+	 * @var \stdClass|null
+     */
+	public ?\stdClass $site = null;
 
 	/**
 	 * db settings
 	 * will be replaced by vxpdo settings
 	 *
 	 * @deprecated
-	 * @var \stdClass
-	 */
-	public $db;
+	 * @var \stdClass|null
+     */
+	public ?\stdClass $db = null;
 
 	/**
 	 * vxpdo settings
 	 *
-	 * @var array
-	 */
-	public $vxpdo;
+	 * @var array|null
+     */
+	public ?array $vxpdo = null;
 
 	/**
-	 * @var \stdClass
-	 */
-	public $mail;
+	 * @var \stdClass|null
+     */
+	public ?\stdClass $mail = null;
 
 	/**
-	 * @var \stdClass
-	 */
-	public $binaries;
+	 * @var \stdClass|null
+     */
+	public ?\stdClass $binaries = null;
 
 	/**
-	 * @var array
-	 */
-	public $paths;
+	 * @var array|null
+     */
+	public ?array $paths = null;
 
 	/**
-	 * @var array
-	 */
-	public $routes;
+	 * @var array|null
+     */
+	public ?array $routes = null;
 
 	/**
 	 * @var Menu[]
 	 */
-	public $menus;
+	public ?array $menus = null;
 
 	/**
-	 * @var array
-	 */
-	public $server;
+	 * @var array|null
+     */
+	public ?array $server = null;
 
 	/**
-	 * @var array
-	 *
+	 * @var array|null
+     *
 	 * holds configuration of services
 	 */
-	public $services;
+	public ?array $services = null;
 
 	/**
-	 * @var array
-	 *
+	 * @var array|null
+     *
 	 * holds all configured plugins (event subscribers)
 	 */
-	public	$plugins;
+	public	?array $plugins = null;
 
 	/**
-	 * @var \stdClass
-	 *
+	 * @var \stdClass|null
+     *
 	 * holds configuration for templating
 	 */
-	public	$templating;
+	public	?\stdClass $templating = null;
 
 	/**
 	 * @var boolean
 	 */
-	public $isLocalhost;
+	public ?bool $isLocalhost = null;
 
     /**
      * @var array
      */
-    private $parserClasses = [];
+    private array $parserClasses = [];
 
 	/**
 	 * a list of already processed XML files
@@ -112,7 +112,7 @@ class Config {
 	 *
 	 * @var array
 	 */
-	private $parsedXmlFiles = [];
+	private array $parsedXmlFiles = [];
 
     /**
      * create config instance
@@ -280,85 +280,77 @@ class Config {
 	 * is called to parse the section
 	 *
 	 * @param \DOMDocument $config
-	 * @throws ConfigException
-	 * @return void
+     * @return void
 	 */
 	private function parseConfig(\DOMDocument $config): void
     {
-		try {
+        // determine server context, missing SERVER_ADDR assumes localhost/CLI
 
-			// determine server context, missing SERVER_ADDR assumes localhost/CLI
+        $this->isLocalhost = Application::runsLocally();
 
-			$this->isLocalhost = Application::runsLocally();
+        $rootNode = $config->firstChild;
 
-			$rootNode = $config->firstChild;
+        $sections = [];
 
-            $sections = [];
+        // collect all top-level node names and allow parsing of specific sections
 
-            // collect all top-level node names and allow parsing of specific sections
+        foreach($rootNode->childNodes as $node) {
+            if ($node->nodeType === XML_ELEMENT_NODE) {
+                if(!array_key_exists($node->nodeName, $sections)) {
+                    $sections[$node->nodeName] = [];
+                }
+                $sections[$node->nodeName][] = $node;
+            }
+        }
 
-			foreach($rootNode->childNodes as $node) {
-                if ($node->nodeType === XML_ELEMENT_NODE) {
-                    if(!array_key_exists($node->nodeName, $sections)) {
-                        $sections[$node->nodeName] = [];
+        $keys = array_keys($sections);
+        $sections = array_values($sections);
+        $faultySections = [];
+
+        while($section = array_shift($keys)) {
+
+            $nodes = array_shift($sections);
+
+            if (array_key_exists($section, $this->parserClasses)) {
+                $parser = new $this->parserClasses[$section]($this);
+
+                foreach ($nodes as $node) {
+                    try {
+                        $result = $parser->parse($node);
+                    } catch (\RuntimeException $e) {
+                        /*
+                        * a RuntimeException may occur when a certain section
+                        * requires other already parsed sections. In this case
+                        * a section is queued at the end again; if this section encounters
+                        * a RuntimeException a second time the parsing is cancelled to
+                        * avoid a potentially endless loop (e.g. parsing menus without any
+                        * routes configured)
+                        */
+                        if (!in_array($section, $faultySections, true)) {
+                            $faultySections[] = $section;
+                            $keys[] = $section;
+                            $sections[] = $nodes;
+                            break;
+                        }
+                       throw new \RuntimeException($e->getMessage());
                     }
-                    $sections[$node->nodeName][] = $node;
+
+                    /**
+                    * work around deprecated pages configuration and merge pages with routes
+                    */
+                    if($section === 'pages') {
+                        $section = 'routes';
+                    }
+                    if ($result instanceof \stdClass) {
+                        $this->$section = $result;
+                    }
+                    if (is_array($result)) {
+                        $this->$section = array_merge($this->$section ?? [], $result);
+                    }
                 }
             }
-
-			$keys = array_keys($sections);
-			$sections = array_values($sections);
-			$faultySections = [];
-
-			while($section = array_shift($keys)) {
-			    $nodes = array_shift($sections);
-
-                if (array_key_exists($section, $this->parserClasses)) {
-
-                    $parser = new $this->parserClasses[$section]($this);
-
-                    foreach ($nodes as $node) {
-                        try {
-                            $result = $parser->parse($node);
-                        } catch (\RuntimeException $e) {
-                            /*
-                             * a RuntimeException may occur when a certain section
-                             * requires other already parsed sections. In this case
-                             * a section is queued at the end again; if this section encounters
-                             * a RuntimeException a second time the parsing is cancelled to
-                             * avoid a potentially endless loop (e.g. parsing menus without any
-                             * routes configured)
-                             */
-                            if (!in_array($section, $faultySections, true)) {
-                                $faultySections[] = $section;
-                                $keys[] = $section;
-                                $sections[] = $nodes;
-                                break;
-                            }
-                            throw new \RuntimeException($e->getMessage());
-                        }
-
-                        /**
-                         * work around deprecated pages configuration and merge pages with routes
-                         */
-                        if($section === 'pages') {
-                            $section = 'routes';
-                        }
-                        if ($result instanceof \stdClass) {
-                            $this->$section = $result;
-                        }
-                        if (is_array($result)) {
-                            $this->$section = array_merge($this->$section ?? [], $result);
-                        }
-                    }
-                }
-			}
-		}
-
-		catch(ConfigException $e) {
-			throw $e;
-		}
-	}
+        }
+    }
 
 	/**
 	 * create constants for simple access to certain configuration settings
@@ -406,7 +398,7 @@ class Config {
 	 * @param string $access
 	 * @return array
 	 */
-	public function getPaths($access = 'rw'): array
+	public function getPaths(string $access = 'rw'): array
     {
 		$paths = [];
 		foreach($this->paths as $p) {

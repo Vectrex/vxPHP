@@ -24,7 +24,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 1.2.0, 2021-10-10
+ * @version 1.2.1, 2021-11-28
  *
  * @throws MenuGeneratorException
  */
@@ -263,7 +263,7 @@ class MenuGenerator
 
 		$m = $this->menu;
 
-		if(($this->level !== false) && $this->level > 0) {
+		if ($this->level > 0) {
 
             while($this->level-- > 0) {
                 $e = $this->menu->getSelectedEntry();
@@ -296,13 +296,16 @@ class MenuGenerator
 		$renderer = new $className($m);
 		$renderer->setParameters($this->renderArgs);
 
-		// enable or disable display of submenus
+        if ($m) {
 
-		$m->setShowSubmenus($this->level === null);
+            // enable or disable display of submenus
 
-		// enable or disable always active menu
+            $m->setShowSubmenus($this->level === null);
 
-		$m->setForceActive(self::$forceActiveMenu);
+            // enable or disable always active menu
+
+            $m->setForceActive((bool) self::$forceActiveMenu);
+        }
 
 		return $renderer->render();
 	}
@@ -319,7 +322,7 @@ class MenuGenerator
 		if($m->getType() === 'dynamic') {
 
 			// invoke service to build menu entries
-			
+
 			Application::getInstance()->getService($m->getServiceId())->appendMenuEntries($m);
 		}
 
@@ -363,7 +366,9 @@ class MenuGenerator
             // check for a possible "root" (i.e. "/") path
 
             if(!$path && !$pathToMatch) {
-                $e->getMenu()->setSelectedEntry($e);
+                if ($e->getMenu()) {
+                    $e->getMenu()->setSelectedEntry($e);
+                }
                 return $e;
             }
 
@@ -372,8 +377,10 @@ class MenuGenerator
 			if($path && 0 === strpos($pathToMatch, $path)) {
 
 				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($path)), '/'));
-				
-				$e->getMenu()->setSelectedEntry($e);
+
+                if ($e->getMenu()) {
+                    $e->getMenu()->setSelectedEntry($e);
+                }
 				$sm = $e->getSubMenu();
 
 				// walk  into submenu
@@ -421,7 +428,6 @@ class MenuGenerator
 		if(!self::$authenticator) {
 			self::$authenticator = new DefaultMenuAuthenticator();
 		}
-		
 		return self::$authenticator->authenticate($menu, Application::getInstance()->getCurrentUser());
 	}
 }

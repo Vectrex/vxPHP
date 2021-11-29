@@ -21,21 +21,21 @@
  */
 namespace vxPHP\Autoload;
 
-class Psr4 {
-
+class Psr4
+{
 	/**
 	 * map with file paths for each class
 	 * 
 	 * @var array
 	 */
-	protected  $classPaths = [];
+	protected array $classPaths = [];
 	
 	/**
 	 * debug information populated by loadClass()
 	 * 
 	 * @var array
 	 */
-	protected $debug = [];
+	protected array $debug = [];
 	
 	/**
 	 *
@@ -44,27 +44,28 @@ class Psr4 {
 	 *
 	 * @var array
 	 */
-	protected $loadedClasses = [];
+	protected array $loadedClasses = [];
 	
 	/**
 	 * map of namespace prefixes to base directories
 	 *
 	 * @var array
 	 */
-	protected $prefixes = [];
+	protected array $prefixes = [];
 	
 	/**
 	 * register autoloader with SPL
 	 *
-	 * @param bool $prepend, prepend to the autoload stack when TRUE
+	 * @param bool $prepend prepend to the autoload stack when TRUE
 	 * @return void
 	 *
 	 */
-	public function register($prepend = FALSE) {
+	public function register(bool $prepend = false): void
+    {
 		spl_autoload_register(
-			array($this, 'loadClass'),
-			TRUE,
-			(bool) $prepend
+			[$this, 'loadClass'],
+			true,
+			$prepend
 		);
 	}
 
@@ -73,8 +74,9 @@ class Psr4 {
 	 *
 	 * @return void
 	 */
-	public function unregister() {
-		spl_autoload_unregister(array($this, 'loadClass'));
+	public function unregister(): void
+    {
+		spl_autoload_unregister([$this, 'loadClass']);
 	}
 
 	/**
@@ -83,7 +85,8 @@ class Psr4 {
 	 *
 	 * @return array
 	 */
-	public function getDebug() {
+	public function getDebug(): array
+    {
 		return $this->debug;
 	}
 
@@ -92,22 +95,22 @@ class Psr4 {
 	 *
 	 * @param string $prefix
 	 * @param string|array $baseDirs: one or more base directories for the namespace prefix
-	 * @param bool $prepend: if true, prepend base directories to prefix instead of appending them;
+	 * @param bool $prepend if true, prepend base directories to prefix instead of appending them;
 	 * this causes them to be searched first rather than last.
 	 *
 	 * @return void
 	 */
-	public function addPrefix($prefix, $baseDirs, $prepend = FALSE) {
-
-		$baseDirs	= (array) $baseDirs;
+	public function addPrefix(string $prefix, $baseDirs, bool $prepend = false): void
+    {
+		$baseDirs = (array) $baseDirs;
 		
 		// normalize the namespace prefix
 
-		$prefix		= trim($prefix, '\\') . '\\';
+		$prefix = trim($prefix, '\\') . '\\';
 
 		// initialize the namespace prefix array if needed
 
-		if (! isset($this->prefixes[$prefix])) {
+		if (!isset($this->prefixes[$prefix])) {
 			$this->prefixes[$prefix] = [];
 		}
 
@@ -127,11 +130,12 @@ class Psr4 {
 	 * set all namespace prefixes and their base directories; overwrites
 	 * existing prefixes
 	 *
-	 * @param array $prefixes: associative array of namespace prefixes and their base directories
+	 * @param array $prefixes associative array of namespace prefixes and their base directories
 	 *
 	 * @return void
 	 */
-	public function setPrefixes(array $prefixes) {
+	public function setPrefixes(array $prefixes): void
+    {
 		$this->prefixes = [];
 		foreach ($prefixes as $prefix => $baseDir) {
 			$this->addPrefix($prefix, $baseDir);
@@ -143,7 +147,8 @@ class Psr4 {
 	 *
 	 * @return array
 	 */
-	public function getPrefixes() {
+	public function getPrefixes(): array
+    {
 		return $this->prefixes;
 	}
 	
@@ -155,18 +160,20 @@ class Psr4 {
 	 *
 	 * @return void
 	 */
-	public function setClassFile($class, $file) {
+	public function setClassFile(string $class, string $file): void
+    {
 		$this->classPaths[$class] = $file;
 	}
 	
 	/**
 	 * set all file paths for all class names;overwrites all previous mappings
 	 *
-	 * @param array $classPaths: map with class name (key) and file path (value)
+	 * @param array $classPaths map with class name (key) and file path (value)
 	 *
 	 * @return void
 	 */
-	public function setClassFiles(array $classPaths) {
+	public function setClassFiles(array $classPaths): void
+    {
 		$this->classPaths = $classPaths;
 	}
 
@@ -177,7 +184,8 @@ class Psr4 {
 	 *
 	 * @return void
 	 */
-	public function addClassFiles(array $classPaths) {
+	public function addClassFiles(array $classPaths): void
+    {
 		$this->classPaths = array_merge($this->classPaths, $classPaths);
 	}
 	
@@ -186,18 +194,19 @@ class Psr4 {
 	 *
 	 * @return array
 	 */
-	public function getClassFiles() {
+	public function getClassFiles(): array
+    {
 		return $this->classPaths;
 	}
 	
 	/**
-	 *
 	 * get list of classes, interfaces, and traits loaded by the autoloader
 	 * keys are class names, values are file names
 	 *
 	 * @return array
 	 */
-	public function getLoadedClasses() {
+	public function getLoadedClasses(): array
+    {
 		return $this->loadedClasses;
 	}
 	
@@ -205,12 +214,12 @@ class Psr4 {
 	 * load class file for a class name $class
 	 * returns mapped file name on success, or boolean false on failure
 	 *
-	 * @param string $class: the fully-qualified class name
+	 * @param string $class the fully-qualified class name
 	 *
-	 * @return mixed
+	 * @return string|false
 	 */
-	public function loadClass($class) {
-
+	public function loadClass (string $class)
+    {
 		// reset debug info
 
 		$this->debug = array('Loading ' . $class);
@@ -237,7 +246,7 @@ class Psr4 {
 		// work backwards through the namespace names of the fully-qualified
 		// class name to find a mapped file name
 
-		while (FALSE !== ($pos = strrpos($prefix, '\\'))) {
+		while (false !== ($pos = strrpos($prefix, '\\'))) {
 	
 			// retain the trailing namespace separator in the prefix
 
@@ -263,25 +272,26 @@ class Psr4 {
 	
 		// did not find a file for the class
 
-		$this->debug[] = $class . 'not loaded';
-		return FALSE;
+		$this->debug[] = $class . ' not loaded';
+		return false;
 	}
-	
+
 	/**
 	 * loads mapped file for a namespace prefix and relative class
+     * returns name of mapped file that was loaded or FALSE if file could not be loaded
 	 *
 	 * @param string $prefix
 	 * @param string $relativeClass
 	 *
-	 * @return mixed name of mapped file that was loaded or FALSE if file could not be loaded
-	 */
-	protected function loadFile($prefix, $relativeClass) {
-
+	 * @return false|string
+     */
+	protected function loadFile(string $prefix, string $relativeClass)
+    {
 		// any base directories for this namespace prefix?
 
 		if (!isset($this->prefixes[$prefix])) {
 			$this->debug[] = $prefix . ': no base dirs';
-			return FALSE;
+			return false;
 		}
 
 		// search base directories for this namespace prefix
@@ -312,7 +322,7 @@ class Psr4 {
 	
 		// not found
 
-		return FALSE;
+		return false;
 	}
 	
 	/**
@@ -323,13 +333,12 @@ class Psr4 {
 	 *
 	 * @return boolean
 	 */
-	protected function requireFile($file) {
-
+	protected function requireFile(string $file): bool
+    {
 		if (file_exists($file)) {
 			require $file;
-			return TRUE;
+			return true;
 		}
-		return FALSE;
+		return false;
 	}	
-
 }

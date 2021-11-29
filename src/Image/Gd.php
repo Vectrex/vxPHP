@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Image;
 
 use vxPHP\Image\Exception\ImageModifierException;
@@ -17,22 +16,22 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.6.0 2021-05-29
+ * @version 0.6.1 2021-12-01
  */
 class Gd extends ImageModifier
 {
     /**
      * @var \stdClass
      */
-	private	$src;
+	private	\stdClass $src;
     /**
      * @var array
      */
-	private $destinationBuffer;
+	private array $destinationBuffer;
     /**
      * @var int
      */
-	private $bufferNdx = 0;
+	private int $bufferNdx = 0;
 
 	/**
 	 * initializes object with optional filename
@@ -199,15 +198,13 @@ class Gd extends ImageModifier
 
 		imagecopy($dst->resource, $src->resource, 0, 0, 0, 0, $src->width, $src->height);
 
-		$this->imagecopymerge_alpha(
+		$this->imagecopymergeAlpha(
 			$dst->resource,
 			$stamp,
 			($src->width - $stampWidth) / 2,
 			($src->height - $stampHeight) / 2,
-			0, 0,
 			$stampWidth,
-			$stampHeight,
-			100
+			$stampHeight
 		);
 
 		return $dst;
@@ -231,12 +228,12 @@ class Gd extends ImageModifier
 		return $dst;
 	}
 
-	private function imagecopymerge_alpha($dst, $src, $dstX, $dstY, $srcX, $srcY, $srcW, $srcH, $opacity): void
+	private function imagecopymergeAlpha($dst, $src, $dstX, $dstY, $srcW, $srcH): void
     {
 		$cut = imagecreatetruecolor($srcW, $srcH);
 		imagecopy($cut, $dst, 0, 0, $dstX, $dstY, $srcW, $srcH);
-		imagecopy($cut, $src, 0, 0, $srcX, $srcY, $srcW, $srcH);
-		imagecopymerge($dst, $cut, $dstX, $dstY, 0, 0, $srcW, $srcH, $opacity);
+		imagecopy($cut, $src, 0, 0, 0, 0, $srcW, $srcH);
+		imagecopymerge($dst, $cut, $dstX, $dstY, 0, 0, $srcW, $srcH, 100);
 		imagedestroy($cut);
     }
 

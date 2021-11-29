@@ -9,8 +9,10 @@
  */
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\File\UploadedFile;
 use vxPHP\Http\Request;
+use vxPHP\Template\Exception\SimpleTemplateException;
 
 class FileInputElement extends InputElement
 {
@@ -72,10 +74,10 @@ class FileInputElement extends InputElement
      * @see \vxPHP\Form\FormElement\FormElement::render()
      * @param bool $force
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
-    public function render($force = false): string
+    public function render(bool $force = false): string
     {
         if(empty($this->html) || $force) {
 

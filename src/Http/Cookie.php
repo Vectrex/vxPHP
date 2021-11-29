@@ -23,25 +23,25 @@ namespace vxPHP\Http;
  */
 class Cookie
 {
-    const SAMESITE_NONE = 'none';
-    const SAMESITE_LAX = 'lax';
-    const SAMESITE_STRICT = 'strict';
+    public const SAMESITE_NONE = 'none';
+    public const SAMESITE_LAX = 'lax';
+    public const SAMESITE_STRICT = 'strict';
 
-    protected $name;
-    protected $value;
-    protected $domain;
-    protected $expire;
-    protected $path;
-    protected $secure;
-    protected $httpOnly;
+    protected string $name;
+    protected ?string $value;
+    protected ?string $domain;
+    protected int $expire;
+    protected string $path;
+    protected ?bool $secure;
+    protected bool $httpOnly;
 
-    private $raw;
-    private $sameSite;
-    private $secureDefault = false;
+    private string $raw;
+    private ?string $sameSite;
+    private bool $secureDefault = false;
 
-    private static $reservedCharsList = "=,; \t\r\n\v\f";
-    private static $reservedCharsFrom = ['=', ',', ';', ' ', "\t", "\r", "\n", "\v", "\f"];
-    private static $reservedCharsTo = ['%3D', '%2C', '%3B', '%20', '%09', '%0D', '%0A', '%0B', '%0C'];
+    private static string $reservedCharsList = "=,; \t\r\n\v\f";
+    private static array $reservedCharsFrom = ['=', ',', ';', ' ', "\t", "\r", "\n", "\v", "\f"];
+    private static array $reservedCharsTo = ['%3D', '%2C', '%3B', '%20', '%09', '%0D', '%0A', '%0B', '%0C'];
 
     /**
      * Creates cookie from raw header string.
@@ -51,7 +51,7 @@ class Cookie
      *
      * @return static
      */
-    public static function fromString($cookie, $decode = false): self
+    public static function fromString(string $cookie, bool $decode = false): self
     {
         $data = [
             'expires' => 0,
@@ -84,17 +84,16 @@ class Cookie
     }
 
     /**
-     * @param string                        $name     The name of the cookie
-     * @param string|null                   $value    The value of the cookie
-     * @param int|string|\DateTimeInterface $expire   The time the cookie expires
-     * @param string                        $path     The path on the server in which the cookie will be available on
-     * @param string|null                   $domain   The domain that the cookie is available to
-     * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
-     * @param bool                          $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
-     * @param bool                          $raw      Whether the cookie value should be sent with no url encoding
-     * @param string|null                   $sameSite Whether the cookie will be available for cross-site requests
+     * @param string $name The name of the cookie
+     * @param string|null $value The value of the cookie
+     * @param int|string|\DateTimeInterface $expire The time the cookie expires
+     * @param string|null $path The path on the server in which the cookie will be available on
+     * @param string|null $domain The domain that the cookie is available to
+     * @param bool|null $secure Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
+     * @param bool $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
+     * @param bool $raw Whether the cookie value should be sent with no url encoding
+     * @param string|null $sameSite Whether the cookie will be available for cross-site requests
      *
-     * @throws \InvalidArgumentException
      */
     public function __construct(string $name, string $value = null, $expire = 0, ?string $path = '/', string $domain = null, ?bool $secure = false, bool $httpOnly = true, bool $raw = false, string $sameSite = null)
     {

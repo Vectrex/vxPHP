@@ -17,44 +17,44 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.6.2 2021-06-16
+ * @version 0.6.3 2021-12-01
  */
 abstract class ImageModifier
 {
     /**
      * @var array
      */
-	protected $queue;
+	protected array $queue = [];
 
     /**
      * @var string
      */
-    protected $mimeType;
+    protected string $mimeType;
 
     /**
      * @var array
      */
-    protected $supportedFormats = ['jpeg', 'gif', 'png', 'webp'];
+    protected array $supportedFormats = ['jpeg', 'gif', 'png', 'webp'];
 
     /**
      * @var string
      */
-    protected $file;
+    protected string $file;
 
     /**
      * @var string
      */
-    protected $path;
+    protected string $path;
 
     /**
      * @var int
      */
-    protected $srcWidth;
+    protected int $srcWidth;
 
     /**
      * @var int
      */
-    protected $srcHeight;
+    protected int $srcHeight;
 
 	/**
 	 * adds a crop-"command" to queue

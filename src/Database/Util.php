@@ -17,10 +17,10 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.3.1, 2020-11-27
+ * @version 0.3.2, 2021-11-29
  */
-class Util {
-	
+class Util
+{
 	/**
 	 * Re-formats a date strings depending on a supplied input locale to yyyy-mm-dd
 	 * does not check validity of date
@@ -70,7 +70,6 @@ class Util {
 		}
 
 		return date('Y-m-d', $parsed);
-
 	}
 	
 	/**
@@ -119,7 +118,7 @@ class Util {
 	 * if $id is set, this record is left out from checking
 	 * returns string which is unique in $column
 	 * 
-	 * currently works only with single-field primary keys
+	 * currently, works only with single-field primary keys
 	 *
 	 * @param DatabaseInterface $connection
 	 * @param string $aliasText
@@ -129,7 +128,7 @@ class Util {
 	 *
 	 * @return string
 	 */
-	public static function getAlias(DatabaseInterface $connection, string $aliasText, string $tableName, $id = 0, $column = 'alias'): string
+	public static function getAlias(DatabaseInterface $connection, string $aliasText, string $tableName, int $id = 0, string $column = 'alias'): string
     {
 		$primaryKeyName = $connection->getPrimaryKey($tableName);
 

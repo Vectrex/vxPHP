@@ -16,8 +16,8 @@ namespace vxPHP\Form\FormElement\FormElementWithOptions;
  *
  * @author Gregor Kofler
  */
-class SelectElement extends FormElementWithOptions {
-
+class SelectElement extends FormElementWithOptions
+{
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElementWithOptions\FormElementWithOptions::appendOption()

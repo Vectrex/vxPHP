@@ -16,8 +16,8 @@ namespace vxPHP\Form\FormElement;
  * 
  * @author Gregor Kofler
  */
-class PasswordInputElement extends InputElement {
-
+class PasswordInputElement extends InputElement
+{
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\InputElement::render()

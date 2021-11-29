@@ -27,69 +27,69 @@ class Email {
 	public const CRLF = "\r\n";
 
     /**
-     * @var \vxPHP\Mail\MailerInterface
+     * @var \vxPHP\Mail\MailerInterface|null
      */
-	private $mailer;
+	private ?MailerInterface $mailer = null;
 
     /**
      * @var string
      */
-	private $sender;
+	private string $sender;
 
     /**
      * @var string
      */
-	private	$subject;
+	private	string $subject;
 
     /**
      * @var array
      */
-    private	$bcc;
+    private	array $bcc;
 
     /**
      * @var array
      */
-    private	$cc;
+    private	array $cc;
 
     /**
      * @var array
      */
-    private $receiver;
+    private array $receiver;
 
     /**
      * @var string
      */
-    private	$mailText;
+    private	string $mailText;
 
     /**
      * @var string
      */
-    private	$sig;
+    private	string $sig;
 
     /**
      * @var bool
      */
-    private	$htmlMail;
+    private	bool $htmlMail;
 
     /**
-     * @var string
+     * @var string|null
      */
-    private	$boundary;
-
-    /**
-     * @var array
-     */
-    private	$headers = [];
+    private	?string $boundary = null;
 
     /**
      * @var array
      */
-    private	$attachments = [];
+    private	array $headers = [];
+
+    /**
+     * @var array
+     */
+    private	array $attachments = [];
 
     /**
      * @var string
      */
-    private	$encoding;
+    private	string $encoding;
 
     /**
      * the message body
@@ -101,7 +101,7 @@ class Email {
     /**
      * @var bool
      */
-	private static $debug = false;
+	private static bool $debug = false;
 
 
     /**
@@ -117,7 +117,7 @@ class Email {
      * @param string $sig
      * @param boolean $htmlMail
      */
-	public function __construct($receiver = null, string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], $sig = '', $htmlMail = false)
+	public function __construct($receiver = null, string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], string $sig = '', bool $htmlMail = false)
     {
 		$this->receiver	= (array) $receiver;
 		$this->subject = $subject;

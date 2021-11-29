@@ -13,27 +13,26 @@ namespace vxPHP\Form\FormElement;
 /**
  * class wrapping a label element
  *
- * @version 0.3.0 2018-12-15
+ * @version 0.3.1 2021-11-29
  * @author Gregor Kofler
  *
  */
 
 class LabelElement
 {
-
     /**
      * all attributes which will be rendered with the attribute element
      *
      * @var array
      */
-    protected $attributes = [];
+    protected array $attributes = [];
 
     /**
      * label text
      *
      * @var string
      */
-    protected $labelText;
+    protected string $labelText;
 
     /**
      * LabelElement constructor.
@@ -42,7 +41,7 @@ class LabelElement
      * @param string $labelText
      * @param array $attributes
      */
-    public function __construct($labelText, array $attributes = [])
+    public function __construct(string $labelText, array $attributes = [])
     {
         $this->labelText = $labelText;
         $this->attributes = $attributes;
@@ -72,12 +71,13 @@ class LabelElement
 
     /**
      * sets attributes of form label
+     * a value of NULL unset the attribute
      *
      * @param string $attr
-     * @param string $value
+     * @param string|null $value
      * @return LabelElement
      */
-    public function setAttribute($attr, $value)
+    public function setAttribute(string $attr, string $value = null): LabelElement
     {
 
         $attr = strtolower($attr);
@@ -90,7 +90,6 @@ class LabelElement
         }
 
         return $this;
-
     }
 
     /**
@@ -99,14 +98,12 @@ class LabelElement
      * @param array $attributes
      * @return LabelElement
      */
-    public function setAttributes(Array $attributes)
+    public function setAttributes(array  $attributes): LabelElement
     {
-
         foreach($attributes as $k => $v) {
             $this->setAttribute($k, $v);
         }
         return $this;
-
     }
 
     /**
@@ -116,9 +113,8 @@ class LabelElement
      *
      * @return string
      */
-    public function render()
+    public function render(): string
     {
-
         $attr = [];
 
         foreach($this->attributes as $k => $v) {
@@ -129,7 +125,5 @@ class LabelElement
             implode(' ', $attr),
             trim($this->labelText)
         );
-
     }
-
 }

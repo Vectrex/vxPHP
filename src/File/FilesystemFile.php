@@ -23,7 +23,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.1 2021-06-16
+ * @version 1.1.2 2021-12-01
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -33,27 +33,27 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
     /**
      * @var array
      */
-    protected static $instances = [];
+    protected static array $instances = [];
 
     /**
      * @var string
      */
-	protected $filename;
+	protected string $filename;
 
     /**
      * @var FilesystemFolder
      */
-    protected $folder;
+    protected FilesystemFolder $folder;
 
     /**
-     * @var string
+     * @var string|null
      */
-	protected $mimetype;
+	protected ?string $mimetype;
 
     /**
      * @var SplFileInfo
      */
-    protected $fileInfo;
+    protected \SplFileInfo $fileInfo;
 
     /**
      * @param string $path
@@ -96,7 +96,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 		}
 
 		if(!file_exists($path)) {
-			throw new FilesystemFileException("File $path does not exist!", FilesystemFileException::FILE_DOES_NOT_EXIST);
+			throw new FilesystemFileException(sprintf("File '%s' does not exist!", $path), FilesystemFileException::FILE_DOES_NOT_EXIST);
 		}
 
 		$this->folder = $folder ?: FilesystemFolder::getInstance(pathinfo($path, PATHINFO_DIRNAME));
@@ -121,7 +121,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      */
 	public function getMimetype(bool $force = false): string
     {
-		if(!isset($this->mimetype) || $force) {
+		if($this->mimetype === null || $force) {
 			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
 		}
 		return $this->mimetype;

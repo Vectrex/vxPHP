@@ -19,25 +19,25 @@ namespace vxPHP\Http;
  *
  * @see https://www.owasp.org/index.php/OWASP_AJAX_Security_Guidelines#Always_return_JSON_with_an_Object_on_the_outside
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Igor Wiedler <igor@wiedler.ch>, Gregor Kofler
  */
 class JsonResponse extends Response
 {
-    protected $data;
+    protected ?string $data = null;
 
     // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
     // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
     public const DEFAULT_ENCODING_OPTIONS = 15;
 
-    protected $encodingOptions = self::DEFAULT_ENCODING_OPTIONS;
+    protected int $encodingOptions = self::DEFAULT_ENCODING_OPTIONS;
 
     /**
      * @param mixed $data The response data
      * @param int $status The response status code
      * @param array $headers An array of response headers
      * @param bool $json If the data is already a JSON string
-     * @throws \Exception
+     * @throws \Exception|\Throwable
      */
     public function __construct($data = null, int $status = 200, array $headers = [], bool $json = false)
     {
@@ -63,7 +63,7 @@ class JsonResponse extends Response
      * @param array $headers An array of response headers
      *
      * @return static
-     * @throws \Exception
+     * @throws \Exception|\Throwable
      */
     public static function create($data = null, $status = 200, $headers = []): Response
     {
@@ -83,9 +83,9 @@ class JsonResponse extends Response
      * @param array $headers An array of response headers
      *
      * @return static
-     * @throws \Exception
+     * @throws \Exception|\Throwable
      */
-    public static function fromJsonString($data = null, $status = 200, $headers = []): self
+    public static function fromJsonString(string $data = null, int $status = 200, array $headers = []): self
     {
         return new static($data, $status, $headers, true);
     }
@@ -99,10 +99,9 @@ class JsonResponse extends Response
      *
      * @throws \InvalidArgumentException
      */
-    public function setJson($json): self
+    public function setJson(string $json): self
     {
         $this->data = $json;
-
         return $this->update();
     }
 
@@ -114,7 +113,7 @@ class JsonResponse extends Response
      * @return $this
      *
      * @throws \InvalidArgumentException
-     * @throws \Exception
+     * @throws \Exception|\Throwable
      */
     public function setData($data = []): self
     {
@@ -127,7 +126,7 @@ class JsonResponse extends Response
             throw $e;
         }
 
-        if (\PHP_VERSION_ID >= 70300 && (JSON_THROW_ON_ERROR & $this->encodingOptions)) {
+        if (JSON_THROW_ON_ERROR & $this->encodingOptions) {
             return $this->setJson($data);
         }
 
@@ -154,11 +153,11 @@ class JsonResponse extends Response
      * @param int $encodingOptions
      *
      * @return $this
-     * @throws \Exception
+     * @throws \Exception|\Throwable
      */
-    public function setEncodingOptions($encodingOptions): self
+    public function setEncodingOptions(int $encodingOptions): self
     {
-        $this->encodingOptions = (int) $encodingOptions;
+        $this->encodingOptions = $encodingOptions;
 
         return $this->setData(json_decode($this->data));
     }

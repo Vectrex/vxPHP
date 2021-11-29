@@ -15,7 +15,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check against an arbitrary regular expression
  * 
- * @version 0.1.2 2018-04-25
+ * @version 0.1.3 2021-11-28
  * @author Gregor Kofler
  */
 class RegularExpression extends AbstractConstraint
@@ -25,7 +25,7 @@ class RegularExpression extends AbstractConstraint
 	 * 
 	 * @var string
 	 */
-	private $regExp;
+	private string $regExp;
 	
 	/**
 	 * constructor

@@ -21,7 +21,7 @@ use vxPHP\Controller\Controller;
  * capturing the output buffer
  *
  * @author Gregor Kofler
- * @version 1.1.0 2020-05-18
+ * @version 1.1.1 2021-11-28
  *
  * @package vxPHP\Template
  */
@@ -34,7 +34,7 @@ class TemplateBuffer
      *
      * the unprocessed template string
      */
-    public $__rawContents = '';
+    public string $__rawContents = '';
 
     /**
      * include another template file
@@ -63,18 +63,18 @@ class TemplateBuffer
      * additional arguments can be passed on to the controller constructor
      *
      * @param string $controllerPath
-     * @param null $methodName
+     * @param string|null $methodName
      * @param array|null $constructorArguments
      *
      * @return string
      * @throws ApplicationException
      * @throws ConfigException
      */
-    public function includeControllerResponse(string $controllerPath, $methodName = null, array $constructorArguments = null): ?string
+    public function includeControllerResponse(string $controllerPath, string $methodName = null, array $constructorArguments = null): ?string
     {
         $namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 
-        if(count($namespaces) && $namespaces[0]) {
+        if($namespaces[0]) {
             $controller = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
         }
 

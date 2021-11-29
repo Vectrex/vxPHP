@@ -23,7 +23,7 @@ namespace vxPHP\Http;
  */
 class IpUtils
 {
-    private static $checkedIps = [];
+    private static array $checkedIps = [];
 
     /**
      * This class should not be instantiated.
@@ -66,7 +66,7 @@ class IpUtils
      *
      * @return bool Whether the request IP matches the IP, or whether the request IP is within the CIDR subnet
      */
-    public static function checkIp4($requestIp, $ip): bool
+    public static function checkIp4($requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {
@@ -114,7 +114,7 @@ class IpUtils
      *
      * @throws \RuntimeException When IPV6 support is not enabled
      */
-    public static function checkIp6($requestIp, $ip): bool
+    public static function checkIp6($requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {

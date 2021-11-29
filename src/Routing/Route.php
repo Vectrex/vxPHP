@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.1.1 2021-02-20
+ * @version 2.1.2 2021-11-28
  *
  */
 
@@ -31,16 +31,16 @@ class Route
      * the router the route is assigned to
      * required to access router related options when generating URLs, etc.
      *
-     * @var Router
+     * @var Router|null
      */
-    private $router;
+    private ?Router $router = null;
 
 	/**
 	 * unique id of route
 	 * 
 	 * @var string
 	 */
-	private $routeId;
+	private string $routeId;
 	
 	/**
 	 * path which will trigger route if no path is configured, the path
@@ -48,14 +48,14 @@ class Route
 	 * 
 	 * @var string
 	 */
-	private $path;
+	private string $path;
 	
 	/**
 	 * the script with which a route becomes active
 	 * 
 	 * @var string
 	 */
-	private $scriptName;
+	private string $scriptName;
 	
 	/**
 	 * the name of the controller class, which will handle the route
@@ -98,7 +98,7 @@ class Route
 	 * 
 	 * @var string $url
 	 */
-	private $url;
+	private string $url = '';
 	
 	/**
 	 * match expression which matches route
@@ -106,7 +106,7 @@ class Route
 	 * 
 	 * @var string $match
 	 */
-	private $match;
+	private string $match;
 
 	/**
 	 * associative array with complete placeholder information
@@ -115,21 +115,21 @@ class Route
 	 * 
 	 * @var array
 	 */
-	private $placeholders;
+	private array $placeholders = [];
 
 	/**
 	 * holds all values of placeholders of current path
 	 * 
 	 * @var array
 	 */
-	private $pathParameters;
+	private array $pathParameters = [];
 
 	/**
 	 * allowed request methods with route
 	 * 
 	 * @var array
 	 */
-	private $requestMethods;
+	private array $requestMethods = [];
 
     /**
      * indicate that the path is "relative"
@@ -137,15 +137,15 @@ class Route
      *
      * @var bool
      */
-	private $pathIsRelative;
+	private bool $pathIsRelative;
 
 	public const KNOWN_REQUEST_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 	/**
 	 * Constructor.
 	 *
-	 * @param string $routeId, the route identifier
-	 * @param string $scriptName, name of assigned script
-	 * @param array $parameters, collection of route parameters
+	 * @param string $routeId the route identifier
+	 * @param string $scriptName name of assigned script
+	 * @param array $parameters collection of route parameters
      * @throws \InvalidArgumentException
 	 */
 	public function __construct(string $routeId, string $scriptName, array $parameters = [])
@@ -172,7 +172,6 @@ class Route
 
             if(preg_match_all('~{(.*?)(=.*?)?}~', $this->path, $matches)) {
 
-                $this->placeholders = [];
                 $rex = $this->path;
 
                 if(!empty($matches[1])) {
@@ -403,7 +402,7 @@ class Route
 
 		//insert path parameters
 			
-		if(!empty($this->placeholders)) {
+		if($this->placeholders) {
 			
 			foreach ($this->placeholders as $placeholder) {
 
@@ -417,7 +416,7 @@ class Route
 
 				// try to use previously set path parameter
 				
-				else if($this->pathParameters && array_key_exists($placeholder['name'], $this->pathParameters)) {
+				else if(array_key_exists($placeholder['name'], $this->pathParameters)) {
 					$path = preg_replace($regExp, $this->pathParameters[$placeholder['name']], $path);
 				}
 
@@ -443,7 +442,7 @@ class Route
      * get URL of this route
      * considers mod_rewrite settings (nice_uri)
      *
-     * When path parameters are passed on to method an URL using these
+     * When path parameters are passed on to method a URL using these
      * parameter values is generated, but path parameters are not
      * stored and do not overwrite previously set path parameters.
      *
@@ -458,7 +457,7 @@ class Route
      * @param string $prefix
      * @return string
      */
-	public function getUrl(array $pathParameters = null, $prefix = ''): string
+	public function getUrl(array $pathParameters = null, string $prefix = ''): string
     {
 	    if(!$this->pathIsRelative && $prefix) {
 	        throw new \RuntimeException(sprintf("Route '%s' has an absolute path configured and does not allow prefixing when generating an URL.", $this->routeId));
@@ -606,11 +605,7 @@ class Route
 	 */
 	public function getPlaceholderNames(): array
     {
-		if(!empty($this->placeholders)) {
-			return array_keys($this->placeholders);
-		}
-
-		return [];
+        return array_keys($this->placeholders);
 	}
 
     /**
@@ -641,7 +636,7 @@ class Route
     {
 		// lazy initialization of parameters
 
-		if(empty($this->pathParameters) && $this->placeholders !== null) {
+		if(!$this->pathParameters && $this->placeholders) {
 
 			// collect all placeholder names
 
@@ -718,7 +713,7 @@ class Route
 
 		$found = false;
 
-		foreach(($this->placeholders ?? []) as $placeholder) {
+		foreach($this->placeholders as $placeholder) {
 			if($placeholder['name'] === $name) {
 				$found = true;
 				break;
@@ -747,7 +742,7 @@ class Route
      * @return RedirectResponse
      * @throws \RuntimeException
      */
-	public function redirect($queryParams = [],  $statusCode = 302): RedirectResponse
+	public function redirect(array $queryParams = [],  int $statusCode = 302): RedirectResponse
     {
 		$request = Request::createFromGlobals();
 

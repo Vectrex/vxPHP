@@ -19,17 +19,17 @@ namespace vxPHP\Form\FormElement;
  */
 class ButtonElement extends InputElement
 {
-	private	$innerHTML = '';
-	
-	/**
-	 * initialize a <button> element instance
-	 * 
-	 * $type defaults to 'button'
-	 * 
-	 * @param string $name
-	 * @param string $value
-	 * @param string $type
-	 */
+	private	string $innerHTML = '';
+
+    /**
+     * initialize a <button> element instance
+     *
+     * $type defaults to 'button'
+     *
+     * @param string $name
+     * @param string|null $value
+     * @param string|null $type
+     */
 	public function __construct(string $name, string $value = null, string $type = null)
     {
 		parent::__construct($name, $value);
@@ -49,7 +49,7 @@ class ButtonElement extends InputElement
      * @see \vxPHP\Form\FormElement\InputElement::setType()
      *
      */
-	public function setType(string $type)
+	public function setType(string $type): ButtonElement
     {
 		$type = strtolower($type);
 
@@ -66,7 +66,7 @@ class ButtonElement extends InputElement
 	 * @param string $html
 	 * @return \vxPHP\Form\FormElement\ButtonElement
 	 */
-	public function setInnerHTML($html)
+	public function setInnerHTML(string $html): ButtonElement
     {
 		$this->innerHTML = $html;
 		return $this;

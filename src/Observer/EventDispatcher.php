@@ -14,7 +14,7 @@ namespace vxPHP\Observer;
 /**
  * simple dispatcher-listener implementation
  *
- * @version 0.4.1 2020-11-27
+ * @version 0.4.2 2021-12-01
  * @author Gregor Kofler
  *
  */
@@ -25,14 +25,14 @@ class EventDispatcher
 	 * eventName -> priority -> callable
 	 * @var array
 	 */
-	private $registry = [];
+	private array $registry = [];
 
 	/**
 	 * lookup for registered subscribers sorted by priority
 	 * eventName -> callable
 	 * @var array
 	 */
-	private $sortedRegistry = [];
+	private array $sortedRegistry = [];
 
 	/**
 	 * register object hashes
@@ -40,7 +40,7 @@ class EventDispatcher
 	 * 
 	 * @var array
 	 */
-	private $registeredHashes = [];
+	private array $registeredHashes = [];
 
 	/**
 	 * last event which was served
@@ -52,9 +52,9 @@ class EventDispatcher
 
 	/**
 	 * singleton pattern
-	 * @var EventDispatcher
-	 */
-	private static $instance;
+	 * @var EventDispatcher|null
+     */
+	private static ?EventDispatcher $instance = null;
 
 	/**
 	 * ensure singleton
@@ -76,7 +76,7 @@ class EventDispatcher
 	public static function getInstance(): EventDispatcher
     {
 		if(is_null(self::$instance)) {
-			self::$instance = new static();
+			self::$instance = new self();
 		}
 
 		return self::$instance;
@@ -178,9 +178,9 @@ class EventDispatcher
 	/**
 	 * provide access to last event which was triggered
      *
-	 * @return string
+	 * @return Event
 	 */
-	public function getLastEvent(): ?Event
+	public function getLastEvent()
     {
 		return $this->lastEvent;
 	}
@@ -213,7 +213,7 @@ class EventDispatcher
     /**
      * check whether listeners for a given event name are registered
      * if no event name is supplied this will evaluate to true if
-     * there any listeners registered
+     * any listeners registered
      *
      * @param string|null $eventName
      * @return bool

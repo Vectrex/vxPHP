@@ -26,8 +26,8 @@ class HeaderBag implements \IteratorAggregate, \Countable
     protected const UPPER = '_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     protected const LOWER = '-abcdefghijklmnopqrstuvwxyz';
 
-    protected $headers = [];
-    protected $cacheControl = [];
+    protected array $headers = [];
+    protected array $cacheControl = [];
 
 	/**
 	 * Constructor.
@@ -72,7 +72,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return array An array of headers
      */
-    public function all($key = null): array
+    public function all(string $key = null): array
     {
         if($key) {
             return $this->headers[strtr($key, self::UPPER, self::LOWER)] ?? [];
@@ -94,7 +94,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      * Replaces the current HTTP headers by a new set.
      * @param array $headers
      */
-    public function replace(array $headers = [])
+    public function replace(array $headers = []): void
     {
         $this->headers = [];
         $this->add($headers);
@@ -104,7 +104,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      * Adds new headers the current HTTP headers set.
      * @param array $headers
      */
-    public function add(array $headers)
+    public function add(array $headers): void
     {
         foreach ($headers as $key => $values) {
             $this->set($key, $values);
@@ -119,9 +119,9 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return string|null The first header value or default value
      */
-    public function get($key, $default = null): ?string
+    public function get(string $key, string $default = null): ?string
     {
-        $headers = $this->all((string) $key);
+        $headers = $this->all($key);
 
         if (!$headers) {
             return $default;
@@ -141,11 +141,11 @@ class HeaderBag implements \IteratorAggregate, \Countable
      * @param string|string[] $values  The value or an array of values
      * @param bool            $replace Whether to replace the actual value or not (true by default)
      */
-    public function set($key, $values, $replace = true)
+    public function set(string $key, $values, bool $replace = true): void
     {
         $key = strtr($key, self::UPPER, self::LOWER);
 
-        if (\is_array($values)) {
+        if (is_array($values)) {
             $values = array_values($values);
 
             if (true === $replace || !isset($this->headers[$key])) {
@@ -173,7 +173,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return bool true if the parameter exists, false otherwise
      */
-    public function has($key): bool
+    public function has(string $key): bool
     {
         return \array_key_exists(strtr($key, self::UPPER, self::LOWER), $this->all());
     }
@@ -186,9 +186,9 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return bool true if the value is contained in the header, false otherwise
      */
-    public function contains($key, $value): bool
+    public function contains(string $key, string $value): bool
     {
-        return \in_array($value, $this->all((string) $key), true);
+        return \in_array($value, $this->all($key), true);
 	}
 
     /**
@@ -196,7 +196,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @param string $key The HTTP header name
      */
-    public function remove($key)
+    public function remove(string $key): void
     {
         $key = strtr($key, self::UPPER, self::LOWER);
 
@@ -211,12 +211,11 @@ class HeaderBag implements \IteratorAggregate, \Countable
      * Returns the HTTP header value converted to a date.
      *
      * @param string $key The parameter key
-     * @param \DateTime $default
+     * @param \DateTime|null $default
      *
      * @return \DateTimeInterface|null The parsed DateTime or the default value if the header does not exist
-     *
      */
-    public function getDate($key, \DateTime $default = null): ?\DateTimeInterface
+    public function getDate(string $key, \DateTime $default = null): ?\DateTimeInterface
     {
         if (null === $value = $this->get($key)) {
             return $default;
@@ -235,7 +234,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      * @param string $key   The Cache-Control directive name
      * @param mixed  $value The Cache-Control directive value
      */
-    public function addCacheControlDirective($key, $value = true)
+    public function addCacheControlDirective(string $key, $value = true): void
     {
         $this->cacheControl[$key] = $value;
         $this->set('Cache-Control', $this->getCacheControlHeader());
@@ -248,7 +247,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return bool true if the directive exists, false otherwise
      */
-    public function hasCacheControlDirective($key): bool
+    public function hasCacheControlDirective(string $key): bool
     {
         return \array_key_exists($key, $this->cacheControl);
     }
@@ -260,7 +259,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return mixed|null The directive value if defined, null otherwise
      */
-    public function getCacheControlDirective($key)
+    public function getCacheControlDirective(string $key)
     {
         return $this->cacheControl[$key] ?? null;
     }
@@ -270,7 +269,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @param string $key The Cache-Control directive
      */
-    public function removeCacheControlDirective($key)
+    public function removeCacheControlDirective(string $key): void
     {
         unset($this->cacheControl[$key]);
 
@@ -297,7 +296,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
         return \count($this->headers);
     }
 
-    protected function getCacheControlHeader()
+    protected function getCacheControlHeader(): string
     {
         ksort($this->cacheControl);
 
@@ -311,7 +310,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return array An array representing the attribute values
      */
-    protected function parseCacheControl($header): array
+    protected function parseCacheControl(string $header): array
     {
         $parts = HeaderUtils::split($header, ',=');
 

@@ -11,18 +11,17 @@
 
 namespace vxPHP\File;
 
-use vxPHP\File\FilesystemFile;
 use vxPHP\File\Exception\FilesystemFileException;
 
 /**
  * extend FilesystemFile to meet requirements of uploaded files
  * an UploadedFile behaves like a FilesystemFile except the first
- * move() moves the temporary file to its destination an re-populates
+ * move() moves the temporary file to its destination and re-populates
  * relevant properties (filename, fileInfo) with the new values
  * 
  * @author Gregor Kofler
  *
- * @version 1.0.0 2020-02-05
+ * @version 1.0.1 2021-12-01
  */
 class UploadedFile extends FilesystemFile
 {
@@ -31,7 +30,7 @@ class UploadedFile extends FilesystemFile
 	 * 
 	 * @var string
 	 */
-	private $originalName;
+	private string $originalName;
 	
 	/**
 	 * when TRUE the file has already been uploaded
@@ -39,7 +38,7 @@ class UploadedFile extends FilesystemFile
 	 * 
 	 * @var boolean
 	 */
-	private $alreadyUploaded;
+	private bool $alreadyUploaded = false;
 
 	public function __construct($path, $originalName)
     {
@@ -106,7 +105,7 @@ class UploadedFile extends FilesystemFile
 
 				// flag completed upload
 				
-				$this->alreadyUploaded = TRUE;
+				$this->alreadyUploaded = true;
 
 				// set new folder reference
 

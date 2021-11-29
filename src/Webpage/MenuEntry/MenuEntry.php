@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.8.1 2021-04-28
+ * @version 0.8.2 2021-11-28
  */
 class MenuEntry
 {
@@ -26,68 +26,68 @@ class MenuEntry
 	 * the index counter of menu entries
 	 * @var integer
 	 */
-	protected static $count = 1;
+	protected static int $count = 1;
 
 	/**
-	 * the menu the menu entry belongs to
-	 * @var Menu
+	 * the menu the entry belongs to
+	 * @var Menu | null
 	 */
-	protected $menu;
+	protected ?Menu $menu;
 
 	/**
 	 * the authentication level of the entry
-	 * @var string
+	 * @var string | null
 	 */
-	protected $auth;
+	protected ?string $auth = null;
 	
 	/**
 	 * additional authentication parameter which
 	 * might be required by the authentication level
 	 * @var string
 	 */
-	protected $authParameters;
+	protected string $authParameters;
 	
 	/**
 	 * misc attributes
 	 * @var \stdClass
 	 */
-	protected $attributes;
+	protected \stdClass $attributes;
 
     /**
      * display attribute
      * @var boolean
      */
-    protected $display = true;
+    protected bool $display = true;
 
 	/**
 	 * unique index of menu entry
 	 * @var integer
 	 */
-	protected $ndx;
+	protected int $ndx;
 	
 	/**
 	 * the path of the menu entry 
 	 * @var string
 	 */
-	protected $path;
+	protected string $path;
 	
 	/**
 	 * an optional submenu of the menu entry
-	 * @var Menu
+	 * @var Menu | null
 	 */
-	protected $subMenu;
+	protected ?Menu $subMenu = null;
 	
 	/**
 	 * flag indicating whether menu entry destination is an absoulte or relative URL
 	 * @var boolean
 	 */
-	protected $localPage;
+	protected bool $localPage;
 	
 	/**
 	 * the URL of the menu entry
-	 * @var string
+	 * @var string | null
 	 */
-	protected $href;
+	protected ?string $href;
 
     /**
      * MenuEntry constructor.
@@ -171,10 +171,10 @@ class MenuEntry
     /**
      * set auth information
      *
-     * @param $auth
+     * @param string $auth
      * @return $this
      */
-	public function setAuth($auth): MenuEntry
+	public function setAuth(string $auth): MenuEntry
     {
 		$this->auth = $auth;
 		return $this;
@@ -193,10 +193,10 @@ class MenuEntry
     /**
      * set additional auth parameters
      *
-     * @param $authParameters
+     * @param string $authParameters
      * @return $this
      */
-	public function setAuthParameters($authParameters): MenuEntry
+	public function setAuthParameters(string $authParameters): MenuEntry
     {
 		$this->authParameters = $authParameters;
 		return $this;
@@ -258,7 +258,7 @@ class MenuEntry
      * @param string $path
      * @return MenuEntry
      */
-    public function setPath(string $path)
+    public function setPath(string $path): self
     {
         $this->path = trim($path, '/');
 

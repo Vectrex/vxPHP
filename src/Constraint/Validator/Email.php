@@ -16,24 +16,26 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check an email for validity
  *
- * @version 0.1.2 2020-09-18
+ * @version 0.1.3 2021-11-28
  * @author Gregor Kofler
  */
 class Email extends AbstractConstraint
 {
+    public const ALLOWED_TYPES = ['checkmx', 'checkhost'];
+
 	/**
 	 * indicate which type of additional checking (MX or host) is required
 	 *
-	 * @var bool
-	 */
-	private $checkType;
+	 * @var string|null
+     */
+	private ?string $checkType = null;
 	
 	/**
 	 * stores the regular expression against the email is checked
 	 *
 	 * @var string
 	 */
-	private $regExp;
+	private string $regExp;
 
     /**
      * build regular expression against which
@@ -44,11 +46,10 @@ class Email extends AbstractConstraint
 	public function __construct(string $type = null)
     {
 		if($type) {
-			$allowedTypes = 'checkMX checkHost';
 			$type = strtolower($type);
 
-			if(!in_array($type, explode(' ', strtolower($allowedTypes)), true)) {
-				throw new \InvalidArgumentException(sprintf("Invalid type for DNS checking '%s'; allowed types are '%s'.", $type, str_replace(' ', "', '", $allowedTypes)));
+			if(!in_array($type, self::ALLOWED_TYPES, true)) {
+				throw new \InvalidArgumentException(sprintf("Invalid type for DNS checking '%s'; allowed types are '%s'.", $type, implode("', '", self::ALLOWED_TYPES)));
 			}
             $this->checkType = $type;
 		}

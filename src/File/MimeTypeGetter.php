@@ -14,12 +14,12 @@ namespace vxPHP\File;
 /**
  * MimeTypeGetter
  * 
- * A collection of static methods to get the MIME type of a file or
+ * A collection of static methods to get the mimetype of a file or
  * buffer; tries to use fileinfo and provides a lookup table as fallback
  * or alternative
  * 
  * @version 1.0 by Bartlomiej Pohl, 2008-09-24
- * @version 2.1.0 by Gregor Kofler, 2021-05-29
+ * @version 2.1.1 by Gregor Kofler, 2021-12-01
  * 
  * @author Bartlomiej Pohl <badek@gmx.de>
  * @author Gregor Kofler <info@gregorkofler.com>
@@ -43,7 +43,7 @@ class MimeTypeGetter {
 	 * 
 	 * @var array
 	 */
-	protected static $extensionToMime = [
+	protected static array $extensionToMime = [
 		'ez' => 'application/andrew-inset',
 		'aw' => 'application/applixware',
 		'atom' => 'application/atom+xml',
@@ -1029,7 +1029,7 @@ class MimeTypeGetter {
 		'ice' => 'x-conference/x-cooltalk',
 	];
 	
-	protected static $mimeToExtension;
+	protected static array $mimeToExtension = [];
 
 	/**
 	 * Gets the Mime Type using the Fileinfo Extension.
@@ -1048,7 +1048,7 @@ class MimeTypeGetter {
 	/**
 	 * extracts the file extension and checks the extension array
 	 * for the extension. If it is found it returns the MIME type.
-	 * If not it returns the the default MIME type.
+	 * If not it returns the default MIME type.
 	 *
 	 * @param string $file the path to the file
 	 * @return string
@@ -1101,7 +1101,7 @@ class MimeTypeGetter {
 	 * returns a default extension by a given MIME type
 	 * 
 	 * since a single MIME type can be assigned to more than one
-	 * extension the one determined by the array structure is returned
+	 * extension the one determined by the array structure is returned;
 	 * returns an empty string if no match for the MIME type was found
 	 *
 	 * @param string
@@ -1110,7 +1110,7 @@ class MimeTypeGetter {
 	 */
 	public static function getDefaultFileExtension($mime): string
     {
-		if(empty(self::$mimeToExtension)) {
+		if(!self::$mimeToExtension) {
 			self::$mimeToExtension = array_flip(self::$extensionToMime);
 		}
 

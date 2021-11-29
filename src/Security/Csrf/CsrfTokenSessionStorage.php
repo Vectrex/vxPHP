@@ -18,12 +18,11 @@ use vxPHP\Security\Csrf\Exception\CsrfTokenException;
  * session storage for CSRF tokens
  * 
  * @author Gregor Kofler
- * @version 0.2.0 2016-04-06
+ * @version 0.2.1 2021-11-28
  *
  */
-class CsrfTokenSessionStorage {
-	
-	
+class CsrfTokenSessionStorage
+{
 	/**
 	 * The namespace used to store values in the session.
 	 *
@@ -36,22 +35,22 @@ class CsrfTokenSessionStorage {
 	 *
 	 * @var SessionDataBag
 	 */
-	private $sessionDataBag;
+	private SessionDataBag $sessionDataBag;
 	
 	/**
 	 * @var string
 	 */
-	private $namespace;
+	private string $namespace;
 	
 	/**
 	 * constructor
-	 * retrieve session data (and if needed initialize session along the way)
+	 * retrieve session data (and if needed to initialize session along the way)
 	 * and the namespace under which the token is stored
 	 *
 	 * @param SessionDataBag $sessionDataBag
 	 * @param string $namespace
 	 */
-	public function __construct(SessionDataBag $sessionDataBag, $namespace = self::SESSION_NAMESPACE)
+	public function __construct(SessionDataBag $sessionDataBag, string $namespace = self::SESSION_NAMESPACE)
     {
 		$this->sessionDataBag = $sessionDataBag;
 		$this->namespace = $namespace;
@@ -65,7 +64,7 @@ class CsrfTokenSessionStorage {
 	 * 
 	 * @throws CsrfTokenException
 	 */
-	public function getToken($tokenId): CsrfToken
+	public function getToken(string $tokenId): CsrfToken
     {
 		$sessionToken = $this->sessionDataBag->get($this->namespace . '/' . $tokenId);
 
@@ -84,9 +83,9 @@ class CsrfTokenSessionStorage {
 	 * 
 	 * @throws \InvalidArgumentException
 	 */
-	public function setToken($tokenId, CsrfToken $token): void
+	public function setToken(string $tokenId, CsrfToken $token): void
     {
-		if(!trim((string) $tokenId)) {
+		if(!trim($tokenId)) {
 			throw new \InvalidArgumentException('Invalid token id.');
 		}
 		
@@ -102,7 +101,7 @@ class CsrfTokenSessionStorage {
      * @param string $tokenId
      * @return mixed
      */
-	public function removeToken($tokenId): ?CsrfToken
+	public function removeToken(string $tokenId): ?CsrfToken
     {
 		return $this->sessionDataBag->remove($this->namespace . '/' . $tokenId);
 	}
@@ -113,7 +112,7 @@ class CsrfTokenSessionStorage {
      * @param string $tokenId
      * @return bool
      */
-	public function hasToken($tokenId): bool
+	public function hasToken(string $tokenId): bool
     {
 		return $this->sessionDataBag->has($this->namespace . '/' . $tokenId);
 	}

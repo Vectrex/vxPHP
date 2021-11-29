@@ -46,75 +46,74 @@ class SmtpMailer implements MailerInterface
 	 * preferences for MIME encoding
 	 * used with mb_internal_encoding()
 	 * mb_encode_mimeheader()
-	 * @var array
 	 */
-	private	$mimeEncodingPreferences = [
+	public const MIME_ENCODING_PREFERENCES = [
 		'scheme' => 'Q',
 		'input-charset' => 'UTF-8',
 		'output-charset' => 'UTF-8',
 		'line-break-chars' => self::CRLF
 	];
 
-	/**
+    /**
+     * supported auth methods
+     */
+    public const AUTH_METHODS = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
+
+
+    /**
 	 * host address of SMTP server
 	 * @var string
 	 */
-	private	$host;
+	private	string $host;
 	
 	/**
 	 * port of SMTP server
 	 * @var integer
 	 */
-	private	$port;
+	private	int $port;
 
 	/**
 	 * username for authentication
 	 * @var string
 	 */
-	private	$user;
+	private	string $user = '';
 
 	/**
 	 * password for authentication
 	 * @var string
 	 */
-	private	$pwd;
+	private	string $pwd = '';
 
 	/**
 	 * auth method used for SMTP authentication
-	 * @var string
-	 */
-	private	$authType;
-
-	/**
-	 * supported auth methods
-	 * @var array
-	 */
-	private	$authTypes = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
+	 * @var string|null
+     */
+	private	string $authMethod = 'NONE';
 
 	/**
 	 * encryption method used for connection
-	 * @var string
-	 */
-	private $smtpEncryption;
+	 * @var string|null
+     */
+	private ?string $smtpEncryption = null;
 
 	/**
 	 * supported encryption methods
 	 * @var array
 	 */
-	private	$smtpEncryptions = ['SSL', 'TLS'];
+	private	array $smtpEncryptions = ['SSL', 'TLS'];
 
     /**
      * OAuth token
      * @var string
      */
-    protected $oAuthToken;
+    protected string $oAuthToken = '';
 
 	/**
 	 * extensions reported by EHLO/HELO
 	 * 
 	 * @var array
 	 */
-	private $extensions = [];
+	private array $extensions = [];
 
 	/**
 	 * connection socket
@@ -126,43 +125,43 @@ class SmtpMailer implements MailerInterface
 	 * email address of sender
 	 * @var string
 	 */
-	private	$from = '';
+	private	string $from = '';
 
 	/**
 	 * extracted display name, when from address is of form "display_name" <email_from>
 	 * @var string
 	 */
-	private	$fromDisplayName = '';
+	private	string $fromDisplayName = '';
 
 	/**
 	 * holds receivers with email addresses
 	 * @var array
 	 */
-	private	$to;
+	private	array $to = [];
 
 	/**
 	 * header rows
 	 * @var array
 	 */
-	private	$headers = [];
+	private	array $headers = [];
 
 	/**
 	 * the mail message
 	 * @var string
 	 */
-	private	$message;
+	private	string $message = '';
 
 	/**
 	 * server response
 	 * @var string
 	 */
-	private	$response;
+	private	string $response = '';
 
 	/**
 	 * server communication log
 	 * @var array
 	 */
-	private	$log = [];
+	private	array $log = [];
 
     /**
      * constructor
@@ -170,11 +169,11 @@ class SmtpMailer implements MailerInterface
      * and default mime encoding
      *
      * @param string $host
-     * @param int|null $port
+     * @param int $port
      * @param string|null $smtpEncryption
      * @throws SmtpMailerException
      */
-	public function __construct(string $host, int $port = null, string $smtpEncryption = null)
+	public function __construct(string $host, int $port = self::DEFAULT_PORT, string $smtpEncryption = null)
     {
 		if($smtpEncryption) {
 			if(!in_array(strtoupper($smtpEncryption), $this->smtpEncryptions, true)) {
@@ -184,10 +183,10 @@ class SmtpMailer implements MailerInterface
 			$this->smtpEncryption = strtolower($smtpEncryption);
 		}
 
-		$this->port = is_null($port) ? self::DEFAULT_PORT : $port;
+		$this->port = $port;
 		$this->host	= $host;
-		
-		mb_internal_encoding($this->mimeEncodingPreferences['output-charset']);
+
+		mb_internal_encoding(self::MIME_ENCODING_PREFERENCES['output-charset']);
 	}
 
 	/**
@@ -234,20 +233,20 @@ class SmtpMailer implements MailerInterface
 	 * 
 	 * @param string $user
 	 * @param string $pwd
-	 * @param string $authType
+	 * @param string $authMethod
 	 * 
 	 * @throws SmtpMailerException
 	 */
-	public function setCredentials(string $user, string $pwd, string $authType = 'LOGIN'): void
+	public function setCredentials(string $user, string $pwd, string $authMethod = 'LOGIN'): void
     {
 		$this->user = $user;
 		$this->pwd = $pwd;
 
-		if(!in_array(strtoupper($authType), $this->authTypes, true)) {
-			throw new SmtpMailerException(sprintf("Invalid authentication type '%s'.", $authType), SmtpMailerException::INVALID_AUTH_TYPE);
+		if(!in_array(strtoupper($authMethod), self::AUTH_METHODS, true)) {
+			throw new SmtpMailerException(sprintf("Invalid authentication type '%s'.", $authMethod), SmtpMailerException::INVALID_AUTH_TYPE);
 		}
 
-		$this->authType = strtoupper($authType);
+		$this->authMethod = strtoupper($authMethod);
 	}
 
     /**
@@ -281,7 +280,7 @@ class SmtpMailer implements MailerInterface
 		// encode email, when non-atom chars + "@" + "." are found in email
 
 		if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $this->from)) {
-			$this->from = mb_encode_mimeheader($this->from, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+			$this->from = mb_encode_mimeheader($this->from, mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']);
 		}
 	}
 	
@@ -388,7 +387,7 @@ class SmtpMailer implements MailerInterface
         if($this->oAuthToken) {
             $this->authOAuthBearer();
         }
-        else if($this->authType !== 'NONE') {
+        else if($this->authMethod !== 'NONE') {
             $this->auth();
         }
 
@@ -471,7 +470,7 @@ class SmtpMailer implements MailerInterface
 				        $rows[] = sprintf('%s: %s', $k, $this->headers[$k]);
                     }
                     else {
-                        $rows[] = iconv_mime_encode($k, $this->headers[$k], $this->mimeEncodingPreferences);
+                        $rows[] = iconv_mime_encode($k, $this->headers[$k], self::MIME_ENCODING_PREFERENCES);
                     }
 					break;
 		
@@ -492,7 +491,7 @@ class SmtpMailer implements MailerInterface
 							// encode display name
 							
 							$email = trim($matches[2]);
-							$displayName = mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+							$displayName = mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']);
 						}
 						else {
 							$email = $address;
@@ -502,7 +501,7 @@ class SmtpMailer implements MailerInterface
 						// encode email, when non-atom chars + "@" + "." are found in email
 
 						if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $email)) {
-							$email = mb_encode_mimeheader($email, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+							$email = mb_encode_mimeheader($email, mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']);
 						}
 						
 						if($displayName) {
@@ -524,7 +523,7 @@ class SmtpMailer implements MailerInterface
 						// encode display name
 
 						$email			= trim($matches[2]);
-						$displayName	= mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+						$displayName	= mb_encode_mimeheader(trim($matches[1]), mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']);
 					}
 					else {
 						$email			= trim($this->headers[$k]);
@@ -534,7 +533,7 @@ class SmtpMailer implements MailerInterface
 					// encode email, when non-atom chars + "@" + "." are found in email
 					
 					if(!preg_match('/^[' . preg_quote(self::RFC5322_ATOM_CHARS, '/') . '@.]+$/', $email)) {
-						$email = mb_encode_mimeheader($email, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']);
+						$email = mb_encode_mimeheader($email, mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']);
 					}
 
 					if($displayName) {
@@ -550,7 +549,7 @@ class SmtpMailer implements MailerInterface
 						$rows[] = sprintf(
 							'%s: %s <%s>',
 							$k,
-							mb_encode_mimeheader($this->fromDisplayName, mb_internal_encoding(), $this->mimeEncodingPreferences['scheme']),
+							mb_encode_mimeheader($this->fromDisplayName, mb_internal_encoding(), self::MIME_ENCODING_PREFERENCES['scheme']),
 							$this->from
 						);
 					}
@@ -671,14 +670,14 @@ class SmtpMailer implements MailerInterface
 	 */
 	private function auth(): void
     {
-		$this->put("AUTH " . $this->authType . self::CRLF);
+		$this->put("AUTH " . $this->authMethod . self::CRLF);
 		$this->getResponse();
 
 		if( $this->response[0] !== '3') {
 			throw new SmtpMailerException('Failed to send AUTH.', SmtpMailerException::AUTH_SEND_FAILED);
 		}
 	
-		if ($this->authType === 'LOGIN') {
+		if ($this->authMethod === 'LOGIN') {
 			$this->put(base64_encode($this->user) . self::CRLF);
 
 			if(!$this->check(self::RFC_CONTINUE_REQUEST)) {
@@ -687,11 +686,11 @@ class SmtpMailer implements MailerInterface
 	
 			$this->put(base64_encode($this->pwd) . self::CRLF);
 		}
-		elseif ($this->authType === 'PLAIN') {
+		elseif ($this->authMethod === 'PLAIN') {
 			$this->put(base64_encode($this->user . chr(0) . $this->user . chr(0) . $this->pwd) . self::CRLF);
 		}
 
-		elseif ($this->authType === 'CRAM-MD5') {
+		elseif ($this->authMethod === 'CRAM-MD5') {
 			$data = explode(' ', $this->response);
 			$data = base64_decode($data[1]);
 			$key = str_pad($this->pwd, 64, chr(0x00));

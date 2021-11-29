@@ -147,7 +147,7 @@ class HeaderUtils
     }
 
     /**
-     * Generates a HTTP Content-Disposition field-value.
+     * Generates an HTTP Content-Disposition field-value.
      *
      * @param string $disposition      One of "inline" or "attachment"
      * @param string $filename         A unicode string
@@ -211,12 +211,12 @@ class HeaderUtils
 
         $parts = [];
         if ($partSeparators) {
-            foreach ($partMatches as $matches) {
-                $parts[] = self::groupParts($matches, $partSeparators);
+            foreach ($partMatches as $m) {
+                $parts[] = self::groupParts($m, $partSeparators);
             }
         } else {
-            foreach ($partMatches as $matches) {
-                $parts[] = self::unquote($matches[0][0]);
+            foreach ($partMatches as $m) {
+                $parts[] = self::unquote($m[0][0]);
             }
         }
 

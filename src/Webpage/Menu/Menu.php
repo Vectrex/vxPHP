@@ -20,7 +20,7 @@ use vxPHP\Webpage\MenuEntry\DynamicMenuEntry;
  * manages a complete menu
  * 
  * @author Gregor Kofler
- * @version 1.1.0 2021-01-13
+ * @version 1.1.1 2021-11-28
  */
 class Menu
 {
@@ -29,78 +29,78 @@ class Menu
      */
     public const DEFAULT_ID = '__default__';
 
-	/**
-	 * @var string
-	 */
-	protected $id;
+    /**
+     * @var string
+     */
+    protected string $script;
+
+    /**
+     * @var string
+     */
+    protected string $type;
+
+    /**
+	 * @var string|null
+     */
+	protected ?string $id;
 
 	/**
-	 * @var string
-	 */
-	protected $script;
+	 * @var string|null
+     */
+	protected ?string $serviceId;
 
 	/**
-	 * @var string
-	 */
-	protected $type;
-
-	/**
-	 * @var string
-	 */
-	protected $serviceId;
-
-	/**
-	 * @var string
-	 */
-	protected $auth;
+	 * @var string|null
+     */
+	protected ?string $auth = null;
 	
 	/**
-	 * @var string
-	 */
-	protected $authParameters;
+	 * @var string|null
+     */
+	protected ?string $authParameters = null;
 	
 	/**
 	 * @var MenuEntry[]
 	 */
-	protected $entries = [];
+	protected array $entries = [];
 	
 	/**
 	 * @var DynamicMenuEntry[]
 	 */
-	protected $dynamicEntries = [];
+	protected array $dynamicEntries = [];
 
 	/**
-	 * @var MenuEntry
-	 */
-	protected $selectedEntry;
+	 * @var MenuEntry|null
+     */
+	protected ?MenuEntry $selectedEntry = null;
 
 	/**
-	 * @var MenuEntry
-	 */
-	protected $parentEntry;
+	 * @var MenuEntry|null
+     */
+	protected ?MenuEntry $parentEntry = null;
 	
 	/**
 	 * @var boolean
 	 */
-	protected $forceActive;
+	protected bool $forceActive = false;
 
 	/**
 	 * @var boolean
 	 */
-	protected $showSubmenus;
+	protected bool $showSubmenus = false;
 
     /**
      * @var boolean
      */
-    protected $display = true;
+    protected bool $display = true;
 
     /**
      * misc attributes
      * @var \stdClass
      */
-    protected $attributes;
+    protected \stdClass $attributes;
 
-    public function __construct($script, $id, $type, $serviceId = null)
+    public function __construct(string $script, string $id = null, string $type = 'static', string $serviceId = null)
     {
 		$this->script = $script;
 		$this->id = $id;
@@ -132,10 +132,10 @@ class Menu
      * insert or append menu entry
      *
      * @param MenuEntry $entry
-     * @param null $ndx
+     * @param int | null $ndx
      * @return Menu
      */
-	protected function insertEntry(MenuEntry $entry, $ndx = null): Menu
+	protected function insertEntry(MenuEntry $entry, int $ndx = null): Menu
     {
 		if($entry instanceof DynamicMenuEntry) {
 			$this->dynamicEntries[] = $entry;
@@ -157,14 +157,21 @@ class Menu
 	 * insert or append several MenuEntry objects
 	 *
 	 * @param array $entries
-	 * @param int $ndx
+	 * @param int|null $ndx
 	 * @return Menu
 	 */
-	public function insertEntries(array $entries, int $ndx): Menu
+	public function insertEntries(array $entries, int $ndx = null): Menu
     {
-		foreach($entries as $e) {
-			$this->insertEntry($e, $ndx++);
-		}
+        if (!isset($ndx)) {
+            foreach($entries as $e) {
+                $this->insertEntry($e);
+            }
+        }
+        else {
+            foreach ($entries as $e) {
+                $this->insertEntry($e, $ndx++);
+            }
+        }
 
 		return $this;
 	}
@@ -330,7 +337,7 @@ class Menu
 	}
 
 	/**
-	 * get all entries of of menu 
+	 * get all entries of menu
 	 * 
 	 * @return MenuEntry[]
 	 */
@@ -457,7 +464,7 @@ class Menu
 	 */
 	public function getForceActive(): bool
     {
-		return (bool) $this->forceActive;
+		return $this->forceActive;
 	}
 
 	/**
@@ -479,7 +486,7 @@ class Menu
 	 */
 	public function getShowSubmenus(): bool
     {
-		return (bool) $this->showSubmenus;
+		return $this->showSubmenus;
 	}
 
 	/**

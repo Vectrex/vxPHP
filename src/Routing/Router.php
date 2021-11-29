@@ -10,6 +10,7 @@
 
 namespace vxPHP\Routing;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
 
 /**
@@ -21,7 +22,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.2.1 2021-02-20
+ * @version 2.2.2 2021-11-28
  *
  */
 class Router
@@ -29,9 +30,9 @@ class Router
 	/**
 	 * class used for route authentication
 	 * 
-	 * @var RouteAuthenticatorInterface
-	 */
-	protected $authenticator;
+	 * @var RouteAuthenticatorInterface|null
+     */
+	protected RouteAuthenticatorInterface $authenticator;
 
     /**
      * @var Route[]
@@ -44,21 +45,21 @@ class Router
      *
      * @var array
      */
-    protected $localePrefixes;
+    protected array $localePrefixes = [];
 
     /**
      * stores a locale prefix found when parsing route
      *
-     * @var string
+     * @var string|null
      */
-    protected $foundLocalePrefix;
+    protected ?string $foundLocalePrefix = null;
 
     /**
      * indicate a server side rewrite
      *
      * @var boolean
      */
-	protected $serverSideRewrite;
+	protected bool $serverSideRewrite;
 
     /**
      * without server side rewrite this will be prefixed
@@ -81,6 +82,9 @@ class Router
 
         if($authenticator) {
             $this->authenticator = $authenticator;
+        }
+        else {
+            $this->authenticator = new DefaultRouteAuthenticator();
         }
 
         // check for possible server side rewrite
@@ -201,7 +205,7 @@ class Router
      * is more specific about the request method is preferred
      *
      * if more than one route matches the requirements and are equally
-     * specific about the request methods the one with less
+     * specific about the request methods the one with fewer
      * placeholders is preferred
      *
      * if more than one match the requirements, are equally specific
@@ -210,7 +214,7 @@ class Router
      *
      * @param Request $request
      * @return \vxPHP\Routing\Route
-     * @throws \RuntimeException
+     * @throws \RuntimeException|ApplicationException
      */
 	public function getRouteFromPathInfo(Request $request): Route
     {
@@ -284,9 +288,9 @@ class Router
      * get locale prefix ("en", "de",...) if these prefixes were set previously
      * and are now found when parsing path
      *
-     * @return string
+     * @return string|null
      */
-    public function getFoundLocalePrefix(): string
+    public function getFoundLocalePrefix(): ?string
     {
         return $this->foundLocalePrefix;
     }
@@ -469,10 +473,6 @@ class Router
 
 		if($auth === null) {
 			return true;
-		}
-
-		if(!$this->authenticator) {
-			$this->authenticator = new DefaultRouteAuthenticator();
 		}
 
 		return $this->authenticator->authenticate($route);

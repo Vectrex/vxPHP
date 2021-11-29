@@ -7,12 +7,12 @@ use vxPHP\Constraint\AbstractConstraint;
  * Validate IBANs
  * 
  * @author Gregor Kofler
- * @version 0.4.1 2020-04-30
+ * @version 0.4.2 2021-11-28
  *
  */
 class Iban extends AbstractConstraint
 {
-	private $ibanPatternsByCountry = [
+	private array $ibanPatternsByCountry = [
 
 	    /*
 	     * official IBAN patterns according to
@@ -127,7 +127,7 @@ class Iban extends AbstractConstraint
         // Central African Republic
     ];
 
-    private $territories = [
+    private array $territories = [
         'AX' => 'FI', // Aland Islands
         'BL' => 'FR', // Saint Barthelemy
         'GF' => 'FR', // French Guyana
@@ -160,7 +160,6 @@ class Iban extends AbstractConstraint
 
 			$this->setErrorMessage('IBAN does not meet basic formal requirements.');
 			return false;
-
 		}
 
 		// IBAN must provide a valid country code and match the country's IBAN length
@@ -171,14 +170,12 @@ class Iban extends AbstractConstraint
 
             $this->setErrorMessage(sprintf("IBAN with unknown country code '%s'.", $country));
             return false;
-
         }
 
         if(!preg_match('/' . $this->ibanPatternsByCountry[$country] . '/', $iban)) {
 
             $this->setErrorMessage(sprintf("Invalid IBAN format for country code '%s'.", $country));
             return false;
-
         }
 
 		// rearrange country code and checksum

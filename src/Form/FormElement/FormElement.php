@@ -11,14 +11,16 @@
 
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Constraint\ConstraintInterface;
 use vxPHP\Form\HtmlForm;
+use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Template\SimpleTemplate;
 
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.13.0 2021-07-10
+ * @version 0.13.1 2021-11-29
  * @author Gregor Kofler
  * 
  */
@@ -31,14 +33,14 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @var array
 	 */
-	protected $validators = [];
+	protected array $validators = [];
 
     /**
      * an error message when the form element fails to validate
      *
-     * @var string
+     * @var string|null
      */
-    protected $validationErrorMessage;
+    protected ?string $validationErrorMessage = null;
 
 	/**
 	 * all modifiers (callbacks, predefined function names, regular expressions)
@@ -46,14 +48,14 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @var array
 	 */
-	protected $modifiers = [];
+	protected array $modifiers = [];
 
 	/**
 	 * all attributes which will be rendered with the form element
 	 * 
 	 * @var array
 	 */
-	protected $attributes = [];
+	protected array $attributes = [];
 	
 	/**
 	 * marks element as required when true
@@ -62,14 +64,14 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @var boolean
 	 */
-	protected $required;
+	protected bool $required = false;
 	
 	/**
 	 * name of the element
 	 * 
 	 * @var string
 	 */
-	protected $name;
+	protected string $name;
 	
 	/**
 	 * the value of the element
@@ -81,37 +83,37 @@ abstract class FormElement implements FormElementInterface
 	/**
 	 * flag indicating that validators were passed
 	 *
-	 * @var bool
+	 * @var bool|null
 	 */
-	protected $valid;
+	protected ?bool $valid = null;
 	
 	/**
 	 * stores reference to form once the element is assigned to
 	 * 
-	 * @var HtmlForm
-	 */
-	protected $form;
+	 * @var HtmlForm|null
+     */
+	protected ?HtmlForm $form = null;
 
     /**
      * label element of the form element
      *
-     * @var LabelElement
+     * @var LabelElement|null
      */
-    protected $label;
+    protected ?LabelElement $label = null;
 
     /**
      * a template used for rendering the element
      *
-     * @var SimpleTemplate
+     * @var SimpleTemplate|null
      */
-    protected $template;
+    protected ?SimpleTemplate $template = null;
 
 	/**
 	 * the cached markup of the element
 	 * 
 	 * @var string
 	 */
-	protected $html;
+	protected string $html;
 
 	/**
 	 * initialize form element
@@ -141,9 +143,9 @@ abstract class FormElement implements FormElementInterface
 	/**
 	 * returns raw form element value
 	 * 
-	 * @return string
+	 * @return string|array|null
 	 */
-	public function getValue(): ?string
+	public function getValue()
     {
 		return $this->value;
 	}
@@ -264,7 +266,7 @@ abstract class FormElement implements FormElementInterface
      * @param string $attributeName
      * @return string|null
      */
-	public function getAttribute(string $attributeName)
+	public function getAttribute(string $attributeName): ?string
     {
 	    $key = strtolower($attributeName);
 
@@ -295,7 +297,7 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @return boolean
 	 */
-	public function getRequired(): ?bool
+	public function getRequired(): bool
     {
 		return $this->required;
 	}
@@ -460,13 +462,7 @@ abstract class FormElement implements FormElementInterface
         // first check whether form data is required
         // if not, then empty strings or null values are considered valid
 
-        if(
-            !$this->required &&
-            (
-                $value === '' ||
-                is_null($value)
-            )
-        ) {
+        if(!$this->required && $value === '') {
             return true;
         }
 
@@ -477,7 +473,7 @@ abstract class FormElement implements FormElementInterface
                 if (!$this->getChecked()) {
                     return false;
                 }
-            } else if ($value === '' || $value === null) {
+            } else if ($value === '') {
                 return false;
             }
         }
@@ -528,8 +524,8 @@ abstract class FormElement implements FormElementInterface
      * requires a template for rendering
      *
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
 	public function render(): string
     {

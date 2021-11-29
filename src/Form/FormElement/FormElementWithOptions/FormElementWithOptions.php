@@ -23,14 +23,14 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
 	 * 
 	 * @var FormElementFragment[]
 	 */
-	protected $options = [];
+	protected array $options = [];
 	
 	/**
 	 * the selected option of element
 	 * 
-	 * @var FormElementFragment
-	 */
-	protected $selectedOption;
+	 * @var FormElementFragmentInterface|null
+     */
+	protected ?FormElementFragmentInterface $selectedOption = null;
 
 	/**
 	 * {@inheritDoc}
@@ -41,12 +41,12 @@ abstract class FormElementWithOptions extends FormElement implements FormElement
         $this->value = $value;
         $v = (string) $value;
 
-		if(isset($this->selectedOption) && $this->selectedOption->getValue() !== $v) {
+		if($this->selectedOption && $this->selectedOption->getValue() !== $v) {
 			$this->selectedOption->unselect();
 			$this->selectedOption = null;
 		}
 
-		if(!isset($this->selectedOption)) {
+		if(!$this->selectedOption) {
 			foreach($this->options as $o) {
 				if($o->getValue() === $v) {
 					$o->select();
