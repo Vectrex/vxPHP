@@ -23,7 +23,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.2 2021-12-01
+ * @version 1.1.3 2021-12-05
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -48,7 +48,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
     /**
      * @var string|null
      */
-	protected ?string $mimetype;
+	protected ?string $mimetype = null;
 
     /**
      * @var SplFileInfo
