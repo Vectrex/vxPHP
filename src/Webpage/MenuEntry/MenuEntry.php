@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.8.2 2021-11-28
+ * @version 0.8.3 2021-12-06
  */
 class MenuEntry
 {
@@ -277,18 +277,18 @@ class MenuEntry
 
 			if($this->localPage) {
 
-				$pathSegments = [];
-				$e = $this;
-
-				do {
-					$pathSegments[] = $e->path;
-				} while ($e = $e->menu->getParentEntry());
-
                 $router = Application::getInstance()->getRouter();
 
                 if(!$router) {
                     throw new \RuntimeException('Not router assigned. Cannot create href attribute for menu entry.');
                 }
+
+                $pathSegments = [];
+				$e = $this;
+
+				do {
+                    array_unshift($pathSegments, ...explode('/', $e->path));
+				} while ($e = $e->menu->getParentEntry());
 
                 if($router->getServerSideRewrite()) {
 					if(($script = basename($this->menu->getScript(), '.php')) === 'index') {
@@ -303,7 +303,7 @@ class MenuEntry
                     $script = '/' . $this->menu->getScript() . '/';
                 }
 
-                $this->href = $script . implode('/', array_reverse(array_map('rawurlencode', $pathSegments)));
+                $this->href = $script . implode('/', array_map('rawurlencode', $pathSegments));
 
 			}
 			else {
