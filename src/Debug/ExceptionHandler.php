@@ -10,63 +10,53 @@
 
 namespace vxPHP\Debug;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Exception\HttpException;
 use vxPHP\Http\Response;
-use vxPHP\Application\Config;
 use vxPHP\Application\Application;
+use vxPHP\Template\Exception\SimpleTemplateException;
 use vxPHP\Template\SimpleTemplate;
 
 /**
  * custom error handling and debugging functionality
  * 
  * @author Gregor Kofler
- * @version 0.1.0 2015-03-22
+ * @version 0.2.0 2022-03-06
  */
-class ExceptionHandler {
-
-	private $debug;
-	private $charset;
-	
+class ExceptionHandler
+{
 	/**
-	 * @var ErrorHandler
-	 */
-	private static $handler;
+	 * @var ExceptionHandler|null
+     */
+	private static ?ExceptionHandler $handler = null;
 	
-	private function __construct($debug, $charset) {
+	private function __construct() {}
 
-		$this->debug	= $debug;
-		$this->charset	= $charset;
-
-	}
-
-	/**
-	 * register custom exception handler
-	 * 
-	 * @param string $debug
-	 * @param string $charset
-	 * @throws \RuntimeException
-	 */
-	public static function register($debug = TRUE, $charset = 'UTF-8') {
-
+    /**
+     * register custom exception handler
+     *
+     * @return ExceptionHandler
+     */
+	public static function register(): ExceptionHandler
+    {
 		if(self::$handler) {
 			throw new \RuntimeException('Exception handler already registered.');
 		}
 		
-		self::$handler = new static($debug, $charset);
+		self::$handler = new static();
 			
-		set_exception_handler(array(self::$handler, 'handle'));
+		set_exception_handler([self::$handler, 'handle']);
 
 		return self::$handler;
-
 	}
 
 	/**
 	 * handle exception
 	 * 
-	 * @param \Exception $e
+	 * @param \Throwable $e
 	 */
-	public function handle(\Exception $e) {
-
+	public function handle(\Throwable $e): void
+    {
 		try {
 			ob_clean();
 			$this->createResponse($e)->send();
@@ -76,28 +66,29 @@ class ExceptionHandler {
 			printf('Exception thrown when handling exception (%s: %s)', get_class($e), $e->getMessage());
 			exit();
 		}
-
 	}
 
-	/**
-	 * create response
-	 * with a HttpException status code and headers are considered
-	 * other exceptions default to status code 500
-	 * a error_docs/error_{status_code}.php template is parsed, when found
-	 * otherwise the exception data is decorated and dumped
-	 * 
-	 * @param \Exception $e
-	 * @return \vxPHP\Http\Response
-	 */
-	protected function createResponse(\Exception $e) {
-
+    /**
+     * create response
+     * with an HttpException status code and headers are considered
+     * other exceptions default to status code 500
+     * error_docs/error_{status_code}.php template is parsed, when found
+     * otherwise the exception data is decorated and dumped
+     *
+     * @param \Exception $e
+     * @return \vxPHP\Http\Response
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
+     */
+	protected function createResponse(\Exception $e): Response
+    {
 		if($e instanceof HttpException) {
-			$status		= $e->getStatusCode();
-			$headers	= $e->getHeaders();
+			$status = $e->getStatusCode();
+			$headers = $e->getHeaders();
 		}
 		else {
-			$status		= Response::HTTP_INTERNAL_SERVER_ERROR;
-			$headers	= array();
+			$status = Response::HTTP_INTERNAL_SERVER_ERROR;
+			$headers = [];
 		}
 
 		$config = Application::getInstance()->getConfig(); 
@@ -133,19 +124,19 @@ class ExceptionHandler {
 	 * 
 	 * @return string
 	 */
-	protected function decorateException(\Exception $e, $status) {
-
+	protected function decorateException(\Exception $e, int $status): string
+    {
 		$headerTpl = '
 		<!DOCTYPE html>
-		<html>
+		<html lang="en">
 			<head>
-				<title>Error %d</title>
+				<title>%s</title>
 				<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 			</head>
 			<body>
 				<table>
 					<tr>
-						<th colspan="4">%s</th>
+						<th colspan="4">%s: %s</th>
 					</tr>
 					<tr>
 						<th></th>
@@ -162,26 +153,21 @@ class ExceptionHandler {
 
 		$rowTpl = '<tr><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>';
 
-		$content = sprintf($headerTpl, $status, $e->getMessage());
+		$content = sprintf($headerTpl, $e->getMessage(), get_class($e), $e->getMessage());
 
 		foreach($e->getTrace() as $ndx => $level) {
 			
-			// skip row with error handler
-
-			if($ndx) {
-				$content .= sprintf(
-					$rowTpl,
-					$ndx,
-					$level['file'],
-					$level['line'],
-					(isset($level['class']) ? ($level['class'] . $level['type'] . $level['function']) : $level['function']) . '()'
-				);
-			}
+            $content .= sprintf(
+                $rowTpl,
+                $ndx,
+                $level['file'],
+                $level['line'],
+                (isset($level['class']) ? ($level['class'] . $level['type'] . $level['function']) : $level['function']) . '()'
+            );
 		}
 
 		$content .= $footerTpl;
 
 		return $content;
-
 	}
 }
