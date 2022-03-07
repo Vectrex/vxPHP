@@ -1,3 +1,7 @@
+## 2.7.0
+- refactored classes to use PHP 7.4+ language features
+- paths of menu entries can now contain slashes
+
 ## 2.6.10
 - refactored and simplified menu renderer; menus are no longer automatically wrapped with divs and get specific id attributes
 - the SimpleList menu renderer now accepts additional aClass, spanClass, activeClass parameters to allow for easier styling (particularly with utility-first CSS frameworks)
