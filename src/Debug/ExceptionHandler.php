@@ -19,54 +19,54 @@ use vxPHP\Template\SimpleTemplate;
 
 /**
  * custom error handling and debugging functionality
- * 
+ *
  * @author Gregor Kofler
- * @version 0.2.0 2022-03-06
+ * @version 0.2.1 2022-03-28
  */
 class ExceptionHandler
 {
-	/**
-	 * @var ExceptionHandler|null
+    /**
+     * @var ExceptionHandler|null
      */
-	private static ?ExceptionHandler $handler = null;
-	
-	private function __construct() {}
+    private static ?ExceptionHandler $handler = null;
+
+    private function __construct()
+    {
+    }
 
     /**
      * register custom exception handler
      *
      * @return ExceptionHandler
      */
-	public static function register(): ExceptionHandler
+    public static function register(): ExceptionHandler
     {
-		if(self::$handler) {
-			throw new \RuntimeException('Exception handler already registered.');
-		}
-		
-		self::$handler = new static();
-			
-		set_exception_handler([self::$handler, 'handle']);
+        if (self::$handler) {
+            throw new \RuntimeException('Exception handler already registered.');
+        }
 
-		return self::$handler;
-	}
+        self::$handler = new static();
 
-	/**
-	 * handle exception
-	 * 
-	 * @param \Throwable $e
-	 */
-	public function handle(\Throwable $e): void
+        set_exception_handler([self::$handler, 'handle']);
+
+        return self::$handler;
+    }
+
+    /**
+     * handle exception
+     *
+     * @param \Throwable $e
+     */
+    public function handle(\Throwable $e): void
     {
-		try {
-			ob_clean();
-			$this->createResponse($e)->send();
-		}
-		
-		catch(\Exception $e) {
-			printf('Exception thrown when handling exception (%s: %s)', get_class($e), $e->getMessage());
-			exit();
-		}
-	}
+        try {
+            ob_clean();
+            $this->createResponse($e)->send();
+        } catch (\Exception $e) {
+            printf('Exception thrown when handling exception (%s: %s)', get_class($e), $e->getMessage());
+            exit();
+        }
+    }
 
     /**
      * create response
@@ -75,58 +75,53 @@ class ExceptionHandler
      * error_docs/error_{status_code}.php template is parsed, when found
      * otherwise the exception data is decorated and dumped
      *
-     * @param \Exception $e
+     * @param \Throwable $e
      * @return \vxPHP\Http\Response
      * @throws ApplicationException
      * @throws SimpleTemplateException
      */
-	protected function createResponse(\Exception $e): Response
+    protected function createResponse(\Throwable $e): Response
     {
-		if($e instanceof HttpException) {
-			$status = $e->getStatusCode();
-			$headers = $e->getHeaders();
-		}
-		else {
-			$status = Response::HTTP_INTERNAL_SERVER_ERROR;
-			$headers = [];
-		}
+        if ($e instanceof HttpException) {
+            $status = $e->getStatusCode();
+            $headers = $e->getHeaders();
+        } else {
+            $status = Response::HTTP_INTERNAL_SERVER_ERROR;
+            $headers = [];
+        }
 
-		$config = Application::getInstance()->getConfig(); 
+        $config = Application::getInstance()->getConfig();
 
-		if(isset($config->paths['tpl_path'])) {
-			$path = ($config->paths['tpl_path']['absolute'] ? '' : rtrim(Application::getInstance()->getRootPath(), DIRECTORY_SEPARATOR)) . $config->paths['tpl_path']['subdir'];
+        if (isset($config->paths['tpl_path'])) {
+            $path = ($config->paths['tpl_path']['absolute'] ? '' : rtrim(Application::getInstance()->getRootPath(), DIRECTORY_SEPARATOR)) . $config->paths['tpl_path']['subdir'];
 
-			if(file_exists($path . 'error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php')) {
-				$tpl = SimpleTemplate::create('error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php');
-				$content = $tpl
-					->assign('exception', $e)
-					->assign('status', $status)
-					->display();
-			}
-			
-			else {
-				$content = $this->decorateException($e, $status);
-			}
-		}
+            if (file_exists($path . 'error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php')) {
+                $tpl = SimpleTemplate::create('error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php');
+                $content = $tpl
+                    ->assign('exception', $e)
+                    ->assign('status', $status)
+                    ->display();
+            } else {
+                $content = $this->decorateException($e, $status);
+            }
+        } else {
+            $content = $this->decorateException($e, $status);
+        }
 
-		else {
-			$content = $this->decorateException($e, $status);
-		}
+        return new Response($content, $status, $headers);
+    }
 
-		return new Response($content, $status, $headers);
-	}
-
-	/**
-	 * generate simple formatted output of exception
-	 * 
-	 * @param \Exception $e
-	 * @param integer $status
-	 * 
-	 * @return string
-	 */
-	protected function decorateException(\Exception $e, int $status): string
+    /**
+     * generate simple formatted output of exception
+     *
+     * @param \Exception $e
+     * @param integer $status
+     *
+     * @return string
+     */
+    protected function decorateException(\Exception $e, int $status): string
     {
-		$headerTpl = '
+        $headerTpl = '
 		<!DOCTYPE html>
 		<html lang="en">
 			<head>
@@ -146,17 +141,17 @@ class ExceptionHandler
 					</tr>
 		';
 
-		$footerTpl = '				
+        $footerTpl = '				
 				</table>
 			</body>
 		</html>';
 
-		$rowTpl = '<tr><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>';
+        $rowTpl = '<tr><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>';
 
-		$content = sprintf($headerTpl, $e->getMessage(), get_class($e), $e->getMessage());
+        $content = sprintf($headerTpl, $e->getMessage(), get_class($e), $e->getMessage());
 
-		foreach($e->getTrace() as $ndx => $level) {
-			
+        foreach ($e->getTrace() as $ndx => $level) {
+
             $content .= sprintf(
                 $rowTpl,
                 $ndx,
@@ -164,10 +159,10 @@ class ExceptionHandler
                 $level['line'],
                 (isset($level['class']) ? ($level['class'] . $level['type'] . $level['function']) : $level['function']) . '()'
             );
-		}
+        }
 
-		$content .= $footerTpl;
+        $content .= $footerTpl;
 
-		return $content;
-	}
+        return $content;
+    }
 }
