@@ -19,7 +19,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.1 2021-12-01
+ * @version 0.7.2 2022-04-11
  */
 
 class FilesystemFolder
@@ -65,19 +65,19 @@ class FilesystemFolder
      */
 	public static function getInstance(string $path): FilesystemFolder
     {
-	    $path = realpath($path);
+	    $realpath = realpath($path);
 
-	    if($path === false) {
+	    if($realpath === false) {
             throw new FilesystemFolderException(sprintf('Path %s does not exist or is no directory.', $path));
         }
 
-		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $realpath = rtrim($realpath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		if(!isset(self::$instances[$path])) {
-			self::$instances[$path] = new self($path);
+		if(!isset(self::$instances[$realpath])) {
+			self::$instances[$realpath] = new self($realpath);
 		}
 
-		return self::$instances[$path];
+		return self::$instances[$realpath];
 	}
 
     /**
@@ -266,11 +266,11 @@ class FilesystemFolder
 		
 		if(!is_dir($path)) {
 
-			if(!mkdir($path, 0777, true) && !is_dir($path)) {
-				throw new FilesystemFolderException(sprintf("Folder %s could not be created!", $path));
+			if(mkdir($path, 0777, true) || is_dir($path)) {
+                chmod($path, 0777);
 			}
 			else {
-				chmod($path, 0777);
+                throw new FilesystemFolderException(sprintf("Folder %s could not be created!", $path));
 			}
 
 			$path = realpath($path);
@@ -381,7 +381,11 @@ class FilesystemFolder
             throw new FilesystemFolderException(sprintf("'%s' contains invalid characters.", $to));
         }
 
-        $newPath = $this->getParentFolder()->getPath() . $to;
+        $parent = $this->getParentFolder();
+        if (!$parent) {
+            throw new FilesystemFolderException(sprintf("No parent folder found. Filesystem folder '%s' could not be renamed.", $this->path));
+        }
+        $newPath = $parent->getPath() . $to;
         $oldPath = $this->path;
 
         if(!@rename($oldPath, $newPath)) {

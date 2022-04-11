@@ -1,3 +1,7 @@
+## 2.7.1
+- bug fix: ErrorHandler/ExceptionHandler was called with wrong number of arguments
+- some minor refactoring
+ 
 ## 2.7.0
 - refactored classes to use PHP 7.4+ language features
 - paths of menu entries can now contain slashes

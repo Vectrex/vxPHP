@@ -122,8 +122,7 @@ class Psr4
 
 		// prepend or append?
 
-		$this->prefixes[$prefix] = $prepend ? array_merge($baseDirs, $this->prefixes[$prefix]) : $this->prefixes[$prefix] = array_merge($this->prefixes[$prefix], $baseDirs);
-
+		$this->prefixes[$prefix] = $prepend ? [...$baseDirs, ...$this->prefixes[$prefix]] : [...$this->prefixes[$prefix], ...$baseDirs];
 	}
 	
 	/**
