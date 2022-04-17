@@ -1,3 +1,6 @@
+## 2.7.2
+- bug fix: ExceptionHandler tried to access obsolete path config attribute
+
 ## 2.7.1
 - bug fix: ErrorHandler/ExceptionHandler was called with wrong number of arguments
 - some minor refactoring

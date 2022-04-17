@@ -21,7 +21,7 @@ use vxPHP\Template\SimpleTemplate;
  * custom error handling and debugging functionality
  *
  * @author Gregor Kofler
- * @version 0.2.1 2022-03-28
+ * @version 0.2.2 2022-04-17
  */
 class ExceptionHandler
 {
@@ -93,7 +93,7 @@ class ExceptionHandler
         $config = Application::getInstance()->getConfig();
 
         if (isset($config->paths['tpl_path'])) {
-            $path = ($config->paths['tpl_path']['absolute'] ? '' : rtrim(Application::getInstance()->getRootPath(), DIRECTORY_SEPARATOR)) . $config->paths['tpl_path']['subdir'];
+            $path = rtrim(Application::getInstance()->getRootPath(), DIRECTORY_SEPARATOR) . $config->paths['tpl_path']['subdir'];
 
             if (file_exists($path . 'error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php')) {
                 $tpl = SimpleTemplate::create('error_docs' . DIRECTORY_SEPARATOR . 'error_' . $status . '.php');
