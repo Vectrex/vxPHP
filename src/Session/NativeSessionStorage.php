@@ -17,45 +17,36 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.1.0 2015-03-14
+ * @version 0.2.0 2022-06-10
  *
  */
-class NativeSessionStorage {
-	
-		/**
-		 * @var boolean
-		 */
-	private	$started;
+class NativeSessionStorage
+{
+    /**
+     * @var boolean
+     */
+	private	bool $started = false;
 
-		/**
-		 * @var \SessionHandlerInterface
-		 */
-	private	$saveHandler;
+    /**
+     * @var \SessionHandlerInterface
+     */
+	private	\SessionHandlerInterface $saveHandler;
 	
-		/**
-		 * @var SessionDataBag
-		 */
-	private $sessionDataBag;
+    /**
+     * @var SessionDataBag
+     */
+	private SessionDataBag $sessionDataBag;
 
-	
 	/**
 	 * initialize storage mechanism, set save handler
 	 */
-	public function __construct() {
-
+	public function __construct()
+    {
 		ini_set('session.use_cookies', 1);
 		
-		if (PHP_VERSION_ID >= 50400) {
-			session_register_shutdown();
-		}
-		else {
-			register_shutdown_function('session_write_close');
-		}
-
+        session_register_shutdown();
 		$this->sessionDataBag = new SessionDataBag();
-
 		$this->setSaveHandler();
-
 	}
 
 	/**
@@ -63,8 +54,8 @@ class NativeSessionStorage {
 	 * 
 	 * @throws \RuntimeException
 	 */
-	public function start() {
-
+	public function start(): void
+    {
 		if(!$this->started) {
 
 			// only non-CLI environments are supposed to provide sessions
@@ -73,10 +64,7 @@ class NativeSessionStorage {
 				
 				// avoid starting an already started session
 
-				if (
-					(PHP_VERSION_ID >= 50400 && session_status() === PHP_SESSION_ACTIVE) ||
-					(PHP_VERSION_ID < 50400 && session_id())
-				) {
+				if (session_status() === PHP_SESSION_ACTIVE) {
 					throw new \RuntimeException('Failed to start the session: Session already started.');
 				}
 
@@ -92,7 +80,6 @@ class NativeSessionStorage {
 			}
 
 			$this->loadSession();
-
 		}
 	}
 
@@ -102,8 +89,8 @@ class NativeSessionStorage {
 	 * 
 	 * @return \vxPHP\Session\SessionDataBag
 	 */
-	public function getSessionDataBag() {
-
+	public function getSessionDataBag(): SessionDataBag
+    {
 		if(!$this->started) {
 			$this->start();
 		}
@@ -116,31 +103,22 @@ class NativeSessionStorage {
 	 * 
 	 * @throws \RuntimeException
 	 */
-	private function setSaveHandler() {
+	private function setSaveHandler(): void
+    {
+        $this->saveHandler = new NativeSessionWrapper();
 
-		if (PHP_VERSION_ID >= 50400) {
-
-			$this->storageEngine = new NativeSessionWrapper();
-
-			if(!session_set_save_handler($this->storageEngine, FALSE)) {
-				throw new \RuntimeException('Could not  set session save handler.');
-			}
-
-		}
-
+        if(!session_set_save_handler($this->saveHandler, false)) {
+            throw new \RuntimeException('Could not  set session save handler.');
+        }
 	}
 
 	/**
 	 * wrap $_SESSION reference in SessionDataBag
 	 */
-	private function loadSession() {
-
+	private function loadSession(): void
+    {
 		$session = &$_SESSION;
-		
 		$this->sessionDataBag->initialize($session);
-
-		$this->started = TRUE;
-
+		$this->started = true;
 	}
-
 }

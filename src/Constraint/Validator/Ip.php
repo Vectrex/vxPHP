@@ -15,7 +15,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check string whether it matches IPv4 or IPv6 address
  * 
- * @version 0.1.2 2021-11-28
+ * @version 0.1.3 2022-06-12
  * @author Gregor Kofler
  */
 class Ip extends AbstractConstraint
@@ -36,7 +36,7 @@ class Ip extends AbstractConstraint
 	public function __construct(string $version = 'all')
     {
 		$allowedVersions = [
-			'all'                 => null,
+			'all'                 => FILTER_DEFAULT,
 			'v4'                  => FILTER_FLAG_IPV4,
 			'v6'                  => FILTER_FLAG_IPV6,
 			'all_no_priv_range'   => FILTER_FLAG_NO_PRIV_RANGE,

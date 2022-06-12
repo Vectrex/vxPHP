@@ -16,22 +16,21 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.1.0 2015-03-14
+ * @version 0.2.0 2022-06-10
  */
-class SessionDataBag implements \IteratorAggregate, \Countable {
-	
+class SessionDataBag implements \IteratorAggregate, \Countable
+{
 	/**
 	 * @var array
 	 */
-	private $data;
+	private array $data;
 
 	/**
 	 * initialize data with empty array
 	 */
-	public function __construct() {
-		
-		$this->data = array();
-
+	public function __construct()
+    {
+		$this->data = [];
 	}
 
 	/**
@@ -39,10 +38,9 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @param array $data
 	 */
-	public function initialize(array &$data) {
-
+	public function initialize(array &$data): void
+    {
 		$this->data = &$data;
-
 	}
 
 	/**
@@ -50,10 +48,9 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @return array
 	 */
-	public function all() {
-		
+	public function all(): array
+    {
 		return $this->data;
-		
 	}
 
 	/**
@@ -62,12 +59,11 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @return array
 	 */
-	public function clear() {
-
+	public function clear(): array
+    {
 		$oldData = $this->data;
-		$this->data = array();
+		$this->data = [];
 		return $oldData;
-
 	}
 
 	/**
@@ -79,10 +75,9 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @return mixed
 	 */
-	public function get($key, $default = NULL) {
-
+	public function get(string $key, $default = null)
+    {
 		return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
-
 	}
 
 	/**
@@ -91,10 +86,9 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * @param string $key
 	 * @param mixed $value
 	 */
-	public function set($key, $value) {
-		
+	public function set(string $key, $value): void
+    {
 		$this->data[$key] = $value;
-
 	}
 
 	/**
@@ -104,10 +98,9 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @return bool
 	 */
-	public function has($key) {
-
+	public function has(string $key): bool
+    {
 		return array_key_exists($key, $this->data);
-
 	}
 	
 	/**
@@ -117,17 +110,16 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * @param string $key
 	 * @return mixed
 	 */
-	public function remove($key) {
-
+	public function remove(string $key)
+    {
 		if(!array_key_exists($key, $this->data)) {
-			return NULL;
+			return null;
 		}
 
 		$oldValue = $this->data[$key];
 		unset($this->data[$key]);
 
 		return $oldValue;
-
 	}
 
 	/**
@@ -135,33 +127,24 @@ class SessionDataBag implements \IteratorAggregate, \Countable {
 	 * 
 	 * @param array $data
 	 */
-	public function replace(array $data) {
-
-		$this->data = array();
-
-		foreach ($data as $k => $v) {
-			$this->data[$k] = $v;
-		}
-
+	public function replace(array $data): void
+    {
+		$this->data = $data;
 	}
 	
 	/* (non-PHPdoc)
 	 * @see Countable::count()
 	 */
-	public function count() {
-
+	public function count(): int
+    {
 		return count($this->data);
-
 	}
 
 	/* (non-PHPdoc)
-	 * @see IteratorAggregate::getIterator()
+	 * @see \IteratorAggregate::getIterator()
 	 */
-	public function getIterator() {
-
+	public function getIterator(): \Traversable
+    {
 		return new \ArrayIterator($this->data);
-
 	}
-
-	
 }

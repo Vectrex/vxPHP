@@ -196,7 +196,7 @@ class Response
         506 => 'Variant Also Negotiates',                                     // RFC2295
         507 => 'Insufficient Storage',                                        // RFC4918
         508 => 'Loop Detected',                                               // RFC5842
-        510 => 'Not Extended',                                                // RFC2774
+        510 => 'Not Extended (OBSOLETED)',                                    // RFC2774
         511 => 'Network Authentication Required',                             // RFC6585
     ];
 
@@ -1242,7 +1242,7 @@ class Response
         $level = \count($status);
         $flags = PHP_OUTPUT_HANDLER_REMOVABLE | ($flush ? PHP_OUTPUT_HANDLER_FLUSHABLE : PHP_OUTPUT_HANDLER_CLEANABLE);
 
-        while ($level-- > $targetLevel && ($s = $status[$level]) && (!isset($s['del']) ? !isset($s['flags']) || ($s['flags'] & $flags) === $flags : $s['del'])) {
+        while ($level-- > $targetLevel && ($s = $status[$level]) && ($s['del'] ?? (!isset($s['flags']) || ($s['flags'] & $flags) === $flags))) {
             if ($flush) {
                 ob_end_flush();
             } else {
@@ -1261,7 +1261,7 @@ class Response
      */
     protected function ensureIEOverSSLCompatibility(Request $request): void
     {
-        if (false !== stripos($this->headers->get('Content-Disposition'), 'attachment') && 1 === preg_match('/MSIE (.*?);/i', $request->server->get('HTTP_USER_AGENT'), $match) && true === $request->isSecure() && (int)preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {
+        if (true === $request->isSecure() && false !== stripos($this->headers->get('Content-Disposition', ''), 'attachment') && 1 === preg_match('/MSIE (.*?);/i', $request->server->get('HTTP_USER_AGENT'), $match) && (int)preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {
             $this->headers->remove('Cache-Control');
         }
     }

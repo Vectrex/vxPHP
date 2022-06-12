@@ -40,18 +40,17 @@ class FakeFileInfo extends \SplFileInfo
     {
 
     }
-
-    public function getSize()
+    public function getSize(): int
     {
         return 42;
     }
 
-    public function getMTime()
+    public function getMTime(): int
     {
         return time();
     }
 
-    public function isReadable()
+    public function isReadable(): bool
     {
         return true;
     }

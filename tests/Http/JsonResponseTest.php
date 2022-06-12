@@ -222,6 +222,7 @@ class JsonResponseTest extends TestCase
 if (interface_exists('JsonSerializable', false)) {
     class JsonSerializableObject implements \JsonSerializable
     {
+        #[\ReturnTypeWillChange]
         public function jsonSerialize()
         {
             throw new \Exception('This error is expected');

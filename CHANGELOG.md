@@ -1,3 +1,6 @@
+## 2.7.3
+- minor fixes and cleanups to avoid PHP8.x deprecation warnings
+
 ## 2.7.2
 - bug fix: ExceptionHandler tried to access obsolete path config attribute
 

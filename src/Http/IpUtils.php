@@ -35,22 +35,24 @@ class IpUtils
     /**
      * Checks if an IPv4 or IPv6 address is contained in the list of given IPs or subnets.
      *
-     * @param string       $requestIp IP to check
-     * @param string|array $ips       List of IPs or subnets (can be a string if only a single one)
+     * @param string|null $requestIp IP to check
+     * @param string|array $ips List of IPs or subnets (can be a string if only a single one)
      *
      * @return bool Whether the IP is valid
      */
-    public static function checkIp($requestIp, $ips): bool
+    public static function checkIp(?string $requestIp, $ips): bool
     {
-        if (!\is_array($ips)) {
-            $ips = [$ips];
-        }
+        if ($requestIp) {
+            if (!\is_array($ips)) {
+                $ips = [$ips];
+            }
 
-        $method = substr_count($requestIp, ':') > 1 ? 'checkIp6' : 'checkIp4';
+            $method = substr_count($requestIp, ':') > 1 ? 'checkIp6' : 'checkIp4';
 
-        foreach ($ips as $ip) {
-            if (self::$method($requestIp, $ip)) {
-                return true;
+            foreach ($ips as $ip) {
+                if (self::$method($requestIp, $ip)) {
+                    return true;
+                }
             }
         }
 

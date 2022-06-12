@@ -286,7 +286,7 @@ class Request
     {
         $request = self::createRequestFromFactory($_GET, $_POST, [], $_COOKIE, $_FILES, $_SERVER);
 
-        if (0 === strpos($request->headers->get('CONTENT_TYPE'), 'application/x-www-form-urlencoded')
+        if (0 === strpos($request->headers->get('CONTENT_TYPE', ''), 'application/x-www-form-urlencoded')
             && \in_array(strtoupper($request->server->get('REQUEST_METHOD', 'GET')), ['PUT', 'DELETE', 'PATCH'])
         ) {
             parse_str($request->getContent(), $data);
@@ -1251,21 +1251,23 @@ class Request
      */
     public function getFormat(?string $mimeType): ?string
     {
-        $canonicalMimeType = null;
-        if (false !== $pos = strpos($mimeType, ';')) {
-            $canonicalMimeType = trim(substr($mimeType, 0, $pos));
-        }
-
-        if (null === static::$formats) {
-            static::initializeFormats();
-        }
-
-        foreach (static::$formats as $format => $mimeTypes) {
-            if (in_array($mimeType, (array)$mimeTypes, true)) {
-                return $format;
+        if ($mimeType) {
+            $canonicalMimeType = null;
+            if (false !== $pos = strpos($mimeType, ';')) {
+                $canonicalMimeType = trim(substr($mimeType, 0, $pos));
             }
-            if (null !== $canonicalMimeType && in_array($canonicalMimeType, (array) $mimeTypes, true)) {
-                return $format;
+
+            if (null === static::$formats) {
+                static::initializeFormats();
+            }
+
+            foreach (static::$formats as $format => $mimeTypes) {
+                if (in_array($mimeType, (array)$mimeTypes, true)) {
+                    return $format;
+                }
+                if (null !== $canonicalMimeType && in_array($canonicalMimeType, (array)$mimeTypes, true)) {
+                    return $format;
+                }
             }
         }
 
@@ -1499,7 +1501,7 @@ class Request
      */
     public function getETags(): array
     {
-        return preg_split('/\s*,\s*/', $this->headers->get('if_none_match'), null, PREG_SPLIT_NO_EMPTY);
+        return preg_split('/\s*,\s*/', $this->headers->get('if_none_match', ''), -1, PREG_SPLIT_NO_EMPTY);
     }
 
     /**
@@ -1712,14 +1714,14 @@ class Request
      */
     protected function prepareBaseUrl(): string
     {
-        $filename = basename($this->server->get('SCRIPT_FILENAME'));
+        $filename = basename($this->server->get('SCRIPT_FILENAME', ''));
 
-        if (basename($this->server->get('SCRIPT_NAME')) === $filename) {
-            $baseUrl = $this->server->get('SCRIPT_NAME');
-        } elseif (basename($this->server->get('PHP_SELF')) === $filename) {
-            $baseUrl = $this->server->get('PHP_SELF');
-        } elseif (basename($this->server->get('ORIG_SCRIPT_NAME')) === $filename) {
-            $baseUrl = $this->server->get('ORIG_SCRIPT_NAME'); // 1and1 shared hosting compatibility
+        if (basename($this->server->get('SCRIPT_NAME', '')) === $filename) {
+            $baseUrl = $this->server->get('SCRIPT_NAME', '');
+        } elseif (basename($this->server->get('PHP_SELF', '')) === $filename) {
+            $baseUrl = $this->server->get('PHP_SELF', '');
+        } elseif (basename($this->server->get('ORIG_SCRIPT_NAME', '')) === $filename) {
+            $baseUrl = $this->server->get('ORIG_SCRIPT_NAME', ''); // 1and1 shared hosting compatibility
         } else {
             // Backtrack up the script_filename to find the portion matching
             // php_self

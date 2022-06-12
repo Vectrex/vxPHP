@@ -14,7 +14,7 @@ namespace vxPHP\Util;
  * text related utility functions
  *
  * @package vxPHP\Util
- * @version 0.3.1 2021-11-28
+ * @version 0.3.2 2022-06-12
  *
  * @author Gregor Kofler
  */
@@ -59,7 +59,7 @@ class Text
 
         // since strtr works with single bytes when replacing strings a conversion into an array is required
 
-        $from = strtr ($from, array_combine(preg_split('//u', $charsFrom, null, PREG_SPLIT_NO_EMPTY), str_split($charsTo)));
+        $from = strtr ($from, array_combine(preg_split('//u', $charsFrom, -1, PREG_SPLIT_NO_EMPTY), str_split($charsTo)));
 
         return preg_replace('/[^\x20-\x7f]/', '', $from);
     }
