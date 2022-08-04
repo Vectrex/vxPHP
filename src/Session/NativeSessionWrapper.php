@@ -16,7 +16,7 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.0 2022-06-10
+ * @version 0.2.1 2022-08-04
  */
 class NativeSessionWrapper implements \SessionHandlerInterface
 {
@@ -58,7 +58,8 @@ class NativeSessionWrapper implements \SessionHandlerInterface
 	
 	/**
 	 * {@inheritdoc }
-	 */  
+	 */
+    #[\ReturnTypeWillChange]
 	public function read($id)
     {
 		return $this->handler->read($id);

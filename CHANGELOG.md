@@ -1,3 +1,6 @@
+## 2.7.4
+- quick fix to avoid deprecation warnings when running on PHP 8.x while maintaining PHP 7.4 compatibility
+
 ## 2.7.3
 - minor fixes and cleanups to avoid PHP8.x deprecation warnings
 
