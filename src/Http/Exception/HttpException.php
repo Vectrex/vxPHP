@@ -32,7 +32,7 @@ class HttpException extends \RuntimeException
      * this allows handling of HTTP errors with a custom exception handler
      *
      * @param int $httpStatusCode
-     * @param string|null $message
+     * @param string $message
      * @param array $headers
      * @param integer $code
      * @param \Exception|null $previous
