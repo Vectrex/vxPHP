@@ -13,7 +13,7 @@ namespace vxPHP\Http\Exception;
 /**
  * @author Gregor Kofler
  *
- * @version 0.1.2 2021-12-02
+ * @version 0.1.3 2022-10-26
  */
 class HttpException extends \RuntimeException
 {
@@ -37,7 +37,7 @@ class HttpException extends \RuntimeException
      * @param integer $code
      * @param \Exception|null $previous
      */
-	public function __construct(int $httpStatusCode, string $message = null, array $headers = [], int $code = 0, \Exception $previous = null)
+	public function __construct(int $httpStatusCode, string $message = '', array $headers = [], int $code = 0, \Exception $previous = null)
     {
 		$this->httpStatusCode = $httpStatusCode;
 		$this->headers = $headers;
