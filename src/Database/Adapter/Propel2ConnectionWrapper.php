@@ -14,7 +14,7 @@ use vxPHP\Database\ConnectionInterface;
 /**
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.2, 2021-11-29
+ * @version 0.3.3, 2022-11-24
  */
 class Propel2ConnectionWrapper implements ConnectionInterface
 {
@@ -23,7 +23,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      *
      * @var \PDO
      */
-    protected $connection;
+    protected \PDO $connection;
 
     /**
      * @var string|null
@@ -77,7 +77,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
     }
 
     /**
-     * @return string The datasource name associated to this connection
+     * @return string|null The datasource name associated to this connection
      */
     public function getName(): ?string
     {

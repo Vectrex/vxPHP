@@ -1,3 +1,6 @@
+## 2.7.6
+- bug fix: Database\Util::unformatDecimal() did not parse strings correctly
+
 ## 2.7.5
 - bug fix: HttpException no longer passes NULL messages to \Exception
 

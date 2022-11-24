@@ -14,7 +14,7 @@ namespace vxPHP\Debug;
  * custom error handling and debugging functionality
  * 
  * @author Gregor Kofler
- * @version 0.3.0 2022-03-06
+ * @version 0.3.1 2022-11-24
  */
 class ErrorHandler
 {
@@ -50,7 +50,7 @@ class ErrorHandler
 	/**
 	 * singleton, disable instantiation via constructor
 	 */
-	private function __construct() {}
+	final private function __construct() {}
 
     /**
      * register handler

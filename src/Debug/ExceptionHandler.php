@@ -21,7 +21,7 @@ use vxPHP\Template\SimpleTemplate;
  * custom error handling and debugging functionality
  *
  * @author Gregor Kofler
- * @version 0.2.2 2022-04-17
+ * @version 0.2.3 2022-11-24
  */
 class ExceptionHandler
 {
@@ -30,9 +30,7 @@ class ExceptionHandler
      */
     private static ?ExceptionHandler $handler = null;
 
-    private function __construct()
-    {
-    }
+    final private function __construct() {}
 
     /**
      * register custom exception handler
