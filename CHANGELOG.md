@@ -1,3 +1,8 @@
+## 2.7.7
+- bug fix: Template\Filter::anchorHref() failed when a shortcut could not be matched with a menu entry
+- bug fix: Database\Adapter\MySQL ignored the keep_key_case option
+- minor fixes and type declarations added
+
 ## 2.7.6
 - bug fix: Database\Util::unformatDecimal() did not parse strings correctly
 

@@ -21,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.14.2, 2022-11-24
+ * @version 1.14.3, 2022-11-25
  */
 class Mysql extends AbstractPdoAdapter
 {
@@ -41,6 +41,13 @@ class Mysql extends AbstractPdoAdapter
 		'utf-8' => 'utf8',
 		'iso-8859-15' => 'latin1'
 	];
+
+    /**
+     * keep case of attributes
+     *
+     * @var boolean
+     */
+    protected bool $keep_key_case = false;
 
     /**
      * initiate connection
@@ -188,7 +195,7 @@ class Mysql extends AbstractPdoAdapter
 
         // if not explicitly specified, attributes are returned lower case
 
-        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+        if(!isset($this->keep_key_case) || !$this->keep_key_case) {
             $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
         }
 

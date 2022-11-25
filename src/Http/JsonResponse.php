@@ -65,7 +65,7 @@ class JsonResponse extends Response
      * @return static
      * @throws \Exception|\Throwable
      */
-    public static function create($data = null, $status = 200, $headers = []): Response
+    public static function create($data = null, int $status = 200, array $headers = []): Response
     {
         return new static($data, $status, $headers);
     }

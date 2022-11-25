@@ -20,23 +20,22 @@ use vxPHP\User\Exception\UserException;
  * @version 0.1.0 2017-02-10
  *
  */
-interface UserProviderInterface {
-	
-	/**
-	 * create a user instance identified by a (unique) username
-	 * throws a UserException when the user is not found 
-	 * 
-	 * @param string $username
-	 * @return User
-	 * @throws UserException
-	 */
-	public function instanceUserByUsername($username);
+interface UserProviderInterface
+{
+    /**
+     * create a user instance identified by a (unique) username
+     * throws a UserException when the user is not found
+     *
+     * @param string $username
+     * @return UserInterface
+     * @throws UserException
+     */
+	public function instanceUserByUsername(string $username): UserInterface;
 	
 	/**
 	 * refresh a user
 	 * 
 	 * @param User $user
 	 */
-	public function refreshUser(UserInterface $user);
-
+	public function refreshUser(UserInterface $user): UserInterface;
 }

@@ -28,7 +28,7 @@ abstract class Event
 	
 	/**
 	 * instance which publishes event
-	 * @param PublisherInterface
+	 * @var PublisherInterface
 	 */
 	private PublisherInterface $publisher;
 

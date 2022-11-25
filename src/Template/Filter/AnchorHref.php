@@ -125,8 +125,9 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
 
 			$uri = implode('/', $uriParts) . $matches[4];
 
-			return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
+			return sprintf('<a%s href=%s/%s%s%s>', $matches[1], $matches[2], $uri, $matches[2], $matches[5]);
 		}
+        return sprintf('<a%s href=%s$%s%s%s>', $matches[1], $matches[2], $matches[3], $matches[4]. $matches[2], $matches[5]);
 	}
 
     /**

@@ -64,7 +64,7 @@ class User implements UserInterface
 	 * 
 	 * @param string $username
 	 * @param string $hashedPassword
-	 * @param array $roles
+	 * @param Role[] $roles
 	 * @param array $attributes
 	 * @throws \InvalidArgumentException
 	 */

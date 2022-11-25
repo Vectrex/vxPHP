@@ -165,6 +165,7 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess
 	 * {@inheritDoc}
 	 * @see ArrayAccess::offsetGet()
 	 */
+    #[\ReturnTypeWillChange]
 	public function offsetGet($offset)
     {
 		return $this->values[$offset] ?? null;

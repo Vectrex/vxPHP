@@ -84,9 +84,10 @@ class NativeSessionWrapper implements \SessionHandlerInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function gc($maxLifetime)
+    #[\ReturnTypeWillChange]
+	public function gc(int $max_lifetime)
     {
-    	return $this->handler->gc($maxLifetime);
+    	return $this->handler->gc($max_lifetime);
 	}
 	
     /**

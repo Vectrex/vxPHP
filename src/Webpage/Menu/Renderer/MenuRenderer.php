@@ -34,7 +34,7 @@ abstract class MenuRenderer implements MenuRendererInterface
      * @param Menu $menu
      * @return MenuRenderer
      */
-	public static function create(Menu $menu): MenuRenderer
+	public static function create(Menu $menu): MenuRendererInterface
     {
 		return new static($menu);
 	}
