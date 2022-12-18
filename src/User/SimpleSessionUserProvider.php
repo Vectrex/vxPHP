@@ -19,7 +19,7 @@ use vxPHP\Session\Session;
  * a session user instance from the session 
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.1 2021-05-22
+ * @version 0.1.1 2022-11-25
  * 
  */
 class SimpleSessionUserProvider implements UserProviderInterface
@@ -41,7 +41,7 @@ class SimpleSessionUserProvider implements UserProviderInterface
 	 * @see \vxPHP\User\UserProviderInterface::instanceUserByUsername()
 	 *
 	 */
-	public function instanceUserByUsername($username): UserInterface
+	public function instanceUserByUsername($username): SessionUser
     {
 		return new SessionUser($username);
 	}
@@ -51,10 +51,10 @@ class SimpleSessionUserProvider implements UserProviderInterface
      * returns the removed session user
      *
      * @param string|null $sessionKey
-     * @return null|UserInterface
+     * @return SessionUser|mixed
      * @throws UserException
      */
-	public function unsetSessionUser(string $sessionKey = null): ?UserInterface
+	public function unsetSessionUser(string $sessionKey = null): ?SessionUser
     {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
@@ -66,10 +66,10 @@ class SimpleSessionUserProvider implements UserProviderInterface
 				throw new UserException(sprintf("Session key '%s' doesn't hold a SessionUser instance.", $sessionKey));
 			}
 			Session::getSessionDataBag()->remove($sessionKey);
-			
+			return $user;
 		}
 		
-		return $user;
+		return null;
 	}
 
     /**
@@ -79,7 +79,7 @@ class SimpleSessionUserProvider implements UserProviderInterface
      * @param string|null $sessionKey
      * @return SessionUser|null
      */
-	public function getSessionUser(string $sessionKey = null): ?UserInterface
+	public function getSessionUser(string $sessionKey = null): ?SessionUser
     {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
@@ -88,7 +88,8 @@ class SimpleSessionUserProvider implements UserProviderInterface
 		if($sessionUser instanceof SessionUser) {
 			return $sessionUser;
 		}
-		return null;
+
+        return null;
 	}
 }
 

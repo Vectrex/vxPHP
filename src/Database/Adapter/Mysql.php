@@ -21,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.14.0, 2021-07-18
+ * @version 1.14.3, 2022-11-25
  */
 class Mysql extends AbstractPdoAdapter
 {
@@ -37,10 +37,17 @@ class Mysql extends AbstractPdoAdapter
 	 * 
 	 * @var array
 	 */
-	protected $charsetMap = [
+	protected array $charsetMap = [
 		'utf-8' => 'utf8',
 		'iso-8859-15' => 'latin1'
 	];
+
+    /**
+     * keep case of attributes
+     *
+     * @var boolean
+     */
+    protected bool $keep_key_case = false;
 
     /**
      * initiate connection
@@ -56,11 +63,11 @@ class Mysql extends AbstractPdoAdapter
 			parent::__construct($config);
 	
 			if(defined('DEFAULT_ENCODING')) {
-				if(!is_null($this->charsetMap[strtolower(DEFAULT_ENCODING)])) {
-					$fallbackCharset = $this->charsetMap[strtolower(DEFAULT_ENCODING)];
+				if(!is_null($this->charsetMap[strtolower(\DEFAULT_ENCODING)])) {
+					$fallbackCharset = $this->charsetMap[strtolower(\DEFAULT_ENCODING)];
 				}
 				else {
-					throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  DEFAULT_ENCODING));
+					throw new \PDOException(sprintf("Character set '%s' not mapped or supported.",  \DEFAULT_ENCODING));
 				}
 			}
 			else {
@@ -188,7 +195,7 @@ class Mysql extends AbstractPdoAdapter
 
         // if not explicitly specified, attributes are returned lower case
 
-        if(!isset($config->keep_key_case) || !$config->keep_key_case) {
+        if(!isset($this->keep_key_case) || !$this->keep_key_case) {
             $options[\PDO::ATTR_CASE] = \PDO::CASE_LOWER;
         }
 

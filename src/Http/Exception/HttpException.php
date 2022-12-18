@@ -13,34 +13,34 @@ namespace vxPHP\Http\Exception;
 /**
  * @author Gregor Kofler
  *
- * @version 0.1.1 2015-04-13 
+ * @version 0.1.3 2022-10-26
  */
-class HttpException extends \RuntimeException {
+class HttpException extends \RuntimeException
+{
+    /**
+     * @var integer
+     */
+	private int $httpStatusCode;
 	
-			/**
-			 * @var integer
-			 */
-	private $httpStatusCode;
-	
-			/**
-			 * @var array
-			 */
-	private $headers;
-	
-	/**
-	 * create an exception enriched with additional HTTP status information
-	 * this allows handling of HTTP errors with a custom exception handler
-	 * 
-	 * @param unknown $httpStatusCode
-	 * @param string $message
-	 * @param array $headers
-	 * @param integer $code
-	 * @param \Exception $previous
-	 */
-	public function __construct($httpStatusCode, $message = NULL, array $headers = array(), $code = 0, \Exception $previous = NULL) {
+    /**
+     * @var array
+     */
+	private array $headers;
 
-		$this->httpStatusCode	= $httpStatusCode;
-		$this->headers			= $headers;
+    /**
+     * create an exception enriched with additional HTTP status information
+     * this allows handling of HTTP errors with a custom exception handler
+     *
+     * @param int $httpStatusCode
+     * @param string $message
+     * @param array $headers
+     * @param integer $code
+     * @param \Exception|null $previous
+     */
+	public function __construct(int $httpStatusCode, string $message = '', array $headers = [], int $code = 0, \Exception $previous = null)
+    {
+		$this->httpStatusCode = $httpStatusCode;
+		$this->headers = $headers;
 
 		parent::__construct($message, $code, $previous);
 	}
@@ -50,10 +50,9 @@ class HttpException extends \RuntimeException {
 	 * 
 	 * @return integer
 	 */
-	public function getStatusCode() {
-
+	public function getStatusCode(): int
+    {
 		return $this->httpStatusCode;
-
 	}
 	
 	/**
@@ -61,10 +60,8 @@ class HttpException extends \RuntimeException {
 	 * 
 	 * @return array
 	 */
-	public function getHeaders() {
-
+	public function getHeaders(): array
+    {
 		return $this->headers;
-
 	}
-
 }

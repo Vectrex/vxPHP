@@ -16,8 +16,8 @@ namespace vxPHP\Form\FormElement;
  *
  * @author Gregor Kofler
  */
-class TextareaElement extends FormElement {
-
+class TextareaElement extends FormElement
+{
 	/**
 	 * (non-PHPdoc)
 	 * @see \vxPHP\Form\FormElement\FormElement::render()

@@ -11,6 +11,7 @@
 
 namespace vxPHP\Webpage;
 
+use vxPHP\User\Role;
 use vxPHP\User\UserInterface;
 use vxPHP\Application\Application;
 use vxPHP\Webpage\Menu\Menu;
@@ -23,13 +24,14 @@ use vxPHP\Webpage\Menu\Menu;
  * the menu each menu entry in turn is checked whether the user has the
  * privileges to see the menu entry
  * if the requirements for single menu entry are not met, the menu entry
- * is hidden by setting it's display property to none
+ * is hidden by setting its display property to none
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.3.0, 2021-03-12
+ * @version 0.3.1, 2021-10-09
  * 
  */
-class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
+class DefaultMenuAuthenticator implements MenuAuthenticatorInterface
+{
 	/**
 	 *
 	 * {@inheritdoc}
@@ -40,24 +42,21 @@ class DefaultMenuAuthenticator implements MenuAuthenticatorInterface {
     {
 		// retrieve roles of current user
 		
-		if(!$user || !$user->isAuthenticated()) {
+		if (!$user || !$user->isAuthenticated()) {
 			$userRoles = [];
 		}
-		
-		else {
-		
-			// role hierarchy defined? check roles and sub-roles
-				
-			if(($roleHierarchy = Application::getInstance()->getRoleHierarchy())) {
-				$userRoles = $user->getRolesAndSubRoles($roleHierarchy);
-			}
-		
-			// otherwise check only directly assigned roles
-				
-			else {
-				$userRoles = $user->getRoles();
-			}
-		}
+
+        // role hierarchy defined? check roles and sub-roles
+
+        else if ($roleHierarchy = Application::getInstance()->getRoleHierarchy()) {
+            $userRoles = $user->getRolesAndSubRoles($roleHierarchy);
+        }
+
+        // otherwise, check only directly assigned roles
+
+        else {
+            $userRoles = $user->getRoles();
+        }
 		
 		// menu needs no authentication, then check all its entries
 

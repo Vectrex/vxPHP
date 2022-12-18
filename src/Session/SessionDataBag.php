@@ -16,14 +16,14 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.1.1 2021-05-08
+ * @version 0.2.0 2022-06-10
  */
 class SessionDataBag implements \IteratorAggregate, \Countable
 {
 	/**
 	 * @var array
 	 */
-	private $data;
+	private array $data;
 
 	/**
 	 * initialize data with empty array
@@ -77,7 +77,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	 */
 	public function get(string $key, $default = null)
     {
-		return $this->data[$key] ?? $default;
+		return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
 	}
 
 	/**
@@ -133,7 +133,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	}
 	
 	/* (non-PHPdoc)
-	 * @see \Countable::count()
+	 * @see Countable::count()
 	 */
 	public function count(): int
     {
@@ -143,7 +143,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	/* (non-PHPdoc)
 	 * @see \IteratorAggregate::getIterator()
 	 */
-	public function getIterator(): \ArrayIterator
+	public function getIterator(): \Traversable
     {
 		return new \ArrayIterator($this->data);
 	}

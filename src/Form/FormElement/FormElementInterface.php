@@ -13,8 +13,8 @@ namespace vxPHP\Form\FormElement;
 
 use vxPHP\Template\SimpleTemplate;
 
-interface FormElementInterface {
-
+interface FormElementInterface
+{
 	public function setValue($value);
 	public function getValue();
 	public function setName(string $name);

@@ -11,5 +11,6 @@
 
 namespace vxPHP\Security\Exception;
 
-class CaptchaException extends \Exception {
+class CaptchaException extends \Exception
+{
 }

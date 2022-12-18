@@ -16,10 +16,11 @@ namespace vxPHP\Security\Password;
  * @author Martin Jansen,  Olivier Vanhoucke
  * @author Gregor Kofler
  * 
- * @version 1.2.0 2020-07-09
+ * @version 1.2.1 2021-11-28
  */
 
-class PasswordGenerator {
+class PasswordGenerator
+{
     /**
      * Create a single password.
      *
@@ -31,7 +32,7 @@ class PasswordGenerator {
      * @return string  Returns the generated password.
      * @throws \Exception
      */
-    public static function create($length = 10, $type = 'pronounceable', $chars = ''): string
+    public static function create(int $length = 10, string $type = 'pronounceable', string $chars = ''): string
     {
         mt_srand();
 
@@ -60,7 +61,7 @@ class PasswordGenerator {
      * @return array   Array containing the passwords
      * @throws \Exception
      */
-    public static function createMultiple($number, $length = 10, $type = 'pronounceable', $chars = ''): array
+    public static function createMultiple(int $number, int $length = 10, string $type = 'pronounceable', string $chars = ''): array
     {
         $passwords = [];
 
@@ -90,7 +91,7 @@ class PasswordGenerator {
      * @return string
      * @throws \RuntimeException
      */
-    public static function createFromLogin($login, $type, $key = 0): string
+    public static function createFromLogin(string $login, string $type, int $key = 0): string
     {
         switch($type) {
             case 'reverse':
@@ -128,10 +129,10 @@ class PasswordGenerator {
     * @param  integer Key
     * @return array   Array containing the passwords
     */
-    public static function createMultipleFromLogin($login, $type, $key = 0): array
+    public static function createMultipleFromLogin(array $login, string $type, int $key = 0): array
     {
         $passwords = [];
-        $number    = count($login);
+        $number = count($login);
 
         while ($number--) {
 
@@ -151,7 +152,7 @@ class PasswordGenerator {
         return $passwords;
     }
 
-    private static function eXor($login, $key): string
+    private static function eXor(string $login, int $key): string
     {
         $tmp = '';
 
@@ -169,7 +170,7 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function asciiRotx($login, $key): string
+    private static function asciiRotx(string $login, int $key): string
     {
         $tmp = '';
 
@@ -187,7 +188,7 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function asciiRotxpp($login, $key): string
+    private static function asciiRotxpp(string $login, int $key): string
     {
         $tmp = '';
 
@@ -200,7 +201,7 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function asciiRotxmm($login, $key): string
+    private static function asciiRotxmm(string $login, int $key): string
     {
         $tmp = '';
 
@@ -218,13 +219,14 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function rotx($login, $key): string
+    private static function rotx(string $login, int $key): string
     {
         $tmp = '';
         $login = strtolower($login);
 
         for ($i = 0, $iMax = strlen($login); $i < $iMax; ++$i) {
-            if ((ord($login[$i]) >= 97) && (ord($login[$i]) <= 122)) { // 65, 90 for uppercase
+            $ord = ord($login[$i]);
+            if (($ord >= 97) && ($ord <= 122)) { // 65, 90 for uppercase
                 $next = ord($login[$i]) + $key;
                 if ($next > 122) {
                     $next -= 26;
@@ -242,13 +244,14 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function rotxpp($login, $key): string
+    private static function rotxpp(string $login, int $key): string
     {
         $tmp = '';
         $login = strtolower($login);
 
         for ($i = 0, $iMax = strlen($login); $i < $iMax; ++$i, ++$key) {
-            if ((ord($login[$i]) >= 97) && (ord($login[$i]) <= 122)) { // 65, 90 for uppercase
+            $ord = ord($login[$i]);
+            if (($ord >= 97) && ($ord <= 122)) { // 65, 90 for uppercase
                 $next = ord($login[$i]) + $key;
                 if ($next > 122) {
                     $next -= 26;
@@ -266,13 +269,14 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function rotxmm($login, $key): string
+    private static function rotxmm(string $login, int $key): string
     {
         $tmp = '';
         $login = strtolower($login);
 
         for ($i = 0, $iMax = strlen($login); $i < $iMax; ++$i, --$key) {
-            if ((ord($login[$i]) >= 97) && (ord($login[$i]) <= 122)) { // 65, 90 for uppercase
+            $ord = ord($login[$i]);
+            if (($ord >= 97) && ($ord <= 122)) { // 65, 90 for uppercase
                 $next = ord($login[$i]) + $key;
                 if ($next > 122) {
                     $next -= 26;
@@ -290,7 +294,7 @@ class PasswordGenerator {
         return $tmp;
     }
 
-    private static function shuffle($login): string
+    private static function shuffle(string $login): string
     {
         $tmp = [];
 
@@ -312,7 +316,7 @@ class PasswordGenerator {
      * @return string  Returns the password
      * @throws \Exception
      */
-    private static function createPronounceable($length): string
+    private static function createPronounceable(int $length): string
     {
         $retVal = '';
 
@@ -356,7 +360,7 @@ class PasswordGenerator {
      * @return string  Returns the password
      * @throws \Exception
      */
-    private static function createUnpronounceable($length, $chars): string
+    private static function createUnpronounceable(int $length, string $chars): string
     {
         $password = '';
 
@@ -375,7 +379,7 @@ class PasswordGenerator {
                 break;
 
             default:
-                $chars = str_replace(',,', ',', str_replace(['+', '|', '$', '^', '/', '\\',], '', trim($chars)));
+                $chars = str_replace(['+', '|', '$', '^', '/', '\\', ',,'], ['', '', '', '', '', '', ','], trim($chars));
                 if ($chars[strlen($chars) - 1] === ',') {
                     $chars = substr($chars, 0, -1);
                 }

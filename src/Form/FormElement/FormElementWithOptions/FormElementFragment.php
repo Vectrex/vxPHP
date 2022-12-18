@@ -21,53 +21,53 @@ use vxPHP\Template\SimpleTemplate;
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.8.1 2020-04-05
+ * @version 0.8.2 2021-11-28
  */
-abstract class FormElementFragment implements FormElementFragmentInterface {
-
+abstract class FormElementFragment implements FormElementFragmentInterface
+{
     /**
      * @var string
      */
-	protected $value;
+	protected string $value;
 
 	/**
      * @var LabelElement
      */
-	protected $label;
+	protected LabelElement $label;
 
 	/**
      * @var string
      */
-    protected $html;
+    protected string $html;
 
     /**
-     * @var FormElementWithOptionsInterface
+     * @var FormElementWithOptionsInterface|null
      */
-    protected $parentElement;
+    protected ?FormElementWithOptionsInterface $parentElement = null;
 
     /**
      * @var boolean
      */
-    protected $selected = false;
+    protected bool $selected = false;
 
     /**
      * @var array
      */
-    protected $attributes = [];
+    protected array $attributes = [];
 
     /**
      * template used for rendering the fragment
-     * @var SimpleTemplate
+     * @var SimpleTemplate|null
      */
-    protected $template;
+    protected ?SimpleTemplate $template = null;
 
-	/**
-	 * creates a "fragment" for a form element with options and appends it to $formElement
-	 *
-	 * @param string $value
-	 * @param LabelElement $label
-	 * @param FormElementWithOptionsInterface $formElement
-	 */
+    /**
+     * creates a "fragment" for a form element with options and appends it to $formElement
+     *
+     * @param string $value
+     * @param LabelElement $label
+     * @param FormElementWithOptionsInterface|null $formElement
+     */
 	public function __construct(string $value, LabelElement $label, FormElementWithOptionsInterface $formElement = null)
     {
 		$this->setValue($value);
@@ -119,11 +119,12 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
 	}
 
     /**
-     * @see FormElementFragmentInterface::setAttribute()
+     * A value of NULL unsets the attribute
+     *
      * @param string $attribute
-     * @param string $value
+     * @param string|null $value
      * @return $this|FormElementFragmentInterface
-
+     * @see FormElementFragmentInterface::setAttribute()
      */
     public function setAttribute(string $attribute, string $value = null): FormElementFragmentInterface
     {
@@ -201,11 +202,11 @@ abstract class FormElementFragment implements FormElementFragmentInterface {
     }
 
     /**
-     * @see FormElementFragmentInterface::render()
+     * @param bool $force
      * @return string
-     * @throws \RuntimeException
      * @throws ApplicationException
      * @throws SimpleTemplateException
+     * @see FormElementFragmentInterface::render()
      */
 	public function render(bool $force = false): string
     {

@@ -1,3 +1,58 @@
+## 2.7.7
+- bug fix: Template\Filter::anchorHref() failed when a shortcut could not be matched with a menu entry
+- bug fix: Database\Adapter\MySQL ignored the keep_key_case option
+- minor fixes and type declarations added
+
+## 2.7.6
+- bug fix: Database\Util::unformatDecimal() did not parse strings correctly
+
+## 2.7.5
+- bug fix: HttpException no longer passes NULL messages to \Exception
+
+## 2.7.4
+- quick fix to avoid deprecation warnings when running on PHP 8.x while maintaining PHP 7.4 compatibility
+
+## 2.7.3
+- minor fixes and cleanups to avoid PHP8.x deprecation warnings
+
+## 2.7.2
+- bug fix: ExceptionHandler tried to access obsolete path config attribute
+
+## 2.7.1
+- bug fix: ErrorHandler/ExceptionHandler was called with wrong number of arguments
+- some minor refactoring
+ 
+## 2.7.0
+- refactored classes to use PHP 7.4+ language features
+- paths of menu entries can now contain slashes
+
+## 2.6.10
+- refactored and simplified menu renderer; menus are no longer automatically wrapped with divs and get specific id attributes
+- the SimpleList menu renderer now accepts additional aClass, spanClass, activeClass parameters to allow for easier styling (particularly with utility-first CSS frameworks)
+- PHP7.4 is now the minimum supported version
+
+## 2.6.9
+- bug fix: SmtpMailer did not encode subject with non-ASCII characters
+
+## 2.6.8
+- bug fix: DatabaseInterface::insertRecords() failed
+- bug fix: DatabaseInterfaceFactory failed to initialize an interface
+
+## 2.6.7
+- improved DSN parsing for PDO connections
+
+## 2.6.6
+- bug fix: checking for a table column in a database failed if the table structure cache had not been filled by a previous database operation
+
+## 2.6.5
+- bug fix: form element factory cast wrong error message type
+
+## 2.6.4
+- bug fix: image modifier resizing of images with *max* limits was broken
+
+## 2.6.3
+- web image related functionality (ImageCache) now handles (lossy) WebP images
+
 ## 2.6.2
 - bug fix: SimpleTemplate::insertTemplateAt() left angle bracket artifacts
 - fixes to form element classes hierarchy

@@ -27,18 +27,19 @@ use vxPHP\File\FilesystemFile;
  * @author Igor Wiedler <igor@wiedler.ch>
  * @author Jordan Alliot <jordan.alliot@gmail.com>
  * @author Sergey Linnik <linniksa@gmail.com>
+ * @author Gregor Kofler
  */
 class BinaryFileResponse extends Response
 {
-    protected static $trustXSendfileTypeHeader = false;
+    protected static bool $trustXSendfileTypeHeader = false;
 
     /**
      * @var FilesystemFile
      */
-    protected $file;
-    protected $offset = 0;
-    protected $maxlen = -1;
-    protected $deleteFileAfterSend = false;
+    protected FilesystemFile $file;
+    protected int $offset = 0;
+    protected int $maxlen = -1;
+    protected bool $deleteFileAfterSend = false;
 
     /**
      * @param FilesystemFile $file The file to stream
@@ -50,7 +51,7 @@ class BinaryFileResponse extends Response
      * @param bool $autoLastModified Whether the Last-Modified header should be automatically set
      * @throws FilesystemFileException
      */
-    public function __construct($file, int $status = 200, array $headers = [], bool $public = true, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true)
+    public function __construct(FilesystemFile $file, int $status = 200, array $headers = [], bool $public = true, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true)
     {
         parent::__construct(null, $status, $headers);
 
@@ -62,7 +63,7 @@ class BinaryFileResponse extends Response
     }
 
     /**
-     * @param FilesystemFile $file The file to stream
+     * @param FilesystemFile $content The file to stream
      * @param int $status The response status code
      * @param array $headers An array of response headers
      * @param bool $public Files are public by default
@@ -73,24 +74,24 @@ class BinaryFileResponse extends Response
      * @return static
      * @throws FilesystemFileException
      */
-    public static function create($file = null, $status = 200, $headers = [], $public = true, $contentDisposition = null, $autoEtag = false, $autoLastModified = true): Response
+    public static function create($content = null, $status = 200, $headers = [], bool $public = true, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): Response
     {
-        return new static($file, $status, $headers, $public, $contentDisposition, $autoEtag, $autoLastModified);
+        return new static($content, $status, $headers, $public, $contentDisposition, $autoEtag, $autoLastModified);
     }
 
     /**
      * Sets the file to stream.
      *
-     * @param FilesystemFile      $file               The file to stream
-     * @param string              $contentDisposition
-     * @param bool                $autoEtag
-     * @param bool                $autoLastModified
+     * @param FilesystemFile $file The file to stream
+     * @param string|null $contentDisposition
+     * @param bool $autoEtag
+     * @param bool $autoLastModified
      *
      * @return $this
      *
      * @throws FilesystemFileException
      */
-    public function setFile(FilesystemFile $file, $contentDisposition = null, $autoEtag = false, $autoLastModified = true): self
+    public function setFile(FilesystemFile $file, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): self
     {
         if (!$file->getFileInfo()->isReadable()) {
             throw new FilesystemFileException('File must be readable.');
@@ -152,7 +153,7 @@ class BinaryFileResponse extends Response
      *
      * @return $this
      */
-    public function setContentDisposition($disposition, $filename = '', $filenameFallback = ''): self
+    public function setContentDisposition(string $disposition, string $filename = '', string $filenameFallback = ''): self
     {
         if ('' === $filename) {
             $filename = $this->file->getFilename();
@@ -237,7 +238,7 @@ class BinaryFileResponse extends Response
             if (!$request->headers->has('If-Range') || $this->hasValidIfRangeHeader($request->headers->get('If-Range'))) {
                 $range = $request->headers->get('Range');
 
-                list($start, $end) = explode('-', substr($range, 6), 2) + [0];
+                [$start, $end] = explode('-', substr($range, 6), 2) + [0];
 
                 $end = ('' === $end) ? $fileSize - 1 : (int) $end;
 
@@ -348,10 +349,9 @@ class BinaryFileResponse extends Response
      *
      * @return $this
      */
-    public function deleteFileAfterSend($shouldDelete = true): self
+    public function deleteFileAfterSend(bool $shouldDelete = true): self
     {
         $this->deleteFileAfterSend = $shouldDelete;
-
         return $this;
     }
 }

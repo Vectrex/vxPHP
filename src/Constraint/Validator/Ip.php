@@ -15,24 +15,17 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check string whether it matches IPv4 or IPv6 address
  * 
- * @version 0.1.1 2020-04-30
+ * @version 0.1.3 2022-06-12
  * @author Gregor Kofler
  */
 class Ip extends AbstractConstraint
 {
 	/**
-	 * version against which address is validated 
-	 * 
-	 * @var string
-	 */
-	private $version;
-
-	/**
 	 * required flags for filter_var() depending on version
 	 * 
-	 * @var integer
-	 */
-	private $flags;
+	 * @var integer|null
+     */
+	private ?int $flags;
 
 	/**
 	 * set type of validation
@@ -40,10 +33,10 @@ class Ip extends AbstractConstraint
 	 * @param string $version
 	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($version = 'all')
+	public function __construct(string $version = 'all')
     {
 		$allowedVersions = [
-			'all'                 => null,
+			'all'                 => FILTER_DEFAULT,
 			'v4'                  => FILTER_FLAG_IPV4,
 			'v6'                  => FILTER_FLAG_IPV6,
 			'all_no_priv_range'   => FILTER_FLAG_NO_PRIV_RANGE,
@@ -63,7 +56,6 @@ class Ip extends AbstractConstraint
 			throw new \InvalidArgumentException(sprintf("'%s' is an invalid IP address version; allowed are '%s'.", $version, implode("', '", array_keys($allowedVersions))));
 		}
 
-		$this->version = $version;
 		$this->flags = $allowedVersions[$version];
 	}
 

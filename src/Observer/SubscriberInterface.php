@@ -18,6 +18,6 @@ interface SubscriberInterface {
 	 * 
 	 * @return array
 	 */
-	public static function getEventsToSubscribe();
+	public static function getEventsToSubscribe(): array;
 
 }

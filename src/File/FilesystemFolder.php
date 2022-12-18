@@ -19,41 +19,41 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2020-09-15
+ * @version 0.7.2 2022-04-11
  */
 
-class FilesystemFolder {
-
+class FilesystemFolder
+{
 	public const CACHE_PATH = '.cache';
 
 	/**
 	 * caches instances of folders
 	 * @var FilesystemFolder[]
 	 */
-	private static $instances = [];
+	private static array $instances = [];
 
 	/**
 	 * absolute path
 	 * @var string
 	 */
-	private	$path;
+	private	string $path;
 	
 	/**
 	 * flags presence of a cache folder
-	 * @var boolean
+	 * @var boolean|null
 	 */
-	private $cacheFound;
+	private ?bool $cacheFound = null;
 	
 	/**
 	 * relative path with application assets path as root
-	 * @var string
-	 */
-	private $relPath;
+	 * @var string|null
+     */
+	private ?string $relPath = null;
 	
 	/**
      * the folder containing the current instance
-	 * @var FilesystemFolder
-	 */
+	 * @var FilesystemFolder|null|false
+     */
 	private $parentFolder;
 
     /**
@@ -65,19 +65,19 @@ class FilesystemFolder {
      */
 	public static function getInstance(string $path): FilesystemFolder
     {
-	    $path = realpath($path);
+	    $realpath = realpath($path);
 
-	    if($path === false) {
+	    if($realpath === false) {
             throw new FilesystemFolderException(sprintf('Path %s does not exist or is no directory.', $path));
         }
 
-		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $realpath = rtrim($realpath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		if(!isset(self::$instances[$path])) {
-			self::$instances[$path] = new self($path);
+		if(!isset(self::$instances[$realpath])) {
+			self::$instances[$realpath] = new self($realpath);
 		}
 
-		return self::$instances[$path];
+		return self::$instances[$realpath];
 	}
 
     /**
@@ -127,7 +127,7 @@ class FilesystemFolder {
      */
 	public function getRelativePath(bool $force = false): string
     {
-		if(!isset($this->relPath) || $force) {
+		if($this->relPath === null || $force) {
 			$relPath = preg_replace('~^' . preg_quote(Application::getInstance()->getAbsoluteAssetsPath(), '~').'~', '', $this->path, -1, $replaced);
 			$this->relPath = $replaced === 0 ? null : $relPath;
 		}
@@ -190,7 +190,7 @@ class FilesystemFolder {
      */
 	public function getParentFolder(bool $force = false): ?FilesystemFolder
     {
-		if(!isset($this->parentFolder) || $force) {
+		if($this->parentFolder === null || $force) {
 			
 			$parentPath = realpath($this->path . '..');
 			
@@ -218,7 +218,7 @@ class FilesystemFolder {
 	 */
 	public function hasCache(bool $force = false): bool
     {
-		if(!isset($this->cacheFound) || $force) {
+		if($this->cacheFound === null || $force) {
 			$this->cacheFound = is_dir($this->path . self::CACHE_PATH);
 		}
 
@@ -262,15 +262,15 @@ class FilesystemFolder {
 			throw new FilesystemFolderException(sprintf("Folder %s cannot be created within folder %s.", $folderName, $this->path));
 		}
 		
-		// recursively create folder(s) when when path not already exists
+		// recursively create folder(s) when path not already exists
 		
 		if(!is_dir($path)) {
 
-			if(!mkdir($path, 0777, true) && !is_dir($path)) {
-				throw new FilesystemFolderException(sprintf("Folder %s could not be created!", $path));
+			if(mkdir($path, 0777, true) || is_dir($path)) {
+                chmod($path, 0777);
 			}
 			else {
-				chmod($path, 0777);
+                throw new FilesystemFolderException(sprintf("Folder %s could not be created!", $path));
 			}
 
 			$path = realpath($path);
@@ -381,7 +381,11 @@ class FilesystemFolder {
             throw new FilesystemFolderException(sprintf("'%s' contains invalid characters.", $to));
         }
 
-        $newPath = $this->getParentFolder()->getPath() . $to;
+        $parent = $this->getParentFolder();
+        if (!$parent) {
+            throw new FilesystemFolderException(sprintf("No parent folder found. Filesystem folder '%s' could not be renamed.", $this->path));
+        }
+        $newPath = $parent->getPath() . $to;
         $oldPath = $this->path;
 
         if(!@rename($oldPath, $newPath)) {

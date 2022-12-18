@@ -11,7 +11,6 @@
 
 namespace vxPHP\Image;
 
-use vxPHP\Image\ImageModifier;
 use vxPHP\Image\Exception\ImageModifierException;
 
 /**
@@ -28,7 +27,7 @@ class ImageMagick extends ImageModifier
 	/**
 	 * @var \stdClass
 	 */
-	private $src;
+	private \stdClass $src;
 
     /**
      *
@@ -53,7 +52,7 @@ class ImageMagick extends ImageModifier
 		$this->srcWidth = $img->getImageWidth();
 		$this->srcHeight = $img->getImageHeight();
 
-		if(!preg_match('#^image/(?:'.implode('|', $this->supportedFormats).')$#', $this->mimeType)) {
+		if(!preg_match('#^image/(?:' . implode('|', $this->supportedFormats) . ')$#', $this->mimeType)) {
             throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
 		}
 
@@ -82,7 +81,6 @@ class ImageMagick extends ImageModifier
      */
 	public function export(string $path = null, string $mimetype = null): void
     {
-		
 		if(!$mimetype) {
 			$mimetype = $this->mimeType;
 		}
@@ -205,7 +203,6 @@ class ImageMagick extends ImageModifier
 	protected function do_greyscale(\stdClass $src): \StdClass
     {
 		$src->resource->modulateImage(100, 0, 100);
-
 		return $src;
 	}
 }

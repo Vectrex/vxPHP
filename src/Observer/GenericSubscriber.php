@@ -11,34 +11,25 @@
 
 namespace vxPHP\Observer;
 
-use vxPHP\Observer\SubscriberInterface;
+class GenericSubscriber implements SubscriberInterface
+{
+	public function __construct() {}
 
-class GenericSubscriber implements SubscriberInterface {
-	
-	public function __construct() {
-		
-	}
-
-	public function listen(Event $event) {
-		
+	public function listen(Event $event): void
+    {
 		if($event->getName() === GenericEvent::TRIGGERED) {
-			
 			echo sprintf("Listener for '%s' called.", GenericEvent::TRIGGERED);
-			
 		}
-		
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 * @see \vxPHP\Observer\SubscriberInterface::getEventsToSubscribe()
 	 */
-	public static function getEventsToSubscribe() {
-		
-		return array(
+	public static function getEventsToSubscribe(): array
+    {
+		return [
 			GenericEvent::TRIGGERED => 'listen'
-		);
-
+        ];
 	}
-	
 }

@@ -14,8 +14,8 @@ namespace vxPHP\Form\FormElement\FormElementWithOptions;
 /**
  * @todo implement stub
  */
-class MultipleCheckboxElement extends FormElementWithOptions {
-
+class MultipleCheckboxElement extends FormElementWithOptions
+{
 	public function createOptions($options): FormElementWithOptionsInterface
     {
 	}

@@ -13,9 +13,9 @@ namespace vxPHP\Webpage;
 
 use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Http\Request;
-use vxPHP\Routing\Route;
 use vxPHP\Webpage\Exception\MenuGeneratorException;
 use vxPHP\Webpage\Menu\Menu;
+use vxPHP\Webpage\Menu\Renderer\MenuRendererInterface;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
 use vxPHP\Application\Application;
 
@@ -24,7 +24,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.0, 2021-01-13
+ * @version 1.2.1, 2021-11-28
  *
  * @throws MenuGeneratorException
  */
@@ -35,9 +35,9 @@ class MenuGenerator
 	 * "active", i.e. still render as anchor elements which can be
 	 * clicked
 	 * 
-	 * @var boolean
+	 * @var ?boolean
 	 */
-	protected static $forceActiveMenu;
+	protected static ?bool $forceActiveMenu = null;
 
 	/**
 	 * cache holding already parsed menus in case they are rendered
@@ -45,19 +45,7 @@ class MenuGenerator
 	 * 
 	 * @var Menu[]
 	 */
-	protected static $primedMenus = [];
-
-	/**
-	 * @var Route
-	 */
-	protected $route;
-
-	/**
-	 * indicates whether mod-rewrite like URLs are to be used
-	 * 
-	 * @var boolean
-	 */
-	protected $rewriteActive;
+	protected static array $primedMenus = [];
 
 	/**
 	 * path segments matched against menu structure to evaluate the
@@ -65,35 +53,28 @@ class MenuGenerator
 	 * 
 	 * @var array
 	 */
-	protected $pathSegments;
+	protected array $pathSegments;
 
 	/**
 	 * the generated menu instance
 	 * 
 	 * @var Menu
 	 */
-	protected $menu;
+	protected Menu $menu;
 
 	/**
 	 * class name of decorator to be used
 	 * 
-	 * @var string
+	 * @var ?string
 	 */
-	protected $decorator;
-
-	/**
-	 * unique id of menu
-	 * 
-	 * @var string
-	 */
-	protected $id;
+	protected ?string $decorator;
 
 	/**
 	 * level of menu in menu hierarchy
 	 * 
-	 * @var integer
+	 * @var ?integer
 	 */
-	protected $level;
+	protected ?int $level;
 
 	/**
 	 * additional parameters passed to menu renderer
@@ -105,60 +86,56 @@ class MenuGenerator
 	/**
 	 * class used for menu and menu entry authentication
 	 *
-	 * @var MenuAuthenticatorInterface
+	 * @var ?MenuAuthenticatorInterface
 	 */
-	protected static $authenticator;
+	protected static ?MenuAuthenticatorInterface $authenticator = null;
 
     /**
      * sets active menu entries, allows addition of dynamic entries and
-     * prints level $level of a menu, identified by $id
+     * prints level $level of a menu
+     *
+     * the menu can either be passed directly or as an id which must correspond
+     * with a configured menu
      *
      * $decorator identifies a decorator class - MenuDecorator{$decorator}
      * $renderArgs are additional parameters passed to Menu::render()
      *
-     * @param string|null $id
-     * @param int|null $level (if NULL, the full menu tree is printed)
+     * @param Menu|string $menuOrId (if NULL the first configured menu is used)
+     * @param int|null $level (if NULL, a full menu tree is rendered)
      * @param bool $forceActiveMenu
      * @param string|null $decorator
      * @param mixed $renderArgs
      *
-     * @throws MenuGeneratorException
      * @throws ApplicationException
+     * @throws MenuGeneratorException
      */
-	public function __construct(string $id = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null)
+	public function __construct($menuOrId = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null)
     {
-		$application = Application::getInstance();
+        if ($menuOrId instanceof Menu) {
+            $this->menu = $menuOrId;
+        }
+        else {
+            $config = Application::getInstance()->getConfig();
 
-		$config = $application->getConfig();
-		$this->rewriteActive = $application->getRouter()->getServerSideRewrite();
+            if (empty($menuOrId)) {
 
-		$this->route = $application->getCurrentRoute();
+                // fall back to menu with default id or first menu in configured list
 
-		if(is_null($this->route)) {
-			$this->route = $application->getRouter()->getRouteFromPathInfo(Request::createFromGlobals());
-		}
-
-		if(empty($id)) {
-            if (array_key_exists(Menu::DEFAULT_ID, $config->menus)) {
-                $id = Menu::DEFAULT_ID;
-            } else {
-                $id = array_keys($config->menus)[0] ?? null;
+                $menuOrId = array_key_exists(Menu::DEFAULT_ID, $config->menus) ? Menu::DEFAULT_ID : (array_keys($config->menus)[0] ?? null);
             }
+            if (
+                !isset($config->menus[$menuOrId]) ||
+                (
+                    !count($config->menus[$menuOrId]->getEntries()) &&
+                    $config->menus[$menuOrId]->getType() === 'static'
+                )
+            ) {
+                throw new MenuGeneratorException(sprintf("Menu '%s' not found or empty.", $menuOrId));
+            }
+            $this->menu = $config->menus[$menuOrId];
         }
 
-		if(
-			!isset($config->menus[$id]) ||
-            (
-                !count($config->menus[$id]->getEntries()) &&
-			    $config->menus[$id]->getType() === 'static'
-            )
-		) {
-			throw new MenuGeneratorException(sprintf("Menu '%s' not found or empty.", $id));
-		}
-
-		$this->menu = $config->menus[$id];
-
-		$this->id = $id;
+        $this->pathSegments = $this->primePathSegments();
 		$this->level = $level;
 		$this->decorator = $decorator;
 		$this->renderArgs = $renderArgs ?? [];
@@ -166,14 +143,14 @@ class MenuGenerator
 		// if $forceActiveMenu was initialized before, it will not be overwritten
 
 		if(is_null(self::$forceActiveMenu)) {
-			self::$forceActiveMenu	= (boolean) $forceActiveMenu;
+			self::$forceActiveMenu = $forceActiveMenu;
 		}
 	}
 
     /**
      * convenience method to allow chaining
      *
-     * @param string|null $id
+     * @param Menu|string $menuOrId (if NULL the first configured menu is used)
      * @param int|null $level (if NULL, the full menu tree is printed)
      * @param bool $forceActiveMenu
      * @param string|null $decorator
@@ -182,10 +159,47 @@ class MenuGenerator
      * @throws ApplicationException
      * @throws MenuGeneratorException
      */
-	public static function create(string $id = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null): MenuGenerator
+	public static function create($menuOrId = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null): MenuGenerator
     {
-		return new static($id, $level, $forceActiveMenu, $decorator, $renderArgs);
+		return new static(...func_get_args());
 	}
+
+    private function primePathSegments (): array
+    {
+        $application = Application::getInstance();
+        $router = $application->getRouter();
+        $request = Request::createFromGlobals();
+
+        $rewriteActive = $router && $router->getServerSideRewrite();
+
+        $route = $application->getCurrentRoute() ?? ($router ? $router->getRouteFromPathInfo($request) : null);
+
+        $routePath = $route ? $route->getPath() : '';
+
+        // prepare path segments to identify active menu entries
+
+        $pathSegments = explode('/', trim($request->getPathInfo(), '/'));
+
+        // skip script name
+
+        if($rewriteActive && basename($request->getScriptName()) !== 'index.php') {
+            array_shift($pathSegments);
+        }
+
+        // skip locale if one found
+
+        if(count($pathSegments) && $application->hasLocale($pathSegments[0])) {
+            array_shift($pathSegments);
+        }
+
+        // if pathSegments are empty use route path as fallback
+
+        if (!count($pathSegments) || $pathSegments[0] === '') {
+            return explode('/', $routePath);
+        }
+
+        return $pathSegments;
+    }
 
 	/**
 	 * activates or deactivates
@@ -224,8 +238,6 @@ class MenuGenerator
 			return '';
 		}
 
-		$request = Request::createFromGlobals();
-		
 		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
 
 		if(!in_array($this->menu, self::$primedMenus, true)) {
@@ -238,56 +250,33 @@ class MenuGenerator
 			
 			$this->completeMenu($this->menu);
 			
-			// prepare path segments to identify active menu entries
-
-			$this->pathSegments = explode('/', trim($request->getPathInfo(), '/'));
-
-			// skip script name
-
-			if($this->rewriteActive && basename($request->getScriptName()) !== 'index.php') {
-				array_shift($this->pathSegments);
-			}
-
-			// skip locale if one found
-
-			if(count($this->pathSegments) && Application::getInstance()->hasLocale($this->pathSegments[0])) {
-				array_shift($this->pathSegments);
-			}
-
 			// walk tree until an active entry is reached
 
-			$this->walkMenuTree($this->menu, (!count($this->pathSegments) || $this->pathSegments[0] === '') ? explode('/', $this->route->getPath()) : $this->pathSegments);
+			$this->walkMenuTree($this->menu, $this->pathSegments);
 
 			// cache menu for multiple renderings
 
 			self::$primedMenus[] = $this->menu;
 		}
 
-		$htmlId = $this->id . 'menu';
-
 		// drill down to required submenu (if only submenu needs to be rendered)
 
 		$m = $this->menu;
 
-		if($this->level !== false) {
+		if ($this->level > 0) {
 
-			$htmlId .= '_level_' . $this->level;
+            while($this->level-- > 0) {
+                $e = $this->menu->getSelectedEntry();
+                if(!$e || !$e->getSubMenu()) {
+                    break;
+                }
+                $m = $e->getSubMenu();
+            }
 
-			if($this->level > 0) {
-
-				while($this->level-- > 0) {
-					$e = $this->menu->getSelectedEntry();
-					if(!$e || !$e->getSubMenu()) {
-						break;
-					}
-					$m = $e->getSubMenu();
-				}
-
-				if($this->level >= 0) {
-					return '';
-				}
-			}
-		}
+            if($this->level >= 0) {
+                return '';
+            }
+        }
 
 		// output
 
@@ -302,45 +291,24 @@ class MenuGenerator
 
 		$className = __NAMESPACE__ . '\\Menu\\Renderer\\' . $rendererName . 'Renderer';
 
+        /* @var MenuRendererInterface $renderer */
+
 		$renderer = new $className($m);
 		$renderer->setParameters($this->renderArgs);
 
-		// enable or disable display of submenus
+        if ($m) {
 
-		$m->setShowSubmenus($this->level === null);
+            // enable or disable display of submenus
 
-		// enable or disable always active menu
+            $m->setShowSubmenus($this->level === null);
 
-		$m->setForceActive(self::$forceActiveMenu);
+            // enable or disable always active menu
 
-		$markup = $renderer->render();
-
-		// if no markup was generated avoid any empty wrappers
-
-		if (!$markup) {
-		    return '';
+            $m->setForceActive((bool) self::$forceActiveMenu);
         }
 
-        // if no container tag was specified, use a DIV element
-
-        if(!isset($this->renderArgs['containerTag'])) {
-            $this->renderArgs['containerTag'] = 'div';
-        }
-
-        // if container tag is not an empty string wrap menu
-
-        if($this->renderArgs['containerTag']) {
-            return sprintf(
-                '<%1$s%2$s>%3$s</%1$s>',
-                $this->renderArgs['containerTag'],
-                (isset($this->renderArgs['omitId']) && $this->renderArgs['omitId']) ? '' : (' id="' . $htmlId . '"'),
-                $markup
-            );
-        }
-
-        return $markup;
+		return $renderer->render();
 	}
-
 
     /**
      * walk the menu tree
@@ -354,10 +322,8 @@ class MenuGenerator
 		if($m->getType() === 'dynamic') {
 
 			// invoke service to build menu entries
-			
-			Application::getInstance()->getService($m->getServiceId())->appendMenuEntries($m);
 
-			
+			Application::getInstance()->getService($m->getServiceId())->appendMenuEntries($m);
 		}
 
 		foreach($m->getEntries() as $entry) {
@@ -400,7 +366,9 @@ class MenuGenerator
             // check for a possible "root" (i.e. "/") path
 
             if(!$path && !$pathToMatch) {
-                $e->getMenu()->setSelectedEntry($e);
+                if ($e->getMenu()) {
+                    $e->getMenu()->setSelectedEntry($e);
+                }
                 return $e;
             }
 
@@ -409,8 +377,10 @@ class MenuGenerator
 			if($path && 0 === strpos($pathToMatch, $path)) {
 
 				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($path)), '/'));
-				
-				$e->getMenu()->setSelectedEntry($e);
+
+                if ($e->getMenu()) {
+                    $e->getMenu()->setSelectedEntry($e);
+                }
 				$sm = $e->getSubMenu();
 
 				// walk  into submenu
@@ -458,7 +428,6 @@ class MenuGenerator
 		if(!self::$authenticator) {
 			self::$authenticator = new DefaultMenuAuthenticator();
 		}
-		
 		return self::$authenticator->authenticate($menu, Application::getInstance()->getCurrentUser());
 	}
 }

@@ -17,11 +17,11 @@ use vxPHP\User\UserInterface;
  * a user is allowed to invoke the controller configured for a route
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.0, 2018-05-11
+ * @version 0.2.1, 2021-11-28
  * 
  */
-interface RouteAuthenticatorInterface {
-
+interface RouteAuthenticatorInterface
+{
 	/**
 	 * checks whether user fulfills route authentication requirements
 	 *  
@@ -29,10 +29,10 @@ interface RouteAuthenticatorInterface {
 	 * @param UserInterface $user
 	 * @return boolean
 	 */
-	public function authenticate(Route $route, UserInterface $user);
+	public function authenticate(Route $route, UserInterface $user): bool;
 
     /**
-     * handle a authentication violation
+     * handles an authentication violation
      *
      * @param Route $route
      * @return mixed

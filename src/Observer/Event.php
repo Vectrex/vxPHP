@@ -15,28 +15,27 @@ namespace vxPHP\Observer;
  * the Event instance wraps both the
  * object which served the event and additional data
  * 
- * @version 0.1.0 2015-12-12
+ * @version 0.1.1 2021-12-01
  * @author Gregor Kofler
  */
-abstract class Event {
-
+abstract class Event
+{
 	/**
 	 * name of event
 	 * @var string
 	 */
-	private	$name;
+	private	string $name;
 	
 	/**
 	 * instance which publishes event
-	 * @param PublisherInterface
+	 * @var PublisherInterface
 	 */
-	private $publisher;
+	private PublisherInterface $publisher;
 
-	public function __construct($eventName, PublisherInterface $publisher) {
-
-		$this->name			= $eventName;
-		$this->publisher	= $publisher;
-
+	public function __construct($eventName, PublisherInterface $publisher)
+    {
+		$this->name = $eventName;
+		$this->publisher = $publisher;
 	}
 	
 	/**
@@ -44,10 +43,9 @@ abstract class Event {
 	 * 
 	 * @return string
 	 */
-	public function __toString() {
-
+	public function __toString()
+    {
 		return $this->name;
-
 	}
 
 	/**
@@ -55,10 +53,9 @@ abstract class Event {
 	 * 
 	 * @return string
 	 */
-	public function getName() {
-
+	public function getName(): string
+    {
 		return $this->name;
-
 	}
 	
 	/**
@@ -66,32 +63,28 @@ abstract class Event {
 	 *
 	 * @return PublisherInterface
 	 */
-	public function getPublisher() {
-	
+	public function getPublisher(): PublisherInterface
+    {
 		return $this->publisher;
-	
 	}
 
 	/**
 	 * trigger event by invoking the EventDispatcher
 	 */
-	public function trigger() {
-
-		EventDispatcher::getInstance()->dispatch($this);		
-
+	public function trigger(): void
+    {
+		EventDispatcher::getInstance()->dispatch($this);
 	}
-	
-	/**
-	 * static method for fluent API
-	 * 
-	 * @param string $eventName
-	 * @param PublisherInterface $publisher
-	 * @return static
-	 * 
-	 */
-	public static function create($eventName, PublisherInterface $publisher) {
 
+    /**
+     * static method for fluent API
+     *
+     * @param string $eventName
+     * @param PublisherInterface $publisher
+     * @return static
+     */
+	public static function create(string $eventName, PublisherInterface $publisher)
+    {
 		return new static($eventName, $publisher);
-
 	}
 }

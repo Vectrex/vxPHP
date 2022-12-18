@@ -14,16 +14,16 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.11.1 2021-04-21
+ * @version 0.11.2 2021-11-29
  * @author Gregor Kofler
  *
  */
-class CheckboxElement extends InputElement {
-
+class CheckboxElement extends InputElement
+{
     /**
      * @var bool
      */
-	private $checked;
+	private bool $checked;
 
     /**
      * inialize a <input type="checkbox"> element instance
@@ -49,7 +49,7 @@ class CheckboxElement extends InputElement {
 	 * @param boolean $state
 	 * @return \vxPHP\Form\FormElement\CheckboxElement
 	 */
-	public function setChecked(bool $state)
+	public function setChecked(bool $state): CheckboxElement
     {
 		$this->checked = $state;
 		return $this;

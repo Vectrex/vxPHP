@@ -17,6 +17,8 @@
 
 namespace vxPHP\Http;
 
+use vxPHP\File\Exception\FilesystemFileException;
+use vxPHP\File\Exception\FilesystemFolderException;
 use vxPHP\File\UploadedFile;
 
 /**
@@ -27,7 +29,7 @@ use vxPHP\File\UploadedFile;
  */
 class FileBag extends ParameterBag
 {
-    private static $fileKeys = ['error', 'name', 'size', 'tmp_name', 'type'];
+    private static array $fileKeys = ['error', 'name', 'size', 'tmp_name', 'type'];
 
     /**
      * @param array|UploadedFile[] $parameters An array of HTTP files
@@ -40,7 +42,7 @@ class FileBag extends ParameterBag
     /**
      * {@inheritdoc}
      */
-    public function replace(array $files = [])
+    public function replace(array $files = []): void
     {
         $this->parameters = [];
         $this->add($files);
@@ -49,7 +51,7 @@ class FileBag extends ParameterBag
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value)
+    public function set($key, $value): void
     {
         if (!\is_array($value) && !$value instanceof UploadedFile) {
             throw new \InvalidArgumentException('An uploaded file must be an array or an instance of UploadedFile.');
@@ -61,7 +63,7 @@ class FileBag extends ParameterBag
     /**
      * {@inheritdoc}
      */
-    public function add(array $files = [])
+    public function add(array $files = []): void
     {
         foreach ($files as $key => $file) {
             $this->set($key, $file);
@@ -74,6 +76,8 @@ class FileBag extends ParameterBag
      * @param array|UploadedFile $file A (multi-dimensional) array of uploaded file information
      *
      * @return UploadedFile[]|UploadedFile|null A (multi-dimensional) array of UploadedFile instances
+     * @throws FilesystemFileException
+     * @throws FilesystemFolderException
      */
     protected function convertFileInformation($file)
     {
@@ -81,13 +85,13 @@ class FileBag extends ParameterBag
             return $file;
         }
 
-        if (\is_array($file)) {
+        if (is_array($file)) {
             $file = $this->fixPhpFilesArray($file);
             $keys = array_keys($file);
             sort($keys);
 
             if ($keys === self::$fileKeys) {
-                if (UPLOAD_ERR_NO_FILE == $file['error']) {
+                if (UPLOAD_ERR_NO_FILE === $file['error']) {
                     $file = null;
                 } else {
                     $file = new UploadedFile($file['tmp_name'], $file['name']);
@@ -119,7 +123,7 @@ class FileBag extends ParameterBag
      *
      * @return array
      */
-    protected function fixPhpFilesArray($data): array
+    protected function fixPhpFilesArray(array $data): array
     {
         $keys = array_keys($data);
         sort($keys);

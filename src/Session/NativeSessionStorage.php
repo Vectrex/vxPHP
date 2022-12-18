@@ -17,7 +17,7 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.1.1 2021-05-08
+ * @version 0.2.0 2022-06-10
  *
  */
 class NativeSessionStorage
@@ -25,12 +25,17 @@ class NativeSessionStorage
     /**
      * @var boolean
      */
-	private	$started;
+	private	bool $started = false;
 
+    /**
+     * @var \SessionHandlerInterface
+     */
+	private	\SessionHandlerInterface $saveHandler;
+	
     /**
      * @var SessionDataBag
      */
-	private $sessionDataBag;
+	private SessionDataBag $sessionDataBag;
 
 	/**
 	 * initialize storage mechanism, set save handler
@@ -41,10 +46,7 @@ class NativeSessionStorage
 		
         session_register_shutdown();
 		$this->sessionDataBag = new SessionDataBag();
-
-        if(!session_set_save_handler(new NativeSessionWrapper(), false)) {
-            throw new \RuntimeException('Could not  set session save handler.');
-        }
+		$this->setSaveHandler();
 	}
 
 	/**
@@ -62,9 +64,7 @@ class NativeSessionStorage
 				
 				// avoid starting an already started session
 
-				if (
-					session_status() === PHP_SESSION_ACTIVE
-				) {
+				if (session_status() === PHP_SESSION_ACTIVE) {
 					throw new \RuntimeException('Failed to start the session: Session already started.');
 				}
 
@@ -79,12 +79,7 @@ class NativeSessionStorage
 				}
 			}
 
-            /**
-             * wrap $_SESSION reference in SessionDataBag
-             */
-            $session = &$_SESSION;
-            $this->sessionDataBag->initialize($session);
-            $this->started = true;
+			$this->loadSession();
 		}
 	}
 
@@ -101,5 +96,29 @@ class NativeSessionStorage
 		}
 
 		return $this->sessionDataBag;
+	}
+
+	/**
+	 * set custom save handler for PHP 5.4+
+	 * 
+	 * @throws \RuntimeException
+	 */
+	private function setSaveHandler(): void
+    {
+        $this->saveHandler = new NativeSessionWrapper();
+
+        if(!session_set_save_handler($this->saveHandler, false)) {
+            throw new \RuntimeException('Could not  set session save handler.');
+        }
+	}
+
+	/**
+	 * wrap $_SESSION reference in SessionDataBag
+	 */
+	private function loadSession(): void
+    {
+		$session = &$_SESSION;
+		$this->sessionDataBag->initialize($session);
+		$this->started = true;
 	}
 }

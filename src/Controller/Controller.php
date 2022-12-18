@@ -21,30 +21,32 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.0 2020-04-26
+ * @version 0.7.1 2021-11-28
  *
  */
 abstract class Controller
 {
-	/**
-	 * @var Request
-	 */
-	protected $request;
+    public const DEFAULT_METHOD_NAME = 'execute';
 
 	/**
-	 * @var \vxPHP\Routing\Route
-	 */
-	protected $route;
+	 * @var Request|null
+     */
+	protected ?Request $request = null;
+
+	/**
+	 * @var \vxPHP\Routing\Route|null
+     */
+	protected ?Route $route = null;
 	
 	/**
 	 * @var array
 	 */
-	protected $parameters;
+	protected array $parameters;
 
 	/**
 	 * @var string
 	 */
-	protected $methodName;
+	protected string $methodName = self::DEFAULT_METHOD_NAME;
 
     /**
      * create a controller instance
@@ -53,10 +55,10 @@ abstract class Controller
      * a second argument can hold an array with arbitrary data used by
      * the controller
      *
-     * @param Route $route
-     * @param array $parameters
+     * @param Route|null $route
+     * @param array|null $parameters
      */
-	public function __construct(Route $route = null, array $parameters = null)
+	public function __construct(Route $route = null, array $parameters = [])
     {
 		$this->parameters = $parameters;
 
@@ -70,7 +72,7 @@ abstract class Controller
     /**
      * @return Request
      */
-    public function getRequest(): Request
+    public function getRequest(): ?Request
     {
         return $this->request;
     }
@@ -88,7 +90,7 @@ abstract class Controller
     /**
      * @return Route
      */
-    public function getRoute(): Route
+    public function getRoute(): ?Route
     {
         return $this->route;
     }
@@ -109,13 +111,8 @@ abstract class Controller
 	 */
 	public function renderResponse(): void
     {
-		if(isset($this->methodName)) {
-			$methodName = $this->methodName;
-			$this->$methodName()->send();
-		}
-		else {
-            $this->execute()->send();
-        }
+        $methodName = $this->methodName;
+        $this->$methodName()->send();
 	}
 
 	/**
@@ -124,13 +121,8 @@ abstract class Controller
 	 */
 	public function render(): void
     {
-		if(isset($this->methodName)) {
-			$methodName = $this->methodName;
-			$this->$methodName()->sendContent();
-		}
-		else {
-			$this->execute()->sendContent();
-		}
+        $methodName = $this->methodName;
+        $this->$methodName()->sendContent();
 	}
 
 	/**
@@ -141,7 +133,7 @@ abstract class Controller
 	 * @param string $methodName
 	 * @return \vxPHP\Controller\Controller
 	 */
-	public function setExecutedMethod($methodName): self
+	public function setExecutedMethod(string $methodName): self
     {
 		$this->methodName = $methodName;
 		return $this;
@@ -149,17 +141,17 @@ abstract class Controller
 
     /**
      * determines controller class name from a routes controllerString
-     * property prefixed with the controllers namespace
+     * property prefixed with the controller's namespace
      * returns the controller instance
      * an additional parameters array will be passed on to the constructor
      *
      * @param Route $route
      * @param string $namespace
      * @param Request|null $request
-     * @param array $parameters
+     * @param array|null $parameters
      * @return \vxPHP\Controller\Controller
      */
-	public static function createControllerFromRoute(Route $route, string $namespace, Request $request = null, array $parameters = null): Controller
+	public static function createControllerFromRoute(Route $route, string $namespace, Request $request = null, array $parameters = []): Controller
     {
 		$controllerClass = trim($namespace, '\\') . $route->getControllerClassName();
 
@@ -191,7 +183,7 @@ abstract class Controller
      * @return RedirectResponse
      * @throws \RuntimeException
      */
-	protected function redirect($url = null, $queryParams = [], $statusCode = 302): RedirectResponse
+	protected function redirect($url = null, array $queryParams = [], int $statusCode = 302): RedirectResponse
     {
 		if($url === null) {
 		    if (!$this->route) {
@@ -213,9 +205,9 @@ abstract class Controller
 	/**
 	 * generate error and (optional) error page content
 	 *
-	 * @param integer $errorCode
+	 * @param int $errorCode
 	 */
-	protected function generateHttpError($errorCode = 404): void
+	protected function generateHttpError(int $errorCode = 404): void
     {
 		$content =
             '<h1>' .

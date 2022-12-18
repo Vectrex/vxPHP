@@ -11,7 +11,9 @@
 
 namespace vxPHP\Form\FormElement\FormElementWithOptions;
 
+use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Form\FormElement\FormElement;
+use vxPHP\Template\Exception\SimpleTemplateException;
 
 /**
  * a select element of type multiple
@@ -78,8 +80,8 @@ class MultipleSelectElement extends SelectElement
 	 * @see SelectElement::render()
      * @param bool $force
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
 	public function render($force = false): string
     {

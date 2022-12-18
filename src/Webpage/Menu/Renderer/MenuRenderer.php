@@ -10,27 +10,22 @@
 
 namespace vxPHP\Webpage\Menu\Renderer;
 
-use vxPHP\Application\Exception\ApplicationException;
 use vxPHP\Webpage\Menu\Menu;
 use vxPHP\Webpage\MenuEntry\MenuEntry;
-use vxPHP\Application\Application;
 
 abstract class MenuRenderer implements MenuRendererInterface
 {
-	protected $menu;
-	protected $rewriteActive;
-	protected $parameters;
+	protected Menu $menu;
+	protected array $parameters = [];
 
     /**
      * initialize menu renderer
      *
      * @param Menu $menu
-     * @throws ApplicationException
      */
 	public function __construct(Menu $menu)
     {
 		$this->menu = $menu;
-		$this->rewriteActive = Application::getInstance()->getRouter()->getServerSideRewrite();
 	}
 
     /**
@@ -38,9 +33,8 @@ abstract class MenuRenderer implements MenuRendererInterface
      * @see \vxPHP\Webpage\Menu\Renderer\MenuRendererInterface::create()
      * @param Menu $menu
      * @return MenuRenderer
-     * @throws ApplicationException
      */
-	public static function create(Menu $menu): MenuRenderer
+	public static function create(Menu $menu): MenuRendererInterface
     {
 		return new static($menu);
 	}
@@ -51,7 +45,7 @@ abstract class MenuRenderer implements MenuRendererInterface
      * @param array $parameters
      * @return MenuRenderer
 	 */
-	public function setParameters(Array $parameters): MenuRenderer
+	public function setParameters(array $parameters): MenuRenderer
     {
 		$this->parameters = $parameters;
 		return $this;
@@ -67,8 +61,8 @@ abstract class MenuRenderer implements MenuRendererInterface
     /**
      * render a single menu entry
      *
-     * @param MenuEntry $e
+     * @param MenuEntry $entry
      * @return string
      */
-	abstract protected function renderEntry(MenuEntry $e): string;
+	abstract protected function renderEntry(MenuEntry $entry): string;
 }

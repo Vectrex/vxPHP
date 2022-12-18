@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
  * session
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.2.1 2021-05-22
+ * @version 0.2.1 2022-11-25
  *        
  */
 class SessionUser extends User
@@ -30,13 +30,6 @@ class SessionUser extends User
 	 */
 	public const DEFAULT_KEY_NAME = 'user';
 	
-	/**
-	 * they key under which the user is stored in the session
-	 * 
-	 * @var string
-	 */
-	private $sessionKey;
-
     /**
      * Constructor
      *
@@ -49,7 +42,6 @@ class SessionUser extends User
      * @param array $attributes
      * @param string|null $sessionKey
      * @param boolean $authenticated
-     *
      */
 	public function __construct(string $username, string $hashedPassword = '', array $roles = [], array $attributes = [], string $sessionKey = null, bool $authenticated = false)
     {
@@ -66,7 +58,6 @@ class SessionUser extends User
 		}
 
 		parent::__construct($username, $hashedPassword, $roles, $attributes);
-		$this->sessionKey = $sessionKey;
 		$this->authenticated = $authenticated;
 		
 		Session::getSessionDataBag()->set($sessionKey, $this);
@@ -76,11 +67,12 @@ class SessionUser extends User
 	 * set or unset authentication flag without checking any credentials
 	 * 
 	 * @param boolean $authenticated
-	 * @return SessionUser
+	 * @return \vxPHP\User\SessionUser
 	 */
-	public function setAuthenticated(bool $authenticated): self
-    {
-		$this->authenticated = $authenticated;
+	public function setAuthenticated($authenticated) {
+		
+		$this->authenticated = (boolean) $authenticated;
 		return $this;
+
 	}
 }

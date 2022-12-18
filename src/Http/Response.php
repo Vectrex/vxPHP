@@ -21,6 +21,7 @@ namespace vxPHP\Http;
  * Response represents an HTTP response.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
  */
 class Response
 {
@@ -96,32 +97,32 @@ class Response
     /**
      * @var ResponseHeaderBag
      */
-    public $headers;
+    public ResponseHeaderBag $headers;
+
+    /**
+     * @var mixed
+     */
+    protected $content = '';
 
     /**
      * @var string
      */
-    protected $content;
-
-    /**
-     * @var string
-     */
-    protected $version;
+    protected string $version;
 
     /**
      * @var int
      */
-    protected $statusCode;
+    protected int $statusCode;
 
     /**
      * @var string
      */
-    protected $statusText;
+    protected string $statusText;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $charset;
+    protected ?string $charset = null;
 
     /**
      * Status codes translation table.
@@ -134,7 +135,7 @@ class Response
      *
      * @var array
      */
-    public static $statusTexts = [
+    public static array $statusTexts = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',            // RFC2518
@@ -170,14 +171,14 @@ class Response
         410 => 'Gone',
         411 => 'Length Required',
         412 => 'Precondition Failed',
-        413 => 'Payload Too Large',
+        413 => 'Content Too Large',
         414 => 'URI Too Long',
         415 => 'Unsupported Media Type',
         416 => 'Range Not Satisfiable',
         417 => 'Expectation Failed',
         418 => 'I\'m a teapot',                                               // RFC2324
         421 => 'Misdirected Request',                                         // RFC7540
-        422 => 'Unprocessable Entity',                                        // RFC4918
+        422 => 'Unprocessable Content',                                       // RFC4918
         423 => 'Locked',                                                      // RFC4918
         424 => 'Failed Dependency',                                           // RFC4918
         425 => 'Too Early',                                                   // RFC-ietf-httpbis-replay-04
@@ -195,12 +196,12 @@ class Response
         506 => 'Variant Also Negotiates',                                     // RFC2295
         507 => 'Insufficient Storage',                                        // RFC4918
         508 => 'Loop Detected',                                               // RFC5842
-        510 => 'Not Extended',                                                // RFC2774
+        510 => 'Not Extended (OBSOLETED)',                                    // RFC2774
         511 => 'Network Authentication Required',                             // RFC6585
     ];
 
     /**
-     * @param string $content
+     * @param mixed $content
      * @param int $status
      * @param array $headers
      */
@@ -226,7 +227,7 @@ class Response
      *
      * @return static
      */
-    public static function create($content = '', $status = 200, $headers = []): Response
+    public static function create($content = '', int $status = 200, array $headers = []): Response
     {
         return new static($content, $status, $headers);
     }
@@ -235,7 +236,7 @@ class Response
      * Returns the Response as an HTTP string.
      *
      * The string representation of the Response is the same as the
-     * one that will be sent to the client only if the prepare() method
+     * one that will be sent to the client only if prepare()
      * has been called before.
      *
      * @return string The Response as an HTTP string
@@ -789,7 +790,7 @@ class Response
     /**
      * Sets the number of seconds after which the response should no longer be considered fresh.
      *
-     * This methods sets the Cache-Control max-age directive.
+     * This method sets the Cache-Control max-age directive.
      *
      * @param int $value
      * @return $this
@@ -806,7 +807,7 @@ class Response
     /**
      * Sets the number of seconds after which the response should no longer be considered fresh by shared caches.
      *
-     * This methods sets the Cache-Control s-maxage directive.
+     * This method sets the Cache-Control s-maxage directive.
      *
      * @param int $value
      * @return $this
@@ -1213,7 +1214,7 @@ class Response
      */
     public function isRedirect(string $location = null): bool
     {
-        return \in_array($this->statusCode, [201, 301, 302, 303, 307, 308], true) && (null === $location ?: $location === $this->headers->get('Location'));
+        return \in_array($this->statusCode, [201, 301, 302, 303, 307, 308], true) && (null === $location || $location === $this->headers->get('Location'));
     }
 
     /**
@@ -1241,7 +1242,7 @@ class Response
         $level = \count($status);
         $flags = PHP_OUTPUT_HANDLER_REMOVABLE | ($flush ? PHP_OUTPUT_HANDLER_FLUSHABLE : PHP_OUTPUT_HANDLER_CLEANABLE);
 
-        while ($level-- > $targetLevel && ($s = $status[$level]) && (!isset($s['del']) ? !isset($s['flags']) || ($s['flags'] & $flags) === $flags : $s['del'])) {
+        while ($level-- > $targetLevel && ($s = $status[$level]) && ($s['del'] ?? (!isset($s['flags']) || ($s['flags'] & $flags) === $flags))) {
             if ($flush) {
                 ob_end_flush();
             } else {
@@ -1260,7 +1261,7 @@ class Response
      */
     protected function ensureIEOverSSLCompatibility(Request $request): void
     {
-        if (false !== stripos($this->headers->get('Content-Disposition'), 'attachment') && 1 === preg_match('/MSIE (.*?);/i', $request->server->get('HTTP_USER_AGENT'), $match) && true === $request->isSecure() && (int)preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {
+        if (true === $request->isSecure() && false !== stripos($this->headers->get('Content-Disposition', ''), 'attachment') && 1 === preg_match('/MSIE (.*?);/i', $request->server->get('HTTP_USER_AGENT'), $match) && (int)preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {
             $this->headers->remove('Cache-Control');
         }
     }

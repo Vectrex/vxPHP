@@ -31,133 +31,134 @@ use vxPHP\User\RoleHierarchy;
  * allows access to various configured components
  *
  * @author Gregor Kofler
- * @version 1.13.0 2020-07-23
+ * @version 1.13.1 2021-12-01
  */
 class Application
 {
 	/**
 	 * this application instance
 	 * 
-	 * @var Application
-	 */
-	private static $instance;
+	 * @var Application|null
+     */
+	private static ?Application $instance = null;
 
 	/**
 	 * the configured default database instance
 	 * 
-	 * @var DatabaseInterface
+	 * @var DatabaseInterface|null
+     * @deprecated
 	 */
-	private	$db;
+	private	?DatabaseInterface $db = null;
 
 	/**
 	 * the instanced vxPDO datasources
 	 * @var DatabaseInterface[]
 	 */
-	private $vxPDOInstances = [];
+	private array $vxPDOInstances = [];
 	
 	/**
 	 * configuration instance of application
 	 * 
 	 * @var Config
 	 */
-	private	$config;
+	private	Config $config;
 
 	/**
 	 * event dispatcher instance
 	 * 
 	 * @var EventDispatcher
 	 */
-	private	$eventDispatcher;
+	private	EventDispatcher $eventDispatcher;
 
 	/**
 	 * all configured locale identifiers
 	 * 
 	 * @var array
 	 */
-	private $locales = [];
+	private array $locales = [];
 
 	/**
 	 * the currently active locale
 	 * 
-	 * @var Locale
-	 */
-	private $currentLocale;
+	 * @var Locale|null
+     */
+	private ?Locale $currentLocale = null;
 
 	/**
-	 * @var Route
-	 */
-	private $currentRoute;
+	 * @var Route|null
+     */
+	private ?Route $currentRoute = null;
 
 	/**
 	 * the absolute path to the top level directory of the application (e.g. "/var/www/mydomain/")
 	 *
-	 * @var string
-	 */
-	private $rootPath;
+	 * @var string|null
+     */
+	private ?string $rootPath = null;
 
 	/**
 	 * the absolute path to web assets (e.g. "/var/www/mydomain/web/")
 	 *
-	 * @var string
-	 */
-	private $absoluteAssetsPath;
+	 * @var string|null
+     */
+	private ?string $absoluteAssetsPath = null;
 
 	/**
 	 * a path prefix which is added to URLs and routes when no URL rewriting is active
 	 * needs to be set when the document root points to parent folder of the absolute assets path
 	 *
-	 * @var string
-	 */
-	private $relativeAssetsPath;
+	 * @var string|null
+     */
+	private ?string $relativeAssetsPath = null;
 
 	/**
 	 * path to application source
 	 *
-	 * @var string
-	 */
-	private $sourcePath;
+	 * @var string|null
+     */
+	private ?string $sourcePath = null;
 
 	/**
 	 * all configured services
 	 * 
 	 * @var ServiceInterface[]
 	 */
-	private $services = [];
+	private array $services = [];
 	
 	/**
 	 * all configured plugins
 	 * 
 	 * @var SubscriberInterface[]
 	 */
-	private $plugins = [];
+	private array $plugins = [];
 
 	/**
-	 * the user instancing instance
+	 * the current user instance
 	 * 
-	 * @var UserInterface
-	 */
-	private $currentUser;
+	 * @var UserInterface|null
+     */
+	private ?UserInterface $currentUser = null;
 
 	/**
 	 * the user role hierarchy in use
 	 *
-	 * @var RoleHierarchy
-	 */
-	private $roleHierarchy;
+	 * @var RoleHierarchy|null
+     */
+	private ?RoleHierarchy $roleHierarchy = null;
 
     /**
      * the currently used router
      *
-     * @var Router
+     * @var Router|null
      */
-	private $router;
+	private ?Router $router = null;
 
     /**
      * indicates whether application runs on a localhost or was called from the command line
      *
      * @var boolean
      */
-    private static $isLocal;
+    private static ?bool $isLocal = null;
 
     /**
 	 * Constructor.
@@ -188,7 +189,7 @@ class Application
 				$this->locales = array_fill_keys($this->config->site->locales, null);
 			}
 
-			// set a relative assets path when configured
+			// set a relative assets' path when configured
 			
 			if(isset($this->config->site->assets_path)) {
 				$this->setRelativeAssetsPath($this->config->site->assets_path);
@@ -376,14 +377,18 @@ class Application
      * any extra argument is passed on to the constructor method of the service
      *
      * @param string $serviceId
-     * @return ServiceInterface :ServiceInterface
+     * @return ServiceInterface
      * @throws ApplicationException
      */
 	public function getService(string $serviceId): ServiceInterface
     {
+        if (array_key_exists($serviceId, $this->services)) {
+            return $this->services[$serviceId];
+        }
+
 		$args = func_get_args();
 		$service = $this->initializeService($serviceId, array_splice($args, 1));
-		$this->services[] = $service;
+		$this->services[$serviceId] = $service;
 
 		return $service;
 	}
@@ -475,8 +480,8 @@ class Application
 	}
 
 	/**
-	 * set absolute assets path
-	 * the relative assets path is updated
+	 * set absolute assets' path
+	 * the relative assets' path is updated
 	 *
 	 * @param string $path
 	 * @return Application
@@ -549,7 +554,7 @@ class Application
 
 	/**
 	 * set root path of application
-	 * if an assetspath is set, the relative assets path is updated
+	 * if an assetspath is set, the relative assets' path is updated
 	 *
 	 * @param string $path
 	 * @return Application
@@ -641,7 +646,7 @@ class Application
         $pathSegments = explode(DIRECTORY_SEPARATOR, $path);
 
         // eliminate doubling of assets path
-        // a subdir with the name of the assets path as a child of the assets path will *not* work
+        // a subdir with the name of the assets' path as a child of the assets' path will *not* work
 
         if($pathSegments[0] === trim($this->getRelativeAssetsPath(), '/')) {
             array_shift($pathSegments);

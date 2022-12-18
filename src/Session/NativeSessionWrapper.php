@@ -12,25 +12,38 @@
 namespace vxPHP\Session;
 
 /**
- * wraps native \SessionHandler
+ * wraps native \SessionHandler on PHP 5.4+
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.0 2021-05-08
+ * @version 0.2.1 2022-08-04
  */
-class NativeSessionWrapper extends \SessionHandler
+class NativeSessionWrapper implements \SessionHandlerInterface
 {
+    /**
+     * @var \SessionHandler
+     */
+	private \SessionHandler $handler;
+	
     /**
      * @var boolean
      */
-	private	$active;
+	private	bool $active = false;
+
+	/**
+	 * 
+	 */
+	public function __construct()
+    {
+		$this->handler = new \SessionHandler();
+	}
 
 	/**
 	 * {@inheritdoc }
 	 */  
-	public function open($path, $name): bool
+	public function open($savePath, $sessionName): bool
     {
-		$this->active = parent::open($path, $name);
+		$this->active = $this->handler->open($savePath, $sessionName);
 		return $this->active;
 	}
 
@@ -39,8 +52,42 @@ class NativeSessionWrapper extends \SessionHandler
 	 */  
 	public function close(): bool
     {
-		$this->active = false;
-		return parent::close();
+    	$this->active = false;
+		return $this->handler->close();
+	}
+	
+	/**
+	 * {@inheritdoc }
+	 */
+    #[\ReturnTypeWillChange]
+	public function read($id)
+    {
+		return $this->handler->read($id);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function write($id, $data): bool
+    {
+		return $this->handler->write($id, $data);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function destroy($id): bool
+    {
+		return (bool) $this->handler->destroy($id);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+    #[\ReturnTypeWillChange]
+	public function gc(int $max_lifetime)
+    {
+    	return $this->handler->gc($max_lifetime);
 	}
 	
     /**

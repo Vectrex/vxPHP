@@ -34,9 +34,12 @@ namespace vxPHP\Http;
  */
 class StreamedResponse extends Response
 {
+    /**
+     * @var callable|null
+     */
     protected $callback;
-    protected $streamed;
-    private $headersSent;
+    protected bool $streamed;
+    private bool $headersSent;
 
     /**
      * @param callable|null $callback A valid PHP callback or null to set it later
@@ -63,7 +66,7 @@ class StreamedResponse extends Response
      *
      * @return static
      */
-    public static function create($callback = null, $status = 200, $headers = []): Response
+    public static function create($callback = null, int $status = 200, array $headers = []): Response
     {
         return new static($callback, $status, $headers);
     }
@@ -76,7 +79,6 @@ class StreamedResponse extends Response
     public function setCallback(callable $callback): self
     {
         $this->callback = $callback;
-
         return $this;
     }
 

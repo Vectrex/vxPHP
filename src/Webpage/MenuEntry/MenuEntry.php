@@ -18,7 +18,7 @@ use vxPHP\User\Role;
  * MenuEntry class
  * manages a single menu entry
  *
- * @version 0.8.1 2021-04-28
+ * @version 0.8.3 2021-12-06
  */
 class MenuEntry
 {
@@ -26,68 +26,68 @@ class MenuEntry
 	 * the index counter of menu entries
 	 * @var integer
 	 */
-	protected static $count = 1;
+	protected static int $count = 1;
 
 	/**
-	 * the menu the menu entry belongs to
-	 * @var Menu
+	 * the menu the entry belongs to
+	 * @var Menu | null
 	 */
-	protected $menu;
+	protected ?Menu $menu;
 
 	/**
 	 * the authentication level of the entry
-	 * @var string
+	 * @var string | null
 	 */
-	protected $auth;
+	protected ?string $auth = null;
 	
 	/**
 	 * additional authentication parameter which
 	 * might be required by the authentication level
 	 * @var string
 	 */
-	protected $authParameters;
+	protected string $authParameters;
 	
 	/**
 	 * misc attributes
 	 * @var \stdClass
 	 */
-	protected $attributes;
+	protected \stdClass $attributes;
 
     /**
      * display attribute
      * @var boolean
      */
-    protected $display = true;
+    protected bool $display = true;
 
 	/**
 	 * unique index of menu entry
 	 * @var integer
 	 */
-	protected $ndx;
+	protected int $ndx;
 	
 	/**
 	 * the path of the menu entry 
 	 * @var string
 	 */
-	protected $path;
+	protected string $path;
 	
 	/**
 	 * an optional submenu of the menu entry
-	 * @var Menu
+	 * @var Menu | null
 	 */
-	protected $subMenu;
+	protected ?Menu $subMenu = null;
 	
 	/**
 	 * flag indicating whether menu entry destination is an absoulte or relative URL
 	 * @var boolean
 	 */
-	protected $localPage;
+	protected bool $localPage;
 	
 	/**
 	 * the URL of the menu entry
-	 * @var string
+	 * @var string | null
 	 */
-	protected $href;
+	protected ?string $href;
 
     /**
      * MenuEntry constructor.
@@ -171,10 +171,10 @@ class MenuEntry
     /**
      * set auth information
      *
-     * @param $auth
+     * @param string $auth
      * @return $this
      */
-	public function setAuth($auth): MenuEntry
+	public function setAuth(string $auth): MenuEntry
     {
 		$this->auth = $auth;
 		return $this;
@@ -193,10 +193,10 @@ class MenuEntry
     /**
      * set additional auth parameters
      *
-     * @param $authParameters
+     * @param string $authParameters
      * @return $this
      */
-	public function setAuthParameters($authParameters): MenuEntry
+	public function setAuthParameters(string $authParameters): MenuEntry
     {
 		$this->authParameters = $authParameters;
 		return $this;
@@ -258,7 +258,7 @@ class MenuEntry
      * @param string $path
      * @return MenuEntry
      */
-    public function setPath(string $path)
+    public function setPath(string $path): self
     {
         $this->path = trim($path, '/');
 
@@ -277,18 +277,18 @@ class MenuEntry
 
 			if($this->localPage) {
 
-				$pathSegments = [];
-				$e = $this;
-
-				do {
-					$pathSegments[] = $e->path;
-				} while ($e = $e->menu->getParentEntry());
-
                 $router = Application::getInstance()->getRouter();
 
                 if(!$router) {
                     throw new \RuntimeException('Not router assigned. Cannot create href attribute for menu entry.');
                 }
+
+                $pathSegments = [];
+				$e = $this;
+
+				do {
+                    array_unshift($pathSegments, ...explode('/', $e->path));
+				} while ($e = $e->menu->getParentEntry());
 
                 if($router->getServerSideRewrite()) {
 					if(($script = basename($this->menu->getScript(), '.php')) === 'index') {
@@ -303,7 +303,7 @@ class MenuEntry
                     $script = '/' . $this->menu->getScript() . '/';
                 }
 
-                $this->href = $script . implode('/', array_reverse(array_map('rawurlencode', $pathSegments)));
+                $this->href = $script . implode('/', array_map('rawurlencode', $pathSegments));
 
 			}
 			else {

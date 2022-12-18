@@ -14,7 +14,7 @@ use vxPHP\Database\ConnectionInterface;
 /**
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.1, 2020-11-28
+ * @version 0.3.3, 2022-11-24
  */
 class Propel2ConnectionWrapper implements ConnectionInterface
 {
@@ -23,20 +23,20 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      *
      * @var \PDO
      */
-    protected $connection;
+    protected \PDO $connection;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $name;
+    protected ?string $name = null;
 
     /**
      * since \PDO doesn't provide a simple way to determine the name
      * of the current database, it must be set explicitly
      *
-     * @var string
+     * @var string|null
      */
-    protected $dbName;
+    protected ?string $dbName = null;
 
     /**
      * Propel2ConnectionWrapper constructor.
@@ -77,7 +77,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
     }
 
     /**
-     * @return string The datasource name associated to this connection
+     * @return string|null The datasource name associated to this connection
      */
     public function getName(): ?string
     {
@@ -138,7 +138,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
     /**
      * @see \PDO::setAttribute()
      *
-     * @param string $attribute
+     * @param int $attribute
      * @param mixed $value
      * @return bool
      */
@@ -176,7 +176,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      * @param array $driver_options
      * @return \PDOStatement
      */
-    public function prepare(string $statement, $driver_options = []): \PDOStatement
+    public function prepare(string $statement, array $driver_options = []): \PDOStatement
     {
         return $this->connection->prepare($statement, $driver_options);
     }
@@ -214,7 +214,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      * @param int $parameter_type
      * @return string
      */
-    public function quote(string $string, $parameter_type = \PDO::PARAM_STR): string
+    public function quote(string $string, int $parameter_type = \PDO::PARAM_STR): string
     {
         return $this->connection->quote($string, $parameter_type);
     }

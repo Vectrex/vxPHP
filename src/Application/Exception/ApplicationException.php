@@ -10,9 +10,8 @@
 
 namespace vxPHP\Application\Exception;
 
-class ApplicationException extends \Exception {
-	CONST INVALID_LOCALE	= 1;
-	CONST PATH_MISMATCH		= 2;
+class ApplicationException extends \Exception
+{
+	public const INVALID_LOCALE = 1;
+	public const PATH_MISMATCH = 2;
 }
-
-?>

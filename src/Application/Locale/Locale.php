@@ -15,26 +15,29 @@ namespace vxPHP\Application\Locale;
  * @author Gregor Kofler
  * @todo currently a stub
  *
- * @version 0.3.0 2015-06-19
+ * @version 0.4.0 2021-11-26
  *
  */
-class Locale {
-
-	private $localeId;
+class Locale
+{
+	private string $localeId;
 
 	public function __toString() {
-		return (string) $this->localeId;
+		return $this->localeId;
 	}
 
-	public function __construct($localeId) {
+	public function __construct (string $localeId)
+    {
 		$this->localeId = strtolower($localeId);
 	}
 
-	public function set() {
+	public function set(): void
+    {
 		setlocale(LC_ALL, $this->localeId);
 	}
 
-	public function getLocaleId() {
+	public function getLocaleId(): string
+    {
 		return $this->localeId;
 	}
 }

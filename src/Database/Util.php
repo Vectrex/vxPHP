@@ -17,10 +17,10 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 0.3.1, 2020-11-27
+ * @version 0.3.3, 2022-11-24
  */
-class Util {
-	
+class Util
+{
 	/**
 	 * Re-formats a date strings depending on a supplied input locale to yyyy-mm-dd
 	 * does not check validity of date
@@ -39,38 +39,37 @@ class Util {
 			return '';
 		}
 	
-		$tmp = preg_split('/[ ./\-]/', $dateString);
+		$tmp = preg_split('/[ .\/\-]/', $dateString);
 
 		if(count($tmp) === 3) {
 
 			switch($locale) {
 	
 				case 'de':
-					$tmp[2] = substr(date('Y'), 0, 4 - strlen($tmp[2])).$tmp[2];
+					$tmp[2] = substr(date('Y'), 0, 4 - strlen($tmp[2])) . $tmp[2];
 					return sprintf('%04d-%02d-%02d', $tmp[2], $tmp[1], $tmp[0]);
 	
 				case 'us':
-					$tmp[2] = substr(date('Y'), 0, 4 - strlen($tmp[2])).$tmp[2];
+					$tmp[2] = substr(date('Y'), 0, 4 - strlen($tmp[2])) . $tmp[2];
 					return sprintf('%04d-%02d-%02d', $tmp[2], $tmp[0], $tmp[1]);
 	
 				case 'iso':
-					$tmp[0] = substr(date('Y'), 0, 4 - strlen($tmp[0])).$tmp[0];
+					$tmp[0] = substr(date('Y'), 0, 4 - strlen($tmp[0])) . $tmp[0];
 					return sprintf('%04d-%02d-%02d', $tmp[0], $tmp[1], $tmp[2]);
 	
 				default:
-					if(($parsed = strtotime($dateString)) === FALSE) {
+					if(($parsed = strtotime($dateString)) === false) {
 						return '';
 					}
 					return date('Y-m-d', $parsed);
 			}
 		}
 
-		if(($parsed = strtotime($dateString)) === FALSE) {
+		if(($parsed = strtotime($dateString)) === false) {
 			return '';
 		}
 
 		return date('Y-m-d', $parsed);
-
 	}
 	
 	/**
@@ -82,13 +81,9 @@ class Util {
 	 */
 	public static function unFormatDecimal(string $decimalString): float
     {
-		if(trim($decimalString) === '') {
-			return NAN;
-		}
-
 		// remove a leading "+"
 
-		$decimalString = rtrim('+', trim($decimalString));
+		$decimalString = ltrim(trim($decimalString), '+');
 
 		// only a decimal separator ("," or ".")
 
@@ -99,18 +94,16 @@ class Util {
 		// "," or "'" as thousands separator "." as decimal separator
 
 		if(preg_match('/^-?[1-9]\d{0,2}([,\']\d{3})*(\.\d+)?$/', $decimalString)) {
-			return (float) (str_replace([',', "'"], ['', ''], $decimalString));
+			return (float) str_replace([',', "'"], ['', ''], $decimalString);
 		}
-		
-		// "." as thousands separator "," as decimal separator
-		
-		if(preg_match('/^-?[1-9]\d{0,2}(\.\d{3})*(,\d+)?$/', $decimalString)) {
-			return (float) (str_replace(['.', ','], ['', '.'], $decimalString));
-		}
-		
-		// try type casting
 
-		return (float) $decimalString;
+		// "." as thousands separator "," as decimal separator
+
+		if(preg_match('/^-?[1-9]\d{0,2}(\.\d{3})*(,\d+)?$/', $decimalString)) {
+            return (float) str_replace(['.', ','], ['', '.'], $decimalString);
+		}
+		
+		return NAN;
 	}
 	
 	/**
@@ -119,7 +112,7 @@ class Util {
 	 * if $id is set, this record is left out from checking
 	 * returns string which is unique in $column
 	 * 
-	 * currently works only with single-field primary keys
+	 * currently, works only with single-field primary keys
 	 *
 	 * @param DatabaseInterface $connection
 	 * @param string $aliasText
@@ -129,7 +122,7 @@ class Util {
 	 *
 	 * @return string
 	 */
-	public static function getAlias(DatabaseInterface $connection, string $aliasText, string $tableName, $id = 0, $column = 'alias'): string
+	public static function getAlias(DatabaseInterface $connection, string $aliasText, string $tableName, int $id = 0, string $column = 'alias'): string
     {
 		$primaryKeyName = $connection->getPrimaryKey($tableName);
 

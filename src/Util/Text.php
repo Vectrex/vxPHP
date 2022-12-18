@@ -14,14 +14,14 @@ namespace vxPHP\Util;
  * text related utility functions
  *
  * @package vxPHP\Util
- * @version 0.3.0 2020-09-23
+ * @version 0.3.2 2022-06-12
  *
  * @author Gregor Kofler
  */
 class Text
 {
     /**
-     * convert an UTF-8 string to ASCII characters only
+     * convert a UTF-8 string to ASCII characters only
      * done by replacing a list of accented characters and umlauts
      * to their closest ASCII counterpart
      *
@@ -59,7 +59,7 @@ class Text
 
         // since strtr works with single bytes when replacing strings a conversion into an array is required
 
-        $from = strtr ($from, array_combine(preg_split('//u', $charsFrom, null, PREG_SPLIT_NO_EMPTY), str_split($charsTo)));
+        $from = strtr ($from, array_combine(preg_split('//u', $charsFrom, -1, PREG_SPLIT_NO_EMPTY), str_split($charsTo)));
 
         return preg_replace('/[^\x20-\x7f]/', '', $from);
     }
@@ -69,7 +69,7 @@ class Text
      * as identifier in database entries or paths
      * the input is trimmed, converted to lower case,
      * ASCII non-word characters are dropped, white spaces
-     * are converted to dashes, multiple dashes are reduced to one
+     * are converted to a dash, multiple dashes are reduced to one
      *
      * @param string $from
      * @return string

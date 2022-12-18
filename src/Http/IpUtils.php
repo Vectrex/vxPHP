@@ -23,7 +23,7 @@ namespace vxPHP\Http;
  */
 class IpUtils
 {
-    private static $checkedIps = [];
+    private static array $checkedIps = [];
 
     /**
      * This class should not be instantiated.
@@ -35,22 +35,24 @@ class IpUtils
     /**
      * Checks if an IPv4 or IPv6 address is contained in the list of given IPs or subnets.
      *
-     * @param string       $requestIp IP to check
-     * @param string|array $ips       List of IPs or subnets (can be a string if only a single one)
+     * @param string|null $requestIp IP to check
+     * @param string|array $ips List of IPs or subnets (can be a string if only a single one)
      *
      * @return bool Whether the IP is valid
      */
-    public static function checkIp($requestIp, $ips): bool
+    public static function checkIp(?string $requestIp, $ips): bool
     {
-        if (!\is_array($ips)) {
-            $ips = [$ips];
-        }
+        if ($requestIp) {
+            if (!\is_array($ips)) {
+                $ips = [$ips];
+            }
 
-        $method = substr_count($requestIp, ':') > 1 ? 'checkIp6' : 'checkIp4';
+            $method = substr_count($requestIp, ':') > 1 ? 'checkIp6' : 'checkIp4';
 
-        foreach ($ips as $ip) {
-            if (self::$method($requestIp, $ip)) {
-                return true;
+            foreach ($ips as $ip) {
+                if (self::$method($requestIp, $ip)) {
+                    return true;
+                }
             }
         }
 
@@ -66,7 +68,7 @@ class IpUtils
      *
      * @return bool Whether the request IP matches the IP, or whether the request IP is within the CIDR subnet
      */
-    public static function checkIp4($requestIp, $ip): bool
+    public static function checkIp4($requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {
@@ -114,7 +116,7 @@ class IpUtils
      *
      * @throws \RuntimeException When IPV6 support is not enabled
      */
-    public static function checkIp6($requestIp, $ip): bool
+    public static function checkIp6($requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {

@@ -26,5 +26,5 @@ interface SimpleTemplateFilterInterface
 	 *
 	 * @return void
 	 */
-	public function apply(&$templateString): void;
+	public function apply(string &$templateString): void;
 }

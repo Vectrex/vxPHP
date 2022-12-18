@@ -19,11 +19,11 @@ use vxPHP\Webpage\Menu\Menu;
  * must be authenticated by a route authenticator
  *
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.0, 2017-02-27
+ * @version 0.1.1, 2021-10-09
  *
  */
-interface MenuAuthenticatorInterface {
-
+interface MenuAuthenticatorInterface
+{
 	/**
 	 * checks whether user fulfills menu or menu entry authentication
 	 * requirements
@@ -35,6 +35,5 @@ interface MenuAuthenticatorInterface {
 	 * @param UserInterface $user
 	 * @return boolean user is authenticated to see the menu
 	 */
-	public function authenticate(Menu $menu, UserInterface $user);
-
+	public function authenticate(Menu $menu, UserInterface $user): bool;
 }

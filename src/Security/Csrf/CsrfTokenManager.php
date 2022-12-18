@@ -17,7 +17,7 @@ use vxPHP\Session\Session;
  * simple wrapper for CSRF token management
  *  
  * @author Gregor Kofler
- * @version 0.4.0 2020-11-27
+ * @version 0.4.1 2021-11-28
  */
 class CsrfTokenManager
 {
@@ -25,9 +25,9 @@ class CsrfTokenManager
 	/**
 	 * @var CsrfTokenSessionStorage
 	 */
-	private $storage;
+	private CsrfTokenSessionStorage $storage;
 	
-	private $tokenLength;
+	private int $tokenLength;
 
 	/**
 	 * create a CSRF provider by combining session storage with token generation
@@ -36,10 +36,10 @@ class CsrfTokenManager
 	 * 
 	 * @param integer $tokenLength
 	 */
-	public function __construct($tokenLength = 32)
+	public function __construct(int $tokenLength = 32)
     {
 		$this->storage = new CsrfTokenSessionStorage(Session::getSessionDataBag());
-		$this->tokenLength = (int) $tokenLength;
+		$this->tokenLength = $tokenLength;
 	}
 
     /**
@@ -60,7 +60,7 @@ class CsrfTokenManager
 
 		$token = new CsrfToken(
 			$tokenId,
-			$this->generateValue((int) $this->tokenLength)
+			$this->generateValue($this->tokenLength)
 		);
 
 		$this->storage->setToken($tokenId, $token);
@@ -84,7 +84,7 @@ class CsrfTokenManager
 
 		$token = new CsrfToken(
 			$tokenId,
-			$this->generateValue((int) $this->tokenLength)
+			$this->generateValue($this->tokenLength)
 		);
 
 		$this->storage->setToken($tokenId, $token);

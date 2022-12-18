@@ -11,10 +11,13 @@
 
 namespace vxPHP\Form\FormElement;
 
+use vxPHP\Application\Exception\ApplicationException;
+use vxPHP\Template\Exception\SimpleTemplateException;
+
 /**
  * generic input element
  *
- * @version 0.11.2 2021-04-28
+ * @version 0.11.3 2021-11-29
  * @author Gregor Kofler
  */
 class InputElement extends FormElement
@@ -39,7 +42,7 @@ class InputElement extends FormElement
 	 * @param string $type
 	 * @return \vxPHP\Form\FormElement\InputElement
 	 */
-	public function setType(string $type)
+	public function setType(string $type): InputElement
     {
 		if(empty($type)) {
 			$type = 'text';
@@ -54,10 +57,10 @@ class InputElement extends FormElement
 	 * @see \vxPHP\Form\FormElement\FormElement::render()
      * @param bool $force
      * @return string
-     * @throws \vxPHP\Application\Exception\ApplicationException
-     * @throws \vxPHP\Template\Exception\SimpleTemplateException
+     * @throws ApplicationException
+     * @throws SimpleTemplateException
 	 */
-	public function render($force = false): string
+	public function render(bool $force = false): string
     {
 		if(empty($this->html) || $force) {
 

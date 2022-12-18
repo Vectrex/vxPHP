@@ -24,15 +24,15 @@ namespace vxPHP\Http;
  */
 class ResponseHeaderBag extends HeaderBag
 {
-    const COOKIES_FLAT = 'flat';
-    const COOKIES_ARRAY = 'array';
+    public const COOKIES_FLAT = 'flat';
+    public const COOKIES_ARRAY = 'array';
 
-    const DISPOSITION_ATTACHMENT = 'attachment';
-    const DISPOSITION_INLINE = 'inline';
+    public const DISPOSITION_ATTACHMENT = 'attachment';
+    public const DISPOSITION_INLINE = 'inline';
 
-    protected $computedCacheControl = [];
-    protected $cookies = [];
-    protected $headerNames = [];
+    protected array $computedCacheControl = [];
+    protected array $cookies = [];
+    protected array $headerNames = [];
 
     /**
      * Constructor.
@@ -81,7 +81,7 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
-    public function replace(array $headers = [])
+    public function replace(array $headers = []): void
     {
         $this->headerNames = [];
 
@@ -120,7 +120,7 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
-    public function set($key, $values, $replace = true)
+    public function set($key, $values, $replace = true): void
     {
         $uniqueKey = strtr($key, self::UPPER, self::LOWER);
 
@@ -151,7 +151,7 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
-    public function remove($key)
+    public function remove(string $key): void
     {
         $uniqueKey = strtr($key, self::UPPER, self::LOWER);
         unset($this->headerNames[$uniqueKey]);
@@ -199,10 +199,10 @@ class ResponseHeaderBag extends HeaderBag
      * Removes a cookie from the array, but does not unset it in the browser.
      *
      * @param string $name
-     * @param string $path
-     * @param string $domain
+     * @param string|null $path
+     * @param string|null $domain
      */
-    public function removeCookie($name, $path = '/', $domain = null): void
+    public function removeCookie(string $name, ?string $path = '/', string $domain = null): void
     {
         if (null === $path) {
             $path = '/';
@@ -232,7 +232,7 @@ class ResponseHeaderBag extends HeaderBag
      *
      * @throws \InvalidArgumentException When the $format is invalid
      */
-    public function getCookies($format = self::COOKIES_FLAT): array
+    public function getCookies(string $format = self::COOKIES_FLAT): array
     {
         if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY], true)) {
             throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])));
@@ -259,11 +259,11 @@ class ResponseHeaderBag extends HeaderBag
      *
      * @param string $name
      * @param string $path
-     * @param string $domain
-     * @param bool   $secure
-     * @param bool   $httpOnly
+     * @param string|null $domain
+     * @param bool $secure
+     * @param bool $httpOnly
      */
-    public function clearCookie($name, $path = '/', $domain = null, $secure = false, $httpOnly = true/*, $sameSite = null*/): void
+    public function clearCookie(string $name, string $path = '/', string $domain = null, bool $secure = false, bool $httpOnly = true/*, $sameSite = null*/): void
     {
         $sameSite = \func_num_args() > 5 ? func_get_arg(5) : null;
         $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, $sameSite));

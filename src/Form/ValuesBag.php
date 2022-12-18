@@ -13,61 +13,57 @@ namespace vxPHP\Form;
 /**
  * ValuesBag is a container for key/value pairs for form values
  */
-class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
+class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess
+{
 	/**
 	 * the value
 	 * @var array
 	 */
-	protected $values;
+	protected array $values;
 
 	/**
 	 * Constructor
 	 * @param array $values
 	 */
-	public function __construct(array $values = array()) {
-
+	public function __construct(array $values = [])
+    {
 		$this->values = $values;
-
 	}
 
 	/**
 	 * returns all values
 	 * @return array
 	 */
-	public function all() {
-
+	public function all(): array
+    {
 		return $this->values;
-
 	}
 
 	/**
 	 * returns the values keys
 	 * @return array
 	 */
-	public function keys() {
-
+	public function keys(): array
+    {
 		return array_keys($this->values);
-
 	}
 
 	/**
 	 * replaces the current values with a new set
 	 * @param array $values
 	 */
-	public function replace(array $values = array()) {
-
+	public function replace(array $values = []): void
+    {
 		$this->values = $values;
-
 	}
 
 	/**
 	 * adds values to the existing ones
 	 * @param array $values
 	 */
-	public function add(array $values = array()) {
-
-		$this->values = array_replace($this->values, $values);
-
+	public function add(array $values = []): void
+    {
+    	$this->values = array_replace($this->values, $values);
 	}
 
 	/**
@@ -78,13 +74,10 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
 	 * @param mixed $default
 	 *
 	 * @return mixed
-	 *
-	 * @throws \InvalidArgumentException
 	 */
-	public function get($key, $default = NULL) {
-
+	public function get(string $key, $default = null)
+    {
 		return array_key_exists($key, $this->values) ? $this->values[$key] : $default;
-
 	}
 
 	/**
@@ -93,10 +86,9 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
 	 * @param string $key
 	 * @param mixed  $value
 	 */
-	public function set($key, $value) {
-
+	public function set(string $key, $value): void
+    {
 		$this->values[$key] = $value;
-
 	}
 
 	/**
@@ -105,10 +97,9 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
 	 * @param string $key
 	 * @return Boolean
 	 */
-	public function has($key) {
-
+	public function has(string $key): bool
+    {
 		return array_key_exists($key, $this->values);
-
 	}
 
 	/**
@@ -116,20 +107,18 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
 	 * 
 	 * @param string $key
 	 */
-	public function remove($key) {
-
+	public function remove(string $key): void
+    {
 		unset($this->values[$key]);
-
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * @see IteratorAggregate::getIterator()
 	 */
-	public function getIterator() {
-
+	public function getIterator(): \ArrayIterator
+    {
 		return new \ArrayIterator($this->values);
-
 	}
 
 	/**
@@ -137,53 +126,48 @@ class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess {
 	 * {@inheritDoc}
 	 * @see Countable::count()
 	 */
-	public function count() {
-
+	public function count(): int
+    {
 		return count($this->values);
-
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 * @see ArrayAccess::offsetSet()
 	 */
-	public function offsetSet($offset, $value) {
-
+	public function offsetSet($offset, $value): void
+    {
 		if (is_null($offset)) {
 			throw new \InvalidArgumentException('Invalid NULL offset. Only named offsets allowed.');
 		}
 		$this->values[$offset] = $value;
-
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 * @see ArrayAccess::offsetExists()
 	 */
-	public function offsetExists($offset) {
-
+	public function offsetExists($offset): bool
+    {
 		return isset($this->values[$offset]);
-
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 * @see ArrayAccess::offsetUnset()
 	 */
-	public function offsetUnset($offset) {
-
+	public function offsetUnset($offset): void
+    {
 		unset($this->values[$offset]);
-
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 * @see ArrayAccess::offsetGet()
 	 */
-	public function offsetGet($offset) {
-
-		return isset($this->values[$offset]) ? $this->values[$offset] : NULL;
-
+    #[\ReturnTypeWillChange]
+	public function offsetGet($offset)
+    {
+		return $this->values[$offset] ?? null;
 	}
-	
 }

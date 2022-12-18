@@ -29,12 +29,12 @@ class AcceptHeader
     /**
      * @var AcceptHeaderItem[]
      */
-    private $items = [];
+    private array $items = [];
 
     /**
      * @var bool
      */
-    private $sorted = true;
+    private bool $sorted = true;
 
     /**
      * @param AcceptHeaderItem[] $items
@@ -49,11 +49,11 @@ class AcceptHeader
     /**
      * Builds an AcceptHeader instance from a string.
      *
-     * @param string $headerValue
+     * @param string|null $headerValue
      *
      * @return self
      */
-    public static function fromString($headerValue): AcceptHeader
+    public static function fromString(?string $headerValue): AcceptHeader
     {
         $index = 0;
 
@@ -87,7 +87,7 @@ class AcceptHeader
      *
      * @return bool
      */
-    public function has($value): bool
+    public function has(string $value): bool
     {
         return isset($this->items[$value]);
     }
@@ -99,7 +99,7 @@ class AcceptHeader
      *
      * @return AcceptHeaderItem|null
      */
-    public function get($value): ?AcceptHeaderItem
+    public function get(string $value): ?AcceptHeaderItem
     {
         return $this->items[$value] ?? $this->items[explode('/', $value)[0].'/*'] ?? $this->items['*/*'] ?? $this->items['*'] ?? null;
     }
@@ -137,7 +137,7 @@ class AcceptHeader
      *
      * @return self
      */
-    public function filter($pattern): AcceptHeader
+    public function filter(string $pattern): AcceptHeader
     {
         return new self(array_filter($this->items, static function (AcceptHeaderItem $item) use ($pattern) {
             return preg_match($pattern, $item->getValue());
