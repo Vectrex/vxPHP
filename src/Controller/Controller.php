@@ -21,7 +21,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.0 2023-01-05
+ * @version 0.8.1 2023-05-18
  *
  */
 abstract class Controller
@@ -235,7 +235,10 @@ abstract class Controller
 	/**
 	 * the actual controller functionality implemented in the individual controllers
 	 *
-	 * @return Response|JsonResponse
+	 * @return Response
 	 */
-	abstract protected function execute();
+	protected function execute(): Response
+    {
+        return new Response();
+    }
 }
