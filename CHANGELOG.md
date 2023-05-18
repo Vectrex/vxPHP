@@ -1,3 +1,8 @@
+## 2.8.0
+- feat: added a dotenv reader
+- Session handler no longer enforces session handling via cookies
+- Controller classes no longer need to implement an execute method
+
 ## 2.7.7
 - bug fix: Template\Filter::anchorHref() failed when a shortcut could not be matched with a menu entry
 - bug fix: Database\Adapter\MySQL ignored the keep_key_case option
