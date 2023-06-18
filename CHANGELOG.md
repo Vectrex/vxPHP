@@ -1,3 +1,6 @@
+## 2.8.2
+- quickfix: added missing defaults in typed properties in abstract PDO adapter
+
 ## 2.8.1
 - Abstract controller drops it rather pointless execute() method
 - fix: deleteRecord() with an array as key identifier failed

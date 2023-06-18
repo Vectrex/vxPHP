@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.15.1, 2023-06-18
+ * @version 0.15.2, 2023-06-18
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -43,49 +43,49 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 * 
 	 * @var string|null
      */
-	protected ?string $host;
+	protected ?string $host = null;
 	
 	/**
 	 * port of database connection
 	 * 
 	 * @var int|null
      */
-	protected ?int $port;
+	protected ?int $port = null;
 	
 	/**
 	 * username for connection
 	 * 
 	 * @var string|null
      */
-	protected ?string $user;
+	protected ?string $user = null;
 	
 	/**
 	 * password of configured user
 	 * 
 	 * @var string|null
      */
-	protected ?string $password;
+	protected ?string $password = null;
 	
 	/**
 	 * name of database for connection
 	 * 
 	 * @var string|null
      */
-	protected ?string $dbname;
+	protected ?string $dbname = null;
 	
 	/**
 	 * charset to be used by connection
 	 * 
 	 * @var string|null
      */
-	protected ?string $charset;
+	protected ?string $charset = null;
 
     /**
      * DSN string
      *
      * @var string|null
      */
-    protected ?string $dsn;
+    protected ?string $dsn = null;
 
 	/**
 	 * holds the wrapped PDO connection
@@ -99,7 +99,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @var \PDOStatement|null
      */
-	protected ?\PDOStatement $statement;
+	protected ?\PDOStatement $statement = null;
 
     /**
      * column details of tables
