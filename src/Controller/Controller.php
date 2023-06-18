@@ -21,7 +21,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.1 2023-05-18
+ * @version 0.8.2 2023-06-18
  *
  */
 abstract class Controller
@@ -231,14 +231,4 @@ abstract class Controller
 		Response::create($content, $errorCode)->send();
 		exit();
 	}
-
-	/**
-	 * the actual controller functionality implemented in the individual controllers
-	 *
-	 * @return Response
-	 */
-	protected function execute(): Response
-    {
-        return new Response();
-    }
 }

@@ -1,3 +1,7 @@
+## 2.8.1
+- Abstract controller drops it rather pointless execute() method
+- fix: deleteRecord() with an array as key identifier failed
+
 ## 2.8.0
 - feat: added a dotenv reader
 - Session handler no longer enforces session handling via cookies
