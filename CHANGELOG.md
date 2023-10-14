@@ -1,3 +1,6 @@
+## 2.8.3
+- fix: Email::getMailer() can return null
+
 ## 2.8.2
 - quickfix: added missing defaults in typed properties in abstract PDO adapter
 
