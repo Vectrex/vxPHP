@@ -10,22 +10,11 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
-use vxPHP\Application\Config;
 use vxPHP\Application\Config\Parser\XmlParserInterface;
 use vxPHP\Application\Exception\ConfigException;
 
 class Binaries implements XmlParserInterface
 {
-    /**
-     * @var bool
-     */
-    private $isLocalhost;
-
-    public function __construct(Config $config)
-    {
-        $this->isLocalhost = $config->isLocalhost;
-    }
-
     /**
      * @param \DOMNode $node
      * @return \stdClass
@@ -34,16 +23,8 @@ class Binaries implements XmlParserInterface
     public function parse(\DOMNode $node): \stdClass
     {
         $binaries = new \stdClass;
-
-        $context = $this->isLocalhost ? 'local' : 'remote';
-
         $xpath = new \DOMXPath($node->ownerDocument);
-
-        $e = $xpath->query("executables[@context='$context']", $node);
-
-        if(!$e->length) {
-            $e = $xpath->query('executables', $node);
-        }
+        $e = $xpath->query('executables', $node);
 
         if($e->length) {
 

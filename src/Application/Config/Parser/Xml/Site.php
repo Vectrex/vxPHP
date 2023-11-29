@@ -10,11 +10,12 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
+use vxPHP\Application\Config\Parser\ParserTrait;
 use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Site implements XmlParserInterface
 {
-
+    use ParserTrait;
     /**
      * @param \DOMNode $node
      * @return \StdClass
@@ -47,7 +48,7 @@ class Site implements XmlParserInterface
                     }
                 }
             } else {
-                $site->$k = $v;
+                $site->$k = $this->parseNodeValue(trim($v));
             }
         }
 

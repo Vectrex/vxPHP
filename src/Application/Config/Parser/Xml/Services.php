@@ -10,11 +10,13 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
+use vxPHP\Application\Config\Parser\ParserTrait;
 use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Services implements XmlParserInterface
 {
+    use ParserTrait;
     /**
      * @param \DOMNode $node
      * @return array
@@ -51,7 +53,7 @@ class Services implements XmlParserInterface
             foreach($service->getElementsByTagName('parameter') as $parameter) {
 
                 $name = $parameter->getAttribute('name');
-                $value = $parameter->getAttribute('value');
+                $value = $this->parseAttributeValue(trim($parameter->getAttribute('value')));
 
                 if(!$name) {
                     throw new ConfigException(sprintf("A parameter for service '%s' has no name.", $id));

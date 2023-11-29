@@ -10,11 +10,13 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
+use vxPHP\Application\Config\Parser\ParserTrait;
 use vxPHP\Application\Exception\ConfigException;
 use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Mail implements XmlParserInterface
 {
+    use ParserTrait;
     /**
      * @param \DOMNode $node
      * @return \StdClass
@@ -36,7 +38,7 @@ class Mail implements XmlParserInterface
                 if($childNode->nodeType !== XML_ELEMENT_NODE) {
                     continue;
                 }
-                $mail->mailer->{$childNode->nodeName} = trim($childNode->nodeValue);
+                $mail->mailer->{$childNode->nodeName} = $this->parseNodeValue(trim($childNode->nodeValue));
             }
 
             if(!isset($mail->mailer->host)) {

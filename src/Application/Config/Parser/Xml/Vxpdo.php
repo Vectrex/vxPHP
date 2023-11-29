@@ -10,12 +10,14 @@
 
 namespace vxPHP\Application\Config\Parser\Xml;
 
+use vxPHP\Application\Config\Parser\ParserTrait;
 use vxPHP\Application\Exception\ConfigException;
 
 use vxPHP\Application\Config\Parser\XmlParserInterface;
 
 class Vxpdo implements XmlParserInterface
 {
+    use ParserTrait;
     /**
      * @param \DOMNode $node
      * @return \StdClass[]
@@ -50,7 +52,7 @@ class Vxpdo implements XmlParserInterface
                 }
 
                 if(array_key_exists($childNode->nodeName, $config)) {
-                    $config[$childNode->nodeName] = trim($childNode->nodeValue);
+                    $config[$childNode->nodeName] = $this->parseNodeValue(trim($childNode->nodeValue));
                 }
             }
 
