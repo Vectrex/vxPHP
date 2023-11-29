@@ -20,10 +20,11 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.6.0 2020-10-11
+ * @version 0.6.1 2023-10-14
  */
 
-class Email {
+class Email
+{
 	public const CRLF = "\r\n";
 
     /**
@@ -398,7 +399,7 @@ class Email {
 	 * 
 	 * @return MailerInterface
 	 */
-	public function getMailer(): MailerInterface
+	public function getMailer(): ?MailerInterface
     {
 		return $this->mailer;
 	}

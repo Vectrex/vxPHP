@@ -32,7 +32,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.7 2021-11-29
+ * @version 1.9.8 2023-01-22
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -74,10 +74,9 @@ class HtmlForm
 	/**
 	 * array holding all element instances assigned to form
 	 * 
-	 * @var FormElement[]
+	 * @var array
 	 */
 	private array $elements = [];
-
 
     /**
      * array that keeps counters for multiple elements with same name
@@ -88,9 +87,9 @@ class HtmlForm
 	/**
 	 * values with which form elements are initialized
 	 * 
-	 * @var array
-	 */
-	private $initFormValues;
+	 * @var array|null
+     */
+	private ?array $initFormValues;
 	
 	/**
 	 * array holding all errors evaluated by a validated form
@@ -313,7 +312,7 @@ class HtmlForm
      * @return HtmlForm
      * @throws HtmlFormException
      */
-	public function setAttribute($attr, $value): HtmlForm
+	public function setAttribute(string $attr, string $value): HtmlForm
     {
 		$attr = strtolower($attr);
 
@@ -1026,7 +1025,7 @@ class HtmlForm
 		}
 
 		foreach($fields as $f) {
-			if(preg_match_all('~<\s*a\s+href\s*=\s*(\\\\*"|\\\\*\')?http://~i', $this->requestValues->get($f), $tmp) > $threshold) {
+			if(preg_match_all('~<\s*a\s+href\s*=\s*(\\\\*"|\\\\*\')?http://~i', $this->requestValues->get($f)) > $threshold) {
 				return true;
 			}
 			if(preg_match('~\[\s*url.*?]~i', $this->requestValues->get($f))) {

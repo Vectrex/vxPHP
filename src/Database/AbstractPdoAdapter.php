@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.15.0, 2021-07-23
+ * @version 0.15.2, 2023-06-18
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -41,72 +41,72 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
     /**
 	 * host address of connection
 	 * 
-	 * @var string
-	 */
-	protected $host;
+	 * @var string|null
+     */
+	protected ?string $host = null;
 	
 	/**
 	 * port of database connection
 	 * 
-	 * @var int
-	 */
-	protected $port;
+	 * @var int|null
+     */
+	protected ?int $port = null;
 	
 	/**
 	 * username for connection
 	 * 
-	 * @var string
-	 */
-	protected $user;
+	 * @var string|null
+     */
+	protected ?string $user = null;
 	
 	/**
 	 * password of configured user
 	 * 
-	 * @var string
-	 */
-	protected $password;
+	 * @var string|null
+     */
+	protected ?string $password = null;
 	
 	/**
 	 * name of database for connection
 	 * 
-	 * @var string
-	 */
-	protected $dbname;
+	 * @var string|null
+     */
+	protected ?string $dbname = null;
 	
 	/**
 	 * charset to be used by connection
 	 * 
-	 * @var string
-	 */
-	protected $charset;
+	 * @var string|null
+     */
+	protected ?string $charset = null;
 
     /**
      * DSN string
      *
-     * @var string
+     * @var string|null
      */
-    protected $dsn;
+    protected ?string $dsn = null;
 
 	/**
 	 * holds the wrapped PDO connection
 	 * 
 	 * @var PDOConnection
 	 */
-	protected $connection;
+	protected PDOConnection $connection;
 
 	/**
 	 * holds last prepared or executed statement
 	 *
-	 * @var \PDOStatement
-	 */
-	protected $statement;
+	 * @var \PDOStatement|null
+     */
+	protected ?\PDOStatement $statement = null;
 
     /**
      * column details of tables
      *
      * @var array
      */
-    protected $tableStructureCache = [];
+    protected array $tableStructureCache = [];
 
     /**
 	 * automatically touch a lastUpdated column whenever
@@ -115,7 +115,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @var boolean
 	 */
-	protected $touchLastUpdated = true;
+	protected bool $touchLastUpdated = true;
 
 	/**
 	 *
@@ -742,7 +742,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 
             if(is_array($whereValue)) {
                 $where .=  sprintf(' IN (%s)', implode(',', array_fill(0, count($whereValue), '?')));
-                array_push ($whereValues, ...$whereValues);
+                array_push ($whereValues, ...$whereValue);
             }
             else {
                 $where .= ' = ?';

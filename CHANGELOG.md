@@ -1,3 +1,18 @@
+## 2.8.3
+- fix: Email::getMailer() can return null
+
+## 2.8.2
+- quickfix: added missing defaults in typed properties in abstract PDO adapter
+
+## 2.8.1
+- Abstract controller drops it rather pointless execute() method
+- fix: deleteRecord() with an array as key identifier failed
+
+## 2.8.0
+- feat: added a dotenv reader
+- Session handler no longer enforces session handling via cookies
+- Controller classes no longer need to implement an execute method
+
 ## 2.7.7
 - bug fix: Template\Filter::anchorHref() failed when a shortcut could not be matched with a menu entry
 - bug fix: Database\Adapter\MySQL ignored the keep_key_case option

@@ -17,7 +17,7 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.0 2022-06-10
+ * @version 0.2.1 2023-02-05
  *
  */
 class NativeSessionStorage
@@ -42,8 +42,6 @@ class NativeSessionStorage
 	 */
 	public function __construct()
     {
-		ini_set('session.use_cookies', 1);
-		
         session_register_shutdown();
 		$this->sessionDataBag = new SessionDataBag();
 		$this->setSaveHandler();
@@ -73,7 +71,6 @@ class NativeSessionStorage
 				if (headers_sent($file, $line)) {
 					throw new \RuntimeException(sprintf("Cannot start session. Headers have already been sent by file '%s' at line %d.", $file, $line));
 				}
-
 				if(!session_start()) {
 					throw new \RuntimeException('Session start failed.');
 				}
