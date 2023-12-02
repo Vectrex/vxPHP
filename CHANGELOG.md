@@ -1,3 +1,8 @@
+## 2.9.0
+- environment variables can now be accessed in the config XML with a `{$env(<varname>)}` expression
+- deprecated configuration parsers (db, pages) have been removed
+- Binaries configuration parser no longer observes context attribute
+
 ## 2.8.3
 - fix: Email::getMailer() can return null
 
