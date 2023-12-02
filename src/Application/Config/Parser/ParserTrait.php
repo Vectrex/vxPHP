@@ -4,19 +4,13 @@ namespace vxPHP\Application\Config\Parser;
 
 trait ParserTrait
 {
-    private static string $envRegex = '/\{\s*env\s*\(([^=]+)\)\s*\}/';
+    private static string $envRegex = '/\{\s*\$env\s*\(([^=(){}]+)\)\s*\}/';
     private function parseNodeValue ($value): string
     {
-        if (preg_match(self::$envRegex, $value, $matches)) {
-            return $matches[1];
-        }
-        return '';
+        return preg_replace_callback(self::$envRegex, static fn($match) => getenv(trim($match[1])) ?: '', $value);
     }
     private function parseAttributeValue ($value): string
     {
-        if (preg_match(self::$envRegex, $value, $matches)) {
-            return $matches[1];
-        }
-        return '';
+        return preg_replace_callback(self::$envRegex, static fn($match) => getenv(trim($match[1])) ?: '', $value);
     }
 }
