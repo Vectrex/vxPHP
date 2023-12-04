@@ -1,3 +1,6 @@
+## 2.9.1
+- added a AbstractPdoAdapter::getColumnNames() method to retrieve all column names of a given table
+
 ## 2.9.0
 - environment variables can now be accessed in the config XML with a `{$env(<varname>)}` expression
 - deprecated configuration parsers (db, pages) have been removed

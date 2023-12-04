@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  * queries and allow access to metadata of tables and columns
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.7.3, 2021-05-22
+ * @version 0.8.0, 2023-12-04
  *
  */
 interface DatabaseInterface
@@ -39,7 +39,7 @@ interface DatabaseInterface
 	 *
 	 * @return mixed
 	 */
-	public function insertRecord(string $tableName, array $rowData);
+	public function insertRecord(string $tableName, array $rowData): mixed;
 	
 	/**
 	 * insert several records in table $tableName
@@ -74,7 +74,7 @@ interface DatabaseInterface
 	 *
 	 * @return integer
 	 */
-	public function updateRecord(string $tableName, $keyValue, array $data): int;
+	public function updateRecord(string $tableName, mixed $keyValue, array $data): int;
 
 	/**
 	 * delete a record in table $tableName, identified by $keyValue
@@ -89,7 +89,7 @@ interface DatabaseInterface
 	 *
 	 * @return NULL|int
 	 */
-	public function deleteRecord(string $tableName, $keyValue): ?int;
+	public function deleteRecord(string $tableName, mixed $keyValue): ?int;
 
 	/**
 	 * wrap prepare(), execute() and fetchAll()
@@ -153,7 +153,15 @@ interface DatabaseInterface
 	 * @return boolean
 	 */
 	public function columnExists(string $tableName, string $columnName): bool;
-	
+
+    /**
+     * get all column names of a table
+     *
+     * @param string $tableName
+     * @return array
+     */
+    public function getColumnNames(string $tableName): array;
+
 	/**
 	 * get name(s) of primary key columns
 	 * returns
@@ -164,7 +172,7 @@ interface DatabaseInterface
 	 * @param string $tableName
 	 * @return mixed
 	 */
-	public function getPrimaryKey(string $tableName);
+	public function getPrimaryKey(string $tableName): mixed;
 
 	/**
 	 * get default value of a column, depending on adapter further
@@ -174,7 +182,7 @@ interface DatabaseInterface
 	 * @param string $columnName
 	 * @return mixed
 	 */
-	public function getColumnDefaultValue(string $tableName, string $columnName);
+	public function getColumnDefaultValue(string $tableName, string $columnName): mixed;
 
     /**
      * set connection of database class

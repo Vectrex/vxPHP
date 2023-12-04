@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.15.2, 2023-06-18
+ * @version 0.16.0, 2023-12-04
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -90,9 +90,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	/**
 	 * holds the wrapped PDO connection
 	 * 
-	 * @var PDOConnection
+	 * @var ConnectionInterface|null
 	 */
-	protected PDOConnection $connection;
+	protected ?ConnectionInterface $connection;
 
 	/**
 	 * holds last prepared or executed statement
@@ -125,7 +125,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 */
 	public function __construct(array $config, array $connectionAttributes = [])
     {
-		$config = array_change_key_case($config, CASE_LOWER);
+		$config = array_change_key_case($config);
 
 		if (isset($config['dsn'])) {
 		    $dsnData = $this->parseDsn($config['dsn']);
@@ -233,7 +233,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @throws \PDOException
 	 */
-	public function getPrimaryKey(string $tableName)
+	public function getPrimaryKey(string $tableName): mixed
     {
         // check whether table exists
 	
@@ -248,30 +248,23 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 		}
 	
 		$pkLength = count($this->tableStructureCache[$tableName]['_primaryKeyColumns']);
-	
-		switch ($pkLength) {
-			case 0:
-				return null;
-	
-			case 1:
-				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0];
-	
-			default:
-				return $this->tableStructureCache[$tableName]['_primaryKeyColumns'];
-		}
-	
+
+        return match ($pkLength) {
+            0 => null,
+            1 => $this->tableStructureCache[$tableName]['_primaryKeyColumns'][0],
+            default => $this->tableStructureCache[$tableName]['_primaryKeyColumns'],
+        };
 	}
 	
 	/**
-	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::getColumnDefaultValue()
 	 *
 	 * @throws \PDOException
 	 */
-	public function getColumnDefaultValue($tableName, $columnName) {
-	
-		// check whether column exists
+	public function getColumnDefaultValue($tableName, $columnName): mixed
+    {
+	    // check whether column exists
 	
 		if(!$this->columnExists($tableName, $columnName)) {
 			throw new \PDOException(sprintf("Unknown column '%s' in table '%s'.", $columnName, $tableName));
@@ -279,8 +272,20 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	
 		return $this->tableStructureCache[$tableName][strtolower($columnName)]['columnDefault'];
 	}
-	
-	/**
+
+    /**
+     * {@inheritDoc}
+     * @see \vxPHP\Database\DatabaseInterface::getColumnNames()
+     */
+    public function getColumnNames(string $tableName): array
+    {
+        if(empty($this->tableStructureCache[$tableName])) {
+            $this->fillTableStructureCache($tableName);
+        }
+        return array_filter(array_keys($this->tableStructureCache[$tableName]), static fn($col) => $col !== '_primaryKeyColumns');
+    }
+
+    /**
 	 * 
 	 * {@inheritDoc}
 	 * @see \vxPHP\Database\DatabaseInterface::columnExists()
@@ -351,9 +356,9 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @throws \PDOException
 	 */
-	public function insertRecord(string $tableName, array $rowData)
+	public function insertRecord(string $tableName, array $rowData): mixed
     {
-        $rowData = array_change_key_case($rowData, CASE_LOWER);
+        $rowData = array_change_key_case($rowData);
 	
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
@@ -445,7 +450,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 
 		// get keys of first record, which determines which attributes will be written
 
-		$firstRow = array_change_key_case($firstRow, CASE_LOWER);
+		$firstRow = array_change_key_case($firstRow);
 		
 		// retrieve attributes of table 
 		
@@ -504,7 +509,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 
 			// remove any additional key-value pairs
 
-			$matchedRow = array_intersect_key(array_change_key_case($row, CASE_LOWER), $firstRow); 
+			$matchedRow = array_intersect_key(array_change_key_case($row), $firstRow);
 
 			if(count($matchedRow) !== count($firstRow)) {
 				throw new \InvalidArgumentException(sprintf("Attribute mismatch in row %d. Expected ['%s'], but found ['%s'].", $i, implode("', '", $names), implode("', '", array_keys($matchedRow))));
@@ -565,7 +570,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 */
 	public function updateRecord(string $tableName, $keyValue, array $data): int
     {
-		$data = array_change_key_case($data, CASE_LOWER);
+		$data = array_change_key_case($data);
 		
 		if(!$this->tableStructureCache || !array_key_exists($tableName, $this->tableStructureCache) || empty($this->tableStructureCache[$tableName])) {
 			$this->fillTableStructureCache($tableName);
@@ -638,7 +643,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 			
 			// record identified with one or more specific attributes
 
-			$keyValue = array_change_key_case($keyValue, CASE_LOWER);
+			$keyValue = array_change_key_case($keyValue);
 
 			$whereNames = []; 
 			$whereValues = [];
@@ -728,7 +733,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 
         // record identified with one or more specific attributes
 
-        $keyValue = array_change_key_case($keyValue, CASE_LOWER);
+        $keyValue = array_change_key_case($keyValue);
 
         $wheres = [];
         $whereValues = [];

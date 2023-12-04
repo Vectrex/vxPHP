@@ -10,7 +10,7 @@ class MysqlTest extends TestCase
     /**
      * @var Mysql
      */
-    private $mysql;
+    private Mysql $mysql;
 
     private const DSN = 'mysql:host=localhost;dbname=test_database';
     private const USER = 'test_user';
@@ -53,29 +53,40 @@ EOD;
         }
     }
 
-    public function testGetEnumValues ()
+    public function testGetColumnNames (): void
+    {
+        $this->assertEquals(
+            count(
+                array_diff(
+                    explode(' ', 'id enum_field varchar_field decimal_field datetime_field lastupdated firstcreated'),
+                    $this->mysql->getColumnNames(self::TEST_TABLE)
+                )
+            ),
+        0);
+    }
+    public function testGetEnumValues (): void
     {
         $this->assertEquals(['val1', 'val2', 'val3'], $this->mysql->getEnumValues(SELF::TEST_TABLE, 'enum_field'));
     }
 
-    public function testGetEnumValuesFromInvalidColumn ()
+    public function testGetEnumValuesFromInvalidColumn (): void
     {
         $this->expectException('PDOException');
         $this->mysql->getEnumValues(SELF::TEST_TABLE, 'foobar');
     }
 
-    public function testInsertRecordTableMismatch ()
+    public function testInsertRecordTableMismatch (): void
     {
         $this->expectException('PDOException');
         $this->mysql->insertRecord('foo', ['bar' => 'baz']);
     }
 
-    public function testInsertRecord ()
+    public function testInsertRecord (): void
     {
         $this->assertIsString($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'enum_field' => 'val1', 'varchar_field' => 'foo']));
     }
 
-    public function testInsertRecordsWithScalar ()
+    public function testInsertRecordsWithScalar (): void
     {
         $this->expectException('InvalidArgumentException');
         $rows = [
@@ -85,7 +96,7 @@ EOD;
         $this->mysql->insertRecords(self::TEST_TABLE, $rows);
     }
 
-    public function testInsertRecordsPartialColumnMismatch ()
+    public function testInsertRecordsPartialColumnMismatch (): void
     {
         $this->expectException('InvalidArgumentException');
         $rows = [
@@ -95,7 +106,7 @@ EOD;
         $this->mysql->insertRecords(self::TEST_TABLE, $rows);
     }
 
-    public function testInsertRecordsCompleteColumnMismatch ()
+    public function testInsertRecordsCompleteColumnMismatch (): void
     {
         $rows = [
             ['f1' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -104,7 +115,7 @@ EOD;
         $this->assertEquals(0, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
     }
 
-    public function testInsertRecords ()
+    public function testInsertRecords (): void
     {
         $rows = [
             ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -115,7 +126,7 @@ EOD;
         $this->assertEquals(3, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
     }
 
-    public function testInsertRecordsOrder ()
+    public function testInsertRecordsOrder (): void
     {
         $rows = [
             ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -124,14 +135,12 @@ EOD;
         ];
 
         $this->mysql->insertRecords(self::TEST_TABLE, $rows);
-
         foreach ($this->mysql->doPreparedQuery(sprintf('SELECT * FROM %s ORDER BY id', self::TEST_TABLE)) as $ndx => $row) {
             $this->assertEquals($rows[$ndx]['varchar_field'], $row['varchar_field']);
         }
     }
 
-
-    public function testInsertRecordFails ()
+    public function testInsertRecordFails (): void
     {
         $this->assertNull($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'a' => 'b']));
     }
