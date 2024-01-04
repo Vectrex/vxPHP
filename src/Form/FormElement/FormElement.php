@@ -20,7 +20,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.13.1 2021-11-29
+ * @version 0.13.2 2024-01-04
  * @author Gregor Kofler
  * 
  */
@@ -78,7 +78,7 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @var mixed
 	 */
-	protected $value;
+	protected mixed $value;
 	
 	/**
 	 * flag indicating that validators were passed
@@ -120,9 +120,9 @@ abstract class FormElement implements FormElementInterface
 	 * only name and an optional value are processed
 	 * 
 	 * @param string $name
-	 * @param mixed $value
+	 * @param mixed|null $value
 	 */
-	public function __construct(string $name, $value = null)
+	public function __construct(string $name, mixed $value = null)
     {
 		$this->name = $name;
 		$this->setValue($value);
@@ -145,7 +145,7 @@ abstract class FormElement implements FormElementInterface
 	 * 
 	 * @return string|array|null
 	 */
-	public function getValue()
+	public function getValue(): mixed
     {
 		return $this->value;
 	}
@@ -203,7 +203,7 @@ abstract class FormElement implements FormElementInterface
     /**
      * get label element
      *
-     * @return LabelElement
+     * @return LabelElement|null
      */
     public function getLabel(): ?LabelElement
     {
@@ -216,30 +216,30 @@ abstract class FormElement implements FormElementInterface
      * setting 'id' will update 'for' when a label element is assigned
 	 *  
 	 * @param string $attributeName
-	 * @param mixed $value
+	 * @param mixed $attributeValue
 	 * @return FormElement
 	 */
-	public function setAttribute(string $attributeName, $value): self
+	public function setAttribute(string $attributeName, $attributeValue): self
     {
 		$attributeName = strtolower($attributeName);
 
 		if($attributeName === 'value') {
-			return $this->setValue($value);
+			return $this->setValue($attributeValue);
 		}
 
 		if($attributeName === 'name') {
-			return $this->setName($value);
+			return $this->setName($attributeValue);
 		}
 
 		if($attributeName === 'id' && $this->label) {
-		    $this->label->setAttribute('for', $value);
+		    $this->label->setAttribute('for', $attributeValue);
         }
 
-		if(is_null($value)) {
+		if(is_null($attributeValue)) {
 			unset($this->attributes[$attributeName]);
 		}
 		else {
-			$this->attributes[$attributeName] = $value;
+			$this->attributes[$attributeName] = $attributeValue;
 		}
 		return $this;
 	}
@@ -312,7 +312,7 @@ abstract class FormElement implements FormElementInterface
 	 * @param mixed $validatingRule
 	 * @return FormElement
 	 */
-	public function addValidator($validatingRule): self
+	public function addValidator(mixed $validatingRule): self
     {
 		$this->validators[] = $validatingRule;
 		$this->valid = null;
@@ -333,7 +333,7 @@ abstract class FormElement implements FormElementInterface
 	}
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getValidationErrorMessage(): ?string
     {
@@ -363,7 +363,7 @@ abstract class FormElement implements FormElementInterface
 	 * @param mixed $modifier
 	 * @return FormElement
 	 */
-	public function addModifier($modifier): self
+	public function addModifier(mixed $modifier): self
     {
 		$this->modifiers[] = $modifier;
 		return $this;
@@ -415,27 +415,13 @@ abstract class FormElement implements FormElementInterface
 			}
 
 			else {
-				switch(strtolower($modifier)) {
-					case 'trim':
-                        $value = trim($value);
-						break;
-
-					case 'uppercase':
-                        $value = strtoupper($value);
-						break;
-	
-					case 'lowercase':
-                        $value = strtolower($value);
-						break;
-	
-					case 'strip_tags':
-                        $value = strip_tags($value);
-						break;
-	
-						// assume a regular expressions as fallback
-					default:
-                        $value = preg_replace($modifier, '', $value);
-				}
+                $value = match (strtolower($modifier)) {
+                    'trim' => trim($value),
+                    'uppercase' => strtoupper($value),
+                    'lowercase' => strtolower($value),
+                    'strip_tags' => strip_tags($value),
+                    default => preg_replace($modifier, '', $value),
+                };
 			}
 		}
 

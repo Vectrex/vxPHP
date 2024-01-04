@@ -1,3 +1,6 @@
+## 2.9.2
+- Fix: Form elements with a default value of null return null as their value instead of an empty string 
+
 ## 2.9.1
 - added a AbstractPdoAdapter::getColumnNames() method to retrieve all column names of a given table
 

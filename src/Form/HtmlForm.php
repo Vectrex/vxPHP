@@ -32,7 +32,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.8 2023-01-22
+ * @version 1.9.9 2024-01-04
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -513,7 +513,7 @@ class HtmlForm
 						continue;
 					}
 
-					$vals[$ndx] = $elem->getModifiedValue();
+					$vals[$ndx] = is_null($e->getValue()) ? null : $elem->getModifiedValue();
 				}
 
 				$tmp->set($name, $vals);
@@ -526,7 +526,7 @@ class HtmlForm
 				) {
 					continue;
 				}
-				$tmp->set($name, $e->getModifiedValue());
+				$tmp->set($name, is_null($e->getValue()) ? null : $e->getModifiedValue());
 			}
 		}
 
