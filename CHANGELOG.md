@@ -1,3 +1,6 @@
+## 2.9.3
+- DotEnvReader received a getKeysInFile() method which lists all keys in the parsed env file
+
 ## 2.9.2
 - Fix: Form elements with a default value of null return null as their value instead of an empty string 
 

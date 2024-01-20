@@ -16,7 +16,7 @@ namespace vxPHP\Application\Config;
  * heavily influenced by
  * https://github.com/devcoder-xyz/php-dotenv
  *
- * @version 0.1.0 2023-01-04
+ * @version 0.2.0 2024-01-20
  */
 class DotEnvReader
 {
@@ -24,6 +24,7 @@ class DotEnvReader
      * @var string path to env file
      */
     protected string $path;
+    protected array $keysInFile;
 
     /**
      * @param string $path
@@ -38,28 +39,43 @@ class DotEnvReader
         }
 
         $this->path = $path;
+        $this->keysInFile = [];
     }
 
     /**
      * read env file and process the lines
      *
-     * @return void
+     * @return DotEnvReader
      */
-    public function read (): void
+    public function read (): self
     {
+        $keys = [];
         foreach (file ($this->path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
             $line = trim($line);
-            if (!$line || strpos($line, '#') === 0) {
+            if (!$line || str_starts_with($line, '#')) {
                 continue;
             }
             [$key, $value] = preg_split('/\s*=\s*/', $line, 2);
             $value = $this->parseValue($value);
+            $keys[] = $key;
 
             if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
                 putenv(sprintf('%s=%s', $key, $value));
                 $_ENV[$key] = $_SERVER[$key] = $value;
             }
         }
+        $this->keysInFile = array_unique($keys);
+        return $this;
+    }
+
+    /**
+     * get all keys found in the parsed env file
+     *
+     * @return array
+     */
+    public function getKeysInFile (): array
+    {
+        return $this->keysInFile;
     }
 
     /**
@@ -68,7 +84,7 @@ class DotEnvReader
      * @param string $value
      * @return bool|string
      */
-    protected function parseValue (string $value)
+    protected function parseValue (string $value): bool|string
     {
         /*
          * check "booleans", i.e. unquoted true/false
@@ -80,7 +96,7 @@ class DotEnvReader
         /*
          * remove single or double quotes from quoted strings
          */
-        if (($value[0] === '"' && substr($value, -1) === '"') || ($value[0] === "'" && substr($value, -1) === "'")) {
+        if (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && substr($value, -1) === "'")) {
             return substr($value, 1, -1);
         }
 

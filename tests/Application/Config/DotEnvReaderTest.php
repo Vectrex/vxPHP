@@ -30,6 +30,36 @@ class DotEnvReaderTest extends TestCase
         $this->assertEquals('0', getenv('FALSE5'));
     }
 
+    public function testFoundKeys ()
+    {
+        $reader = (new DotEnvReader(__DIR__ . '/env/.env'));
+        $reader->read();
+        $this->assertEquals(array_diff([
+            'FALSE1',
+            'FALSE2',
+            'FALSE3',
+            'FALSE4',
+            'FALSE5',
+            'TRUE1',
+            'TRUE2',
+            'TRUE3',
+            'TRUE4',
+            'TRUE5',
+            'MYAPP_ENV',
+            'DATABASE_DNS',
+            'DATABASE_USER',
+            'DATABASE_PASSWORD',
+            'BOOLEAN_LITERAL',
+            'BOOLEAN_QUOTED',
+            'QUOTED1',
+            'QUOTED2',
+            'QUOTED3',
+            'QUOTED4',
+            'QUOTED5',
+            'QUOTED6',
+            'QUOTED7'], $reader->getKeysInFile()), []);
+    }
+
     public function testEnvPopulation ()
     {
         (new DotEnvReader(__DIR__ . '/env/.env'))->read();
