@@ -18,14 +18,14 @@ use vxPHP\Routing\Route;
 class Routes implements XmlParserInterface
 {
     /**
-     * @var \StdClass
+     * @var \StdClass|null
      */
-    protected $site;
+    protected ?\StdClass $site;
 
     /**
      * @var string
      */
-    protected $nodeName;
+    protected string $nodeName;
 
     /**
      * Parsing of routes requires a script name configured
@@ -50,8 +50,6 @@ class Routes implements XmlParserInterface
             throw new \RuntimeException('Cannot parse route configuration. Site configuration must be parsed first.');
         }
 
-        $routes = [];
-
         $scriptName = $node->getAttribute('script');
 
         if(!$scriptName) {
@@ -60,9 +58,7 @@ class Routes implements XmlParserInterface
 
         $redirect = $node->getAttribute('default_redirect');
 
-        if(!array_key_exists($scriptName, $routes)) {
-            $routes[$scriptName] = [];
-        }
+        $routes = [$scriptName => []];
 
         foreach($node->getElementsByTagName($this->nodeName) as $routeNode) {
 
@@ -92,7 +88,7 @@ class Routes implements XmlParserInterface
                     $parameters['controller'] = '\\Controller\\'. implode('\\', array_map('ucfirst', $namespaces)) . 'Controller';
                 }
                 else {
-                    throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", (string) $controller));
+                    throw new ConfigException(sprintf("Controller string '%s' cannot be parsed.", $controller));
                 }
             }
 

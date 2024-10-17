@@ -96,7 +96,7 @@ class DotEnvReader
         /*
          * remove single or double quotes from quoted strings
          */
-        if (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && substr($value, -1) === "'")) {
+        if (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && str_ends_with($value, "'"))) {
             return substr($value, 1, -1);
         }
 

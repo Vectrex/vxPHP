@@ -26,7 +26,7 @@ class Mail implements XmlParserInterface
     {
         $mail = new \StdClass;
 
-        if(($mailer = $node->getElementsByTagName('mailer')->item(0))) {
+        if($mailer = $node->getElementsByTagName('mailer')->item(0)) {
             $mail->mailer = new \stdClass;
 
             if(!($class = $mailer->getAttribute('class'))) {

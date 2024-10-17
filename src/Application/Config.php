@@ -418,17 +418,13 @@ class Config {
 
 		$fs = ini_get('upload_max_filesize');
 		$suffix = strtoupper(substr($fs, -1));
-		switch($suffix) {
-			case 'K':
-				$mult = 1024; break;
-			case 'M':
-				$mult = 1024*1024; break;
-			case 'G':
-				$mult = 1024*1024*1024; break;
-			default:
-				$mult = 0;
-		}
+        $multiplier = match ($suffix) {
+            'K' => 1024,
+            'M' => 1024 * 1024,
+            'G' => 1024 * 1024 * 1024,
+            default => 0,
+        };
 
-		$this->server['max_upload_filesize'] = $mult ? (float) (substr($fs, 0, -1)) * $mult : (int) $fs;
+		$this->server['max_upload_filesize'] = $multiplier ? (float) (substr($fs, 0, -1)) * $multiplier : (int) $fs;
 	}
 }

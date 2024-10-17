@@ -20,14 +20,14 @@ use vxPHP\Application\Config\Parser\XmlParserInterface;
 class Menus implements XmlParserInterface
 {
     /**
-     * @var array
+     * @var array|null
      */
-    private $routes;
+    private ?array $routes;
 
     /**
-     * @var \StdClass
+     * @var \StdClass|null
      */
-    private $site;
+    private ?\StdClass $site;
 
     public function __construct(Config $config)
     {
@@ -163,7 +163,7 @@ class Menus implements XmlParserInterface
                 // menu entry comes with a path attribute (which can also link an external resource)
 
                 if($path) {
-                    $local = strpos($path, '/') !== 0 && !preg_match('~^[a-z]+://~', $path);
+                    $local = !str_starts_with($path, '/') && !preg_match('~^[a-z]+://~', $path);
                     $e = new MenuEntry($path, $attributes, $local);
                 }
 
