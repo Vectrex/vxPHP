@@ -21,7 +21,7 @@ use vxPHP\Template\SimpleTemplate;
  * custom error handling and debugging functionality
  *
  * @author Gregor Kofler
- * @version 0.2.3 2022-11-24
+ * @version 0.2.4 2024-11-21
  */
 class ExceptionHandler
 {
@@ -112,12 +112,12 @@ class ExceptionHandler
     /**
      * generate simple formatted output of exception
      *
-     * @param \Exception $e
+     * @param \Throwable $e
      * @param integer $status
      *
      * @return string
      */
-    protected function decorateException(\Exception $e, int $status): string
+    protected function decorateException(\Throwable $e, int $status): string
     {
         $headerTpl = '
 		<!DOCTYPE html>

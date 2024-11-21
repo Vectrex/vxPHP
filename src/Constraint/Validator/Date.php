@@ -95,7 +95,7 @@ class Date extends AbstractConstraint
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value): bool
+	public function validate(mixed $value): bool
     {
 		$localeId = $this->locale->getLocaleId();
 

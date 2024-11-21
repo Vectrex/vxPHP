@@ -10,7 +10,7 @@
 
 namespace vxPHP\Controller;
 
-use vxPHP\Http\JsonResponse;
+use JetBrains\PhpStorm\NoReturn;
 use vxPHP\Http\Response;
 use vxPHP\Http\RedirectResponse;
 use vxPHP\Http\Request;
@@ -21,7 +21,7 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.2 2023-06-18
+ * @version 0.8.3 2024-11-21
  *
  */
 abstract class Controller
@@ -56,7 +56,7 @@ abstract class Controller
      * the controller
      *
      * @param Route|null $route
-     * @param array|null $parameters
+     * @param array $parameters
      */
 	public function __construct(Route $route = null, array $parameters = [])
     {
@@ -70,7 +70,7 @@ abstract class Controller
 	}
 
     /**
-     * @return Request
+     * @return Request|null
      */
     public function getRequest(): ?Request
     {
@@ -88,7 +88,7 @@ abstract class Controller
     }
 
     /**
-     * @return Route
+     * @return Route|null
      */
     public function getRoute(): ?Route
     {
@@ -160,15 +160,15 @@ abstract class Controller
      * @param Route $route
      * @param string $namespace
      * @param Request|null $request
-     * @param array|null $parameters
-     * @return \vxPHP\Controller\Controller
+     * @param array $parameters
+     * @return Controller
      */
 	public static function createControllerFromRoute(Route $route, string $namespace, Request $request = null, array $parameters = []): Controller
     {
 		$controllerClass = trim($namespace, '\\') . $route->getControllerClassName();
 
 		/**
-		 * @var Controller
+		 * @var Controller $instance
 		 */
 		$instance = new $controllerClass($route, $parameters); 
 
@@ -189,13 +189,12 @@ abstract class Controller
     /**
      * prepares and executes a Route::redirect
      *
-     * @param string destination page id
+     * @param string|null $url
      * @param array $queryParams
      * @param int $statusCode
      * @return RedirectResponse
-     * @throws \RuntimeException
      */
-	protected function redirect($url = null, array $queryParams = [], int $statusCode = 302): RedirectResponse
+	protected function redirect(string $url = null, array $queryParams = [], int $statusCode = 302): RedirectResponse
     {
 		if($url === null) {
 		    if (!$this->route) {
@@ -205,7 +204,7 @@ abstract class Controller
 		}
 
 		if($queryParams) {
-			$query = (strpos($url, '?') === false ? '?' : '&') . http_build_query($queryParams);
+			$query = (!str_contains($url, '?') ? '?' : '&') . http_build_query($queryParams);
 		}
 		else {
 			$query = '';
@@ -219,7 +218,8 @@ abstract class Controller
 	 *
 	 * @param int $errorCode
 	 */
-	protected function generateHttpError(int $errorCode = 404): void
+	#[NoReturn]
+    protected function generateHttpError(int $errorCode = 404): void
     {
 		$content =
             '<h1>' .

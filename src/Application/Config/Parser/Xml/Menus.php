@@ -137,7 +137,7 @@ class Menus implements XmlParserInterface
     {
         foreach($entries as $entry) {
 
-            if($entry->nodeType !== XML_ELEMENT_NODE || 'menuentry' !== $entry->nodeName) {
+            if($entry->nodeType !== XML_ELEMENT_NODE || !in_array($entry->nodeName, ['menuentry', 'menuentry_placeholder'])) {
                 continue;
             }
 

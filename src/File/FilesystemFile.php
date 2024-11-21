@@ -23,7 +23,7 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.3 2021-12-05
+ * @version 1.1.4 2024-11-21
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
@@ -289,7 +289,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($filename, $this->filename) !== 0
+                    !str_starts_with($filename, $this->filename)
 				) {
 					continue;
 				}
@@ -329,7 +329,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($fileinfo->getFilename(), $this->filename) !== 0
+                    !str_starts_with($fileinfo->getFilename(), $this->filename)
 				) {
 					continue;
 				}
@@ -349,9 +349,9 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 	/**
 	 * retrieve information about cached files
-	 * @return array|bool information
+	 * @return array|false information
 	 */
-	public function getCacheInfo()
+	public function getCacheInfo(): array|false
     {
 		if(($cachePath = $this->folder->getCachePath(true))) {
 			$size = 0;
@@ -362,7 +362,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 			foreach($di as $fileinfo) {
 				if(	$fileinfo->isDot() ||
 					!$fileinfo->isFile() ||
-					strpos($fileinfo->getFilename(), $this->filename) !== 0
+                    !str_starts_with($fileinfo->getFilename(), $this->filename)
 				) {
 					continue;
 				}

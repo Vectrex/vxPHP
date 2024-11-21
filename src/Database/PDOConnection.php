@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.12.2, 2020-11-27
+ * @version 1.12.3, 2024-11-21
  */
 class PDOConnection extends \PDO implements ConnectionInterface
 {
@@ -66,7 +66,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
     }
 
     /**
-     * @return string The datasource name associated to this connection
+     * @return string|null The datasource name associated to this connection
      */
     public function getName(): ?string
     {
@@ -76,7 +76,7 @@ class PDOConnection extends \PDO implements ConnectionInterface
     /**
      * get name of database of the wrapped connection
      *
-     * @return string
+     * @return string|null
      */
     public function getDbName(): ?string
     {

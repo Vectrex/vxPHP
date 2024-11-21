@@ -65,7 +65,7 @@ class Email extends AbstractConstraint
 	 *
 	 * @see \vxPHP\Constraint\AbstractConstraint::validate()
 	 */
-	public function validate($value): bool
+	public function validate(mixed $value): bool
     {
 		if(!preg_match($this->regExp, $value)) {
 			$this->setErrorMessage(sprintf("'%s' does not appear to be a valid email.", $value));

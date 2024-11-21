@@ -28,15 +28,15 @@ class Binaries implements XmlParserInterface
 
         if($e->length) {
 
-            $p = $e->item(0)->getElementsByTagName('path');
+            $p = $e->item(0)?->getElementsByTagName('path');
 
-            if(empty($p)) {
+            if($p === null) {
                 throw new ConfigException('Malformed "site.ini.xml"! Missing path for binaries.');
             }
 
             $binaries->path = rtrim($p->item(0)->nodeValue, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-            foreach($e->item(0)->getElementsByTagName('executable') as $v) {
+            foreach($e->item(0)?->getElementsByTagName('executable') as $v) {
 
                 if(!($id = $v->getAttribute('id'))) {
                     throw new ConfigException('Binary without id found.');

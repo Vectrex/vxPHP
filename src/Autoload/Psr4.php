@@ -94,13 +94,13 @@ class Psr4
 	 * add a base directory for a namespace prefix
 	 *
 	 * @param string $prefix
-	 * @param string|array $baseDirs: one or more base directories for the namespace prefix
+	 * @param array|string $baseDirs: one or more base directories for the namespace prefix
 	 * @param bool $prepend if true, prepend base directories to prefix instead of appending them;
 	 * this causes them to be searched first rather than last.
 	 *
 	 * @return void
 	 */
-	public function addPrefix(string $prefix, $baseDirs, bool $prepend = false): void
+	public function addPrefix(string $prefix, array|string $baseDirs, bool $prepend = false): void
     {
 		$baseDirs = (array) $baseDirs;
 		
@@ -217,7 +217,7 @@ class Psr4
 	 *
 	 * @return string|false
 	 */
-	public function loadClass (string $class)
+	public function loadClass (string $class): false|string
     {
 		// reset debug info
 
@@ -284,7 +284,7 @@ class Psr4
 	 *
 	 * @return false|string
      */
-	protected function loadFile(string $prefix, string $relativeClass)
+	protected function loadFile(string $prefix, string $relativeClass): false|string
     {
 		// any base directories for this namespace prefix?
 

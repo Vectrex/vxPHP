@@ -148,7 +148,7 @@ class Iban extends AbstractConstraint
 	 *
 	 * @see \vxPHP\Constraint\AbstractConstraint::validate()
 	 */
-	public function validate($value): bool
+	public function validate(mixed $value): bool
     {
 		$this->clearErrorMessage();
 

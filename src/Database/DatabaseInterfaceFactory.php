@@ -18,7 +18,7 @@ use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.6.0, 2021-07-21
+ * @version 0.6.1, 2024-11-21
  */
 class DatabaseInterfaceFactory
 {
@@ -42,14 +42,14 @@ class DatabaseInterfaceFactory
 	    if(!$type) {
 
 	        if(!isset($config['dsn'])) {
-	            throw new \Exception('No database type defined.');
+	            throw new \InvalidArgumentException('No database type defined.');
             }
 
             if(preg_match('/^([a-z0-9]+):/i', trim($config['dsn']), $matches)) {
                 $type = $matches[1];
             }
             else {
-                throw new \Exception('No driver found in DSN.');
+                throw new \InvalidArgumentException('No driver found in DSN.');
             }
 
         }
@@ -61,7 +61,7 @@ class DatabaseInterfaceFactory
 			// check whether Propel is available (assume Propel2)
 
             if(!class_exists('\\Propel\\Runtime\\Propel')) {
-                throw new \Exception('Propel is configured as driver for vxPDO but not available in this application.');
+                throw new \InvalidArgumentException('Propel is configured as driver for vxPDO but not available in this application.');
             }
 
             $serviceContainer = \Propel\Runtime\Propel::getServiceContainer();
@@ -77,7 +77,7 @@ class DatabaseInterfaceFactory
 
             if(!in_array($adapterName, ['mysql', 'pgsql'])) {
 
-                throw new \Exception(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $dsnName, $adapterName));
+                throw new \InvalidArgumentException(sprintf("vxPDO accepts only mysql and pgsql as established connection drivers. The configured Propel connection '%s' uses '%s'.", $dsnName, $adapterName));
 
 			}
 

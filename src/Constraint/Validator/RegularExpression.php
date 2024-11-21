@@ -49,7 +49,7 @@ class RegularExpression extends AbstractConstraint
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value): bool
+	public function validate(mixed $value): bool
     {
 		return (bool) preg_match($this->regExp, $value);
 	}

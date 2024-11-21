@@ -19,7 +19,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.2 2022-04-11
+ * @version 0.7.3 2024-11-21
  */
 
 class FilesystemFolder
@@ -54,7 +54,7 @@ class FilesystemFolder
      * the folder containing the current instance
 	 * @var FilesystemFolder|null|false
      */
-	private $parentFolder;
+	private FilesystemFolder|null|false $parentFolder;
 
     /**
      * get the filesystem folder instance belonging to a given path
@@ -192,7 +192,7 @@ class FilesystemFolder
     {
 		if($this->parentFolder === null || $force) {
 			
-			$parentPath = realpath($this->path . '..');
+			$parentPath = dirname($this->path);
 			
 			// flag parentFolder property, when $this is already the root folder
 			
@@ -225,13 +225,13 @@ class FilesystemFolder
 		return $this->cacheFound;
 	}
 
-	/**
-	 * checks whether a FilesystemFolder::CACHE_PATH subfolder
-	 * returns path to subfolder when folder exists, undefined otherwise
-	 *
-	 * @param boolean $force
-	 * @return string
-	 */
+    /**
+     * checks whether a FilesystemFolder::CACHE_PATH subfolder
+     * returns path to subfolder when folder exists, undefined otherwise
+     *
+     * @param boolean $force
+     * @return string|null
+     */
 	public function getCachePath(bool $force = false): ?string
     {
 		if($this->hasCache($force)) {
@@ -258,7 +258,7 @@ class FilesystemFolder
 		
 		// throw exception when $folderName cannot be established as subdirectory of current folder
 		
-		else if (strpos($path, $this->path) !== 0) {
+		else if (!str_starts_with($path, $this->path)) {
 			throw new FilesystemFolderException(sprintf("Folder %s cannot be created within folder %s.", $folderName, $this->path));
 		}
 		
@@ -377,7 +377,7 @@ class FilesystemFolder
      */
 	public function rename (string $to): FilesystemFolder
     {
-        if(strpos($to, DIRECTORY_SEPARATOR) !== false) {
+        if(str_contains($to, DIRECTORY_SEPARATOR)) {
             throw new FilesystemFolderException(sprintf("'%s' contains invalid characters.", $to));
         }
 
@@ -407,7 +407,7 @@ class FilesystemFolder
      */
     public function move (FilesystemFolder $destination): FilesystemFolder
     {
-        if(strpos($destination->getPath(), $this->path) === 0) {
+        if(str_starts_with($destination->getPath(), $this->path)) {
             throw new FilesystemFolderException('Folder cannot be moved into itself or a contained subfolder.');
         }
         $newPath = $destination->getPath() . basename($this->path);

@@ -65,7 +65,7 @@ class Ip extends AbstractConstraint
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	public function validate($value): bool
+	public function validate(mixed $value): bool
     {
 		if(!filter_var($value, FILTER_VALIDATE_IP, $this->flags)) {
 			$this->setErrorMessage(sprintf("'%s' does not appear to be a valid IP address.", $value));

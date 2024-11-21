@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.16.0, 2023-12-04
+ * @version 0.16.1, 2024-11-21
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -356,7 +356,7 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
 	 *
 	 * @throws \PDOException
 	 */
-	public function insertRecord(string $tableName, array $rowData): mixed
+	public function insertRecord(string $tableName, array $rowData): string|null|false
     {
         $rowData = array_change_key_case($rowData);
 	

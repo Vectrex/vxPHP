@@ -19,7 +19,7 @@ namespace vxPHP\File;
  * or alternative
  * 
  * @version 1.0 by Bartlomiej Pohl, 2008-09-24
- * @version 2.1.1 by Gregor Kofler, 2021-12-01
+ * @version 2.1.2 by Gregor Kofler, 2024-11-21
  * 
  * @author Bartlomiej Pohl <badek@gmx.de>
  * @author Gregor Kofler <info@gregorkofler.com>
@@ -1104,11 +1104,11 @@ class MimeTypeGetter {
 	 * extension the one determined by the array structure is returned;
 	 * returns an empty string if no match for the MIME type was found
 	 *
-	 * @param string
+	 * @param string $mime
 	 * @return string
 	 * 
 	 */
-	public static function getDefaultFileExtension($mime): string
+	public static function getDefaultFileExtension(string $mime): string
     {
 		if(!self::$mimeToExtension) {
 			self::$mimeToExtension = array_flip(self::$extensionToMime);

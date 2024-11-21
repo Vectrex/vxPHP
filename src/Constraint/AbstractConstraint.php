@@ -15,7 +15,7 @@ namespace vxPHP\Constraint;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.2.2, 2021-11-28
+ * @version 0.2.3, 2024-11-21
  */
 abstract class AbstractConstraint implements ConstraintInterface
 {
@@ -33,13 +33,13 @@ abstract class AbstractConstraint implements ConstraintInterface
 	 *
 	 * @see \vxPHP\Constraint\ConstraintInterface::validate()
 	 */
-	abstract public function validate($value): bool;
+	abstract public function validate(mixed $value): bool;
 
-	/**
-	 * get error message
-	 * 
-	 * @return string
-	 */
+    /**
+     * get error message
+     *
+     * @return string|null
+     */
 	public function getErrorMessage(): ?string
     {
 		return $this->errorMessage;
