@@ -9,32 +9,32 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\JsonResponse;
 
 class JsonResponseTest extends TestCase
 {
-    public function testConstructorEmptyCreatesJsonObject()
+    public function testConstructorEmptyCreatesJsonObject(): void
     {
         $response = new JsonResponse();
         $this->assertSame('{}', $response->getContent());
     }
 
-    public function testConstructorWithArrayCreatesJsonArray()
+    public function testConstructorWithArrayCreatesJsonArray(): void
     {
         $response = new JsonResponse([0, 1, 2, 3]);
         $this->assertSame('[0,1,2,3]', $response->getContent());
     }
 
-    public function testConstructorWithAssocArrayCreatesJsonObject()
+    public function testConstructorWithAssocArrayCreatesJsonObject(): void
     {
         $response = new JsonResponse(['foo' => 'bar']);
         $this->assertSame('{"foo":"bar"}', $response->getContent());
     }
 
-    public function testConstructorWithSimpleTypes()
+    public function testConstructorWithSimpleTypes(): void
     {
         $response = new JsonResponse('foo');
         $this->assertSame('"foo"', $response->getContent());
@@ -50,26 +50,26 @@ class JsonResponseTest extends TestCase
         $this->assertSame('true', $response->getContent());
     }
 
-    public function testConstructorWithCustomStatus()
+    public function testConstructorWithCustomStatus(): void
     {
         $response = new JsonResponse([], 202);
         $this->assertSame(202, $response->getStatusCode());
     }
 
-    public function testConstructorAddsContentTypeHeader()
+    public function testConstructorAddsContentTypeHeader(): void
     {
         $response = new JsonResponse();
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
     }
 
-    public function testConstructorWithCustomHeaders()
+    public function testConstructorWithCustomHeaders(): void
     {
         $response = new JsonResponse([], 200, ['ETag' => 'foo']);
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
         $this->assertSame('foo', $response->headers->get('ETag'));
     }
 
-    public function testConstructorWithCustomContentType()
+    public function testConstructorWithCustomContentType(): void
     {
         $headers = ['Content-Type' => 'application/vnd.acme.blog-v1+json'];
 
@@ -77,7 +77,7 @@ class JsonResponseTest extends TestCase
         $this->assertSame('application/vnd.acme.blog-v1+json', $response->headers->get('Content-Type'));
     }
 
-    public function testSetJson()
+    public function testSetJson(): void
     {
         $response = new JsonResponse('1', 200, [], true);
         $this->assertEquals('1', $response->getContent());
@@ -90,7 +90,7 @@ class JsonResponseTest extends TestCase
         $this->assertEquals('true', $response->getContent());
     }
 
-    public function testCreate()
+    public function testCreate(): void
     {
         $response = JsonResponse::create(['foo' => 'bar'], 204);
 
@@ -99,28 +99,28 @@ class JsonResponseTest extends TestCase
         $this->assertEquals(204, $response->getStatusCode());
     }
 
-    public function testStaticCreateEmptyJsonObject()
+    public function testStaticCreateEmptyJsonObject(): void
     {
         $response = JsonResponse::create();
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame('{}', $response->getContent());
     }
 
-    public function testStaticCreateJsonArray()
+    public function testStaticCreateJsonArray(): void
     {
         $response = JsonResponse::create([0, 1, 2, 3]);
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame('[0,1,2,3]', $response->getContent());
     }
 
-    public function testStaticCreateJsonObject()
+    public function testStaticCreateJsonObject(): void
     {
         $response = JsonResponse::create(['foo' => 'bar']);
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame('{"foo":"bar"}', $response->getContent());
     }
 
-    public function testStaticCreateWithSimpleTypes()
+    public function testStaticCreateWithSimpleTypes(): void
     {
         $response = JsonResponse::create('foo');
         $this->assertInstanceOf(JsonResponse::class, $response);
@@ -140,26 +140,26 @@ class JsonResponseTest extends TestCase
         $this->assertSame('true', $response->getContent());
     }
 
-    public function testStaticCreateWithCustomStatus()
+    public function testStaticCreateWithCustomStatus(): void
     {
         $response = JsonResponse::create([], 202);
         $this->assertSame(202, $response->getStatusCode());
     }
 
-    public function testStaticCreateAddsContentTypeHeader()
+    public function testStaticCreateAddsContentTypeHeader(): void
     {
         $response = JsonResponse::create();
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
     }
 
-    public function testStaticCreateWithCustomHeaders()
+    public function testStaticCreateWithCustomHeaders(): void
     {
         $response = JsonResponse::create([], 200, ['ETag' => 'foo']);
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
         $this->assertSame('foo', $response->headers->get('ETag'));
     }
 
-    public function testStaticCreateWithCustomContentType()
+    public function testStaticCreateWithCustomContentType(): void
     {
         $headers = ['Content-Type' => 'application/vnd.acme.blog-v1+json'];
 
@@ -167,21 +167,21 @@ class JsonResponseTest extends TestCase
         $this->assertSame('application/vnd.acme.blog-v1+json', $response->headers->get('Content-Type'));
     }
 
-    public function testJsonEncodeFlags()
+    public function testJsonEncodeFlags(): void
     {
         $response = new JsonResponse('<>\'&"');
 
         $this->assertEquals('"\u003C\u003E\u0027\u0026\u0022"', $response->getContent());
     }
 
-    public function testGetEncodingOptions()
+    public function testGetEncodingOptions(): void
     {
         $response = new JsonResponse();
 
         $this->assertEquals(JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT, $response->getEncodingOptions());
     }
 
-    public function testSetEncodingOptions()
+    public function testSetEncodingOptions(): void
     {
         $response = new JsonResponse();
         $response->setData([[1, 2, 3]]);
@@ -193,19 +193,19 @@ class JsonResponseTest extends TestCase
         $this->assertEquals('{"0":{"0":1,"1":2,"2":3}}', $response->getContent());
     }
 
-    public function testItAcceptsJsonAsString()
+    public function testItAcceptsJsonAsString(): void
     {
         $response = JsonResponse::fromJsonString('{"foo":"bar"}');
         $this->assertSame('{"foo":"bar"}', $response->getContent());
     }
 
-    public function testSetContent()
+    public function testSetContent(): void
     {
         $this->expectException('InvalidArgumentException');
         JsonResponse::create("\xB1\x31");
     }
 
-    public function testSetContentJsonSerializeError()
+    public function testSetContentJsonSerializeError(): void
     {
         $this->expectException('Exception');
         $this->expectExceptionMessage('This error is expected');
@@ -223,7 +223,7 @@ if (interface_exists('JsonSerializable', false)) {
     class JsonSerializableObject implements \JsonSerializable
     {
         #[\ReturnTypeWillChange]
-        public function jsonSerialize()
+        public function jsonSerialize(): void
         {
             throw new \Exception('This error is expected');
         }

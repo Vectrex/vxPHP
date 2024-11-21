@@ -6,22 +6,21 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint;
+namespace Constraint\Validator;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Constraint\Validator\RegularExpression;
 
-class RegularExpressionTest extends TestCase {
-
-    public function testInvalidRegExp()
+class RegularExpressionTest extends TestCase
+{
+    public function testInvalidRegExp(): void
     {
 
         $this->expectException(\InvalidArgumentException::class);
         new RegularExpression('/^(/');
-
     }
 
-    public function testRegExpMatches()
+    public function testRegExpMatches(): void
     {
         $v = new RegularExpression('/^foo$/i');
 
@@ -32,7 +31,5 @@ class RegularExpressionTest extends TestCase {
 
         $this->assertTrue($v->validate('bar'));
         $this->assertFalse($v->validate('Bar'));
-
     }
-
 }

@@ -1,5 +1,6 @@
 <?php
-namespace vxPHP\Tests\Templating;
+
+namespace Templating;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Template\Exception\SimpleTemplateException;
@@ -7,7 +8,7 @@ use vxPHP\Template\SimpleTemplate;
 
 class SimpleTemplateTest extends TestCase
 {
-    public function testAssign()
+    public function testAssign(): void
     {
         $template = new SimpleTemplate();
         $template->setRawContents('<p><?= $this->date->format("Y-m-d") ?></p>');
@@ -18,7 +19,7 @@ class SimpleTemplateTest extends TestCase
         $this->assertEquals('A#B#C#A', $template->display([]));
     }
 
-    public function testAssignString()
+    public function testAssignString(): void
     {
         $template = new SimpleTemplate();
         $template->setRawContents('<div><?= $this->text ?></div>');
@@ -26,7 +27,7 @@ class SimpleTemplateTest extends TestCase
         $this->assertEquals('<div>&lt;p&gt;a &amp; o&lt;/p&gt;</div>', $template->display([]));
     }
 
-    public function testContainsPhp ()
+    public function testContainsPhp(): void
     {
         $template = new SimpleTemplate();
         $template->setRawContents('<p><?php echo "Check"; ?></p>');
@@ -37,7 +38,7 @@ class SimpleTemplateTest extends TestCase
         $this->assertFalse($template->containsPHP());
     }
 
-    public function testBlockPreceededByNonWhitespaceException ()
+    public function testBlockPreceededByNonWhitespaceException(): void
     {
         $this->expectException(SimpleTemplateException::class);
         $this->expectExceptionMessage('First extend directive preceeded by non-whitespace characters.');
@@ -46,7 +47,7 @@ class SimpleTemplateTest extends TestCase
         $template->setRawContents('<div><!-- {extend: parent.php@content }--></div>');
     }
 
-    public function testBlockMismatchException ()
+    public function testBlockMismatchException(): void
     {
         $this->expectException(SimpleTemplateException::class);
         $this->expectExceptionMessage('Mismatch of block markers and block contents. Block contents must not be empty.');
@@ -55,7 +56,7 @@ class SimpleTemplateTest extends TestCase
         $template->setRawContents('<!-- {extend: parent.php@content }--> ');
     }
 
-    public function testMultipleParentTemplateException ()
+    public function testMultipleParentTemplateException(): void
     {
         $this->expectException(SimpleTemplateException::class);
         $this->expectExceptionMessage('No support of multiple parent templates.');
@@ -64,14 +65,14 @@ class SimpleTemplateTest extends TestCase
         $template->setRawContents('<!-- {extend: parent.php@content }--><div></div><!-- {extend: other_parent.php@content }--><div></div>');
     }
 
-    public function testTemplateWithoutBlocks ()
+    public function testTemplateWithoutBlocks(): void
     {
         $template = new SimpleTemplate();
         $template->setRawContents("\n<h1>Foo</h1>\n");
         $this->assertEquals('<h1>Foo</h1>', $template->display([]));
     }
 
-    public function testGetParentTemplateName ()
+    public function testGetParentTemplateName(): void
     {
         $template = new SimpleTemplate();
         $template->setRawContents("\r\n<!-- {extend: parent.php@content }--><div>Foo</div>");
@@ -81,7 +82,7 @@ class SimpleTemplateTest extends TestCase
         $this->assertEquals('path_to/parent.php', $template->getParentTemplateFilename());
     }
 
-    public function testMultipleBlocksNotAllFilled ()
+    public function testMultipleBlocksNotAllFilled(): void
     {
         $parentTemplate = $this->createParentTplFile();
         $childTemplate = sprintf('<!-- { extend: %1$s @ header_block } -->
@@ -91,7 +92,7 @@ class SimpleTemplateTest extends TestCase
 
         $tpl = SimpleTemplate::create()->setRawContents($childTemplate);
 
-        $this->assertEquals( <<<EOD
+        $this->assertEquals(<<<EOD
 <head><title>Parent</title></head><body></body><header>
 <h1>header</h1>
 </header>
@@ -106,7 +107,7 @@ EOD,
         );
     }
 
-    public function testMultipleBlocks ()
+    public function testMultipleBlocks(): void
     {
         $parentTemplate = $this->createParentTplFile();
         $childTemplate = sprintf('<!-- { extend: %1$s @ header_block } -->
@@ -118,7 +119,7 @@ EOD,
 
         $tpl = SimpleTemplate::create()->setRawContents($childTemplate);
 
-        $this->assertEquals( <<<EOD
+        $this->assertEquals(<<<EOD
 <head><title>Parent</title></head><body></body><header>
 <h1>header</h1>
 </header>
@@ -133,7 +134,7 @@ EOD,
         );
     }
 
-    protected function createParentTplFile()
+    protected function createParentTplFile(): false|string
     {
         $parentTempFile = tempnam(sys_get_temp_dir() . '/tpl_test', 'parent');
         file_put_contents($parentTempFile, <<<EOD

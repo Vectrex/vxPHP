@@ -1,12 +1,14 @@
 <?php
-namespace vxPHP\Tests\Templating\Filter;
 
+namespace Templating\Filter;
+
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Template\Filter\Spaceless;
 
 class SpacelessTest extends TestCase
 {
-    public function templateSamples()
+    public static function templateSamples(): array
     {
         return [
             ['<foo> </foo>', '<foo> </foo>'],
@@ -35,10 +37,8 @@ class SpacelessTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider templateSamples
-     */
-    public function testApply($previous, $after)
+    #[DataProvider('templateSamples')]
+    public function testApply($previous, $after): void
     {
         (new Spaceless())->apply($previous);
         $this->assertEquals($after, $previous);

@@ -1,12 +1,13 @@
 <?php
-namespace vxPHP\Tests\Constraint;
+
+namespace Constraint\Validator;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Constraint\Validator\Time;
 
-class TimeTest extends TestCase {
-
-    protected $validTimes = [
+class TimeTest extends TestCase
+{
+    protected array $validTimes = [
         '1:0',
         '1:1',
         '1:1:1',
@@ -19,7 +20,7 @@ class TimeTest extends TestCase {
         ' 23:59:59 '
     ];
 
-    protected $invalidTimes = [
+    protected array $invalidTimes = [
         '0',
         '0:',
         '0:0:',
@@ -31,18 +32,18 @@ class TimeTest extends TestCase {
         '23:59:60'
     ];
 
-    public function testValidTimes()
+    public function testValidTimes(): void
     {
         $v = new Time();
-        foreach($this->validTimes as $value) {
+        foreach ($this->validTimes as $value) {
             $this->assertTrue($v->validate($value));
         }
     }
 
-    public function testInvalidTimes()
+    public function testInvalidTimes(): void
     {
         $v = new Time();
-        foreach($this->invalidTimes as $value) {
+        foreach ($this->invalidTimes as $value) {
             $this->assertFalse($v->validate($value));
         }
     }

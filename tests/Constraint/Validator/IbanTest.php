@@ -6,14 +6,17 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint;
+namespace Constraint\Validator;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use vxPHP\Constraint\Validator\Iban;
 use PHPUnit\Framework\TestCase;
 
-class IbanTest extends TestCase {
+class IbanTest extends TestCase
+{
 
-    public function getValidIbans() {
+    public static function getValidIbans(): array
+    {
         return [
             ['BE68844010370034'],
             ['MC1112739000700011111000H79'],
@@ -122,7 +125,8 @@ class IbanTest extends TestCase {
         ];
     }
 
-    public function getInvalidIbans () {
+    public static function getInvalidIbans(): array
+    {
         return [
             ['AT123'],
             ['AT1234567890123456789012345678901234567890'],
@@ -195,19 +199,17 @@ class IbanTest extends TestCase {
         ];
     }
 
-    /**
-     * @dataProvider getInvalidIbans
-     */
-    public function testInvalidIban($value) {
+    #[DataProvider('getInvalidIbans')]
+    public function testInvalidIban($value): void
+    {
 
         $this->assertFalse((new Iban())->validate($value), sprintf("Invalid '%s' did validate.", $value));
 
     }
 
-    /**
-     * @dataProvider getValidIbans
-     */
-    public function testValidIban($value) {
+    #[DataProvider('getValidIbans')]
+    public function testValidIban($value): void
+    {
 
         $this->assertTrue((new Iban())->validate($value), sprintf("Valid '%s' did not validate.", $value));
 

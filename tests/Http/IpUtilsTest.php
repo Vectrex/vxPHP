@@ -9,22 +9,21 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\IpUtils;
 
 class IpUtilsTest extends TestCase
 {
-    /**
-     * @dataProvider getIpv4Data
-     */
-    public function testIpv4($matches, $remoteAddr, $cidr)
+    #[DataProvider('getIpv4Data')]
+    public function testIpv4($matches, $remoteAddr, $cidr): void
     {
         $this->assertSame($matches, IpUtils::checkIp($remoteAddr, $cidr));
     }
 
-    public function getIpv4Data()
+    public static function getIpv4Data(): array
     {
         return [
             [true, '192.168.1.1', '192.168.1.1'],
@@ -42,10 +41,8 @@ class IpUtilsTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider getIpv6Data
-     */
-    public function testIpv6($matches, $remoteAddr, $cidr)
+    #[DataProvider('getIpv6Data')]
+    public function testIpv6($matches, $remoteAddr, $cidr): void
     {
         if (!\defined('AF_INET6')) {
             $this->markTestSkipped('Only works when PHP is compiled without the option "disable-ipv6".');
@@ -54,7 +51,7 @@ class IpUtilsTest extends TestCase
         $this->assertSame($matches, IpUtils::checkIp($remoteAddr, $cidr));
     }
 
-    public function getIpv6Data()
+    public static function getIpv6Data(): array
     {
         return [
             [true, '2a01:198:603:0:396e:4789:8e99:890f', '2a01:198:603:0::/65'],
@@ -75,7 +72,7 @@ class IpUtilsTest extends TestCase
     /**
      * @requires extension sockets
      */
-    public function testAnIpv6WithOptionDisabledIpv6()
+    public function testAnIpv6WithOptionDisabledIpv6(): void
     {
         $this->expectException('RuntimeException');
         if (\defined('AF_INET6')) {
@@ -85,15 +82,13 @@ class IpUtilsTest extends TestCase
         IpUtils::checkIp('2a01:198:603:0:396e:4789:8e99:890f', '2a01:198:603:0::/65');
     }
 
-    /**
-     * @dataProvider invalidIpAddressData
-     */
-    public function testInvalidIpAddressesDoNotMatch($requestIp, $proxyIp)
+    #[DataProvider('invalidIpAddressData')]
+    public function testInvalidIpAddressesDoNotMatch($requestIp, $proxyIp): void
     {
         $this->assertFalse(IpUtils::checkIp4($requestIp, $proxyIp));
     }
 
-    public function invalidIpAddressData()
+    public static function invalidIpAddressData(): array
     {
         return [
             'invalid proxy wildcard' => ['192.168.20.13', '*'],
@@ -102,15 +97,13 @@ class IpUtilsTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider anonymizedIpData
-     */
-    public function testAnonymize($ip, $expected)
+    #[DataProvider('anonymizedIpData')]
+    public function testAnonymize($ip, $expected): void
     {
         $this->assertSame($expected, IpUtils::anonymize($ip));
     }
 
-    public function anonymizedIpData()
+    public static function anonymizedIpData(): array
     {
         return [
             ['192.168.1.1', '192.168.1.0'],

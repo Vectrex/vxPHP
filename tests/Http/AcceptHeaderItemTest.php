@@ -9,24 +9,23 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\AcceptHeaderItem;
 
 class AcceptHeaderItemTest extends TestCase
 {
-    /**
-     * @dataProvider provideFromStringData
-     */
-    public function testFromString($string, $value, array $attributes)
+    #[DataProvider('provideFromStringData')]
+    public function testFromString($string, $value, array $attributes): void
     {
         $item = AcceptHeaderItem::fromString($string);
         $this->assertEquals($value, $item->getValue());
         $this->assertEquals($attributes, $item->getAttributes());
     }
 
-    public function provideFromStringData()
+    public static function provideFromStringData(): array
     {
         return [
             [
@@ -48,16 +47,14 @@ class AcceptHeaderItemTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideToStringData
-     */
-    public function testToString($value, array $attributes, $string)
+    #[DataProvider('provideToStringData')]
+    public function testToString($value, array $attributes, $string): void
     {
         $item = new AcceptHeaderItem($value, $attributes);
-        $this->assertEquals($string, (string) $item);
+        $this->assertEquals($string, (string)$item);
     }
 
-    public function provideToStringData()
+    public static function provideToStringData(): array
     {
         return [
             [
@@ -71,7 +68,7 @@ class AcceptHeaderItemTest extends TestCase
         ];
     }
 
-    public function testValue()
+    public function testValue(): void
     {
         $item = new AcceptHeaderItem('value', []);
         $this->assertEquals('value', $item->getValue());
@@ -83,7 +80,7 @@ class AcceptHeaderItemTest extends TestCase
         $this->assertEquals('1', $item->getValue());
     }
 
-    public function testQuality()
+    public function testQuality(): void
     {
         $item = new AcceptHeaderItem('value', []);
         $this->assertEquals(1.0, $item->getQuality());
@@ -96,7 +93,7 @@ class AcceptHeaderItemTest extends TestCase
         $this->assertFalse($item->hasAttribute('q'));
     }
 
-    public function testAttribute()
+    public function testAttribute(): void
     {
         $item = new AcceptHeaderItem('value', []);
         $this->assertEquals([], $item->getAttributes());

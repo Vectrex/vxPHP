@@ -1,13 +1,14 @@
 <?php
 
-namespace vxPHP\Tests\Util;
+namespace Util;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use vxPHP\Util\Text;
 use PHPUnit\Framework\TestCase;
 
 class TextTest extends TestCase
 {
-    public function toAsciiStrings ()
+    public static function toAsciiStrings(): array
     {
         return [
             [
@@ -33,7 +34,7 @@ class TextTest extends TestCase
         ];
     }
 
-    public function toAliasStrings ()
+    public static function toAliasStrings(): array
     {
         return [
             [
@@ -67,7 +68,7 @@ class TextTest extends TestCase
         ];
     }
 
-    public function toSanitizedFilenameStrings ()
+    public static function toSanitizedFilenameStrings(): array
     {
         return [
             [
@@ -97,26 +98,20 @@ class TextTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider toAsciiStrings
-     */
-    public function testToAscii ($from, $to)
+    #[DataProvider('toAsciiStrings')]
+    public function testToAscii($from, $to): void
     {
         $this->assertEquals($to, Text::toAscii($from));
     }
 
-    /**
-     * @dataProvider toAliasStrings
-     */
-    public function testToAlias ($from, $to)
+    #[DataProvider('toAliasStrings')]
+    public function testToAlias($from, $to): void
     {
         $this->assertEquals($to, Text::toAlias($from));
     }
 
-    /**
-     * @dataProvider toSanitizedFilenameStrings
-     */
-    public function testToSanitizedFilename ($from, $to)
+    #[DataProvider('toSanitizedFilenameStrings')]
+    public function testToSanitizedFilename($from, $to): void
     {
         $this->assertEquals($to, Text::toSanitizedFilename($from));
     }

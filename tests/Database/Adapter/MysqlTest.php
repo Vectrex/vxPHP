@@ -45,48 +45,45 @@ EOD;
             $this->mysql = new Mysql(['dsn' => self::DSN, 'user' => self::USER, 'password' => self::PASS]);
             $this->mysql->execute(sprintf('DROP TABLE IF EXISTS `%s`', self::TEST_TABLE));
             $this->mysql->execute(sprintf(self::DDL, self::TEST_TABLE));
-        }
-        catch (\PDOException $e) {
+        } catch (\PDOException $e) {
             $this->markTestSkipped(
                 'Could not establish MySQL and/or generate test tables connection: ' . $e->getMessage()
             );
         }
     }
 
-    public function testGetColumnNames (): void
+    public function testGetColumnNames(): void
     {
-        $this->assertEquals(
-            count(
-                array_diff(
-                    explode(' ', 'id enum_field varchar_field decimal_field datetime_field lastupdated firstcreated'),
-                    $this->mysql->getColumnNames(self::TEST_TABLE)
-                )
-            ),
-        0);
-    }
-    public function testGetEnumValues (): void
-    {
-        $this->assertEquals(['val1', 'val2', 'val3'], $this->mysql->getEnumValues(SELF::TEST_TABLE, 'enum_field'));
+        $this->assertCount(
+            0, array_diff(
+            explode(' ', 'id enum_field varchar_field decimal_field datetime_field lastupdated firstcreated'),
+            $this->mysql->getColumnNames(self::TEST_TABLE)
+        ));
     }
 
-    public function testGetEnumValuesFromInvalidColumn (): void
+    public function testGetEnumValues(): void
+    {
+        $this->assertEquals(['val1', 'val2', 'val3'], $this->mysql->getEnumValues(self::TEST_TABLE, 'enum_field'));
+    }
+
+    public function testGetEnumValuesFromInvalidColumn(): void
     {
         $this->expectException('PDOException');
-        $this->mysql->getEnumValues(SELF::TEST_TABLE, 'foobar');
+        $this->mysql->getEnumValues(self::TEST_TABLE, 'foobar');
     }
 
-    public function testInsertRecordTableMismatch (): void
+    public function testInsertRecordTableMismatch(): void
     {
         $this->expectException('PDOException');
         $this->mysql->insertRecord('foo', ['bar' => 'baz']);
     }
 
-    public function testInsertRecord (): void
+    public function testInsertRecord(): void
     {
         $this->assertIsString($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'enum_field' => 'val1', 'varchar_field' => 'foo']));
     }
 
-    public function testInsertRecordsWithScalar (): void
+    public function testInsertRecordsWithScalar(): void
     {
         $this->expectException('InvalidArgumentException');
         $rows = [
@@ -96,7 +93,7 @@ EOD;
         $this->mysql->insertRecords(self::TEST_TABLE, $rows);
     }
 
-    public function testInsertRecordsPartialColumnMismatch (): void
+    public function testInsertRecordsPartialColumnMismatch(): void
     {
         $this->expectException('InvalidArgumentException');
         $rows = [
@@ -106,7 +103,7 @@ EOD;
         $this->mysql->insertRecords(self::TEST_TABLE, $rows);
     }
 
-    public function testInsertRecordsCompleteColumnMismatch (): void
+    public function testInsertRecordsCompleteColumnMismatch(): void
     {
         $rows = [
             ['f1' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -115,7 +112,7 @@ EOD;
         $this->assertEquals(0, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
     }
 
-    public function testInsertRecords (): void
+    public function testInsertRecords(): void
     {
         $rows = [
             ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -126,7 +123,7 @@ EOD;
         $this->assertEquals(3, $this->mysql->insertRecords(self::TEST_TABLE, $rows));
     }
 
-    public function testInsertRecordsOrder (): void
+    public function testInsertRecordsOrder(): void
     {
         $rows = [
             ['varchar_field' => 'a', 'f2' => 'b', 'f3' => 'c'],
@@ -140,7 +137,7 @@ EOD;
         }
     }
 
-    public function testInsertRecordFails (): void
+    public function testInsertRecordFails(): void
     {
         $this->assertNull($this->mysql->insertRecord(self::TEST_TABLE, ['foo' => 'bar', 'a' => 'b']));
     }

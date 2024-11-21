@@ -6,22 +6,22 @@
  * Time: 21:36
  */
 
-namespace vxPHP\Tests\Constraint;
+namespace Constraint\Validator;
 
 use vxPHP\Constraint\Validator\Ip;
 use PHPUnit\Framework\TestCase;
 
-class IpTest extends TestCase {
-
-    protected $invalidIpV4 = [
+class IpTest extends TestCase
+{
+    protected array $invalidIpV4 = [
         '0', '0.0', '0.0.0', '0.0.0.0.0', '256.0.0.0', '0.256.0.0', '0.0.256.0', '0.0.0.256', '-1.0.0.0', 'dummytext'
     ];
 
-    protected $validIpV4 = [
+    protected array $validIpV4 = [
         '0.0.0.0', '10.0.0.0', '123.45.67.89', '98.76.54.32', '192.168.0.1', '127.0.0.1', '255.255.255.255'
     ];
 
-    protected $validIpV6 = [
+    protected array $validIpV6 = [
         '1200:0000:AB00:1234:0000:2552:7777:1313',
         '21DA:D3:0:2F3B:2AA:FF:FE28:9C5A',
         '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
@@ -44,57 +44,63 @@ class IpTest extends TestCase {
         '::123.45.67.178',
     ];
 
-    protected $invalidIpV6 = [
+    protected array $invalidIpV6 = [
         '42540766414390830568948465903729639425',
     ];
 
-    public function testInvalidIpV4() {
+    public function testInvalidIpV4(): void
+    {
 
         $v = new Ip('v4');
 
-        foreach($this->invalidIpV4 as $test) {
+        foreach ($this->invalidIpV4 as $test) {
             $this->assertFalse($v->validate($test));
         }
 
     }
 
-    public function testValidIpV4() {
+    public function testValidIpV4(): void
+    {
 
         $v = new Ip('v4');
 
-        foreach($this->validIpV4 as $test) {
+        foreach ($this->validIpV4 as $test) {
             $this->assertTrue($v->validate($test));
         }
 
     }
 
-    public function testNullIsInvalid() {
+    public function testNullIsInvalid(): void
+    {
 
         $this->assertFalse((new Ip())->validate(null));
 
     }
 
-    public function testEmptyStringIsInvalid() {
+    public function testEmptyStringIsInvalid(): void
+    {
 
         $this->assertFalse((new Ip())->validate(''));
 
     }
 
-    public function testValidIpV6() {
+    public function testValidIpV6(): void
+    {
 
         $v = new Ip('v6');
 
-        foreach($this->validIpV6 as $test) {
+        foreach ($this->validIpV6 as $test) {
             $this->assertTrue($v->validate($test));
         }
 
     }
 
-    public function testInvalidIpV6() {
+    public function testInvalidIpV6(): void
+    {
 
         $v = new Ip('v6');
 
-        foreach($this->invalidIpV6 as $test) {
+        foreach ($this->invalidIpV6 as $test) {
             $this->assertFalse($v->validate($test));
         }
 

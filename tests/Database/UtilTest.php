@@ -3,12 +3,13 @@
 
 namespace Database;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use vxPHP\Database\Util;
 use PHPUnit\Framework\TestCase;
 
 class UtilTest extends TestCase
 {
-    public function invalidDateStrings (): array
+    public static function invalidDateStrings(): array
     {
         return [
             [''],
@@ -18,7 +19,7 @@ class UtilTest extends TestCase
         ];
     }
 
-    public function validDateStrings (): array
+    public static function validDateStrings(): array
     {
         return [
             ['2022-04-01'],
@@ -28,7 +29,7 @@ class UtilTest extends TestCase
         ];
     }
 
-    public function datesWithLocales (): array
+    public static function datesWithLocales(): array
     {
         return [
             ['2000-3-1', 'iso', '2000-03-01'],
@@ -48,7 +49,7 @@ class UtilTest extends TestCase
         ];
     }
 
-    public function validDecimals (): array
+    public static function validDecimals(): array
     {
         return [
             ['+200.5', 200.5],
@@ -64,7 +65,7 @@ class UtilTest extends TestCase
         ];
     }
 
-    public function inValidDecimals (): array
+    public static function inValidDecimals(): array
     {
         return [
             ['+200.'],
@@ -76,10 +77,8 @@ class UtilTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider validDateStrings
-     */
-    public function testValidUnformatDateNoLocale ($ds)
+    #[DataProvider('validDateStrings')]
+    public function testValidUnformatDateNoLocale($ds): void
     {
         $d = (new \DateTime());
         $d->setDate(2022, 4, 1);
@@ -88,34 +87,26 @@ class UtilTest extends TestCase
         $this->assertEquals($dateStr, Util::unFormatDate($ds));
     }
 
-    /**
-     * @dataProvider invalidDateStrings
-     */
-    public function testInvalidUnformatDateNoLocale ($ds)
+    #[DataProvider('invalidDateStrings')]
+    public function testInvalidUnformatDateNoLocale($ds): void
     {
         $this->assertEquals('', Util::unFormatDate($ds));
     }
 
-    /**
-     * @dataProvider datesWithLocales
-     */
-    public function testUnformatDate($toCheck, $locale, $expected)
+    #[DataProvider('datesWithLocales')]
+    public function testUnformatDate($toCheck, $locale, $expected): void
     {
         $this->assertEquals($expected, Util::unFormatDate($toCheck, $locale));
     }
 
-    /**
-     * @dataProvider validDecimals
-     */
-    public function testUnformatDecimals($toCheck, $expected)
+    #[DataProvider('validDecimals')]
+    public function testUnformatDecimals($toCheck, $expected): void
     {
         $this->assertEquals($expected, Util::unFormatDecimal($toCheck));
     }
 
-    /**
-     * @dataProvider invalidDecimals
-     */
-    public function testUnformatInvalidDecimals($toCheck)
+    #[DataProvider('invalidDecimals')]
+    public function testUnformatInvalidDecimals($toCheck): void
     {
         $this->assertNan(Util::unFormatDecimal($toCheck));
     }

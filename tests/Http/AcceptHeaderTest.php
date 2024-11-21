@@ -9,24 +9,23 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\AcceptHeader;
 use vxPHP\Http\AcceptHeaderItem;
 
 class AcceptHeaderTest extends TestCase
 {
-    public function testFirst()
+    public function testFirst(): void
     {
         $header = AcceptHeader::fromString('text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c');
         $this->assertSame('text/html', $header->first()->getValue());
     }
 
-    /**
-     * @dataProvider provideFromStringData
-     */
-    public function testFromString($string, array $items)
+    #[DataProvider('provideFromStringData')]
+    public function testFromString($string, array $items): void
     {
         $header = AcceptHeader::fromString($string);
         $parsed = array_values($header->all());
@@ -37,7 +36,7 @@ class AcceptHeaderTest extends TestCase
         $this->assertEquals($items, $parsed);
     }
 
-    public function provideFromStringData()
+    public static function provideFromStringData(): array
     {
         return [
             ['', []],
@@ -48,16 +47,14 @@ class AcceptHeaderTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideToStringData
-     */
-    public function testToString(array $items, $string)
+    #[DataProvider('provideToStringData')]
+    public function testToString(array $items, $string): void
     {
         $header = new AcceptHeader($items);
-        $this->assertEquals($string, (string) $header);
+        $this->assertEquals($string, (string)$header);
     }
 
-    public function provideToStringData()
+    public static function provideToStringData(): array
     {
         return [
             [[], ''],
@@ -67,32 +64,28 @@ class AcceptHeaderTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideFilterData
-     */
-    public function testFilter($string, $filter, array $values)
+    #[DataProvider('provideFilterData')]
+    public function testFilter($string, $filter, array $values): void
     {
         $header = AcceptHeader::fromString($string)->filter($filter);
         $this->assertEquals($values, array_keys($header->all()));
     }
 
-    public function provideFilterData()
+    public static function provideFilterData(): array
     {
         return [
             ['fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4', '/fr.*/', ['fr-FR', 'fr']],
         ];
     }
 
-    /**
-     * @dataProvider provideSortingData
-     */
-    public function testSorting($string, array $values)
+    #[DataProvider('provideSortingData')]
+    public function testSorting($string, array $values): void
     {
         $header = AcceptHeader::fromString($string);
         $this->assertEquals($values, array_keys($header->all()));
     }
 
-    public function provideSortingData()
+    public static function provideSortingData(): array
     {
         return [
             'quality has priority' => ['*;q=0.3,ISO-8859-1,utf-8;q=0.7', ['ISO-8859-1', 'utf-8', '*']],
@@ -101,16 +94,14 @@ class AcceptHeaderTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideDefaultValueData
-     */
-    public function testDefaultValue($acceptHeader, $value, $expectedQuality)
+    #[DataProvider('provideDefaultValueData')]
+    public function testDefaultValue($acceptHeader, $value, $expectedQuality): void
     {
         $header = AcceptHeader::fromString($acceptHeader);
         $this->assertSame($expectedQuality, $header->get($value)->getQuality());
     }
 
-    public function provideDefaultValueData()
+    public static function provideDefaultValueData(): ?\Generator
     {
         yield ['text/plain;q=0.5, text/html, text/x-dvi;q=0.8, *;q=0.3', 'text/xml', 0.3];
         yield ['text/plain;q=0.5, text/html, text/x-dvi;q=0.8, */*;q=0.3', 'text/xml', 0.3];

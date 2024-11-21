@@ -1,6 +1,6 @@
 <?php
 
-namespace vxPHP\Tests\Routing;
+namespace Routing;
 
 use vxPHP\Http\Request;
 use vxPHP\Http\Response;
@@ -8,8 +8,9 @@ use vxPHP\Routing\Route;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Routing\Router;
 
-class RouteTest extends TestCase {
-    public function testConstructor()
+class RouteTest extends TestCase
+{
+    public function testConstructor(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertEquals('foo', $route->getRouteId());
@@ -21,19 +22,19 @@ class RouteTest extends TestCase {
         new Route('foo', 'index.php', ['requestMethods' => 'foo']);
     }
 
-    public function testConstructorWithPlaceHolders ()
+    public function testConstructorWithPlaceHolders(): void
     {
         $this->expectException('InvalidArgumentException');
         new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['match' => '[1-9][0-9]*']]]);
     }
 
-    public function testConstructorWithInvalidPlaceholderMatch ()
+    public function testConstructorWithInvalidPlaceholderMatch(): void
     {
         $this->expectException('InvalidArgumentException');
         new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9*']]]);
     }
 
-    public function testSetPathParameterValue ()
+    public function testSetPathParameterValue(): void
     {
         $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
         $route->setPathParameter('bar', '123');
@@ -42,14 +43,14 @@ class RouteTest extends TestCase {
         $route->setPathParameter('bar', 'abc');
     }
 
-    public function testSetPathParameterName ()
+    public function testSetPathParameterName(): void
     {
         $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
         $this->expectException('InvalidArgumentException');
         $route->setPathParameter('baz', '123');
     }
 
-    public function testGetPlaceholderByIndex ()
+    public function testGetPlaceholderByIndex(): void
     {
         $route = new Route('foo', 'index.php', ['path' => 'foo/{bar}/{baz}', 'placeholders' => [['name' => 'bar', 'match' => '[1-9][0-9]*']]]);
         $this->assertEquals('baz', $route->getPlaceHolderByIndex(1)['name']);
@@ -57,7 +58,7 @@ class RouteTest extends TestCase {
         $route->getPlaceHolderByIndex(2);
     }
 
-    public function testSetRequestMethods()
+    public function testSetRequestMethods(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertEquals(Route::KNOWN_REQUEST_METHODS, $route->getRequestMethods());
@@ -69,14 +70,14 @@ class RouteTest extends TestCase {
         $route->setRequestMethods(['foo']);
     }
 
-    public function testAllowsRequestMethod()
+    public function testAllowsRequestMethod(): void
     {
         $route = new Route('foo', 'index.php', ['requestMethods' => ['get', 'post']]);
         $this->assertTrue($route->allowsRequestMethod('get'));
         $this->assertFalse($route->allowsRequestMethod('delete'));
     }
 
-    public function testHasRelativePath()
+    public function testHasRelativePath(): void
     {
         $route = new Route('foo', 'index.php', ['path' => 'another/place']);
         $this->assertTrue($route->hasRelativePath());
@@ -84,7 +85,7 @@ class RouteTest extends TestCase {
         $this->assertFalse($route->hasRelativePath());
     }
 
-    public function testGetMatchExpression()
+    public function testGetMatchExpression(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertEquals('foo', $route->getMatchExpression()); // match is set to id
@@ -92,7 +93,7 @@ class RouteTest extends TestCase {
         $this->assertEquals('foo/bar', $route->getMatchExpression());
     }
 
-    public function testGetMethodName()
+    public function testGetMethodName(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertNull($route->getMethodName());
@@ -102,7 +103,8 @@ class RouteTest extends TestCase {
         $route->setMethodName('bar');
         $this->assertEquals('bar', $route->getMethodName());
     }
-    public function testGetControllerClassName()
+
+    public function testGetControllerClassName(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertNull($route->getControllerClassName());
@@ -113,7 +115,7 @@ class RouteTest extends TestCase {
         $this->assertEquals('bar', $route->getControllerClassName());
     }
 
-    public function testGetPlaceholderNames()
+    public function testGetPlaceholderNames(): void
     {
         $route = new Route('foo', 'index.php');
         $this->assertEquals([], $route->getPlaceholderNames());
@@ -121,7 +123,7 @@ class RouteTest extends TestCase {
         $this->assertEquals(['bar', 'baz'], $route->getPlaceholderNames());
     }
 
-    public function testGetPath()
+    public function testGetPath(): void
     {
         $route = new Route('foo', 'index.php', ['path' => '/another/place']);
         $this->assertEquals('another/place', $route->getPath());
@@ -129,7 +131,7 @@ class RouteTest extends TestCase {
         $this->assertEquals('another/place', $route->getPath());
     }
 
-    public function testGetPathParameter()
+    public function testGetPathParameter(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['SCRIPT_NAME'] = '/index.php';
@@ -146,13 +148,14 @@ class RouteTest extends TestCase {
         $this->assertEquals('def', $route->getPathParameter('foo', 'def'));
     }
 
-    public function testGetUrlMissingRouterException()
+    public function testGetUrlMissingRouterException(): void
     {
         $route = new Route('foo', 'index.php', ['path' => 'bar/{baz}']);
         $this->expectException('RuntimeException');
         $route->getUrl(['baz' => 'thx1138']);
     }
-    public function testGetUrlNoPrefixingException()
+
+    public function testGetUrlNoPrefixingException(): void
     {
         $route = new Route('foo', 'index.php', ['path' => '/bar/{baz}']);
         $router = new Router();
@@ -160,7 +163,8 @@ class RouteTest extends TestCase {
         $this->expectException('RuntimeException');
         $route->getUrl(['baz' => 'thx1138'], 'mypath');
     }
-    public function testGetUrl()
+
+    public function testGetUrl(): void
     {
         $route = new Route('foo', 'index.php', ['path' => '/bar/{baz}']);
         $router = new Router();
@@ -173,12 +177,12 @@ class RouteTest extends TestCase {
         $this->assertEquals('/mypath/index.php/bar/thx1138', $route->getUrl(['baz' => 'thx1138'], 'mypath'));
     }
 
-    public function testGetRedirect()
+    public function testGetRedirect(): void
     {
-        $this->assertEquals(true, true);
+        $this->assertTrue(true);
     }
 
-    public function testRedirect()
+    public function testRedirect(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['SCRIPT_NAME'] = '/index.php';

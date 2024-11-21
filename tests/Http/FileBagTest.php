@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\File\UploadedFile;
@@ -23,16 +23,16 @@ use vxPHP\Http\FileBag;
  */
 class FileBagTest extends TestCase
 {
-    public function testFileMustBeAnArrayOrUploadedFile()
+    public function testFileMustBeAnArrayOrUploadedFile(): void
     {
         $this->expectException('InvalidArgumentException');
         new FileBag(['file' => 'foo']);
     }
 
-    public function testShouldConvertsUploadedFiles()
+    public function testShouldConvertsUploadedFiles(): void
     {
         $tmpFile = $this->createTempFile();
-        $file = new UploadedFile($tmpFile, basename($tmpFile), 'text/plain');
+        $file = new UploadedFile($tmpFile, basename($tmpFile));
 
         $bag = new FileBag(['file' => [
             'name' => basename($tmpFile),
@@ -45,7 +45,7 @@ class FileBagTest extends TestCase
         $this->assertEquals($file, $bag->get('file'));
     }
 
-    public function testShouldSetEmptyUploadedFilesToNull()
+    public function testShouldSetEmptyUploadedFilesToNull(): void
     {
         $bag = new FileBag(['file' => [
             'name' => '',
@@ -58,7 +58,7 @@ class FileBagTest extends TestCase
         $this->assertNull($bag->get('file'));
     }
 
-    public function testShouldRemoveEmptyUploadedFilesForMultiUpload()
+    public function testShouldRemoveEmptyUploadedFilesForMultiUpload(): void
     {
         $bag = new FileBag(['files' => [
             'name' => [''],
@@ -71,7 +71,7 @@ class FileBagTest extends TestCase
         $this->assertSame([], $bag->get('files'));
     }
 
-    public function testShouldNotRemoveEmptyUploadedFilesForAssociativeArray()
+    public function testShouldNotRemoveEmptyUploadedFilesForAssociativeArray(): void
     {
         $bag = new FileBag(['files' => [
             'name' => ['file1' => ''],
@@ -84,10 +84,10 @@ class FileBagTest extends TestCase
         $this->assertSame(['file1' => null], $bag->get('files'));
     }
 
-    public function testShouldConvertUploadedFilesWithPhpBug()
+    public function testShouldConvertUploadedFilesWithPhpBug(): void
     {
         $tmpFile = $this->createTempFile();
-        $file = new UploadedFile($tmpFile, basename($tmpFile), 'text/plain');
+        $file = new UploadedFile($tmpFile, basename($tmpFile));
 
         $bag = new FileBag([
             'child' => [
@@ -113,10 +113,10 @@ class FileBagTest extends TestCase
         $this->assertEquals($file, $files['child']['file']);
     }
 
-    public function testShouldConvertNestedUploadedFilesWithPhpBug()
+    public function testShouldConvertNestedUploadedFilesWithPhpBug(): void
     {
         $tmpFile = $this->createTempFile();
-        $file = new UploadedFile($tmpFile, basename($tmpFile), 'text/plain');
+        $file = new UploadedFile($tmpFile, basename($tmpFile));
 
         $bag = new FileBag([
             'child' => [
@@ -142,19 +142,19 @@ class FileBagTest extends TestCase
         $this->assertEquals($file, $files['child']['sub']['file']);
     }
 
-    public function testShouldNotConvertNestedUploadedFiles()
+    public function testShouldNotConvertNestedUploadedFiles(): void
     {
         $tmpFile = $this->createTempFile();
-        $file = new UploadedFile($tmpFile, basename($tmpFile), 'text/plain');
+        $file = new UploadedFile($tmpFile, basename($tmpFile));
         $bag = new FileBag(['image' => ['file' => $file]]);
 
         $files = $bag->all();
         $this->assertEquals($file, $files['image']['file']);
     }
 
-    protected function createTempFile()
+    protected function createTempFile(): false|string
     {
-        $tempFile = tempnam(sys_get_temp_dir().'/form_test', 'FormTest');
+        $tempFile = tempnam(sys_get_temp_dir() . '/form_test', 'FormTest');
         file_put_contents($tempFile, '1');
 
         return $tempFile;
@@ -162,15 +162,15 @@ class FileBagTest extends TestCase
 
     protected function setUp(): void
     {
-        mkdir(sys_get_temp_dir().'/form_test', 0777, true);
+        mkdir(sys_get_temp_dir() . '/form_test', 0777, true);
     }
 
     protected function tearDown(): void
     {
-        foreach (glob(sys_get_temp_dir().'/form_test/*') as $file) {
+        foreach (glob(sys_get_temp_dir() . '/form_test/*') as $file) {
             unlink($file);
         }
 
-        rmdir(sys_get_temp_dir().'/form_test');
+        rmdir(sys_get_temp_dir() . '/form_test');
     }
 }

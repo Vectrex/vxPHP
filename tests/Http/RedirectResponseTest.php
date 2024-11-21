@@ -9,34 +9,34 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\RedirectResponse;
 
 class RedirectResponseTest extends TestCase
 {
-    public function testGenerateMetaRedirect()
+    public function testGenerateMetaRedirect(): void
     {
         $response = new RedirectResponse('foo.bar');
 
         $this->assertMatchesRegularExpression('#<meta http-equiv="refresh" content="\d+;url=\'foo\.bar\'" />#', preg_replace('/\s+/', ' ', $response->getContent()));
     }
 
-    public function testRedirectResponseConstructorEmptyUrl()
+    public function testRedirectResponseConstructorEmptyUrl(): void
     {
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('Cannot redirect to an empty URL.');
         new RedirectResponse('');
     }
 
-    public function testRedirectResponseConstructorWrongStatusCode()
+    public function testRedirectResponseConstructorWrongStatusCode(): void
     {
         $this->expectException('InvalidArgumentException');
         new RedirectResponse('foo.bar', 404);
     }
 
-    public function testGenerateLocationHeader()
+    public function testGenerateLocationHeader(): void
     {
         $response = new RedirectResponse('foo.bar');
 
@@ -44,14 +44,14 @@ class RedirectResponseTest extends TestCase
         $this->assertEquals('foo.bar', $response->headers->get('Location'));
     }
 
-    public function testGetTargetUrl()
+    public function testGetTargetUrl(): void
     {
         $response = new RedirectResponse('foo.bar');
 
         $this->assertEquals('foo.bar', $response->getTargetUrl());
     }
 
-    public function testSetTargetUrl()
+    public function testSetTargetUrl(): void
     {
         $response = new RedirectResponse('foo.bar');
         $response->setTargetUrl('baz.beep');
@@ -59,14 +59,14 @@ class RedirectResponseTest extends TestCase
         $this->assertEquals('baz.beep', $response->getTargetUrl());
     }
 
-    public function testSetTargetUrlNull()
+    public function testSetTargetUrlNull(): void
     {
         $this->expectException('InvalidArgumentException');
         $response = new RedirectResponse('foo.bar');
         $response->setTargetUrl(null);
     }
 
-    public function testCreate()
+    public function testCreate(): void
     {
         $response = RedirectResponse::create('foo', 301);
 
@@ -74,7 +74,7 @@ class RedirectResponseTest extends TestCase
         $this->assertEquals(301, $response->getStatusCode());
     }
 
-    public function testCacheHeaders()
+    public function testCacheHeaders(): void
     {
         $response = new RedirectResponse('foo.bar', 301);
         $this->assertFalse($response->headers->hasCacheControlDirective('no-cache'));

@@ -1,30 +1,32 @@
 <?php
 
-namespace vxPHP\Tests\Routing;
+namespace Routing;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\Request;
 use vxPHP\Routing\Route;
 use vxPHP\Routing\Router;
 
-class RouterTest extends TestCase {
-    public function testConstructor()
+class RouterTest extends TestCase
+{
+    public function testConstructor(): void
     {
         $router = new Router();
-        $this->assertEquals(false, $router->getServerSideRewrite());
+        $this->assertFalse($router->getServerSideRewrite());
 
         $_SERVER['REQUEST_URI'] = 'http://localhost/index.php/foo';
         $_SERVER['SCRIPT_NAME'] = 'index.php';
         $router = new Router();
-        $this->assertEquals(false, $router->getServerSideRewrite());
+        $this->assertFalse($router->getServerSideRewrite());
 
         $_SERVER['REQUEST_URI'] = 'http://localhost/foo';
         $_SERVER['SCRIPT_NAME'] = 'index.php';
         $router = new Router();
-        $this->assertEquals(false, $router->getServerSideRewrite()); // PHP_SAPI will detect CLI
+        $this->assertFalse($router->getServerSideRewrite()); // PHP_SAPI will detect CLI
     }
 
-    public function validRoutes()
+    public static function validRoutes(): array
     {
         return [
             [new Route('route00', 'index.php', ['path' => 'foo'])],
@@ -34,10 +36,8 @@ class RouterTest extends TestCase {
         ];
     }
 
-    /**
-     * @dataProvider validRoutes
-     */
-    public function testAddRoute(Route $route)
+    #[DataProvider('validRoutes')]
+    public function testAddRoute(Route $route): void
     {
         $router = new Router();
         $id = $route->getRouteId();
@@ -45,18 +45,18 @@ class RouterTest extends TestCase {
         $this->assertEquals($route, $router->getRoute($id));
     }
 
-    public function testRemoveRoute()
+    public function testRemoveRoute(): void
     {
         $router = new Router();
         $router->addRoute(new Route('route00', 'index.php'));
-        $this->assertEquals(1, count($router->getRoutes()));
+        $this->assertCount(1, $router->getRoutes());
         $router->removeRoute('route00');
-        $this->assertEquals(0, count($router->getRoutes()));
+        $this->assertCount(0, $router->getRoutes());
         $this->expectException('RuntimeException');
         $router->getRoute('route00');
     }
 
-    public function getServerSideRewrite()
+    public function getServerSideRewrite(): void
     {
         $_SERVER['SCRIPT_NAME'] = '/index.php';
         $_SERVER['SCRIPT_FILENAME'] = '/index.php';
@@ -65,10 +65,10 @@ class RouterTest extends TestCase {
         $_SERVER['PATH_INFO'] = '/foo/abc';
 
         $router = new Router();
-        $this->assertEquals(false, $router->getServerSideRewrite()); // will always return false since there is no server environment
+        $this->assertFalse($router->getServerSideRewrite()); // will always return false since there is no server environment
     }
 
-    public function routesAndRequests()
+    public static function routesAndRequests(): array
     {
         $routes = [
             new Route('route00', 'index.php', ['path' => '/foo/{bar}', 'requestMethods' => ['get', 'post']]),
@@ -183,10 +183,8 @@ class RouterTest extends TestCase {
         ];
     }
 
-    /**
-     * @dataProvider routesAndRequests
-     */
-    public function testGetRouteFromPathInfo($routes, $request, $matchingId)
+    #[DataProvider('routesAndRequests')]
+    public function testGetRouteFromPathInfo($routes, $request, $matchingId): void
     {
         $router = new Router($routes);
 
@@ -194,7 +192,7 @@ class RouterTest extends TestCase {
         $this->assertEquals($matchingId, $route->getRouteId());
     }
 
-    public function testNoRoutesConfiguredException ()
+    public function testNoRoutesConfiguredException(): void
     {
         $router = new Router();
 
@@ -210,7 +208,7 @@ class RouterTest extends TestCase {
         $router->getRouteFromPathInfo($request);
     }
 
-    public function testNoRoutesForScriptConfiguredException ()
+    public function testNoRoutesForScriptConfiguredException(): void
     {
         $router = new Router([new Route('route', 'foo.php', ['path' => '/foo', 'requestMethods' => ['get', 'post']])]);
 

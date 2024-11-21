@@ -1,14 +1,17 @@
 <?php
-namespace vxPHP\Tests\Constraint;
 
+namespace Constraint\Validator;
+
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Constraint\Validator\Email;
 
-class EmailTest extends TestCase {
+class EmailTest extends TestCase
+{
 
     /* taken from https://gist.github.com/cjaoude/fd9910626629b53c4d25 */
 
-    protected $validEmails = [
+    protected static array $validEmails = [
         'email@example.com',
         'firstname.lastname@example.com',
         'email@subdomain.example.com',
@@ -24,14 +27,14 @@ class EmailTest extends TestCase {
         'firstname-lastname@example.com',
     ];
 
-    protected $validEmailsNotAccepted = [
+    protected static array $validEmailsNotAccepted = [
         'very.”(),:;<>[]”.VERY.”very@\\ "very”.unusual@strange.example.com',
         'email@123.123.123.123',
         'much.”more\ unusual”@example.com',
         'very.unusual.”@”.unusual.com@example.com',
     ];
 
-    protected $invalidEmails = [
+    protected static array $invalidEmails = [
         'plainaddress',
         '#@%^%#$@#$@#.com',
         '@example.com',
@@ -56,54 +59,48 @@ class EmailTest extends TestCase {
         'this\ is"really"not\allowed@example.com'
     ];
 
-    public function validEmailStrings ()
+    public static function validEmailStrings(): array
     {
         $values = [];
-        foreach($this->validEmails as $value) {
+        foreach (self::$validEmails as $value) {
             $values[] = [$value];
         }
         return $values;
     }
 
-    public function validEmailStringsNotAccepted ()
+    public static function validEmailStringsNotAccepted(): array
     {
         $values = [];
-        foreach($this->validEmailsNotAccepted as $value) {
+        foreach (self::$validEmailsNotAccepted as $value) {
             $values[] = [$value];
         }
         return $values;
     }
 
-    public function invalidEmailStrings ()
+    public static function invalidEmailStrings(): array
     {
         $values = [];
-        foreach($this->validEmailsNotAccepted as $value) {
+        foreach (self::$validEmailsNotAccepted as $value) {
             $values[] = [$value];
         }
         return $values;
     }
 
-    /**
-     * @dataProvider validEmailStrings
-     */
-    public function testValidEmails($value)
+    #[DataProvider('validEmailStrings')]
+    public function testValidEmails($value): void
     {
         //$this->assertTrue(true);
         $this->assertTrue((new Email())->validate($value), sprintf('%s is a valid e-mail address.', $value));
     }
 
-    /**
-     * @dataProvider validEmailStringsNotAccepted
-     */
-    public function testValidEmailsToError ($value)
+    #[DataProvider('validEmailStringsNotAccepted')]
+    public function testValidEmailsToError($value): void
     {
         $this->assertFalse((new Email())->validate($value), sprintf('%s is a valid e-mail address which should NOT be matched.', $value));
     }
 
-    /**
-     * @dataProvider invalidEmailStrings
-     */
-    public function testInvalidEmails($value)
+    #[DataProvider('invalidEmailStrings')]
+    public function testInvalidEmails($value): void
     {
         //$this->assertTrue(true);
         $this->assertFalse((new Email())->validate($value), sprintf('%s is an invalid e-mail address.', $value));

@@ -9,14 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace vxPHP\Tests\Http;
+namespace Http;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use vxPHP\Http\HeaderUtils;
 
 class HeaderUtilsTest extends TestCase
 {
-    public function testSplit()
+    public function testSplit(): void
     {
         $this->assertSame(['foo=123', 'bar'], HeaderUtils::split('foo=123,bar', ','));
         $this->assertSame(['foo=123', 'bar'], HeaderUtils::split('foo=123, bar', ','));
@@ -45,7 +46,7 @@ class HeaderUtilsTest extends TestCase
         $this->assertSame(['foo', 'bar, baz\\'], HeaderUtils::split('foo, "bar, baz\\\\', ','));
     }
 
-    public function testCombine()
+    public function testCombine(): void
     {
         $this->assertSame(['foo' => '123'], HeaderUtils::combine([['foo', '123']]));
         $this->assertSame(['foo' => true], HeaderUtils::combine([['foo']]));
@@ -53,7 +54,7 @@ class HeaderUtilsTest extends TestCase
         $this->assertSame(['foo' => '123', 'bar' => true], HeaderUtils::combine([['foo', '123'], ['bar']]));
     }
 
-    public function testToString()
+    public function testToString(): void
     {
         $this->assertSame('foo', HeaderUtils::toString(['foo' => true], ','));
         $this->assertSame('foo; bar', HeaderUtils::toString(['foo' => true, 'bar' => true], ';'));
@@ -62,7 +63,7 @@ class HeaderUtilsTest extends TestCase
         $this->assertSame('foo="1 2 3", bar', HeaderUtils::toString(['foo' => '1 2 3', 'bar' => true], ','));
     }
 
-    public function testQuote()
+    public function testQuote(): void
     {
         $this->assertSame('foo', HeaderUtils::quote('foo'));
         $this->assertSame('az09!#$%&\'*.^_`|~-', HeaderUtils::quote('az09!#$%&\'*.^_`|~-'));
@@ -72,7 +73,7 @@ class HeaderUtilsTest extends TestCase
         $this->assertSame('"foo \\\\ bar"', HeaderUtils::quote('foo \\ bar'));
     }
 
-    public function testUnquote()
+    public function testUnquote(): void
     {
         $this->assertEquals('foo', HeaderUtils::unquote('foo'));
         $this->assertEquals('az09!#$%&\'*.^_`|~-', HeaderUtils::unquote('az09!#$%&\'*.^_`|~-'));
@@ -83,21 +84,19 @@ class HeaderUtilsTest extends TestCase
         $this->assertEquals('foo \\ bar', HeaderUtils::unquote('"foo \\\\ bar"'));
     }
 
-    public function testMakeDispositionInvalidDisposition()
+    public function testMakeDispositionInvalidDisposition(): void
     {
         $this->expectException('InvalidArgumentException');
         HeaderUtils::makeDisposition('invalid', 'foo.html');
     }
 
-    /**
-     * @dataProvider provideMakeDisposition
-     */
-    public function testMakeDisposition($disposition, $filename, $filenameFallback, $expected)
+    #[DataProvider('provideMakeDisposition')]
+    public function testMakeDisposition($disposition, $filename, $filenameFallback, $expected): void
     {
         $this->assertEquals($expected, HeaderUtils::makeDisposition($disposition, $filename, $filenameFallback));
     }
 
-    public function provideMakeDisposition()
+    public static function provideMakeDisposition(): array
     {
         return [
             ['attachment', 'foo.html', 'foo.html', 'attachment; filename=foo.html'],
@@ -109,16 +108,14 @@ class HeaderUtilsTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideMakeDispositionFail
-     */
-    public function testMakeDispositionFail($disposition, $filename)
+    #[DataProvider('provideMakeDispositionFail')]
+    public function testMakeDispositionFail($disposition, $filename): void
     {
         $this->expectException('InvalidArgumentException');
         HeaderUtils::makeDisposition($disposition, $filename);
     }
 
-    public function provideMakeDispositionFail()
+    public static function provideMakeDispositionFail(): array
     {
         return [
             ['attachment', 'foo%20bar.html'],
