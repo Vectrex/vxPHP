@@ -19,8 +19,8 @@ namespace vxPHP\Form\FormElement;
 class SubmitInputElement extends InputElement
 {
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::render()
+	 * (non-PHPDoc)
+	 * @see InputElement::render
 	 */
 	public function render($force = false): string
     {

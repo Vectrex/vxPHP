@@ -433,7 +433,7 @@ abstract class FormElement implements FormElementInterface
      *
      * first checks whether a value is required,
      * then applies validators
-     * checkbox elements are due to their nature handled seperately
+     * checkbox elements are due to their nature handled separately
      *
      * as soon as one validator fails
      * the result will yield FALSE

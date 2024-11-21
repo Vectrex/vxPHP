@@ -32,7 +32,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.9 2024-01-04
+ * @version 1.9.10 2024-11-21
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -350,7 +350,7 @@ class HtmlForm
 	}
 
     /**
-     * sets sevaral form attributes stored in associative array
+     * sets several form attributes stored in associative array
      *
      * @param array $attrs
      * @return HtmlForm
@@ -365,11 +365,11 @@ class HtmlForm
 		return $this;
 	}
 
-	/**
-	 * Returns FormElement which submitted form, result is cached
-	 * 
-	 * @return FormElement
-	 */
+    /**
+     * Returns FormElement which submitted form, result is cached
+     *
+     * @return FormElement|null
+     */
 	public function getSubmittingElement(): ?FormElement
     {
 		// cache submitting element
@@ -391,7 +391,7 @@ class HtmlForm
 				foreach($this->requestValues->keys() as $k) {
 
 					if(
-					    preg_match('/^' . $name . '\\[(.*?)\\]$/', $k, $m) &&
+					    preg_match('/^' . $name . '\[(.*?)]$/', $k, $m) &&
 						isset($this->elements[$name][$m[1]]) &&
                         $this->elements[$name][$m[1]]->canSubmit()
                     ) {
@@ -573,7 +573,7 @@ class HtmlForm
 	 *
 	 * @return FormError[]|boolean
 	 */
-	public function getFormErrors()
+	public function getFormErrors(): array|false
     {
 		if(!count($this->formErrors)) {
 			return false;
@@ -590,9 +590,9 @@ class HtmlForm
      * if $keys is set, only error texts for given element names are extracted
      *
      * @param array $keys
-     * @return array $error_texts
-     * @throws HtmlFormException
+     * @return array|null
      * @throws ApplicationException
+     * @throws HtmlFormException
      */
 	public function getErrorTexts(array $keys = []): ?array
     {
@@ -659,7 +659,7 @@ class HtmlForm
 	 * @return HtmlForm
 	 *
 	 */
-	public function initVar(string $name, $value): HtmlForm
+	public function initVar(string $name, mixed $value): HtmlForm
     {
 		$this->vars[$name] = $value;
 		return $this;
@@ -673,7 +673,7 @@ class HtmlForm
      * @param string|null $message
      * @return HtmlForm
      */
-	public function setError(string $errorName, $errorNameIndex = null, string $message = null): HtmlForm
+	public function setError(string $errorName, mixed $errorNameIndex = null, string $message = null): HtmlForm
     {
 		if($errorNameIndex === null) {
 			$this->formErrors[$errorName] = new FormError($message);
@@ -702,7 +702,7 @@ class HtmlForm
 	 * @return FormElement|FormElement[]
      * @throws \InvalidArgumentException
 	 */
-	public function getElementsByName(string $name)
+	public function getElementsByName(string $name): FormElement|array
     {
 		if(isset($this->elements[$name])) {
 			return $this->elements[$name];
@@ -738,7 +738,7 @@ class HtmlForm
 	 * the elements have to be of same type and have to have the same
 	 * name or an empty name
 	 *
-	 * @param array FormElement[]
+	 * @param FormElement[] $elements
 	 * @throws HtmlFormException
 	 * @return HtmlForm
 	 *
@@ -752,7 +752,7 @@ class HtmlForm
 
 			// remove any array indexes from name
 
-			$name = preg_replace('~\[\w*\]$~i', '', $name);
+			$name = preg_replace('~\[\w*]$~i', '', $name);
 
 			if(!empty($this->elements[$name])) {
 				throw new HtmlFormException(sprintf("Element '%s' already assigned.", $name));
@@ -774,7 +774,7 @@ class HtmlForm
 				
 				// check whether names of element arrays match
 
-				$nameToCheck = preg_replace('~\[\w*\]$~i', '', $e->getName());
+				$nameToCheck = preg_replace('~\[\w*]$~i', '', $e->getName());
 
 				if($nameToCheck && $nameToCheck !== $name) {
 					throw new HtmlFormException(sprintf("Name mismatch of form elements array. Expected '%s' or empty name, found '%s'.", $name, $e->getName()));
@@ -1202,7 +1202,7 @@ class HtmlForm
 		$stack = [];
 
 		while(true) {
-			preg_match('~(.*?)\{(loop\s+\044([a-z0-9_]+)(?:\[(\d+)\]|((?:\[\044[a-z0-9_]+\])*))|end_loop)}(.*)~si', $tpl, $matches);
+			preg_match('~(.*?)\{(loop\s+$([a-z0-9_]+)(?:\[(\d+)]|((?:\[$[a-z0-9_]+])*))|end_loop)}(.*)~si', $tpl, $matches);
 
 			if(count($matches) < 7) {
 				$stack[]['left'] = $tpl;
@@ -1239,11 +1239,11 @@ class HtmlForm
 		foreach($this->vars as $k => $v) {
 			if(is_array($v)) {
 				foreach($v as $kk => $vv) {
-					$tpl = preg_replace('~\{\s*\\$' . $k .'\[' . $kk . '\]\s*\}~i', $vv, $tpl);
+					$tpl = preg_replace('~\{\s*\$' . $k .'\[' . $kk . ']\s*}~i', $vv, $tpl);
 				}
 			}
 			else {
-				$tpl = preg_replace('~\{\s*\\$' . $k .'\s*\}~i', $v, $tpl);
+				$tpl = preg_replace('~\{\s*\$' . $k .'\s*}~i', $v, $tpl);
 			}
 		}
 		return $tpl;
@@ -1258,7 +1258,7 @@ class HtmlForm
 		$nesting = 0;
 
 		while(true) {
-			preg_match('~(.*?)\{(if\s*\((.+?)\)\s*|else|end_if)\}(.*)~si', $tpl, $matches);
+			preg_match('~(.*?)\{(if\s*\((.+?)\)\s*|else|end_if)}(.*)~si', $tpl, $matches);
 
 			if(count($matches) < 5) {
 				break;
@@ -1346,28 +1346,17 @@ class HtmlForm
             $terms[3] = $this->vars[$tmp[1]] ?? null;
         }
 
-		switch ($terms[2]) {
-			case '==':
-				return $terms[1] == $terms[3];
+        return match ($terms[2]) {
+            '==' => $terms[1] == $terms[3],
+            '!=' => $terms[1] != $terms[3],
+            '<' => $terms[1] < $terms[3],
+            '>' => $terms[1] > $terms[3],
+            '<=' => $terms[1] <= $terms[3],
+            '>=' => $terms[1] >= $terms[3],
+            default => null,
+        };
 
-			case '!=':
-				return $terms[1] != $terms[3];
-
-			case '<':
-				return $terms[1] < $terms[3];
-
-			case '>':
-				return $terms[1] > $terms[3];
-
-			case '<=':
-				return $terms[1] <= $terms[3];
-
-			case '>=':
-				return $terms[1] >= $terms[3];
-		}
-
-		return null;
-	}
+    }
 
     /**
      * insert form fields into template
@@ -1388,7 +1377,7 @@ class HtmlForm
     {
 		$this->html = preg_replace_callback(
 
-			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox|label|element):(\w+)(?:\s+(\{.*?\}))?\s*\}/i',
+			'/\{\s*(dropdown|input|image|button|textarea|options|checkbox|selectbox|label|element):(\w+)(?:\s+(\{.*?}))?\s*}/i',
 
 			function($matches) {
 
@@ -1411,7 +1400,7 @@ class HtmlForm
                             throw new HtmlFormException(sprintf("Could not parse JSON attributes for element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
                         }
 
-                        $attributes = array_change_key_case($attributes, CASE_LOWER);
+                        $attributes = array_change_key_case($attributes);
 
                         if (isset($attributes['name'])) {
                             throw new HtmlFormException(sprintf("Attribute 'name' is not allowed with element '%s'.", $matches[2]), HtmlFormException::INVALID_MARKUP);
@@ -1482,7 +1471,7 @@ class HtmlForm
     {
 		$this->html = preg_replace_callback(
 
-			'/\{\s*form(?:\s+(\{.*?\}))?\s*\}/i',
+			'/\{\s*form(?:\s+(\{.*?}))?\s*}/i',
 
 			function($matches) {
 
@@ -1496,7 +1485,7 @@ class HtmlForm
 						throw new HtmlFormException("Could not parse JSON attributes for '{form}'.", HtmlFormException::INVALID_MARKUP);
 					}
 
-					$attributes = array_change_key_case($attributes, CASE_LOWER);
+					$attributes = array_change_key_case($attributes);
 
 					// check for not allowed attributes
 
@@ -1581,7 +1570,7 @@ class HtmlForm
 	private function insertFormEnd(): HtmlForm
     {
 		$this->html = preg_replace(
-			'/\{\s*end_form\s*\}/i',
+			'/\{\s*end_form\s*}/i',
 			'</form>',
 			$this->html,
 			-1,
@@ -1645,6 +1634,6 @@ class HtmlForm
      */
 	private function cleanupHtml(): void
     {
-		$this->html = preg_replace('/\{\s*(error_.*?|html:.*?|\044.*?)\s*\}/i', '', $this->html);
+		$this->html = preg_replace('/\{\s*(error_.*?|html:.*?|$.*?)\s*}/i', '', $this->html);
     }
 }

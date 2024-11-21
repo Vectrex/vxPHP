@@ -24,7 +24,7 @@ use vxPHP\Form\FormElement\FormElementWithOptions\RadioElement;
  * if $value is an array, the factory returns a collection of elements
  *
  * @author Gregor Kofler
- * @version 0.6.0 2021-07-10
+ * @version 0.6.1 2024-11-21
  */
 class FormElementFactory
 {
@@ -44,7 +44,7 @@ class FormElementFactory
      * @return FormElement | FormElement[]
      * @throws FormElementFactoryException
      */
-public static function create(string $type, string $name, $value = null, array $attributes = [], array $options = [], bool $required = false, array $modifiers = [], array $validators = [], string $validationErrorMessage = '')
+public static function create(string $type, string $name, mixed $value = null, array $attributes = [], array $options = [], bool $required = false, array $modifiers = [], array $validators = [], string $validationErrorMessage = ''): FormElement|array
 {
 		$type = strtolower($type);
 
@@ -81,11 +81,11 @@ public static function create(string $type, string $name, $value = null, array $
      * @param $modifiers
      * @param $validators
      * @param $validationErrorMessage
-     * @return ButtonElement|CheckboxElement|ImageElement|InputElement|PasswordInputElement|SubmitInputElement|TextareaElement
+     * @return FormElement
      *
      * @throws FormElementFactoryException
      */
-	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage)
+	private static function createSingleElement($type, $name, $value, $attributes, $options, $required, $modifiers, $validators, $validationErrorMessage): FormElement
     {
 		switch($type) {
 			case 'input':

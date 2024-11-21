@@ -40,7 +40,7 @@ class InputElement extends FormElement
 	 * no validation of correct types is done ATM
 	 * 
 	 * @param string $type
-	 * @return \vxPHP\Form\FormElement\InputElement
+	 * @return InputElement
 	 */
 	public function setType(string $type): InputElement
     {
@@ -54,7 +54,7 @@ class InputElement extends FormElement
 	}
 
 	/**
-	 * @see \vxPHP\Form\FormElement\FormElement::render()
+	 * @see FormElement::render
      * @param bool $force
      * @return string
      * @throws ApplicationException

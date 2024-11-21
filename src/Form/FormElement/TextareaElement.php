@@ -19,8 +19,8 @@ namespace vxPHP\Form\FormElement;
 class TextareaElement extends FormElement
 {
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\FormElement::render()
+	 * (non-PHPDoc)
+	 * @see FormElement::render
 	 */
 	public function render($force = false): string
     {

@@ -19,7 +19,7 @@ namespace vxPHP\Form\FormElement;
 class ImageElement extends InputElement
 {
 	/**
-	 * inialize a <input type="image"> element instance
+	 * initialize a <input type="image"> element instance
 	 * 
 	 * @param string $name
 	 * @param string $src
@@ -31,8 +31,8 @@ class ImageElement extends InputElement
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::render()
+	 * (non-PHPDoc)
+	 * @see InputElement::render
 	 */
 	public function render($force = false): string
     {

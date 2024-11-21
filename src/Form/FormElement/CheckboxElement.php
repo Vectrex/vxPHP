@@ -26,14 +26,14 @@ class CheckboxElement extends InputElement
 	private bool $checked;
 
     /**
-     * inialize a <input type="checkbox"> element instance
+     * initialize a <input type="checkbox"> element instance
      *
      * @param string $name
      * @param mixed $value
      * @param boolean $checked
      * @param LabelElement|null $label
      */
-	public function __construct(string $name, $value = null, bool $checked = false, LabelElement $label = null) {
+	public function __construct(string $name, mixed $value = null, bool $checked = false, LabelElement $label = null) {
 
 		parent::__construct($name, $value);
 		$this->setChecked($checked);
@@ -47,7 +47,7 @@ class CheckboxElement extends InputElement
 	 * check checkbox
 	 * 
 	 * @param boolean $state
-	 * @return \vxPHP\Form\FormElement\CheckboxElement
+	 * @return CheckboxElement
 	 */
 	public function setChecked(bool $state): CheckboxElement
     {
@@ -66,8 +66,8 @@ class CheckboxElement extends InputElement
 	}
 
 	/**
-	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::render()
+	 * (non-PHPDoc)
+	 * @see InputElement::render
 	 */
 	public function render($force = false): string
     {

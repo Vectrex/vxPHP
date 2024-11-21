@@ -20,7 +20,7 @@ class PasswordInputElement extends InputElement
 {
 	/**
 	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::render()
+	 * @see InputElement::render
 	 */
 	public function render($force = false): string
     {

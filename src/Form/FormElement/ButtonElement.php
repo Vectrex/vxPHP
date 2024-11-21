@@ -46,7 +46,7 @@ class ButtonElement extends InputElement
      * (non-PHPdoc)
      * @param string $type
      * @return ButtonElement
-     * @see \vxPHP\Form\FormElement\InputElement::setType()
+     * @see InputElement::setType
      *
      */
 	public function setType(string $type): ButtonElement
@@ -64,7 +64,7 @@ class ButtonElement extends InputElement
 	 * set innerHTML of a button element
 	 * 
 	 * @param string $html
-	 * @return \vxPHP\Form\FormElement\ButtonElement
+	 * @return ButtonElement
 	 */
 	public function setInnerHTML(string $html): ButtonElement
     {
@@ -74,7 +74,7 @@ class ButtonElement extends InputElement
 
 	/**
 	 * (non-PHPdoc)
-	 * @see \vxPHP\Form\FormElement\InputElement::render()
+	 * @see InputElement::render
 	 */
 	public function render($force = false): string
     {

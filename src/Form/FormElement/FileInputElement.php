@@ -30,7 +30,7 @@ class FileInputElement extends InputElement
      * get original name of an uploaded file associated with this element
      * if attribute multiple is set the name of the first file is returned
      *
-     * @return string
+     * @return string|null
      */
     public function getValue(): ?string
     {
@@ -52,7 +52,7 @@ class FileInputElement extends InputElement
      * input is ignored upon rendering
      *
      * @param mixed $value
-     * @return $this|FormElement
+     * @return FormElement
      */
 
     public function setValue($value): FormElement
@@ -65,13 +65,13 @@ class FileInputElement extends InputElement
      *
      * @return UploadedFile | UploadedFile[]
      */
-    public function getFile()
+    public function getFile(): array|UploadedFile
     {
         return Request::createFromGlobals()->files->get($this->name);
     }
 
     /**
-     * @see \vxPHP\Form\FormElement\FormElement::render()
+     * @see FormElement::render
      * @param bool $force
      * @return string
      * @throws ApplicationException
