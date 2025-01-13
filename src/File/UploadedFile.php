@@ -18,127 +18,123 @@ use vxPHP\File\Exception\FilesystemFileException;
  * an UploadedFile behaves like a FilesystemFile except the first
  * move() moves the temporary file to its destination and re-populates
  * relevant properties (filename, fileInfo) with the new values
- * 
+ *
  * @author Gregor Kofler
  *
  * @version 1.0.1 2021-12-01
  */
 class UploadedFile extends FilesystemFile
 {
-	/**
-	 * the original file name
-	 * 
-	 * @var string
-	 */
-	private string $originalName;
-	
-	/**
-	 * when TRUE the file has already been uploaded
-	 * a move() is then handled by parent class
-	 * 
-	 * @var boolean
-	 */
-	private bool $alreadyUploaded = false;
+    /**
+     * the original file name
+     *
+     * @var string
+     */
+    private string $originalName;
 
-	public function __construct($path, $originalName)
+    /**
+     * when TRUE the file has already been uploaded
+     * a move() is then handled by parent class
+     *
+     * @var boolean
+     */
+    private bool $alreadyUploaded = false;
+
+    public function __construct(string $path, string $originalName)
     {
-		$this->originalName = $originalName;
-		parent::__construct($path);
-	}
+        $this->originalName = $originalName;
+        parent::__construct($path);
+    }
 
     /**
      * get the original file name of the uploaded file
      *
      * @return string
      */
-	public function getOriginalName(): string
+    public function getOriginalName(): string
     {
-		return $this->originalName;
-	}
+        return $this->originalName;
+    }
 
-	/**
-	 * renames an uploaded file by
-	 * either overwriting the original filename (pre-move)
-	 * or redirecting to parent method
-	 * 
-	 * (non-PHPdoc)
-	 * @see \vxPHP\File\FilesystemFile::rename()
-	 */
-	public function rename($to): FilesystemFileInterface
+    /**
+     * renames an uploaded file by
+     * either overwriting the original filename (pre-move)
+     * or redirecting to parent method
+     *
+     * (non-PHPdoc)
+     * @see \vxPHP\File\FilesystemFile::rename()
+     */
+    public function rename($to): FilesystemFileInterface
     {
-		if($this->alreadyUploaded) {
-			return parent::rename($to);
-		}
+        if ($this->alreadyUploaded) {
+            return parent::rename($to);
+        }
 
-		$this->originalName = $to;
+        $this->originalName = $to;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * performs an initial move of an uploaded file
-	 * from its temporary folder to a destination folder
-	 * and renames it to the original filename
-	 * once completed a flag is set and subsequent
-	 * moves are redirected to the parent method
-	 * 
-	 * (non-PHPdoc)
-	 * @see \vxPHP\File\FilesystemFile::move()
-	 */
-	public function move(FilesystemFolder $destination): FilesystemFileInterface
+    /**
+     * performs an initial move of an uploaded file
+     * from its temporary folder to a destination folder
+     * and renames it to the original filename
+     * once completed a flag is set and subsequent
+     * moves are redirected to the parent method
+     *
+     * (non-PHPdoc)
+     * @see \vxPHP\File\FilesystemFile::move()
+     */
+    public function move(FilesystemFolder $destination): FilesystemFileInterface
     {
-		if($this->alreadyUploaded) {
-			return parent::move($destination);
-		}
+        if ($this->alreadyUploaded) {
+            return parent::move($destination);
+        }
 
-		$oldpath = $this->folder->getPath() . $this->filename;
-		$filename = self::sanitizeFilename($this->originalName, $destination);
-		$newpath = $destination->getPath() . $filename;
+        $oldpath = $this->folder->getPath() . $this->filename;
+        $filename = self::sanitizeFilename($this->originalName, $destination);
+        $newpath = $destination->getPath() . $filename;
 
-		// ensure that only uploaded files are handled
+        // ensure that only uploaded files are handled
 
-		if(is_uploaded_file($oldpath)) {
+        if (is_uploaded_file($oldpath)) {
 
-			// move uploaded file
+            // move uploaded file
 
-			if(@move_uploaded_file($oldpath, $newpath)) {
+            if (@move_uploaded_file($oldpath, $newpath)) {
 
-				// flag completed upload
-				
-				$this->alreadyUploaded = true;
+                // flag completed upload
 
-				// set new folder reference
+                $this->alreadyUploaded = true;
 
-				$this->folder = $destination;
+                // set new folder reference
 
-				// set new filename
+                $this->folder = $destination;
 
-				$this->filename	= $filename;
+                // set new filename
 
-				// re-read fileinfo
+                $this->filename = $filename;
 
-				$this->fileInfo	= new \SplFileInfo($newpath);
+                // re-read fileinfo
 
-				// set cached instance
+                $this->fileInfo = new \SplFileInfo($newpath);
 
-				self::$instances[$newpath] = $this;
+                // set cached instance
 
-				// @todo: check necessity of chmod
-			
-				@chmod($newpath, 0666 & ~umask());
-				
-			}
+                self::$instances[$newpath] = $this;
 
-			else {
-				throw new FilesystemFileException(sprintf("Could not move uploaded file '%s' to '%s'.", $this->originalName, $newpath), FilesystemFileException::FILE_RENAME_FAILED);
-			}
+                // @todo: check necessity of chmod
 
-		}
-		
-		else {
-			throw new FilesystemFileException(sprintf("File '%s' was not identified as uploaded file.", $oldpath));
-		}
-		
-		return $this;
-	}
+                @chmod($newpath, 0666 & ~umask());
+
+            } else {
+                throw new FilesystemFileException(sprintf("Could not move uploaded file '%s' to '%s'.", $this->originalName, $newpath), FilesystemFileException::FILE_RENAME_FAILED);
+            }
+
+        } else {
+            throw new FilesystemFileException(sprintf("File '%s' was not identified as uploaded file.", $oldpath));
+        }
+
+        return $this;
+    }
 }

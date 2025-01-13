@@ -31,7 +31,7 @@ class RadioOptionElement extends FormElementFragment
      * @param LabelElement $label
      * @param RadioElement|null $formElement
      */
-	public function __construct(string $value, LabelElement $label, RadioElement $formElement = null)
+	public function __construct(string $value, LabelElement $label, ?RadioElement $formElement = null)
     {
 		parent::__construct($value, $label, $formElement);
 	}

@@ -40,7 +40,7 @@ class IpUtils
      *
      * @return bool Whether the IP is valid
      */
-    public static function checkIp(?string $requestIp, $ips): bool
+    public static function checkIp(?string $requestIp, mixed $ips): bool
     {
         if ($requestIp) {
             if (!\is_array($ips)) {
@@ -68,7 +68,7 @@ class IpUtils
      *
      * @return bool Whether the request IP matches the IP, or whether the request IP is within the CIDR subnet
      */
-    public static function checkIp4($requestIp, string $ip): bool
+    public static function checkIp4(string $requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {
@@ -79,7 +79,7 @@ class IpUtils
             return self::$checkedIps[$cacheKey] = false;
         }
 
-        if (false !== strpos($ip, '/')) {
+        if (str_contains($ip, '/')) {
             [$address, $netmask] = explode('/', $ip, 2);
 
             if ('0' === $netmask) {
@@ -116,7 +116,7 @@ class IpUtils
      *
      * @throws \RuntimeException When IPV6 support is not enabled
      */
-    public static function checkIp6($requestIp, string $ip): bool
+    public static function checkIp6(string $requestIp, string $ip): bool
     {
         $cacheKey = $requestIp.'-'.$ip;
         if (isset(self::$checkedIps[$cacheKey])) {
@@ -127,7 +127,7 @@ class IpUtils
             throw new \RuntimeException('Unable to check Ipv6. Check that PHP was not compiled with option "disable-ipv6".');
         }
 
-        if (false !== strpos($ip, '/')) {
+        if (str_contains($ip, '/')) {
             [$address, $netmask] = explode('/', $ip, 2);
 
             if ('0' === $netmask) {
@@ -171,7 +171,7 @@ class IpUtils
     public static function anonymize(string $ip): string
     {
         $wrappedIPv6 = false;
-        if (strpos($ip, '[') === 0 && ']' === $ip[strlen($ip) - 1]) {
+        if (str_starts_with($ip, '[') && ']' === $ip[strlen($ip) - 1]) {
             $wrappedIPv6 = true;
             $ip = substr($ip, 1, -1);
         }

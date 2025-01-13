@@ -19,12 +19,12 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.3 2024-11-21
+ * @version 0.7.4 2025-01-13
  */
 
 class FilesystemFolder
 {
-	public const CACHE_PATH = '.cache';
+	public const string CACHE_PATH = '.cache';
 
 	/**
 	 * caches instances of folders
@@ -144,7 +144,7 @@ class FilesystemFolder
      * @throws Exception\FilesystemFileException
      * @throws FilesystemFolderException
      */
-	public function getFiles(string $extension = null): array
+	public function getFiles(?string $extension = null): array
     {
 		$result = [];
 		$glob = $this->path . '*';

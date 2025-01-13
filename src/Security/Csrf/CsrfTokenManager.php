@@ -91,14 +91,14 @@ class CsrfTokenManager
 
 		return $token;
 	}
-	
+
     /**
-	 * removes the CSRF token with the given id
-	 * no further checking is done, whether the token previously existed
-	 * returns NULL when token did not exist, otherwise the token
-	 *
-	 * @param string $tokenId
-     * @return CsrfToken
+     * removes the CSRF token with the given id
+     * no further checking is done, whether the token previously existed
+     * returns NULL when token did not exist, otherwise the token
+     *
+     * @param string $tokenId
+     * @return CsrfToken|null
      */
 	public function removeToken(string $tokenId): ?CsrfToken
     {

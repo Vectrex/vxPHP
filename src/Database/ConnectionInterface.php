@@ -90,7 +90,7 @@ interface ConnectionInterface
      * @see \PDO::lastInsertId()
      *
      */
-    public function lastInsertId(string $name = null): string|false;
+    public function lastInsertId(?string $name = null): string|false;
 
     /**
      * @see \PDO::exec()

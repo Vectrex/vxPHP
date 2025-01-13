@@ -18,19 +18,19 @@ namespace vxPHP\Form\FormElement;
  */
 class SubmitInputElement extends InputElement
 {
-	/**
-	 * (non-PHPDoc)
-	 * @see InputElement::render
-	 */
-	public function render($force = false): string
+    /**
+     * (non-PHPDoc)
+     * @see InputElement::render
+     */
+    public function render($force = false): string
     {
-		if(empty($this->html) || $force) {
+        if (empty($this->html) || $force) {
 
-			$this->attributes['type'] = 'submit';
-			$this->html = parent::render(true);
+            $this->attributes['type'] = 'submit';
+            $this->html = parent::render(true);
 
-		}
+        }
 
-		return $this->html;
-	}
+        return $this->html;
+    }
 }

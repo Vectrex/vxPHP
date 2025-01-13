@@ -14,7 +14,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * input element of type checkbox
  *
- * @version 0.11.2 2021-11-29
+ * @version 0.11.3 2025-01-13
  * @author Gregor Kofler
  *
  */
@@ -33,7 +33,7 @@ class CheckboxElement extends InputElement
      * @param boolean $checked
      * @param LabelElement|null $label
      */
-	public function __construct(string $name, mixed $value = null, bool $checked = false, LabelElement $label = null) {
+	public function __construct(string $name, mixed $value = null, bool $checked = false, ?LabelElement $label = null) {
 
 		parent::__construct($name, $value);
 		$this->setChecked($checked);

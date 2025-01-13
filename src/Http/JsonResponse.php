@@ -19,7 +19,7 @@ namespace vxPHP\Http;
  *
  * @see https://www.owasp.org/index.php/OWASP_AJAX_Security_Guidelines#Always_return_JSON_with_an_Object_on_the_outside
  *
- * @version 0.2.1
+ * @version 0.2.2
  * @author Igor Wiedler <igor@wiedler.ch>, Gregor Kofler
  */
 class JsonResponse extends Response
@@ -28,7 +28,7 @@ class JsonResponse extends Response
 
     // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
     // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
-    public const DEFAULT_ENCODING_OPTIONS = 15;
+    public const int DEFAULT_ENCODING_OPTIONS = 15;
 
     protected int $encodingOptions = self::DEFAULT_ENCODING_OPTIONS;
 
@@ -85,7 +85,7 @@ class JsonResponse extends Response
      * @return static
      * @throws \Exception|\Throwable
      */
-    public static function fromJsonString(string $data = null, int $status = 200, array $headers = []): self
+    public static function fromJsonString(?string $data = null, int $status = 200, array $headers = []): self
     {
         return new static($data, $status, $headers, true);
     }
@@ -115,12 +115,12 @@ class JsonResponse extends Response
      * @throws \InvalidArgumentException
      * @throws \Exception|\Throwable
      */
-    public function setData($data = []): self
+    public function setData(mixed $data = []): self
     {
         try {
             $data = json_encode($data, $this->encodingOptions);
         } catch (\Exception $e) {
-            if ('Exception' === \get_class($e) && 0 === strpos($e->getMessage(), 'Failed calling ')) {
+            if ('Exception' === \get_class($e) && str_starts_with($e->getMessage(), 'Failed calling ')) {
                 throw $e->getPrevious() ?: $e;
             }
             throw $e;
@@ -159,7 +159,7 @@ class JsonResponse extends Response
     {
         $this->encodingOptions = $encodingOptions;
 
-        return $this->setData(json_decode($this->data));
+        return $this->setData(json_decode($this->data, true));
     }
 
     /**

@@ -38,7 +38,7 @@ class DefaultMenuAuthenticator implements MenuAuthenticatorInterface
 	 *
 	 * @see \vxPHP\Webpage\Menu\MenuAuthenticatorInterface::authenticate()
 	 */
-	public function authenticate(Menu $menu, UserInterface $user = null): bool
+	public function authenticate(Menu $menu, ?UserInterface $user = null): bool
     {
 		// retrieve roles of current user
 		

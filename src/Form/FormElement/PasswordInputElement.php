@@ -13,24 +13,24 @@ namespace vxPHP\Form\FormElement;
 
 /**
  * input element of type "password"
- * 
+ *
  * @author Gregor Kofler
  */
 class PasswordInputElement extends InputElement
 {
-	/**
-	 * (non-PHPdoc)
-	 * @see InputElement::render
-	 */
-	public function render($force = false): string
+    /**
+     * (non-PHPdoc)
+     * @see InputElement::render
+     */
+    public function render($force = false): string
     {
-		if(empty($this->html) || $force) {
+        if (empty($this->html) || $force) {
 
-			$this->attributes['type'] = 'password';
-			$this->html = parent::render(true);
+            $this->attributes['type'] = 'password';
+            $this->html = parent::render(true);
 
-		}
+        }
 
-		return $this->html;
-	}
+        return $this->html;
+    }
 }

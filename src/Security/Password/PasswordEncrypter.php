@@ -15,15 +15,15 @@
  * @todo add options to enforce password requirements
  * 
  * @author Gregor Kofler, info@gregorkofler.com
- * @version 0.1.3 2021-11-29
+ * @version 0.1.4 2025-01-13
  */
 namespace vxPHP\Security\Password;
 
 class PasswordEncrypter
 {
-	public const MAX_LENGTH = 64;
-	public const MIN_LENGTH = 4;
-	public const MIN_COST = 4;
+	public const int MAX_LENGTH = 64;
+	public const int MIN_LENGTH = 4;
+	public const int MIN_COST = 4;
 
 	/*
 	 * the cost used when generating the password

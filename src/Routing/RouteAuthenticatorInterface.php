@@ -37,5 +37,5 @@ interface RouteAuthenticatorInterface
      * @param Route $route
      * @return mixed
      */
-	public function handleViolation(Route $route);
+	public function handleViolation(Route $route): mixed;
 }

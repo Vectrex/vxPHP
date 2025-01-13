@@ -14,14 +14,13 @@ namespace vxPHP\Debug;
  * custom error handling and debugging functionality
  * 
  * @author Gregor Kofler
- * @version 0.3.1 2022-11-24
+ * @version 0.3.2 2025-01-13
  */
 class ErrorHandler
 {
-	public const ERROR_LEVELS = [
+	public const array ERROR_LEVELS = [
 		E_WARNING => 'Warning',
 		E_NOTICE => 'Notice',
-		E_STRICT => 'Runtime Notice',
 		E_RECOVERABLE_ERROR => 'Catchable Fatal Error',
 		E_DEPRECATED => 'Deprecated',
 		E_USER_ERROR => 'User Error',
@@ -61,7 +60,7 @@ class ErrorHandler
      *
      * @return \vxPHP\Debug\ErrorHandler
      */
-	public static function register(int $errorLevel = null, bool $displayErrors = true): self
+	public static function register(?int $errorLevel = null, bool $displayErrors = true): self
     {
 		if(self::$handler) {
 			throw new \RuntimeException('Error handler already registered.');
@@ -91,7 +90,7 @@ class ErrorHandler
      * @param int|null $errorLevel
      * @return \vxPHP\Debug\ErrorHandler
      */
-	public function setLevel(int $errorLevel = null): self
+	public function setLevel(?int $errorLevel = null): self
     {
 		if(is_null($errorLevel)) {
 			$this->errorLevel = error_reporting();
@@ -126,7 +125,7 @@ class ErrorHandler
      * @return boolean
      * @throws \ErrorException
      */
-	public function handle(int $errorLevel, string $message, string $file = null, string $line = null, array $context = null): bool
+	public function handle(int $errorLevel, string $message, ?string $file = null, ?string $line = null, ?array $context = null): bool
     {
 		if ($this->errorLevel === 0) {
 			return false;

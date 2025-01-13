@@ -39,7 +39,7 @@ class DefaultRouteAuthenticator implements RouteAuthenticatorInterface
 	 *
 	 * @see \vxPHP\Routing\RouteAuthenticatorInterface::authenticate()
 	 */
-	public function authenticate(Route $route, UserInterface $user = null): bool
+	public function authenticate(Route $route, ?UserInterface $user = null): bool
     {
         if($user === null) {
             $user = Application::getInstance()->getCurrentUser();

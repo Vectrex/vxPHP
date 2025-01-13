@@ -1236,14 +1236,14 @@ class RequestTest extends TestCase
         $_GET['foo1'] = 'bar1';
         $_POST['foo2'] = 'bar2';
         $_COOKIE['foo3'] = 'bar3';
-        $_FILES['foo4'] = ['bar4'];
+        $_FILES['foo4'] = ['name' => 'bar4', 'type' => 'text/plain', 'size' => 0, 'tmp_name' => __DIR__ . '/Fixtures/other-file.example', 'error' => 0, 'full_path' => ''];
         $_SERVER['foo5'] = 'bar5';
 
         $request = Request::createFromGlobals();
         $this->assertEquals('bar1', $request->query->get('foo1'), '::fromGlobals() uses values from $_GET');
         $this->assertEquals('bar2', $request->request->get('foo2'), '::fromGlobals() uses values from $_POST');
         $this->assertEquals('bar3', $request->cookies->get('foo3'), '::fromGlobals() uses values from $_COOKIE');
-        $this->assertEquals(['bar4'], $request->files->get('foo4'), '::fromGlobals() uses values from $_FILES');
+        $this->assertEquals('bar4', $request->files->get('foo4')->getOriginalName(), '::fromGlobals() uses values from $_FILES');
         $this->assertEquals('bar5', $request->server->get('foo5'), '::fromGlobals() uses values from $_SERVER');
 
         unset($_GET['foo1'], $_POST['foo2'], $_COOKIE['foo3'], $_FILES['foo4'], $_SERVER['foo5']);

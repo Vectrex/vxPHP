@@ -21,12 +21,12 @@ use vxPHP\Routing\Route;
  *
  * @author Gregor Kofler
  *
- * @version 0.8.3 2024-11-21
+ * @version 0.8.4 2025-01-13
  *
  */
 abstract class Controller
 {
-    public const DEFAULT_METHOD_NAME = 'execute';
+    public const string DEFAULT_METHOD_NAME = 'execute';
 
 	/**
 	 * @var Request|null
@@ -58,7 +58,7 @@ abstract class Controller
      * @param Route|null $route
      * @param array $parameters
      */
-	public function __construct(Route $route = null, array $parameters = [])
+	public function __construct(?Route $route = null, array $parameters = [])
     {
 		$this->parameters = $parameters;
 
@@ -163,7 +163,7 @@ abstract class Controller
      * @param array $parameters
      * @return Controller
      */
-	public static function createControllerFromRoute(Route $route, string $namespace, Request $request = null, array $parameters = []): Controller
+	public static function createControllerFromRoute(Route $route, string $namespace, ?Request $request = null, array $parameters = []): Controller
     {
 		$controllerClass = trim($namespace, '\\') . $route->getControllerClassName();
 
@@ -194,7 +194,7 @@ abstract class Controller
      * @param int $statusCode
      * @return RedirectResponse
      */
-	protected function redirect(string $url = null, array $queryParams = [], int $statusCode = 302): RedirectResponse
+	protected function redirect(?string $url = null, array $queryParams = [], int $statusCode = 302): RedirectResponse
     {
 		if($url === null) {
 		    if (!$this->route) {

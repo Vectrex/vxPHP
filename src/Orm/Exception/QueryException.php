@@ -11,5 +11,6 @@
 
 namespace vxPHP\Orm\Exception;
 
-class QueryException extends \Exception {
+class QueryException extends \Exception
+{
 }

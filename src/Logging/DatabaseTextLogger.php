@@ -14,12 +14,12 @@ use vxPHP\Logging\LoggerInterface;
 
 class DatabaseTextLogger implements LoggerInterface
 {
-    public function writeLogEntry()
+    public function writeLogEntry(): void
     {
         // TODO Auto-generated method stub
     }
 
-    public function setLogFile( $path)
+    public function setLogFile(string $path): void
     {
     // TODO Auto-generated method stub
     }

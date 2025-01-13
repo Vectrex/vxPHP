@@ -24,11 +24,11 @@ namespace vxPHP\Http;
  */
 class ResponseHeaderBag extends HeaderBag
 {
-    public const COOKIES_FLAT = 'flat';
-    public const COOKIES_ARRAY = 'array';
+    public const string COOKIES_FLAT = 'flat';
+    public const string COOKIES_ARRAY = 'array';
 
-    public const DISPOSITION_ATTACHMENT = 'attachment';
-    public const DISPOSITION_INLINE = 'inline';
+    public const string DISPOSITION_ATTACHMENT = 'attachment';
+    public const string DISPOSITION_INLINE = 'inline';
 
     protected array $computedCacheControl = [];
     protected array $cookies = [];
@@ -101,7 +101,7 @@ class ResponseHeaderBag extends HeaderBag
      *
      * @param string|null $key The name of the headers to return or null to get them all
      */
-    public function all($key = null): array
+    public function all(?string $key = null): array
     {
         $headers = parent::all();
 
@@ -202,7 +202,7 @@ class ResponseHeaderBag extends HeaderBag
      * @param string|null $path
      * @param string|null $domain
      */
-    public function removeCookie(string $name, ?string $path = '/', string $domain = null): void
+    public function removeCookie(string $name, ?string $path = '/', ?string $domain = null): void
     {
         if (null === $path) {
             $path = '/';
@@ -263,7 +263,7 @@ class ResponseHeaderBag extends HeaderBag
      * @param bool $secure
      * @param bool $httpOnly
      */
-    public function clearCookie(string $name, string $path = '/', string $domain = null, bool $secure = false, bool $httpOnly = true/*, $sameSite = null*/): void
+    public function clearCookie(string $name, string $path = '/', ?string $domain = null, bool $secure = false, bool $httpOnly = true/*, $sameSite = null*/): void
     {
         $sameSite = \func_num_args() > 5 ? func_get_arg(5) : null;
         $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, $sameSite));

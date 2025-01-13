@@ -21,7 +21,7 @@ use vxPHP\Template\SimpleTemplate;
  * i.e. <option>s of <select> elements and single <input type="radio"> elements
  * 
  * @author Gregor Kofler
- * @version 0.8.2 2021-11-28
+ * @version 0.8.3 2025-01-13
  */
 abstract class FormElementFragment implements FormElementFragmentInterface
 {
@@ -68,7 +68,7 @@ abstract class FormElementFragment implements FormElementFragmentInterface
      * @param LabelElement $label
      * @param FormElementWithOptionsInterface|null $formElement
      */
-	public function __construct(string $value, LabelElement $label, FormElementWithOptionsInterface $formElement = null)
+	public function __construct(string $value, LabelElement $label, ?FormElementWithOptionsInterface $formElement = null)
     {
 		$this->setValue($value);
 		$this->setLabel($label);
@@ -123,10 +123,10 @@ abstract class FormElementFragment implements FormElementFragmentInterface
      *
      * @param string $attribute
      * @param string|null $value
-     * @return $this|FormElementFragmentInterface
+     * @return FormElementFragmentInterface
      * @see FormElementFragmentInterface::setAttribute()
      */
-    public function setAttribute(string $attribute, string $value = null): FormElementFragmentInterface
+    public function setAttribute(string $attribute, ?string $value = null): FormElementFragmentInterface
     {
         if($value === null) {
             unset($this->attributes[$attribute]);

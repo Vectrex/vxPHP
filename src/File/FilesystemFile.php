@@ -23,12 +23,12 @@ use vxPHP\Util\Text;
  *
  * @author Gregor Kofler
  *
- * @version 1.1.4 2024-11-21
+ * @version 1.1.5 2025-01-13
  */
 
 class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 {
-    public const WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    public const array WEBIMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
     /**
      * @var array
@@ -86,7 +86,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
      * @throws Exception\FilesystemFolderException
      * @throws FilesystemFileException
      */
-	public function __construct(string $path, FilesystemFolder $folder = null)
+	public function __construct(string $path, ?FilesystemFolder $folder = null)
     {
 		if($folder) {
 			$path = $folder->getPath() . $path;

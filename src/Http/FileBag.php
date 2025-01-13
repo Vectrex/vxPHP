@@ -29,7 +29,7 @@ use vxPHP\File\UploadedFile;
  */
 class FileBag extends ParameterBag
 {
-    private static array $fileKeys = ['error', 'name', 'size', 'tmp_name', 'type'];
+    private static array $fileKeys = ['error', 'full_path', 'name', 'size', 'tmp_name', 'type'];
 
     /**
      * @param array|UploadedFile[] $parameters An array of HTTP files
@@ -56,7 +56,6 @@ class FileBag extends ParameterBag
         if (!\is_array($value) && !$value instanceof UploadedFile) {
             throw new \InvalidArgumentException('An uploaded file must be an array or an instance of UploadedFile.');
         }
-
         parent::set($key, $this->convertFileInformation($value));
     }
 
@@ -73,35 +72,29 @@ class FileBag extends ParameterBag
     /**
      * Converts uploaded files to UploadedFile instances.
      *
-     * @param array|UploadedFile $file A (multi-dimensional) array of uploaded file information
+     * @param array|UploadedFile $file A (multidimensional) array of uploaded file information
      *
-     * @return UploadedFile[]|UploadedFile|null A (multi-dimensional) array of UploadedFile instances
+     * @return UploadedFile[]|UploadedFile|null A (multidimensional) array of UploadedFile instances
      * @throws FilesystemFileException
      * @throws FilesystemFolderException
      */
-    protected function convertFileInformation($file)
+    protected function convertFileInformation(UploadedFile|array $file): array|UploadedFile|null
     {
         if ($file instanceof UploadedFile) {
             return $file;
         }
 
-        if (is_array($file)) {
-            $file = $this->fixPhpFilesArray($file);
-            $keys = array_keys($file);
-            sort($keys);
-
-            if ($keys === self::$fileKeys) {
-                if (UPLOAD_ERR_NO_FILE === $file['error']) {
-                    $file = null;
-                } else {
-                    $file = new UploadedFile($file['tmp_name'], $file['name']);
-                }
-            } else {
-                $file = array_map([$this, 'convertFileInformation'], $file);
-                if (array_keys($keys) === $keys) {
-                    $file = array_filter($file);
-                }
+        $file = $this->fixPhpFilesArray($file);
+        $keys = array_keys($file);
+        if (!count(array_diff($keys, self::$fileKeys))) {
+            if (UPLOAD_ERR_NO_FILE === $file['error']) {
+                return null;
             }
+            return new UploadedFile($file['tmp_name'], $file['name']);
+        }
+        $file = array_map([$this, 'convertFileInformation'], $file);
+        if (array_keys($keys) === $keys) {
+            $file = array_filter($file);
         }
 
         return $file;

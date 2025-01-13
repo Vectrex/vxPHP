@@ -40,7 +40,7 @@ interface QueryInterface
 	public function where(string $whereClause, array $valuesToBind): QueryInterface;
 
     /**
-     * add a order by clause
+     * add an order by clause
      *
      * @param string $columnName
      * @param bool $asc

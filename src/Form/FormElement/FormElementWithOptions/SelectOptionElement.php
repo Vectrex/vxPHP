@@ -28,7 +28,7 @@ class SelectOptionElement extends FormElementFragment
      * @param string $label
      * @param SelectElement|null $formElement
      */
-	public function __construct(string $value, string $label, SelectElement $formElement = null)
+	public function __construct(string $value, string $label, ?SelectElement $formElement = null)
     {
 		parent::__construct($value, new LabelElement($label), $formElement);
 	}

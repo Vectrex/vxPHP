@@ -33,7 +33,7 @@ class MimeTypeGetter {
 	 *
 	 * @var string
 	 */
-	public const DEFAULT_MIME_TYPE = 'application/octet-stream';
+	public const string DEFAULT_MIME_TYPE = 'application/octet-stream';
 
 	/**
 	 * Array that associates file extensions with MIME types

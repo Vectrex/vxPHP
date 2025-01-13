@@ -21,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 1.5.1, 2021-11-29
+ * @version 1.5.2, 2025-01-13
  */
 class Pgsql extends AbstractPdoAdapter
 {
@@ -30,7 +30,7 @@ class Pgsql extends AbstractPdoAdapter
      *
      * @var string
      */
-    public const QUOTE_CHAR = '"';
+    public const string QUOTE_CHAR = '"';
 
     /**
      * map translating encoding names
@@ -50,7 +50,7 @@ class Pgsql extends AbstractPdoAdapter
      *
      * @todo parse unix_socket settings
      */
-    public function __construct(array $config = null, array $connectionAttributes = [])
+    public function __construct(?array $config = null, array $connectionAttributes = [])
     {
         if($config) {
 

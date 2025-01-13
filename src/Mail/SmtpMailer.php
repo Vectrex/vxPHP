@@ -17,37 +17,37 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.5.2 2021-09-30
+ * @version 0.5.3 2025-01-13
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
  */
 class SmtpMailer implements MailerInterface
 {
-	public const CRLF = "\r\n";
-    public const RFC5322_ATOM_CHARS	= "!#$%&'*+-/=?^_`{|}~a-zA-Z0-9";
+	public const string CRLF = "\r\n";
+    public const string RFC5322_ATOM_CHARS	= "!#$%&'*+-/=?^_`{|}~a-zA-Z0-9";
 
-    public const RFC_SERVICE_READY = 220;
-    public const RFC_SERVICE_CLOSING = 221;
-    public const RFC_AUTH_SUCCESSFUL = 235;
-    public const RFC_REQUEST_OK = 250;
-    public const RFC_CONTINUE_REQUEST = 334;
-    public const RFC_START_MAIL_INPUT = 354;
+    public const int RFC_SERVICE_READY = 220;
+    public const int RFC_SERVICE_CLOSING = 221;
+    public const int RFC_AUTH_SUCCESSFUL = 235;
+    public const int RFC_REQUEST_OK = 250;
+    public const int RFC_CONTINUE_REQUEST = 334;
+    public const int RFC_START_MAIL_INPUT = 354;
 
-    public const DEFAULT_PORT = 25;
+    public const int DEFAULT_PORT = 25;
 
 	/**
 	 * when set to true TLS is enforced in case server reports support
 	 * @var boolean
 	 */
-    public const DEFAULT_TLS = true;
+    public const bool DEFAULT_TLS = true;
 
 	/**
 	 * preferences for MIME encoding
 	 * used with mb_internal_encoding()
 	 * mb_encode_mimeheader()
 	 */
-	public const MIME_ENCODING_PREFERENCES = [
+	public const array MIME_ENCODING_PREFERENCES = [
 		'scheme' => 'Q',
 		'input-charset' => 'UTF-8',
 		'output-charset' => 'UTF-8',
@@ -57,7 +57,7 @@ class SmtpMailer implements MailerInterface
     /**
      * supported auth methods
      */
-    public const AUTH_METHODS = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
+    public const array AUTH_METHODS = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
 
 
     /**
@@ -86,7 +86,7 @@ class SmtpMailer implements MailerInterface
 
 	/**
 	 * auth method used for SMTP authentication
-	 * @var string|null
+	 * @var string
      */
 	private	string $authMethod = 'NONE';
 
@@ -173,7 +173,7 @@ class SmtpMailer implements MailerInterface
      * @param string|null $smtpEncryption
      * @throws SmtpMailerException
      */
-	public function __construct(string $host, int $port = self::DEFAULT_PORT, string $smtpEncryption = null)
+	public function __construct(string $host, int $port = self::DEFAULT_PORT, ?string $smtpEncryption = null)
     {
 		if($smtpEncryption) {
 			if(!in_array(strtoupper($smtpEncryption), $this->smtpEncryptions, true)) {
@@ -215,7 +215,7 @@ class SmtpMailer implements MailerInterface
 			throw new SmtpMailerException(sprintf('Connection failed. %d: %s.', $errno, $errstr), SmtpMailerException::CONNECTION_FAILED);
 		}
 
-		stream_set_timeout($this->socket, $timeout, 0);
+		stream_set_timeout($this->socket, $timeout);
 	}
 
 	/**

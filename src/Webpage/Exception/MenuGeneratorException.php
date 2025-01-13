@@ -10,8 +10,6 @@
 
 namespace vxPHP\Webpage\Exception;
 
-class MenuGeneratorException extends \Exception {
-
+class MenuGeneratorException extends \Exception
+{
 }
-
-?>

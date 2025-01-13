@@ -54,7 +54,7 @@ class SimpleSessionUserProvider implements UserProviderInterface
      * @return SessionUser|mixed
      * @throws UserException
      */
-	public function unsetSessionUser(string $sessionKey = null): ?SessionUser
+	public function unsetSessionUser(?string $sessionKey = null): ?SessionUser
     {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		
@@ -79,7 +79,7 @@ class SimpleSessionUserProvider implements UserProviderInterface
      * @param string|null $sessionKey
      * @return SessionUser|null
      */
-	public function getSessionUser(string $sessionKey = null): ?SessionUser
+	public function getSessionUser(?string $sessionKey = null): ?SessionUser
     {
 		$sessionKey = $sessionKey ?: SessionUser::DEFAULT_KEY_NAME;
 		

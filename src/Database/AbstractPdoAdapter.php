@@ -15,7 +15,7 @@ namespace vxPHP\Database;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.16.1, 2024-11-21
+ * @version 0.16.2, 2025-01-13
  */
 abstract class AbstractPdoAdapter implements DatabaseInterface
 {
@@ -29,14 +29,14 @@ abstract class AbstractPdoAdapter implements DatabaseInterface
      * record; must be an all lowercase string, though the attribute in
      * the database might be not
      */
-    public const UPDATE_FIELD = 'lastupdated';
+    public const string UPDATE_FIELD = 'lastupdated';
 
     /**
      * attribute which stores the timestamp of the creation timestamp of
      * a record; must be an all lowercase string, though the attribute
      * in the database might be not
      */
-    public const CREATE_FIELD = 'firstcreated';
+    public const string CREATE_FIELD = 'firstcreated';
 
     /**
 	 * host address of connection

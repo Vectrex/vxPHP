@@ -21,7 +21,7 @@ use vxPHP\Database\RecordsetIteratorInterface;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 1.14.3, 2022-11-25
+ * @version 1.14.4, 2025-01-13
  */
 class Mysql extends AbstractPdoAdapter
 {
@@ -30,7 +30,7 @@ class Mysql extends AbstractPdoAdapter
 	 * 
 	 * @var string
 	 */
-	public const QUOTE_CHAR = '`';
+	public const string QUOTE_CHAR = '`';
 
 	/**
 	 * map translating encoding names
@@ -57,7 +57,7 @@ class Mysql extends AbstractPdoAdapter
      * @todo parse unix_socket settings
      *
      */
-	public function __construct(array $config = null, array $connectionAttributes = [])
+	public function __construct(?array $config = null, array $connectionAttributes = [])
     {
 		if($config) {
 			parent::__construct($config);

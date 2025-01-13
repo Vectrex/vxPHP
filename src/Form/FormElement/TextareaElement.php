@@ -18,24 +18,24 @@ namespace vxPHP\Form\FormElement;
  */
 class TextareaElement extends FormElement
 {
-	/**
-	 * (non-PHPDoc)
-	 * @see FormElement::render
-	 */
-	public function render($force = false): string
+    /**
+     * (non-PHPDoc)
+     * @see FormElement::render
+     */
+    public function render($force = false): string
     {
-		if(empty($this->html) || $force) {
+        if (empty($this->html) || $force) {
 
-			$attr = array();
-			foreach($this->attributes as $k => $v) {
-				$attr[] = "$k='$v'";
-			}
-			$this->html = sprintf('<textarea name="%s" %s>%s</textarea>',
-				$this->getName(),
-				implode(' ', $attr),
-				$this->getModifiedValue()
-			);
-		}
-		return $this->html;
-	}
+            $attr = [];
+            foreach ($this->attributes as $k => $v) {
+                $attr[] = "$k='$v'";
+            }
+            $this->html = sprintf('<textarea name="%s" %s>%s</textarea>',
+                $this->getName(),
+                implode(' ', $attr),
+                $this->getModifiedValue()
+            );
+        }
+        return $this->html;
+    }
 }

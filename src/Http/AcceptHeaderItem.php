@@ -156,11 +156,11 @@ class AcceptHeaderItem
      * Returns an attribute by its name.
      *
      * @param string $name
-     * @param mixed  $default
+     * @param mixed|null $default
      *
      * @return mixed
      */
-    public function getAttribute(string $name, $default = null)
+    public function getAttribute(string $name, mixed $default = null): mixed
     {
         return $this->attributes[$name] ?? $default;
     }
@@ -183,7 +183,7 @@ class AcceptHeaderItem
      *
      * @return $this
      */
-    public function setAttribute(string $name, $value): self
+    public function setAttribute(string $name, mixed $value): self
     {
         if ('q' === $name) {
             $this->quality = (float) $value;

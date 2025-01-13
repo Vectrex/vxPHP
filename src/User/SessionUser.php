@@ -43,7 +43,7 @@ class SessionUser extends User
      * @param string|null $sessionKey
      * @param boolean $authenticated
      */
-	public function __construct(string $username, string $hashedPassword = '', array $roles = [], array $attributes = [], string $sessionKey = null, bool $authenticated = false)
+	public function __construct(string $username, string $hashedPassword = '', array $roles = [], array $attributes = [], ?string $sessionKey = null, bool $authenticated = false)
     {
 		$sessionKey = $sessionKey ?: self::DEFAULT_KEY_NAME;
 		

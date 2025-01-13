@@ -14,7 +14,7 @@ namespace vxPHP\Observer;
 /**
  * simple dispatcher-listener implementation
  *
- * @version 0.4.2 2021-12-01
+ * @version 0.4.3 2025-01-13
  * @author Gregor Kofler
  *
  */
@@ -46,9 +46,9 @@ class EventDispatcher
 	 * last event which was served
 	 * wraps emitting element
 	 * 
-	 * @var Event
-	 */
-	private	$lastEvent;
+	 * @var Event|null
+     */
+	private	?Event $lastEvent;
 
 	/**
 	 * singleton pattern
@@ -175,12 +175,12 @@ class EventDispatcher
 		}
 	}
 
-	/**
-	 * provide access to last event which was triggered
+    /**
+     * provide access to last event which was triggered
      *
-	 * @return Event
-	 */
-	public function getLastEvent()
+     * @return Event|null
+     */
+	public function getLastEvent(): ?Event
     {
 		return $this->lastEvent;
 	}
@@ -193,7 +193,7 @@ class EventDispatcher
      * @param string|null $eventName
      * @return array
      */
-    public function getListeners(string $eventName = null): array
+    public function getListeners(?string $eventName = null): array
     {
         if ($eventName) {
             if (empty($this->registry[$eventName])) {
@@ -218,7 +218,7 @@ class EventDispatcher
      * @param string|null $eventName
      * @return bool
      */
-    public function hasListeners(string $eventName = null): bool
+    public function hasListeners(?string $eventName = null): bool
     {
 	    if($eventName) {
             return !empty($this->registry[$eventName]);

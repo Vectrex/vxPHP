@@ -31,7 +31,7 @@ class FormError
      * @param string|null $errorMessage
      * @return $this
      */
-    public function setErrorMessage(string $errorMessage = null): FormError
+    public function setErrorMessage(?string $errorMessage = null): FormError
     {
         $this->errorMessage = $errorMessage;
         return $this;

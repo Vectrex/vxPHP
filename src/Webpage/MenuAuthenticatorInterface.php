@@ -24,16 +24,16 @@ use vxPHP\Webpage\Menu\Menu;
  */
 interface MenuAuthenticatorInterface
 {
-	/**
-	 * checks whether user fulfills menu or menu entry authentication
-	 * requirements
-	 * the result will indicate whether the menu is visible at all
-	 * the state of single menu entries within an otherwise visible menu
-	 * are stored with the menu entries
-	 * 
-	 * @param Menu $menu
-	 * @param UserInterface $user
-	 * @return boolean user is authenticated to see the menu
-	 */
-	public function authenticate(Menu $menu, UserInterface $user): bool;
+    /**
+     * checks whether user fulfills menu or menu entry authentication
+     * requirements
+     * the result will indicate whether the menu is visible at all
+     * the state of single menu entries within an otherwise visible menu
+     * are stored with the menu entries
+     *
+     * @param Menu $menu
+     * @param UserInterface $user
+     * @return boolean user is authenticated to see the menu
+     */
+    public function authenticate(Menu $menu, UserInterface $user): bool;
 }

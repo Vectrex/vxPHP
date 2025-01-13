@@ -79,9 +79,9 @@ class MenuGenerator
 	/**
 	 * additional parameters passed to menu renderer
 	 * 
-	 * @var array
+	 * @var ?array
 	 */
-	protected $renderArgs;
+	protected ?array $renderArgs;
 
 	/**
 	 * class used for menu and menu entry authentication
@@ -100,7 +100,7 @@ class MenuGenerator
      * $decorator identifies a decorator class - MenuDecorator{$decorator}
      * $renderArgs are additional parameters passed to Menu::render()
      *
-     * @param Menu|string $menuOrId (if NULL the first configured menu is used)
+     * @param Menu|string|null $menuOrId (if NULL the first configured menu is used)
      * @param int|null $level (if NULL, a full menu tree is rendered)
      * @param bool $forceActiveMenu
      * @param string|null $decorator
@@ -109,7 +109,7 @@ class MenuGenerator
      * @throws ApplicationException
      * @throws MenuGeneratorException
      */
-	public function __construct($menuOrId = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null)
+	public function __construct(Menu|string|null $menuOrId = null, ?int $level = null, bool $forceActiveMenu = false, ?string $decorator = null, mixed $renderArgs = null)
     {
         if ($menuOrId instanceof Menu) {
             $this->menu = $menuOrId;
@@ -150,7 +150,7 @@ class MenuGenerator
     /**
      * convenience method to allow chaining
      *
-     * @param Menu|string $menuOrId (if NULL the first configured menu is used)
+     * @param Menu|string|null $menuOrId (if NULL the first configured menu is used)
      * @param int|null $level (if NULL, the full menu tree is printed)
      * @param bool $forceActiveMenu
      * @param string|null $decorator
@@ -159,7 +159,7 @@ class MenuGenerator
      * @throws ApplicationException
      * @throws MenuGeneratorException
      */
-	public static function create($menuOrId = null, int $level = null, bool $forceActiveMenu = false, string $decorator = null, $renderArgs = null): MenuGenerator
+	public static function create(Menu|string|null $menuOrId = null, ?int $level = null, bool $forceActiveMenu = false, ?string $decorator = null, mixed $renderArgs = null): MenuGenerator
     {
 		return new static(...func_get_args());
 	}
@@ -172,7 +172,7 @@ class MenuGenerator
 
         $rewriteActive = $router && $router->getServerSideRewrite();
 
-        $route = $application->getCurrentRoute() ?? ($router ? $router->getRouteFromPathInfo($request) : null);
+        $route = $application->getCurrentRoute() ?? ($router?->getRouteFromPathInfo($request));
 
         $routePath = $route ? $route->getPath() : '';
 
@@ -238,7 +238,7 @@ class MenuGenerator
 			return '';
 		}
 
-		// if menu has not been prepared yet, do it now (caching avoids re-parsing for submenus)
+		// if menu has not been prepared yet, do it now (caching avoids reparsing for submenus)
 
 		if(!in_array($this->menu, self::$primedMenus, true)) {
 
@@ -340,7 +340,7 @@ class MenuGenerator
 	 * @param Menu $m
 	 * @param array $pathSegments
 	 *
-	 * @return MenuEntry
+	 * @return ?MenuEntry
 	 *
 	 */
 	protected function walkMenuTree(Menu $m, array $pathSegments): ?MenuEntry
@@ -366,21 +366,17 @@ class MenuGenerator
             // check for a possible "root" (i.e. "/") path
 
             if(!$path && !$pathToMatch) {
-                if ($e->getMenu()) {
-                    $e->getMenu()->setSelectedEntry($e);
-                }
+                $e->getMenu()?->setSelectedEntry($e);
                 return $e;
             }
 
             // path segment doesn't match menu entry - finish walk
 
-			if($path && 0 === strpos($pathToMatch, $path)) {
+			if($path && str_starts_with($pathToMatch, $path)) {
 
 				$pathSegments = explode('/', trim(substr($pathToMatch, strlen($path)), '/'));
 
-                if ($e->getMenu()) {
-                    $e->getMenu()->setSelectedEntry($e);
-                }
+                $e->getMenu()?->setSelectedEntry($e);
 				$sm = $e->getSubMenu();
 
 				// walk  into submenu

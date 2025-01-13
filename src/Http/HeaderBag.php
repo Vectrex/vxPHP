@@ -72,7 +72,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return array An array of headers
      */
-    public function all(string $key = null): array
+    public function all(?string $key = null): array
     {
         if($key) {
             return $this->headers[strtr($key, self::UPPER, self::LOWER)] ?? [];
@@ -119,7 +119,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return string|null The first header value or default value
      */
-    public function get(string $key, string $default = null): ?string
+    public function get(string $key, ?string $default = null): ?string
     {
         $headers = $this->all($key);
 
@@ -215,7 +215,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      *
      * @return \DateTimeInterface|null The parsed DateTime or the default value if the header does not exist
      */
-    public function getDate(string $key, \DateTime $default = null): ?\DateTimeInterface
+    public function getDate(string $key, ?\DateTime $default = null): ?\DateTimeInterface
     {
         if (null === $value = $this->get($key)) {
             return $default;

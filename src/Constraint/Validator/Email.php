@@ -16,12 +16,12 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check an email for validity
  *
- * @version 0.1.3 2021-11-28
+ * @version 0.1.4 2025-01-13
  * @author Gregor Kofler
  */
 class Email extends AbstractConstraint
 {
-    public const ALLOWED_TYPES = ['checkmx', 'checkhost'];
+    public const array ALLOWED_TYPES = ['checkmx', 'checkhost'];
 
 	/**
 	 * indicate which type of additional checking (MX or host) is required
@@ -43,7 +43,7 @@ class Email extends AbstractConstraint
      *
      * @param string|null $type
      */
-	public function __construct(string $type = null)
+	public function __construct(?string $type = null)
     {
 		if($type) {
 			$type = strtolower($type);
@@ -56,7 +56,7 @@ class Email extends AbstractConstraint
 		
         // taken the regexp from vee validate (and vuelidate)
 
-        $this->regExp = '/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
+        $this->regExp = '/^(([^<>()\[\].,;:\s@"]+(\.[^<>()\[\].,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
 	}
 
 	/**

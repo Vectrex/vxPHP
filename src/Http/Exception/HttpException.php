@@ -37,7 +37,7 @@ class HttpException extends \RuntimeException
      * @param integer $code
      * @param \Exception|null $previous
      */
-	public function __construct(int $httpStatusCode, string $message = '', array $headers = [], int $code = 0, \Exception $previous = null)
+	public function __construct(int $httpStatusCode, string $message = '', array $headers = [], int $code = 0, ?\Exception $previous = null)
     {
 		$this->httpStatusCode = $httpStatusCode;
 		$this->headers = $headers;

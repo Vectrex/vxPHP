@@ -13,24 +13,24 @@ namespace vxPHP\Webpage\Menu;
 use vxPHP\Service\Service;
 
 /**
- * parent class for services generating dynamic menu entries 
- * 
+ * parent class for services generating dynamic menu entries
+ *
  * @author Gregor Kofler
  * @version 0.1.1 2021-10-09
  */
 abstract class MenuService extends Service implements MenuServiceInterface
 {
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Webpage\Menu\MenuServiceInterface::appendMenuEntries()
-	 */
-	abstract public function appendMenuEntries(Menu $menu);
+    /**
+     * {@inheritDoc}
+     * @see \vxPHP\Webpage\Menu\MenuServiceInterface::appendMenuEntries()
+     */
+    abstract public function appendMenuEntries(Menu $menu);
 
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Service\Service::setParameters()
-	 */
-	public function setParameters(array $parameters): void
+    /**
+     * {@inheritDoc}
+     * @see \vxPHP\Service\Service::setParameters()
+     */
+    public function setParameters(array $parameters): void
     {
-	}
+    }
 }

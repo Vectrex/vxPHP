@@ -12,13 +12,13 @@ class MysqlTest extends TestCase
      */
     private Mysql $mysql;
 
-    private const DSN = 'mysql:host=localhost;dbname=test_database';
-    private const USER = 'test_user';
-    private const PASS = 'test_password';
+    private const string DSN = 'mysql:host=localhost;dbname=test_database';
+    private const string USER = 'test_user';
+    private const string PASS = 'test_password';
 
-    private const TEST_TABLE = 'test_table';
+    private const string TEST_TABLE = 'test_table';
 
-    private const DDL = <<< 'EOD'
+    private const string DDL = <<< 'EOD'
 
 CREATE TABLE `%s` (
   `id` int NOT NULL AUTO_INCREMENT,

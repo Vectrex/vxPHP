@@ -17,20 +17,19 @@ use vxPHP\Service\ServiceInterface;
  * abstract class to allow simple dependency injection
  *
  * @author Gregor Kofler
- * @version 0.1.0 2015-07-05
+ * @version 0.1.1 2025-01-13
  *
  */
-abstract class Service implements ServiceInterface {
-	
-	/**
-	 * @var array
-	 */
-	protected $parameters;
-	
-	public function setParameters(array $parameters) {
+abstract class Service implements ServiceInterface
+{
 
-		$this->parameters = $parameters;
+    /**
+     * @var array
+     */
+    protected array $parameters;
 
-	}
-
+    public function setParameters(array $parameters): void
+    {
+        $this->parameters = $parameters;
+    }
 }

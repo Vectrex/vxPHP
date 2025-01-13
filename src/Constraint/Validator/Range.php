@@ -32,12 +32,12 @@ class Range extends AbstractConstraint
     /**
      * @var float|int
      */
-    private $min;
+    private int|float $min;
 
     /**
      * @var float|int
      */
-    private $max;
+    private int|float $max;
 
     /**
      * Range constructor.

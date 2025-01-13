@@ -12,6 +12,6 @@
 namespace vxPHP\Logging;
 
 interface LoggerInterface {
-	public function setLogFile($path);
-	public function writeLogEntry();
+	public function setLogFile(string $path): void;
+	public function writeLogEntry(): void;
 }

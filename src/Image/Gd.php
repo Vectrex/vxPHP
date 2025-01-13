@@ -16,7 +16,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * implements ImageModfier for gdLib
  * 
  * @author Gregor Kofler
- * @version 0.6.1 2021-12-01
+ * @version 0.6.2 2025-01-13
  */
 class Gd extends ImageModifier
 {
@@ -55,22 +55,13 @@ class Gd extends ImageModifier
 		$this->file = $file;
 		$this->mimeType = $info['mime'];
 
-		switch($this->mimeType) {
-			case 'image/jpeg':
-				$src->resource = imagecreatefromjpeg($file);
-				break;
-			case 'image/png':
-				$src->resource = imagecreatefrompng($file);
-				break;
-			case 'image/gif':
-				$src->resource = imagecreatefromgif($file);
-				break;
-            case 'image/webp':
-                $src->resource = imagecreatefromwebp($file);
-                break;
-            default:
-                throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE);
-		}
+        $src->resource = match ($this->mimeType) {
+            'image/jpeg' => imagecreatefromjpeg($file),
+            'image/png' => imagecreatefrompng($file),
+            'image/gif' => imagecreatefromgif($file),
+            'image/webp' => imagecreatefromwebp($file),
+            default => throw new ImageModifierException(sprintf("File %s is not of type '%s'.", $file, implode("', '", $this->supportedFormats)), ImageModifierException::WRONG_FILE_TYPE),
+        };
 		
 		$this->srcWidth = $info[0];
 		$this->srcHeight = $info[1];
@@ -244,7 +235,7 @@ class Gd extends ImageModifier
      * @throws ImageModifierException
      * @see \vxPHP\Image\ImageModifier::export()
      */
-	public function export(string $path = null, string $mimetype = null): void
+	public function export(?string $path = null, ?string $mimetype = null): void
     {
 		if(!$mimetype) {
 			$mimetype = $this->mimeType;

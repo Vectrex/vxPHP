@@ -27,7 +27,7 @@ use vxPHP\Controller\Controller;
  */
 class TemplateBuffer
 {
-    public const INVALID_PROPERTIES = ['__rawContents'];
+    public const array INVALID_PROPERTIES = ['__rawContents'];
 
     /**
      * @var string
@@ -46,10 +46,6 @@ class TemplateBuffer
      */
     public function includeFile(string $templateFilename): void
     {
-        /* @deprecated use $this when accessing assigned variables */
-
-        $tpl = $this;
-
         eval('?>' .
             file_get_contents(Application::getInstance()->getRootPath() .
                 (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') .
@@ -66,11 +62,11 @@ class TemplateBuffer
      * @param string|null $methodName
      * @param array|null $constructorArguments
      *
-     * @return string
+     * @return string|null
      * @throws ApplicationException
      * @throws ConfigException
      */
-    public function includeControllerResponse(string $controllerPath, string $methodName = null, array $constructorArguments = null): ?string
+    public function includeControllerResponse(string $controllerPath, ?string $methodName = null, ?array $constructorArguments = null): ?string
     {
         $namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 
@@ -88,7 +84,7 @@ class TemplateBuffer
 
         if(!$constructorArguments) {
             /**
-             * @var Controller
+             * @var Controller $instance
              */
             $instance = new $controllerClass();
         }

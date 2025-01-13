@@ -13,83 +13,82 @@ namespace vxPHP\Session;
 
 /**
  * wraps native \SessionHandler on PHP 5.4+
- * 
+ *
  * @author Gregor Kofler
- * 
- * @version 0.2.1 2022-08-04
+ *
+ * @version 0.2.2 2025-01-13
  */
 class NativeSessionWrapper implements \SessionHandlerInterface
 {
     /**
      * @var \SessionHandler
      */
-	private \SessionHandler $handler;
-	
+    private \SessionHandler $handler;
+
     /**
      * @var boolean
      */
-	private	bool $active = false;
+    private bool $active = false;
 
-	/**
-	 * 
-	 */
-	public function __construct()
+    /**
+     *
+     */
+    public function __construct()
     {
-		$this->handler = new \SessionHandler();
-	}
+        $this->handler = new \SessionHandler();
+    }
 
-	/**
-	 * {@inheritdoc }
-	 */  
-	public function open($savePath, $sessionName): bool
+    /**
+     * {@inheritdoc }
+     */
+    public function open(string $path, string $name): bool
     {
-		$this->active = $this->handler->open($savePath, $sessionName);
-		return $this->active;
-	}
+        $this->active = $this->handler->open($path, $name);
+        return $this->active;
+    }
 
-	/**
-	 * {@inheritdoc }
-	 */  
-	public function close(): bool
+    /**
+     * {@inheritdoc }
+     */
+    public function close(): bool
     {
-    	$this->active = false;
-		return $this->handler->close();
-	}
-	
-	/**
-	 * {@inheritdoc }
-	 */
-    #[\ReturnTypeWillChange]
-	public function read($id)
-    {
-		return $this->handler->read($id);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function write($id, $data): bool
-    {
-		return $this->handler->write($id, $data);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function destroy($id): bool
-    {
-		return (bool) $this->handler->destroy($id);
-	}
+        $this->active = false;
+        return $this->handler->close();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-    #[\ReturnTypeWillChange]
-	public function gc(int $max_lifetime)
+    /**
+     * {@inheritdoc }
+     */
+    public function read($id): string|false
     {
-    	return $this->handler->gc($max_lifetime);
-	}
-	
+        return $this->handler->read($id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function write($id, $data): bool
+    {
+        return $this->handler->write($id, $data);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function destroy($id): bool
+    {
+        return $this->handler->destroy($id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+
+    public function gc(int $max_lifetime): int|false
+    {
+        return $this->handler->gc($max_lifetime);
+    }
+
     /**
      * get session id
      *
@@ -97,7 +96,7 @@ class NativeSessionWrapper implements \SessionHandlerInterface
      */
     public function getId(): string
     {
-    	return session_id();
+        return session_id();
     }
 
     /**
@@ -107,6 +106,6 @@ class NativeSessionWrapper implements \SessionHandlerInterface
      */
     public function getName(): string
     {
-    	return session_name();
+        return session_name();
     }
 }

@@ -15,7 +15,7 @@ namespace vxPHP\Observer;
  * the Event instance wraps both the
  * object which served the event and additional data
  * 
- * @version 0.1.1 2021-12-01
+ * @version 0.1.2 2025-01-13
  * @author Gregor Kofler
  */
 abstract class Event
@@ -83,7 +83,7 @@ abstract class Event
      * @param PublisherInterface $publisher
      * @return static
      */
-	public static function create(string $eventName, PublisherInterface $publisher)
+	public static function create(string $eventName, PublisherInterface $publisher): static
     {
 		return new static($eventName, $publisher);
 	}

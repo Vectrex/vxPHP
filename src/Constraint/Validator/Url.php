@@ -13,14 +13,14 @@ namespace vxPHP\Constraint\Validator;
 use vxPHP\Constraint\AbstractConstraint;
 
 /**
- * check an URL for validity
+ * check a URL for validity
  * 
- * @version 0.1.2 2021-11-28
+ * @version 0.1.3 2025-01-13
  * @author Gregor Kofler
  */
 class Url extends AbstractConstraint
 {
-	public const MATCH_PATTERN = '~^
+	public const string MATCH_PATTERN = '~^
 		(%s)://														# protocol
 		(([\pL\pN-]+:)?([\pL\pN-]+)@)?								# optional auth
 		(
@@ -57,7 +57,7 @@ class Url extends AbstractConstraint
      * @param bool $checkDns
      * @param array|null $schemes
      */
-	public function __construct(bool $checkDns = false, array $schemes = null)
+	public function __construct(bool $checkDns = false, ?array $schemes = null)
     {
 		$this->checkDns = $checkDns;
 

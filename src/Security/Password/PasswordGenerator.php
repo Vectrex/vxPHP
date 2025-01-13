@@ -16,7 +16,7 @@ namespace vxPHP\Security\Password;
  * @author Martin Jansen,  Olivier Vanhoucke
  * @author Gregor Kofler
  * 
- * @version 1.2.1 2021-11-28
+ * @version 1.2.2 2025-01-13
  */
 
 class PasswordGenerator
@@ -24,9 +24,9 @@ class PasswordGenerator
     /**
      * Create a single password.
      *
-     * @param integer Length of the password.
-     * @param string  Type of password (pronounceable, unpronounceable)
-     * @param string  Character which can be used in the
+     * @param integer $length Length of the password.
+     * @param string $type Type of password (pronounceable, unpronounceable)
+     * @param string $chars Character which can be used in the
      *                 unpronounceable password e.g. : 'A,B,C,D,E,F,G'
      *                 or numeric or alphanumeric.
      * @return string  Returns the generated password.
@@ -36,14 +36,10 @@ class PasswordGenerator
     {
         mt_srand();
 
-        switch ($type) {
-            case 'unpronounceable' :
-                return self::createUnpronounceable($length, $chars);
-
-            case 'pronounceable' :
-            default :
-                return self::createPronounceable($length);
-        }
+        return match ($type) {
+            'unpronounceable' => self::createUnpronounceable($length, $chars),
+            default => self::createPronounceable($length),
+        };
     }
 
     /**
@@ -52,10 +48,10 @@ class PasswordGenerator
      * Method to create a list of different passwords which are
      * all different.
      *
-     * @param integer Number of different password
-     * @param integer Length of the password
-     * @param string  Type of password (pronounceable, unpronounceable)
-     * @param string  Character which can be used in the
+     * @param integer $number Number of different password
+     * @param integer $length Length of the password
+     * @param string $type Type of password (pronounceable, unpronounceable)
+     * @param string $chars Character which can be used in the
      *                 unpronounceable password ex : 'A,B,C,D,E,F,G'
      *                 or numeric or alphanumeric.
      * @return array   Array containing the passwords
@@ -85,9 +81,9 @@ class PasswordGenerator
      *
      * Method to create password from login
      *
-     * @param  string  Login
-     * @param  string  Type
-     * @param  integer Key
+     * @param  string $login Login
+     * @param  string $type Type
+     * @param  integer $key Key
      * @return string
      * @throws \RuntimeException
      */
@@ -124,9 +120,9 @@ class PasswordGenerator
     *
     * Method to create a list of different passwords from logins
     *
-    * @param  array   Login
-    * @param  string  Type
-    * @param  integer Key
+    * @param  array $login Login
+    * @param  string $type Type
+    * @param  integer $key Key
     * @return array   Array containing the passwords
     */
     public static function createMultipleFromLogin(array $login, string $type, int $key = 0): array
@@ -312,7 +308,7 @@ class PasswordGenerator
      * This method creates a string that consists of
      * vowels and consonats.
      *
-     * @param integer Length of the password
+     * @param integer $length Length of the password
      * @return string  Returns the password
      * @throws \Exception
      */
@@ -353,8 +349,8 @@ class PasswordGenerator
      *
      * This method creates a random unpronounceable password
      *
-     * @param integer Length of the password
-     * @param string  Character which could be used in the
+     * @param integer $length Length of the password
+     * @param string $chars Character which could be used in the
      *                 unpronounceable password ex : 'A,B,C,D,E,F,G'
      *                 or numeric or alphanumeric.
      * @return string  Returns the password

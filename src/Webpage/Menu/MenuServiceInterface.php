@@ -14,16 +14,16 @@ use vxPHP\Service\ServiceInterface;
 
 /**
  * Interface for services generating menu entries
- * 
+ *
  * @author Gregor Kofler
  * @version 0.1.0 2016-07-25
  */
 interface MenuServiceInterface extends ServiceInterface
 {
-	/**
-	 * append menu entries to a menu passed into method
-	 * 
-	 * @param Menu $menu
-	 */
-	public function appendMenuEntries(Menu $menu);
+    /**
+     * append menu entries to a menu passed into method
+     *
+     * @param Menu $menu
+     */
+    public function appendMenuEntries(Menu $menu);
 }

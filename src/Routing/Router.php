@@ -22,7 +22,7 @@ use vxPHP\Http\Request;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.2.2 2021-11-28
+ * @version 2.2.3 2025-01-13
  *
  */
 class Router
@@ -32,7 +32,7 @@ class Router
 	 * 
 	 * @var RouteAuthenticatorInterface|null
      */
-	protected RouteAuthenticatorInterface $authenticator;
+	protected ?RouteAuthenticatorInterface $authenticator;
 
     /**
      * @var Route[]
@@ -74,7 +74,7 @@ class Router
      * @param Route[]|null $routes
      * @param RouteAuthenticatorInterface|null $authenticator
      */
-	public function __construct(array $routes = null, RouteAuthenticatorInterface $authenticator = null)
+	public function __construct(?array $routes = null, ?RouteAuthenticatorInterface $authenticator = null)
     {
         if($routes) {
             $this->setRoutes($routes);
@@ -89,11 +89,11 @@ class Router
 
         // check for possible server side rewrite
 
-        if(!empty($_SERVER) && strpos(PHP_SAPI, 'cli') !== 0) {
+        if(!empty($_SERVER) && !str_starts_with(PHP_SAPI, 'cli')) {
 
             // check whether script name is found in URL path; if not a rewrite is assumed
 
-            $this->serverSideRewrite = (false === strpos(strtok($_SERVER['REQUEST_URI'], '?'), basename($_SERVER['SCRIPT_NAME'])));
+            $this->serverSideRewrite = (!str_contains(strtok($_SERVER['REQUEST_URI'], '?'), basename($_SERVER['SCRIPT_NAME'])));
         }
         else {
             $this->serverSideRewrite = false;
@@ -316,9 +316,9 @@ class Router
      * @param string $requestMethod
      * @param array|null $pathSegments
      *
-     * @return \vxPHP\Routing\Route
+     * @return Route|null
      */
-	private function findRoute(string $scriptName, string $requestMethod, array $pathSegments = null): ?Route
+	private function findRoute(string $scriptName, string $requestMethod, ?array $pathSegments = null): ?Route
     {
 	    if(!count($this->routes)) {
 	        throw new \RuntimeException('Routing aborted: No routes assigned.');

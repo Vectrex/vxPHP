@@ -16,7 +16,7 @@ namespace vxPHP\Session;
  * 
  * @author Gregor Kofler
  * 
- * @version 0.2.0 2022-06-10
+ * @version 0.2.1 2025-01-13
  */
 class SessionDataBag implements \IteratorAggregate, \Countable
 {
@@ -75,7 +75,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	 * 
 	 * @return mixed
 	 */
-	public function get(string $key, $default = null)
+	public function get(string $key, mixed $default = null): mixed
     {
 		return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
 	}
@@ -86,7 +86,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	 * @param string $key
 	 * @param mixed $value
 	 */
-	public function set(string $key, $value): void
+	public function set(string $key, mixed $value): void
     {
 		$this->data[$key] = $value;
 	}
@@ -110,7 +110,7 @@ class SessionDataBag implements \IteratorAggregate, \Countable
 	 * @param string $key
 	 * @return mixed
 	 */
-	public function remove(string $key)
+	public function remove(string $key): mixed
     {
 		if(!array_key_exists($key, $this->data)) {
 			return null;

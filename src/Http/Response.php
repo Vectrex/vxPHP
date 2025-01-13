@@ -25,74 +25,74 @@ namespace vxPHP\Http;
  */
 class Response
 {
-    public const HTTP_CONTINUE = 100;
-    public const HTTP_SWITCHING_PROTOCOLS = 101;
-    public const HTTP_PROCESSING = 102;            // RFC2518
-    public const HTTP_EARLY_HINTS = 103;           // RFC8297
-    public const HTTP_OK = 200;
-    public const HTTP_CREATED = 201;
-    public const HTTP_ACCEPTED = 202;
-    public const HTTP_NON_AUTHORITATIVE_INFORMATION = 203;
-    public const HTTP_NO_CONTENT = 204;
-    public const HTTP_RESET_CONTENT = 205;
-    public const HTTP_PARTIAL_CONTENT = 206;
-    public const HTTP_MULTI_STATUS = 207;          // RFC4918
-    public const HTTP_ALREADY_REPORTED = 208;      // RFC5842
-    public const HTTP_IM_USED = 226;               // RFC3229
-    public const HTTP_MULTIPLE_CHOICES = 300;
-    public const HTTP_MOVED_PERMANENTLY = 301;
-    public const HTTP_FOUND = 302;
-    public const HTTP_SEE_OTHER = 303;
-    public const HTTP_NOT_MODIFIED = 304;
-    public const HTTP_USE_PROXY = 305;
-    public const HTTP_RESERVED = 306;
-    public const HTTP_TEMPORARY_REDIRECT = 307;
-    public const HTTP_PERMANENTLY_REDIRECT = 308;  // RFC7238
-    public const HTTP_BAD_REQUEST = 400;
-    public const HTTP_UNAUTHORIZED = 401;
-    public const HTTP_PAYMENT_REQUIRED = 402;
-    public const HTTP_FORBIDDEN = 403;
-    public const HTTP_NOT_FOUND = 404;
-    public const HTTP_METHOD_NOT_ALLOWED = 405;
-    public const HTTP_NOT_ACCEPTABLE = 406;
-    public const HTTP_PROXY_AUTHENTICATION_REQUIRED = 407;
-    public const HTTP_REQUEST_TIMEOUT = 408;
-    public const HTTP_CONFLICT = 409;
-    public const HTTP_GONE = 410;
-    public const HTTP_LENGTH_REQUIRED = 411;
-    public const HTTP_PRECONDITION_FAILED = 412;
-    public const HTTP_REQUEST_ENTITY_TOO_LARGE = 413;
-    public const HTTP_REQUEST_URI_TOO_LONG = 414;
-    public const HTTP_UNSUPPORTED_MEDIA_TYPE = 415;
-    public const HTTP_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
-    public const HTTP_EXPECTATION_FAILED = 417;
-    public const HTTP_I_AM_A_TEAPOT = 418;                                               // RFC2324
-    public const HTTP_MISDIRECTED_REQUEST = 421;                                         // RFC7540
-    public const HTTP_UNPROCESSABLE_ENTITY = 422;                                        // RFC4918
-    public const HTTP_LOCKED = 423;                                                      // RFC4918
-    public const HTTP_FAILED_DEPENDENCY = 424;                                           // RFC4918
+    public const int HTTP_CONTINUE = 100;
+    public const int HTTP_SWITCHING_PROTOCOLS = 101;
+    public const int HTTP_PROCESSING = 102;            // RFC2518
+    public const int HTTP_EARLY_HINTS = 103;           // RFC8297
+    public const int HTTP_OK = 200;
+    public const int HTTP_CREATED = 201;
+    public const int HTTP_ACCEPTED = 202;
+    public const int HTTP_NON_AUTHORITATIVE_INFORMATION = 203;
+    public const int HTTP_NO_CONTENT = 204;
+    public const int HTTP_RESET_CONTENT = 205;
+    public const int HTTP_PARTIAL_CONTENT = 206;
+    public const int HTTP_MULTI_STATUS = 207;          // RFC4918
+    public const int HTTP_ALREADY_REPORTED = 208;      // RFC5842
+    public const int HTTP_IM_USED = 226;               // RFC3229
+    public const int HTTP_MULTIPLE_CHOICES = 300;
+    public const int HTTP_MOVED_PERMANENTLY = 301;
+    public const int HTTP_FOUND = 302;
+    public const int HTTP_SEE_OTHER = 303;
+    public const int HTTP_NOT_MODIFIED = 304;
+    public const int HTTP_USE_PROXY = 305;
+    public const int HTTP_RESERVED = 306;
+    public const int HTTP_TEMPORARY_REDIRECT = 307;
+    public const int HTTP_PERMANENTLY_REDIRECT = 308;  // RFC7238
+    public const int HTTP_BAD_REQUEST = 400;
+    public const int HTTP_UNAUTHORIZED = 401;
+    public const int HTTP_PAYMENT_REQUIRED = 402;
+    public const int HTTP_FORBIDDEN = 403;
+    public const int HTTP_NOT_FOUND = 404;
+    public const int HTTP_METHOD_NOT_ALLOWED = 405;
+    public const int HTTP_NOT_ACCEPTABLE = 406;
+    public const int HTTP_PROXY_AUTHENTICATION_REQUIRED = 407;
+    public const int HTTP_REQUEST_TIMEOUT = 408;
+    public const int HTTP_CONFLICT = 409;
+    public const int HTTP_GONE = 410;
+    public const int HTTP_LENGTH_REQUIRED = 411;
+    public const int HTTP_PRECONDITION_FAILED = 412;
+    public const int HTTP_REQUEST_ENTITY_TOO_LARGE = 413;
+    public const int HTTP_REQUEST_URI_TOO_LONG = 414;
+    public const int HTTP_UNSUPPORTED_MEDIA_TYPE = 415;
+    public const int HTTP_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    public const int HTTP_EXPECTATION_FAILED = 417;
+    public const int HTTP_I_AM_A_TEAPOT = 418;                                               // RFC2324
+    public const int HTTP_MISDIRECTED_REQUEST = 421;                                         // RFC7540
+    public const int HTTP_UNPROCESSABLE_ENTITY = 422;                                        // RFC4918
+    public const int HTTP_LOCKED = 423;                                                      // RFC4918
+    public const int HTTP_FAILED_DEPENDENCY = 424;                                           // RFC4918
 
     /**
      * @deprecated
      */
-    public const HTTP_RESERVED_FOR_WEBDAV_ADVANCED_COLLECTIONS_EXPIRED_PROPOSAL = 425;   // RFC2817
-    public const HTTP_TOO_EARLY = 425;                                                   // RFC-ietf-httpbis-replay-04
-    public const HTTP_UPGRADE_REQUIRED = 426;                                            // RFC2817
-    public const HTTP_PRECONDITION_REQUIRED = 428;                                       // RFC6585
-    public const HTTP_TOO_MANY_REQUESTS = 429;                                           // RFC6585
-    public const HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;                             // RFC6585
-    public const HTTP_UNAVAILABLE_FOR_LEGAL_REASONS = 451;
-    public const HTTP_INTERNAL_SERVER_ERROR = 500;
-    public const HTTP_NOT_IMPLEMENTED = 501;
-    public const HTTP_BAD_GATEWAY = 502;
-    public const HTTP_SERVICE_UNAVAILABLE = 503;
-    public const HTTP_GATEWAY_TIMEOUT = 504;
-    public const HTTP_VERSION_NOT_SUPPORTED = 505;
-    public const HTTP_VARIANT_ALSO_NEGOTIATES_EXPERIMENTAL = 506;                        // RFC2295
-    public const HTTP_INSUFFICIENT_STORAGE = 507;                                        // RFC4918
-    public const HTTP_LOOP_DETECTED = 508;                                               // RFC5842
-    public const HTTP_NOT_EXTENDED = 510;                                                // RFC2774
-    public const HTTP_NETWORK_AUTHENTICATION_REQUIRED = 511;                             // RFC6585
+    public const int HTTP_RESERVED_FOR_WEBDAV_ADVANCED_COLLECTIONS_EXPIRED_PROPOSAL = 425;   // RFC2817
+    public const int HTTP_TOO_EARLY = 425;                                                   // RFC-ietf-httpbis-replay-04
+    public const int HTTP_UPGRADE_REQUIRED = 426;                                            // RFC2817
+    public const int HTTP_PRECONDITION_REQUIRED = 428;                                       // RFC6585
+    public const int HTTP_TOO_MANY_REQUESTS = 429;                                           // RFC6585
+    public const int HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;                             // RFC6585
+    public const int HTTP_UNAVAILABLE_FOR_LEGAL_REASONS = 451;
+    public const int HTTP_INTERNAL_SERVER_ERROR = 500;
+    public const int HTTP_NOT_IMPLEMENTED = 501;
+    public const int HTTP_BAD_GATEWAY = 502;
+    public const int HTTP_SERVICE_UNAVAILABLE = 503;
+    public const int HTTP_GATEWAY_TIMEOUT = 504;
+    public const int HTTP_VERSION_NOT_SUPPORTED = 505;
+    public const int HTTP_VARIANT_ALSO_NEGOTIATES_EXPERIMENTAL = 506;                        // RFC2295
+    public const int HTTP_INSUFFICIENT_STORAGE = 507;                                        // RFC4918
+    public const int HTTP_LOOP_DETECTED = 508;                                               // RFC5842
+    public const int HTTP_NOT_EXTENDED = 510;                                                // RFC2774
+    public const int HTTP_NETWORK_AUTHENTICATION_REQUIRED = 511;                             // RFC6585
 
     /**
      * @var ResponseHeaderBag
@@ -102,7 +102,7 @@ class Response
     /**
      * @var mixed
      */
-    protected $content = '';
+    protected mixed $content = '';
 
     /**
      * @var string
@@ -205,7 +205,7 @@ class Response
      * @param int $status
      * @param array $headers
      */
-    public function __construct($content = '', int $status = 200, array $headers = [])
+    public function __construct(mixed $content = '', int $status = 200, array $headers = [])
     {
         $this->headers = new ResponseHeaderBag($headers);
         $this->setContent($content);
@@ -227,7 +227,7 @@ class Response
      *
      * @return static
      */
-    public static function create($content = '', int $status = 200, array $headers = []): Response
+    public static function create(mixed $content = '', int $status = 200, array $headers = []): Response
     {
         return new static($content, $status, $headers);
     }
@@ -318,7 +318,7 @@ class Response
         }
 
         // Check if we need to send extra expire info headers
-        if ('1.0' === $this->getProtocolVersion() && false !== strpos($headers->get('Cache-Control'), 'no-cache')) {
+        if ('1.0' === $this->getProtocolVersion() && str_contains($headers->get('Cache-Control'), 'no-cache')) {
             $headers->set('pragma', 'no-cache');
             $headers->set('expires', -1);
         }
@@ -407,7 +407,7 @@ class Response
      *
      * @throws \UnexpectedValueException
      */
-    public function setContent($content): Response
+    public function setContent(mixed $content): Response
     {
         if (null !== $content && !\is_string($content) && !is_numeric($content) && !\is_callable([$content, '__toString'])) {
             throw new \UnexpectedValueException(sprintf('The Response content must be a string or object implementing __toString(), "%s" given.', \gettype($content)));
@@ -423,7 +423,7 @@ class Response
      *
      * @return string|false
      */
-    public function getContent()
+    public function getContent(): string|false
     {
         return $this->content;
     }
@@ -727,7 +727,7 @@ class Response
     {
         try {
             return $this->headers->getDate('Expires');
-        } catch (\RuntimeException $e) {
+        } catch (\RuntimeException) {
             // according to RFC 2616 invalid date formats (e.g. "0" and "-1") must be treated as in the past
             return \DateTime::createFromFormat('U', time() - 172800);
         }
@@ -743,7 +743,7 @@ class Response
      *
      * @final
      */
-    public function setExpires(\DateTimeInterface $date = null): self
+    public function setExpires(?\DateTimeInterface $date = null): self
     {
         if (null === $date) {
             $this->headers->remove('Expires');
@@ -765,7 +765,7 @@ class Response
      * Returns the number of seconds after the time specified in the response's Date
      * header when the response should no longer be considered fresh.
      *
-     * First, it checks for a s-maxage directive, then a max-age directive, and then it falls
+     * First, it checks for an s-maxage directive, then a max-age directive, and then it falls
      * back on an expires header. It returns null when no maximum age can be established.
      *
      * @final
@@ -895,7 +895,7 @@ class Response
      *
      * @final
      */
-    public function setLastModified(\DateTimeInterface $date = null): self
+    public function setLastModified(?\DateTimeInterface $date = null): self
     {
         if (null === $date) {
             $this->headers->remove('Last-Modified');
@@ -933,12 +933,12 @@ class Response
      *
      * @final
      */
-    public function setEtag(string $etag = null, bool $weak = false): self
+    public function setEtag(?string $etag = null, bool $weak = false): self
     {
         if (null === $etag) {
             $this->headers->remove('Etag');
         } else {
-            if (0 !== strpos($etag, '"')) {
+            if (!str_starts_with($etag, '"')) {
                 $etag = '"'.$etag.'"';
             }
 
@@ -1069,7 +1069,7 @@ class Response
      *
      * @final
      */
-    public function setVary($headers, bool $replace = true): self
+    public function setVary(string|array $headers, bool $replace = true): self
     {
         $this->headers->set('Vary', $headers, $replace);
 
@@ -1212,7 +1212,7 @@ class Response
      * @param string|null $location
      * @return bool
      */
-    public function isRedirect(string $location = null): bool
+    public function isRedirect(?string $location = null): bool
     {
         return \in_array($this->statusCode, [201, 301, 302, 303, 307, 308], true) && (null === $location || $location === $this->headers->get('Location'));
     }

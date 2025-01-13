@@ -17,7 +17,7 @@ use vxPHP\Image\Exception\ImageModifierException;
  * wraps some image manipulation functionality
  *
  * @author Gregor Kofler
- * @version 0.6.3 2021-12-01
+ * @version 0.6.4 2025-01-13
  */
 abstract class ImageModifier
 {
@@ -368,6 +368,6 @@ abstract class ImageModifier
      * @param string|null $path , output filename, defaults to source filename
      * @param string|null $mimetype , output file mimetype, defaults to source mime type
      */
-	abstract public function export(string $path = null, string $mimetype = null);
+	abstract public function export(?string $path = null, ?string $mimetype = null);
 
 }

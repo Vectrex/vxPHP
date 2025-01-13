@@ -11,5 +11,6 @@
 
 namespace vxPHP\Form\Exception;
 
-class FormElementFactoryException extends \Exception {
+class FormElementFactoryException extends \Exception
+{
 }

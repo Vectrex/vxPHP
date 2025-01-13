@@ -7,7 +7,7 @@ use vxPHP\Constraint\AbstractConstraint;
  * Validate IBANs
  * 
  * @author Gregor Kofler
- * @version 0.4.2 2021-11-28
+ * @version 0.4.3 2025-01-13
  *
  */
 class Iban extends AbstractConstraint
@@ -127,6 +127,7 @@ class Iban extends AbstractConstraint
         // Central African Republic
     ];
 
+    /*
     private array $territories = [
         'AX' => 'FI', // Aland Islands
         'BL' => 'FR', // Saint Barthelemy
@@ -141,6 +142,7 @@ class Iban extends AbstractConstraint
         'YT' => 'FR', // Mayotte
         'WF' => 'FR', // Wallis and Futuna Islands
     ];
+    */
 
 	/**
 	 *

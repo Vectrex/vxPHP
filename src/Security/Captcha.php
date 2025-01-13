@@ -15,277 +15,267 @@ use vxPHP\Security\Exception\CaptchaException;
 
 /**
  * Captcha
- * @version 0.2.5, 2021-11-28
+ * @version 0.2.6, 2025-01-13
  * @author Gregor Kofler
  */
-class Captcha {
-	private int $charCount;
-	private int $fontSize;
-	private	array $bgColor = [];
-	private array $fontColors = [];
-	private array $fonts = [];
-	private array $gridColors = [];
-	private int $gridSpacing = 8;
-	private bool $tiltedLetters = true;
-	
-	private string $type;
-	private string $imgType;
-	private string $string;
-	private int $height;
-	private int $width;
-	private bool $debug	= false;
+class Captcha
+{
+    private int $charCount;
+    private int $fontSize;
+    private array $bgColor = [];
+    private array $fontColors = [];
+    private array $fonts = [];
+    private array $gridColors = [];
+    private int $gridSpacing = 8;
+    private bool $tiltedLetters = true;
 
-	/**
-	 * @param int character count
-	 * @param int font size
-	 * @param string image type
-	 * @param string text contain digits, chars or mixed
-	 * @return void
-	 */
-	public function __construct(int $charCount = 6, int $fontSize = 32, string $imgType = 'png', string $type = 'mixed')
+    private string $type;
+    private string $imgType;
+    private string $string;
+    private int $height;
+    private int $width;
+    private bool $debug = false;
+
+    /**
+     * @param int $charCount character count
+     * @param int $fontSize font size
+     * @param string $imgType image type
+     * @param string $type text contain digits, chars or mixed
+     * @return void
+     */
+    public function __construct(int $charCount = 6, int $fontSize = 32, string $imgType = 'png', string $type = 'mixed')
     {
-		$this->charCount = $charCount;
-		$this->fontSize = $fontSize;
-		$this->imgType = $imgType;
-		$this->type = $type;
+        $this->charCount = $charCount;
+        $this->fontSize = $fontSize;
+        $this->imgType = $imgType;
+        $this->type = $type;
 
-		$this->width = ($this->charCount + 2) * $this->fontSize;
-		$this->height = ($this->fontSize * 3);
-		$this->generateString();
-	}
-	
-	public function __toString()
+        $this->width = ($this->charCount + 2) * $this->fontSize;
+        $this->height = ($this->fontSize * 3);
+        $this->generateString();
+    }
+
+    public function __toString()
     {
-		return $this->string;
-	}
+        return $this->string;
+    }
 
-	public function tiltLetters($tilt): Captcha
+    public function tiltLetters($tilt): Captcha
     {
-		$this->tiltedLetters = (boolean) $tilt;
-		return $this;
-	}
-	
-	public function setFonts($fonts): Captcha
+        $this->tiltedLetters = (boolean)$tilt;
+        return $this;
+    }
+
+    public function setFonts($fonts): Captcha
     {
-		$this->fonts = (array) $fonts;
-		return $this;
-	}
-	
-	public function setBgColor($bgColor): Captcha
+        $this->fonts = (array)$fonts;
+        return $this;
+    }
+
+    public function setBgColor($bgColor): Captcha
     {
-		if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($bgColor), $matches)) {
-			throw new CaptchaException(sprintf("Invalid background color '%s'.", trim($bgColor)));
-		}
-		
-		$this->bgColor = [
-			hexdec(substr($matches[1], 0, 2)),
-			hexdec(substr($matches[1], 2, 2)),
-			hexdec(substr($matches[1], 4, 2))
-		];
+        if (!preg_match('/^#?([0-9a-f]{6})$/i', trim($bgColor), $matches)) {
+            throw new CaptchaException(sprintf("Invalid background color '%s'.", trim($bgColor)));
+        }
 
-		return $this;
-	}
-	
-	public function setFontColor($color): Captcha
+        $this->bgColor = [
+            hexdec(substr($matches[1], 0, 2)),
+            hexdec(substr($matches[1], 2, 2)),
+            hexdec(substr($matches[1], 4, 2))
+        ];
+
+        return $this;
+    }
+
+    public function setFontColor($color): Captcha
     {
-		foreach((array) $color as $c) {
+        foreach ((array)$color as $c) {
 
-			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
-				throw new CaptchaException(sprintf("Invalid font color '%s'.", trim($c)));
-			}
+            if (!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
+                throw new CaptchaException(sprintf("Invalid font color '%s'.", trim($c)));
+            }
 
-			$this->fontColors[] = [
-				hexdec(substr($matches[1], 0, 2)),
-				hexdec(substr($matches[1], 2, 2)),
-				hexdec(substr($matches[1], 4, 2))
-			];
-		}
+            $this->fontColors[] = [
+                hexdec(substr($matches[1], 0, 2)),
+                hexdec(substr($matches[1], 2, 2)),
+                hexdec(substr($matches[1], 4, 2))
+            ];
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function setGridColor($color): Captcha
+    public function setGridColor($color): Captcha
     {
-		foreach((array) $color as $c) {
+        foreach ((array)$color as $c) {
 
-			if(!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
-				throw new CaptchaException(sprintf("Invalid grid color '%s'.", trim($c)));
-			}
-			
-			$this->gridColors[] = [
-				hexdec(substr($matches[1], 0, 2)),
-				hexdec(substr($matches[1], 2, 2)),
-				hexdec(substr($matches[1], 4, 2))
-			];
-		}
+            if (!preg_match('/^#?([0-9a-f]{6})$/i', trim($c), $matches)) {
+                throw new CaptchaException(sprintf("Invalid grid color '%s'.", trim($c)));
+            }
 
-		return $this;
-	}
+            $this->gridColors[] = [
+                hexdec(substr($matches[1], 0, 2)),
+                hexdec(substr($matches[1], 2, 2)),
+                hexdec(substr($matches[1], 4, 2))
+            ];
+        }
 
-	public function setGridSpacing(int $gridSpacing): Captcha
+        return $this;
+    }
+
+    public function setGridSpacing(int $gridSpacing): Captcha
     {
-		$this->gridSpacing = max(2, $gridSpacing);
-		return $this;
-	}
-	
-	public function display(): void
+        $this->gridSpacing = max(2, $gridSpacing);
+        return $this;
+    }
+
+    public function display(): void
     {
-		if(empty($this->fonts)) {
-			throw new CaptchaException('No font(s) set.');
-		}
-		
-		$image = $this->generate();
+        if (empty($this->fonts)) {
+            throw new CaptchaException('No font(s) set.');
+        }
 
-		$this->sendHeader();
+        $image = $this->generate();
 
-		switch ($this->imgType) {
+        $this->sendHeader();
 
-			case 'jpeg':
-				imagejpeg($image);	
-				break;
+        switch ($this->imgType) {
 
-			case 'gif':
-				imagegif($image);
-				break;
+            case 'jpeg':
+                imagejpeg($image);
+                break;
 
-			case 'png':
-			default:
-				imagepng($image);
-		}
-	}
+            case 'gif':
+                imagegif($image);
+                break;
 
-	public function save($path, $filename = null): bool
+            case 'png':
+            default:
+                imagepng($image);
+        }
+    }
+
+    public function save($path, $filename = null): bool
     {
-		if(empty($this->fonts)) {
-			throw new CaptchaException('No font(s) set.');
-		}
-		
-		if(empty($filename)) {
-			$filename = uniqid('captcha_', true);
-		}
+        if (empty($this->fonts)) {
+            throw new CaptchaException('No font(s) set.');
+        }
 
-		$filename = rtrim($path, '/') . '/' . $filename;
+        if (empty($filename)) {
+            $filename = uniqid('captcha_', true);
+        }
 
-		$image = $this->generate();
+        $filename = rtrim($path, '/') . '/' . $filename;
 
-		switch ($this->imgType) {
-			case 'jpeg': return imagejpeg($image, $filename);
-			case 'gif':	return imagegif($image, $filename);
+        $image = $this->generate();
 
-			case 'png':	
-			default: return imagepng($image, $filename, 9);
-		}
-	}
+        return match ($this->imgType) {
+            'jpeg' => imagejpeg($image, $filename),
+            'gif' => imagegif($image, $filename),
+            default => imagepng($image, $filename, 9),
+        };
+    }
 
-	public function getString(): string
+    public function getString(): string
     {
-		return $this->string;
-	}
+        return $this->string;
+    }
 
-	private function generate()
+    private function generate()
     {
-		if(!($image = imagecreatetruecolor($this->width, $this->height))) {
-			throw new CaptchaException('GD image stream could not be initialized.');
-		}
+        if (!($image = imagecreatetruecolor($this->width, $this->height))) {
+            throw new CaptchaException('GD image stream could not be initialized.');
+        }
 
-		if(function_exists('imageantialias')) {
-			imageantialias($image, TRUE);
-		}
+        if (function_exists('imageantialias')) {
+            imageantialias($image, true);
+        }
 
-		if($this->bgColor) {
-			$bgColor = imagecolorallocate($image, $this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
-			imagefill($image, 0, 0, $bgColor);
-		}
+        if ($this->bgColor) {
+            $bgColor = imagecolorallocate($image, $this->bgColor[0], $this->bgColor[1], $this->bgColor[2]);
+            imagefill($image, 0, 0, $bgColor);
+        }
 
-		if(!$this->fontColors) {
-			throw new CaptchaException('No font colors defined.');
-		}
+        if (!$this->fontColors) {
+            throw new CaptchaException('No font colors defined.');
+        }
 
-		$char = [];
-		
-		foreach($this->fontColors as $color) {
-			$char[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
-		}
+        $char = [];
 
-		
-		if($this->gridColors) {
-			$grid = [];
-	
-			foreach($this->gridColors as $color) {
-				$grid[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
-			}
+        foreach ($this->fontColors as $color) {
+            $char[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
+        }
+
+
+        if ($this->gridColors) {
+            $grid = [];
+
+            foreach ($this->gridColors as $color) {
+                $grid[] = imagecolorallocate($image, $color[0], $color[1], $color[2]);
+            }
 
             for ($i = $this->gridSpacing; $i < $this->height; $i += $this->gridSpacing) {
-                imageline($image, 0, $i+random_int(-$this->gridSpacing, $this->gridSpacing), $this->width, $i + random_int(-$this->gridSpacing, $this->gridSpacing), $grid[array_rand($grid)]);
+                imageline($image, 0, $i + random_int(-$this->gridSpacing, $this->gridSpacing), $this->width, $i + random_int(-$this->gridSpacing, $this->gridSpacing), $grid[array_rand($grid)]);
             }
-		}
-		
-		$len = strlen($this->string);
-		$x = $this->fontSize;
-		$y = $this->fontSize * 2;
+        }
 
-		for($i = 0; $i < $len; ++$i) {
+        $len = strlen($this->string);
+        $x = $this->fontSize;
+        $y = $this->fontSize * 2;
 
-			if($this->tiltedLetters) {
-				$angle = random_int(0, 1) ? random_int(0, 29) : random_int(330, 360);
-			}
-			else {
-				$angle = 0;
-			}
+        for ($i = 0; $i < $len; ++$i) {
 
-			imagettftext($image, $this->fontSize, $angle, $x, $y, $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string[$i]);
-			$x += $this->fontSize + random_int(-$this->fontSize, $this->fontSize) / 5;
-			$y += random_int(-$this->fontSize, $this->fontSize) / 4;
-		}
+            if ($this->tiltedLetters) {
+                $angle = random_int(0, 1) ? random_int(0, 29) : random_int(330, 360);
+            } else {
+                $angle = 0;
+            }
 
-		if($this->gridColors) {
-			for ($i = $this->gridSpacing; $i < $this->width; $i += $this->gridSpacing) {
-				imageline($image, $i + random_int(-$this->gridSpacing, $this->gridSpacing), 0, $i + random_int(-$this->gridSpacing, $this->gridSpacing), $this->height, $grid[array_rand($grid)]);
-			}
-		}
+            imagettftext($image, $this->fontSize, $angle, $x, $y, $char[array_rand($char)], $this->fonts[array_rand($this->fonts)], $this->string[$i]);
+            $x += $this->fontSize + random_int(-$this->fontSize, $this->fontSize) / 5;
+            $y += random_int(-$this->fontSize, $this->fontSize) / 4;
+        }
 
-		if($this->debug) {
-			imagestring($image, 5, 0, 0, $this->string, imagecolorallocate($image, 0, 0, 0));
-		}
+        if ($this->gridColors) {
+            for ($i = $this->gridSpacing; $i < $this->width; $i += $this->gridSpacing) {
+                imageline($image, $i + random_int(-$this->gridSpacing, $this->gridSpacing), 0, $i + random_int(-$this->gridSpacing, $this->gridSpacing), $this->height, $grid[array_rand($grid)]);
+            }
+        }
 
-		return $image;
-	}
+        if ($this->debug) {
+            imagestring($image, 5, 0, 0, $this->string, imagecolorallocate($image, 0, 0, 0));
+        }
 
-	private function generateString(): void
+        return $image;
+    }
+
+    private function generateString(): void
     {
-		$rv = '';
-		while(strlen($rv) < $this->charCount) {
+        $rv = '';
+        while (strlen($rv) < $this->charCount) {
 
-			if ($this->type === 'digits') {
-				$char = random_int(0, 9);
-			}
-			else {
-				$char = chr(random_int(0, 255));
-			}
+            if ($this->type === 'digits') {
+                $char = random_int(0, 9);
+            } else {
+                $char = chr(random_int(0, 255));
+            }
 
-			switch($this->type) {
-				case 'chars':
-					$regex = '/^[a-z@!?]$/i';
-					break;
+            $regex = match ($this->type) {
+                'chars' => '/^[a-z@!?]$/i',
+                'digits' => '/^[0-9]$/',
+                default => '/^[a-np-z0-9@!?]$/i',
+            };
 
-				case 'digits':
-					$regex = '/^[0-9]$/';
-					break;
+            if (preg_match($regex, $char)) {
+                $rv .= $char;
+            }
 
-				default:
-					$regex = '/^[a-np-z0-9@!?]$/i';
-			}
-			
-			if(preg_match($regex, $char)) {
-				$rv .= $char;
-			}
+        }
+        $this->string = $rv;
+    }
 
-		}
-		$this->string = $rv;
-	}
-
-	private function sendHeader(): void
+    private function sendHeader(): void
     {
-		header('Content-type: image/' . $this->imgType);
-	}
+        header('Content-type: image/' . $this->imgType);
+    }
 }

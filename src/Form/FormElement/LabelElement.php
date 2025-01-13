@@ -13,7 +13,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * class wrapping a label element
  *
- * @version 0.3.1 2021-11-29
+ * @version 0.3.2 2025-01-13
  * @author Gregor Kofler
  *
  */
@@ -77,7 +77,7 @@ class LabelElement
      * @param string|null $value
      * @return LabelElement
      */
-    public function setAttribute(string $attr, string $value = null): LabelElement
+    public function setAttribute(string $attr, ?string $value = null): LabelElement
     {
 
         $attr = strtolower($attr);

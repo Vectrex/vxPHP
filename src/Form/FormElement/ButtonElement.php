@@ -30,7 +30,7 @@ class ButtonElement extends InputElement
      * @param string|null $value
      * @param string|null $type
      */
-	public function __construct(string $name, string $value = null, string $type = null)
+	public function __construct(string $name, ?string $value = null, ?string $type = null)
     {
 		parent::__construct($name, $value);
 

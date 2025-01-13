@@ -22,59 +22,58 @@ use vxPHP\Template\Exception\SimpleTemplateException;
  */
 class InputElement extends FormElement
 {
-	/**
-	 * return type of element
-	 * 
-	 * @return string
-	 */
-	public function getType(): string
+    /**
+     * return type of element
+     *
+     * @return string
+     */
+    public function getType(): string
     {
-		if(!isset($this->attributes['type'])) {
-			$this->attributes['type'] = 'text';
-		}
-		return $this->attributes['type'];
-	}
-	
-	/**
-	 * sets type of input element
-	 * no validation of correct types is done ATM
-	 * 
-	 * @param string $type
-	 * @return InputElement
-	 */
-	public function setType(string $type): InputElement
+        if (!isset($this->attributes['type'])) {
+            $this->attributes['type'] = 'text';
+        }
+        return $this->attributes['type'];
+    }
+
+    /**
+     * sets type of input element
+     * no validation of correct types is done ATM
+     *
+     * @param string $type
+     * @return InputElement
+     */
+    public function setType(string $type): InputElement
     {
-		if(empty($type)) {
-			$type = 'text';
-		}
+        if (empty($type)) {
+            $type = 'text';
+        }
 
-		$this->attributes['type'] = $type;
-		
-		return $this;
-	}
+        $this->attributes['type'] = $type;
 
-	/**
-	 * @see FormElement::render
+        return $this;
+    }
+
+    /**
      * @param bool $force
      * @return string
      * @throws ApplicationException
      * @throws SimpleTemplateException
-	 */
-	public function render(bool $force = false): string
+     * @see FormElement::render
+     */
+    public function render(bool $force = false): string
     {
-		if(empty($this->html) || $force) {
+        if (empty($this->html) || $force) {
 
-            if($this->template) {
+            if ($this->template) {
                 parent::render();
-            }
-            else {
-                if(!isset($this->attributes['type'])) {
+            } else {
+                if (!isset($this->attributes['type'])) {
                     $this->attributes['type'] = 'text';
                 }
 
                 $attr = [];
 
-                foreach($this->attributes as $k => $v) {
+                foreach ($this->attributes as $k => $v) {
                     $attr[] = sprintf('%s="%s"', $k, $v);
                 }
 
@@ -87,6 +86,6 @@ class InputElement extends FormElement
             }
         }
 
-		return $this->html;
-	}
+        return $this->html;
+    }
 }

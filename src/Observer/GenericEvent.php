@@ -13,7 +13,7 @@ namespace vxPHP\Observer;
 
 class GenericEvent extends Event
 {
-	public const TRIGGERED = 'GenericEvent.triggered';
+	public const string TRIGGERED = 'GenericEvent.triggered';
 	
 	public function __construct (string $eventName, PublisherInterface $publisher)
     {

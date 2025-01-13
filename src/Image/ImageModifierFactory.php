@@ -14,7 +14,7 @@ namespace vxPHP\Image;
  * simple factory for returning an ImageModifier class
  *
  * @author Gregor Kofler
- * @version 0.1.1 2021-05-29
+ * @version 0.1.2 2025-01-13
  */
 
 class ImageModifierFactory
@@ -40,7 +40,7 @@ class ImageModifierFactory
      *
      * @return ImageModifier
      */
-	public static function create(string $path, string $preference = null): ImageModifier
+	public static function create(string $path, ?string $preference = null): ImageModifier
     {
 		// try to set preferred option to $preference ("available" and extension loaded)
 

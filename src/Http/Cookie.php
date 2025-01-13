@@ -23,9 +23,9 @@ namespace vxPHP\Http;
  */
 class Cookie
 {
-    public const SAMESITE_NONE = 'none';
-    public const SAMESITE_LAX = 'lax';
-    public const SAMESITE_STRICT = 'strict';
+    public const string SAMESITE_NONE = 'none';
+    public const string SAMESITE_LAX = 'lax';
+    public const string SAMESITE_STRICT = 'strict';
 
     protected string $name;
     protected ?string $value;
@@ -78,7 +78,7 @@ class Cookie
         return new static($name, $value, $data['expires'], $data['path'], $data['domain'], $data['secure'], $data['httponly'], $data['raw'], $data['samesite']);
     }
 
-    public static function create(string $name, string $value = null, $expire = 0, ?string $path = '/', string $domain = null, bool $secure = null, bool $httpOnly = true, bool $raw = false, ?string $sameSite = self::SAMESITE_LAX): self
+    public static function create(string $name, ?string $value = null, $expire = 0, ?string $path = '/', ?string $domain = null, ?bool $secure = null, bool $httpOnly = true, bool $raw = false, ?string $sameSite = self::SAMESITE_LAX): self
     {
         return new self($name, $value, $expire, $path, $domain, $secure, $httpOnly, $raw, $sameSite);
     }
@@ -86,7 +86,7 @@ class Cookie
     /**
      * @param string $name The name of the cookie
      * @param string|null $value The value of the cookie
-     * @param int|string|\DateTimeInterface $expire The time the cookie expires
+     * @param \DateTimeInterface|int|string $expire The time the cookie expires
      * @param string|null $path The path on the server in which the cookie will be available on
      * @param string|null $domain The domain that the cookie is available to
      * @param bool|null $secure Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
@@ -95,7 +95,7 @@ class Cookie
      * @param string|null $sameSite Whether the cookie will be available for cross-site requests
      *
      */
-    public function __construct(string $name, string $value = null, $expire = 0, ?string $path = '/', string $domain = null, ?bool $secure = false, bool $httpOnly = true, bool $raw = false, string $sameSite = null)
+    public function __construct(string $name, ?string $value = null, \DateTimeInterface|int|string $expire = 0, ?string $path = '/', ?string $domain = null, ?bool $secure = false, bool $httpOnly = true, bool $raw = false, ?string $sameSite = null)
     {
         if ($raw && false !== strpbrk($name, self::$reservedCharsList)) {
             throw new \InvalidArgumentException(sprintf('The cookie name "%s" contains invalid characters.', $name));
@@ -199,7 +199,7 @@ class Cookie
     /**
      * Gets the value of the cookie.
      *
-     * @return string
+     * @return string|null
      */
     public function getValue(): ?string
     {
@@ -209,7 +209,7 @@ class Cookie
     /**
      * Gets the domain that the cookie is available to.
      *
-     * @return string
+     * @return string|null
      */
     public function getDomain(): ?string
     {
@@ -235,7 +235,7 @@ class Cookie
     {
         $maxAge = $this->expire - time();
 
-        return 0 >= $maxAge ? 0 : $maxAge;
+        return max(0, $maxAge);
     }
 
     /**

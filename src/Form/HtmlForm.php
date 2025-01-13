@@ -32,7 +32,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
 /**
  * Parent class for HTML forms
  *
- * @version 1.9.10 2024-11-21
+ * @version 1.9.11 2025-01-13
  * @author Gregor Kofler
  *
  * @todo tie submit buttons to other elements of form; use $initFormValues?
@@ -40,7 +40,7 @@ use vxPHP\Template\Exception\SimpleTemplateException;
  */
 class HtmlForm
 {
-    public const CSRF_TOKEN_NAME = '_csrf_token';
+    public const string CSRF_TOKEN_NAME = '_csrf_token';
 
     /**
      * generated markup
@@ -188,7 +188,7 @@ class HtmlForm
      * @param string $method form method attribute
      * @param string|null $encodingType
      */
-    public function __construct(string $template = null, string $action = null, string $method = 'POST', string $encodingType = null)
+    public function __construct(?string $template = null, ?string $action = null, string $method = 'POST', ?string $encodingType = null)
     {
         $this->method = strtoupper($method);
         $this->encType = $encodingType;
@@ -211,7 +211,7 @@ class HtmlForm
      * @return HtmlForm
      */
 
-    public static function create(string $template = null, string $action = null, string $method = 'POST', string $encType = null): HtmlForm
+    public static function create(?string $template = null, ?string $action = null, string $method = 'POST', ?string $encType = null): HtmlForm
     {
         return new static($template, $action, $method, $encType);
     }
@@ -223,7 +223,7 @@ class HtmlForm
      * @param ParameterBag|null $bag
      * @return HtmlForm
      */
-    public function bindRequestParameters(ParameterBag $bag = null): HtmlForm
+    public function bindRequestParameters(?ParameterBag $bag = null): HtmlForm
     {
         if ($bag) {
             $this->requestValues = $bag;
@@ -339,7 +339,7 @@ class HtmlForm
      * @param string|null $default
      * @return string
      */
-    public function getAttribute(string $attr, string $default = null): string
+    public function getAttribute(string $attr, ?string $default = null): string
     {
         return ($attr && array_key_exists($attr, $this->attributes)) ? $this->attributes[$attr] : $default;
     }
@@ -587,7 +587,7 @@ class HtmlForm
 
             $pattern = empty($keys) ? '.*?' : implode('|', $keys);
 
-            preg_match_all("/{\s*error_({$pattern}):(.*?)}/", $this->template, $hits);
+            preg_match_all("/{\s*error_($pattern):(.*?)}/", $this->template, $hits);
 
             if (!empty($hits[1]) && !empty($hits[2]) && count($hits[1]) === count($hits[2])) {
                 return (array_combine($hits[1], array_map('strip_tags', $hits[2])));
@@ -658,7 +658,7 @@ class HtmlForm
      * @param string|null $message
      * @return HtmlForm
      */
-    public function setError(string $errorName, mixed $errorNameIndex = null, string $message = null): HtmlForm
+    public function setError(string $errorName, mixed $errorNameIndex = null, ?string $message = null): HtmlForm
     {
         if ($errorNameIndex === null) {
             $this->formErrors[$errorName] = new FormError($message);
@@ -1019,7 +1019,7 @@ class HtmlForm
      * @param int|null $index of element if an array of elements is handled
      * @return HtmlForm
      */
-    public function removeElementByName(string $name, int $index = null): HtmlForm
+    public function removeElementByName(string $name, ?int $index = null): HtmlForm
     {
         if ($index !== null) {
             unset($this->elements[$name][$index]);
@@ -1038,7 +1038,7 @@ class HtmlForm
      * @param int|null $index of markup if an array of markups is handled
      * @return HtmlForm
      */
-    public function removeHtmlByName(string $id, int $index = null): HtmlForm
+    public function removeHtmlByName(string $id, ?int $index = null): HtmlForm
     {
         if (null !== $index && isset($this->miscHtml[$id][$index])) {
             unset($this->miscHtml[$id][$index]);

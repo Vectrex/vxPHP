@@ -13,39 +13,39 @@ namespace vxPHP\Form\FormElement;
 
 /**
  * input element of type "image"
- * 
+ *
  * @author Gregor Kofler
  */
 class ImageElement extends InputElement
 {
-	/**
-	 * initialize a <input type="image"> element instance
-	 * 
-	 * @param string $name
-	 * @param string $src
-	 */
-	public function __construct(string $name, string $src)
+    /**
+     * initialize a <input type="image"> element instance
+     *
+     * @param string $name
+     * @param string $src
+     */
+    public function __construct(string $name, string $src)
     {
-		parent::__construct($name, $src);
-		$this->setAttribute('alt', pathinfo($src, PATHINFO_FILENAME));
-	}
+        parent::__construct($name, $src);
+        $this->setAttribute('alt', pathinfo($src, PATHINFO_FILENAME));
+    }
 
-	/**
-	 * (non-PHPDoc)
-	 * @see InputElement::render
-	 */
-	public function render($force = false): string
+    /**
+     * (non-PHPDoc)
+     * @see InputElement::render
+     */
+    public function render($force = false): string
     {
-        if(empty($this->html) || $force) {
+        if (empty($this->html) || $force) {
 
             $attr = [
                 sprintf('src="%s"', $this->getValue()),
                 'type="image"'
             ];
 
-            foreach($this->attributes as $k => $v) {
+            foreach ($this->attributes as $k => $v) {
 
-                if(in_array(strtolower($k), ['src', 'value', 'type'])) {
+                if (in_array(strtolower($k), ['src', 'value', 'type'])) {
                     continue;
                 }
                 $attr[] = sprintf('%s="%s"', $k, $v);
@@ -60,5 +60,5 @@ class ImageElement extends InputElement
         }
 
         return $this->html;
-	}
+    }
 }

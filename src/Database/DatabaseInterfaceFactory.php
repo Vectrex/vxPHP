@@ -18,7 +18,7 @@ use vxPHP\Database\Adapter\Propel2ConnectionWrapper;
  * 
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.6.1, 2024-11-21
+ * @version 0.6.2, 2025-01-13
  */
 class DatabaseInterfaceFactory
 {
@@ -37,7 +37,7 @@ class DatabaseInterfaceFactory
      *
      * @throws ConfigException
      */
-	public static function create(string $type = null, array $config = []): DatabaseInterface
+	public static function create(?string $type = null, array $config = []): DatabaseInterface
     {
 	    if(!$type) {
 

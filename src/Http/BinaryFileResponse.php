@@ -51,7 +51,7 @@ class BinaryFileResponse extends Response
      * @param bool $autoLastModified Whether the Last-Modified header should be automatically set
      * @throws FilesystemFileException
      */
-    public function __construct(FilesystemFile $file, int $status = 200, array $headers = [], bool $public = true, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true)
+    public function __construct(FilesystemFile $file, int $status = 200, array $headers = [], bool $public = true, ?string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true)
     {
         parent::__construct(null, $status, $headers);
 
@@ -74,7 +74,7 @@ class BinaryFileResponse extends Response
      * @return static
      * @throws FilesystemFileException
      */
-    public static function create($content = null, $status = 200, $headers = [], bool $public = true, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): Response
+    public static function create($content = null, int $status = 200, array $headers = [], bool $public = true, ?string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): Response
     {
         return new static($content, $status, $headers, $public, $contentDisposition, $autoEtag, $autoLastModified);
     }
@@ -91,7 +91,7 @@ class BinaryFileResponse extends Response
      *
      * @throws FilesystemFileException
      */
-    public function setFile(FilesystemFile $file, string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): self
+    public function setFile(FilesystemFile $file, ?string $contentDisposition = null, bool $autoEtag = false, bool $autoLastModified = true): self
     {
         if (!$file->getFileInfo()->isReadable()) {
             throw new FilesystemFileException('File must be readable.');
@@ -159,7 +159,7 @@ class BinaryFileResponse extends Response
             $filename = $this->file->getFilename();
         }
 
-        if ('' === $filenameFallback && (!preg_match('/^[\x20-\x7e]*$/', $filename) || false !== strpos($filename, '%'))) {
+        if ('' === $filenameFallback && (!preg_match('/^[\x20-\x7e]*$/', $filename) || str_contains($filename, '%'))) {
             $encoding = mb_detect_encoding($filename, null, true) ?: '8bit';
 
             for ($i = 0, $filenameLength = mb_strlen($filename, $encoding); $i < $filenameLength; ++$i) {
@@ -220,7 +220,7 @@ class BinaryFileResponse extends Response
                 $parts = HeaderUtils::split($request->headers->get('X-Accel-Mapping', ''), ',=');
                 foreach ($parts as $part) {
                     [$pathPrefix, $location] = $part;
-                    if (strpos($path, $pathPrefix) === 0) {
+                    if (str_starts_with($path, $pathPrefix)) {
                         $path = $location.substr($path, \strlen($pathPrefix));
                         // Only set X-Accel-Redirect header if a valid URI can be produced
                         // as nginx does not serve arbitrary file paths.
@@ -328,7 +328,7 @@ class BinaryFileResponse extends Response
     /**
      * {@inheritdoc}
      */
-    public function getContent()
+    public function getContent(): false|string
     {
         return false;
     }

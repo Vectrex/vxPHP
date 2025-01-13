@@ -23,10 +23,9 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.3.1 2021-03-29
+ * @version 2.4.1 2025-01-13
  *
  */
-
 class SimpleTemplate
 {
     /**
@@ -34,7 +33,7 @@ class SimpleTemplate
      *
      * @var TemplateBuffer
      */
-	private $bufferInstance;
+    private TemplateBuffer $bufferInstance;
 
     /**
      * the raw string of the template contents
@@ -42,36 +41,36 @@ class SimpleTemplate
      *
      * @var string
      */
-    private $rawContents;
+    private string $rawContents;
 
     /**
      * associative array of blocks
      *
-     * @var array
+     * @var array|null
      */
-    private $blocks;
+    private ?array $blocks;
 
     /**
-     * @var string
+     * @var string|null
      *
      * the processed template string
      */
-	private $contents;
+    private ?string $contents;
 
     /**
      * store for added custom filters with addFilter()
      *
      * @var SimpleTemplateFilterInterface []
      */
-	private $filters = [];
-	
+    private array $filters = [];
+
     /**
      * keeps instances of pre-configured filters
      * will be applied before any added custom filters
      *
      * @var SimpleTemplateFilterInterface []
      */
-	private $defaultFilters;
+    private array $defaultFilters;
 
     /**
      * ids of blocked filters
@@ -79,36 +78,36 @@ class SimpleTemplate
      *
      * @var array
      */
-    private $blockedFilters = [];
+    private array $blockedFilters = [];
 
     /**
      * name of a parent template found in <!-- extend: ... -->
      *
-     * @var string
+     * @var string|null
      */
-	private $parentTemplateFilename;
+    private ?string $parentTemplateFilename = null;
 
     /**
      * the regular expression employed to search for an "extend@..." directive
      *
      * @var string
      */
-	protected const EXTEND_REX = '~<!--\s*{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*}\s*-->~';
+    protected const string EXTEND_REX = '~<!--\s*{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*}\s*-->~';
 
     /**
      * the regular expression format to search for "block" directives
      */
-    protected const BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*%s\s*}\s*-->~';
+    protected const string BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*%s\s*}\s*-->~';
 
     /**
      * initialize template based on $file
      * if $file is omitted the content can be set with setRawContents() later
      *
-     * @param string $file
-     * @throws SimpleTemplateException
+     * @param string|null $file
      * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
-	public function __construct($file = null)
+    public function __construct(?string $file = null)
     {
         $this->bufferInstance = new TemplateBuffer();
 
@@ -120,11 +119,10 @@ class SimpleTemplate
             // new AssetsPath()
         ];
 
-		if ($file) {
-		    if (file_exists($file)) {
+        if ($file) {
+            if (file_exists($file)) {
                 $this->setRawContents(file_get_contents($file));
-            }
-		    else {
+            } else {
                 $application = Application::getInstance();
                 $path = $application->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '');
 
@@ -134,21 +132,21 @@ class SimpleTemplate
 
                 $this->setRawContents(file_get_contents($path . $file));
             }
-		}
-	}
+        }
+    }
 
     /**
      * static method to allow method chaining
      *
-     * @param string $file
+     * @param string|null $file
      * @return SimpleTemplate
-     * @throws SimpleTemplateException
      * @throws ApplicationException
+     * @throws SimpleTemplateException
      */
-	public static function create($file = null): self
+    public static function create(?string $file = null): self
     {
-		return new static($file);
-	}
+        return new static($file);
+    }
 
     /**
      * set or overwrite the raw contents of the template
@@ -157,45 +155,45 @@ class SimpleTemplate
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-	public function setRawContents(string $contents): self
+    public function setRawContents(string $contents): self
     {
         $this->rawContents = $contents;
-        $this->extractBlocks ();
-		return $this;
-	}
-	
-	/**
-	 * check whether template file contains PHP code
-	 * does this by searching for opening PHP tags:
-	 * <? <?= <?php
-	 * no checks for ASP notation are applied 
-	 *
-	 * @return boolean
-	 */
-	public function containsPHP(): bool
-    {
-		return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->rawContents);
-	}
+        $this->extractBlocks();
+        return $this;
+    }
 
-	/**
-	 * return the plain file content of template file
-	 *
-	 * @return string
-	 */
-	public function getRawContents(): string
+    /**
+     * check whether template file contains PHP code
+     * does this by searching for opening PHP tags:
+     * <? <?= <?php
+     * no checks for ASP notation are applied
+     *
+     * @return boolean
+     */
+    public function containsPHP(): bool
+    {
+        return 1 === preg_match('~<\?(?:=|php\s|\s)~', $this->rawContents);
+    }
+
+    /**
+     * return the plain file content of template file
+     *
+     * @return string
+     */
+    public function getRawContents(): string
     {
         return $this->rawContents;
-	}
+    }
 
     /**
      * get filename of parent template
      *
-     * @return string
+     * @return string|null
      */
-	public function getParentTemplateFilename(): ?string
+    public function getParentTemplateFilename(): ?string
     {
-		return $this->parentTemplateFilename;
-	}
+        return $this->parentTemplateFilename;
+    }
 
     /**
      * explicitly insert template at $blockName position
@@ -205,103 +203,98 @@ class SimpleTemplate
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-	public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
+    public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
     {
-		$blockRegExp = sprintf(self::BLOCK_REX_FORMAT, $blockName);
+        $blockRegExp = sprintf(self::BLOCK_REX_FORMAT, $blockName);
 
-		if(preg_match($blockRegExp, $this->rawContents)) {
-			$this->setRawContents(preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents));
-		}
-		else {
-			throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
-		}
+        if (preg_match($blockRegExp, $this->rawContents)) {
+            $this->setRawContents(preg_replace($blockRegExp, $childTemplate->getRawContents(), $this->rawContents));
+        } else {
+            throw new SimpleTemplateException(sprintf("Could not insert child template at '%s'.", $blockName), SimpleTemplateException::TEMPLATE_INVALID_NESTING);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
     /**
      * assign value to variable, which is then available within template
      *
-     * @param string | array $var
-     * @param mixed $value
+     * @param array|string $var
+     * @param mixed|null $value
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-	public function assign($var, $value = null): self
+    public function assign(array|string $var, mixed $value = null): self
     {
-		if(is_array($var)) {
-			foreach($var as $k => $v) {
-			    if(false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $k)) {
-			        throw new SimpleTemplateException("Invalid property name '%s'", $k);
+        if (is_array($var)) {
+            foreach ($var as $k => $v) {
+                if (false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $k)) {
+                    throw new SimpleTemplateException("Invalid property name '%s'", $k);
                 }
 
-			    if(in_array($k, TemplateBuffer::INVALID_PROPERTIES, true)) {
-			        throw new SimpleTemplateException("Tried to assign invalid property '%s'", $k);
+                if (in_array($k, TemplateBuffer::INVALID_PROPERTIES, true)) {
+                    throw new SimpleTemplateException("Tried to assign invalid property '%s'", $k);
                 }
-				$this->bufferInstance->$k = $v;
-			}
+                $this->bufferInstance->$k = $v;
+            }
 
-			return $this;
-		}
+            return $this;
+        }
 
-        if(false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $var)) {
+        if (false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $var)) {
             throw new SimpleTemplateException("Invalid property name '%s'", $var);
         }
-        if(in_array($var, TemplateBuffer::INVALID_PROPERTIES, true)) {
+        if (in_array($var, TemplateBuffer::INVALID_PROPERTIES, true)) {
             throw new SimpleTemplateException("Tried to assign invalid property '%s'", $var);
         }
 
-		$this->bufferInstance->$var = $value;
+        $this->bufferInstance->$var = $value;
 
-		return $this;
-	}
+        return $this;
+    }
 
     /**
      * works as SimpleTemplate::assign() but will escape the value
      * before assigning it; will only handle values that can
      * be converted to strings
      *
-     * @param string | array $var
-     * @param mixed $value
+     * @param array|string $var
+     * @param mixed|null $value
      * @return $this
      * @throws SimpleTemplateException
      */
-	public function assignString($var, $value = null): self
+    public function assignString(array|string $var, mixed $value = null): self
     {
-        if(is_array($var)) {
-            foreach($var as $k => $v) {
-                if(false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $k)) {
+        if (is_array($var)) {
+            foreach ($var as $k => $v) {
+                if (false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $k)) {
                     throw new SimpleTemplateException("Invalid property name '%s'", $k);
                 }
-                if(in_array($k, TemplateBuffer::INVALID_PROPERTIES, true)) {
+                if (in_array($k, TemplateBuffer::INVALID_PROPERTIES, true)) {
                     throw new SimpleTemplateException("Tried to assign invalid property '%s'", $k);
                 }
-                if(is_scalar($v)) {
-                    $this->bufferInstance->$k = htmlspecialchars((string) $v);
-                }
-                else if(is_object($v) && method_exists($v, '__toString')) {
+                if (is_scalar($v)) {
+                    $this->bufferInstance->$k = htmlspecialchars((string)$v);
+                } else if (is_object($v) && method_exists($v, '__toString')) {
                     $this->bufferInstance->$k = htmlspecialchars($v->__toString());
-                }
-                else {
+                } else {
                     throw new SimpleTemplateException(sprintf("String value can not be evaluated for property '%s'", $k));
                 }
             }
             return $this;
         }
 
-        if(false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $var)) {
+        if (false === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $var)) {
             throw new SimpleTemplateException("Invalid property name '%s'", $var);
         }
-        if(in_array($var, TemplateBuffer::INVALID_PROPERTIES, true)) {
+        if (in_array($var, TemplateBuffer::INVALID_PROPERTIES, true)) {
             throw new SimpleTemplateException("Tried to assign invalid property '%s'", $var);
         }
-        if(is_scalar($value)) {
-            $this->bufferInstance->$var = htmlspecialchars((string) $value);
-        }
-        else if(is_object($value) && method_exists($value, '__toString')) {
+        if (is_scalar($value)) {
+            $this->bufferInstance->$var = htmlspecialchars((string)$value);
+        } else if (is_object($value) && method_exists($value, '__toString')) {
             $this->bufferInstance->$var = htmlspecialchars($value->__toString());
-        }
-        else {
+        } else {
             throw new SimpleTemplateException(sprintf("String value can not be evaluated for property '%s'.", $var));
         }
 
@@ -315,15 +308,15 @@ class SimpleTemplate
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-	public function addFilter(SimpleTemplateFilterInterface $filter): self
+    public function addFilter(SimpleTemplateFilterInterface $filter): self
     {
-        if(array_key_exists(strtolower(get_class($filter)), $this->defaultFilters)) {
+        if (array_key_exists(strtolower(get_class($filter)), $this->defaultFilters)) {
             throw new SimpleTemplateException(sprintf("Filter class '%s' is already configured as default filter.", get_class($filter)));
         }
 
         $this->filters[strtolower(get_class($filter))] = $filter;
-		return $this;
-	}
+        return $this;
+    }
 
     /**
      * block a pre-configured filter
@@ -331,10 +324,10 @@ class SimpleTemplate
      * @param string $filterId
      * @return $this
      */
-	public function blockFilter(string $filterId): self
+    public function blockFilter(string $filterId): self
     {
-	    if(!in_array($filterId, $this->blockedFilters, true)) {
-	        $this->blockedFilters[] = $filterId;
+        if (!in_array($filterId, $this->blockedFilters, true)) {
+            $this->blockedFilters[] = $filterId;
         }
 
         return $this;
@@ -346,32 +339,32 @@ class SimpleTemplate
      * if an array of filters is passed it will replace any previously
      * configured or added filters including the default filters
      *
-     * @param SimpleTemplateFilterInterface []
+     * @param SimpleTemplateFilterInterface [] $filters
      * @return string
      * @throws SimpleTemplateException
      * @throws ApplicationException
      */
-	public function display(array $filters = null): string
+    public function display(?array $filters = null): string
     {
-		$this->extend();
-		$this->fillBuffer();
+        $this->extend();
+        $this->fillBuffer();
 
-		if(null !== $filters) {
+        if (null !== $filters) {
 
-		    // won't check for duplicate filters
+            // won't check for duplicate filters
 
-		    foreach($filters as $filter) {
-		        if(!$filter instanceof SimpleTemplateFilterInterface) {
-		            throw new SimpleTemplateException('Tried to apply a filter which does not implement the SimpleTemplateFilterInterface.');
+            foreach ($filters as $filter) {
+                if (!$filter instanceof SimpleTemplateFilterInterface) {
+                    throw new SimpleTemplateException('Tried to apply a filter which does not implement the SimpleTemplateFilterInterface.');
                 }
             }
 
             $this->applyFilters($filters);
-		    $this->removeEmptyBlocks();
+            $this->removeEmptyBlocks();
             return $this->contents;
-		}
+        }
 
-		// get default filters and added filters
+        // get default filters and added filters
 
         $filtersToApply = array_merge($this->defaultFilters, $this->filters);
 
@@ -379,15 +372,14 @@ class SimpleTemplate
 
         try {
             $templatingConfig = Application::getInstance()->getConfig()->templating;
-        }
-		catch (ApplicationException $e) {
-		    $templatingConfig = null;
+        } catch (ApplicationException) {
+            $templatingConfig = null;
         }
 
-        if($templatingConfig) {
-            foreach($templatingConfig->filters as $id => $filter) {
+        if ($templatingConfig) {
+            foreach ($templatingConfig->filters as $id => $filter) {
 
-                if(!in_array($id, $this->blockedFilters, true)) {
+                if (!in_array($id, $this->blockedFilters, true)) {
 
                     // load class file
 
@@ -399,7 +391,7 @@ class SimpleTemplate
                         throw new SimpleTemplateException(sprintf("Template filter '%s' (class %s) does not implement the SimpleTemplateFilterInterface.", $id, get_class($filter)));
                     }
 
-                    if(array_key_exists(strtolower(get_class($instance)), $filtersToApply)) {
+                    if (array_key_exists(strtolower(get_class($instance)), $filtersToApply)) {
                         throw new SimpleTemplateException("Template filter '%s' (class %s) has been already set.", $id, get_class($filter));
                     }
 
@@ -409,8 +401,8 @@ class SimpleTemplate
         }
 
         $this->applyFilters($filtersToApply);
-		return $this->contents;
-	}
+        return $this->contents;
+    }
 
     /**
      * allow extension of a parent template with current template
@@ -425,13 +417,12 @@ class SimpleTemplate
      * @throws SimpleTemplateException
      * @throws ApplicationException
      */
-	private function extend(): void
+    private function extend(): void
     {
         if ($this->parentTemplateFilename) {
             if (file_exists($this->parentTemplateFilename)) {
                 $path = $this->parentTemplateFilename;
-            }
-            else {
+            } else {
                 $path = Application::getInstance()->getRootPath() . (defined('TPL_PATH') ? str_replace('/', DIRECTORY_SEPARATOR, ltrim(TPL_PATH, '/')) : '') . $this->parentTemplateFilename;
 
                 if (!file_exists($path)) {
@@ -442,65 +433,58 @@ class SimpleTemplate
             $this->contents = file_get_contents($path);
 
             foreach ($this->blocks as $blockName => $markup) {
-                $blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*\}\s*-->~';
+                $blockRegExp = '~<!--\s*\{\s*block\s*:\s*' . $blockName . '\s*}\s*-->~';
 
                 if (preg_match($blockRegExp, $this->contents)) {
                     $this->contents = preg_replace($blockRegExp, $markup, $this->contents);
                 }
             }
-        }
-        else {
+        } else {
             $this->contents = implode('', $this->blocks);
         }
-	}
+    }
 
     /**
      * apply filters to template before output
      *
      * @param SimpleTemplateFilterInterface[] $filters
      */
-	private function applyFilters (array $filters): void
+    private function applyFilters(array $filters): void
     {
         foreach ($filters as $filter) {
             $filter->apply($this->contents);
         }
-	}
+    }
 
     /**
      * remove any orphaned <!-- { block: ... } --> comments
      */
-	private function removeEmptyBlocks (): void
+    private function removeEmptyBlocks(): void
     {
-        $this->contents = preg_replace ('~<!--\s*{\s*block\s*:\s*.*?\s*}\s*-->~', '', $this->contents);
+        $this->contents = preg_replace('~<!--\s*{\s*block\s*:\s*.*?\s*}\s*-->~', '', $this->contents);
     }
 
-	/**
-	 * fetches template file and evaluates content
-	 * immediate output suppressed by output buffering
-	 */
-	private function fillBuffer(): void
+    /**
+     * fetches template file and evaluates content
+     * immediate output suppressed by output buffering
+     */
+    private function fillBuffer(): void
     {
-	    // wrap bufferInstance in closure to allow the use of $this in template
+        // wrap bufferInstance in closure to allow the use of $this in template
 
         $this->bufferInstance->__rawContents = $this->contents;
 
-	    $closure = function($outer) {
+        $closure = function ($outer) {
 
             ob_start();
 
-            /* @deprecated use $this when accessing assigned variables */
-
-            $tpl = $this;
-
             eval('?>' . $this->__rawContents);
-            $outer->contents = ob_get_contents();
-            ob_end_clean();
-
+            $outer->contents = ob_get_clean();
         };
 
-	    $boundClosure = $closure->bindTo($this->bufferInstance);
-	    $boundClosure($this);
-	}
+        $boundClosure = $closure->bindTo($this->bufferInstance);
+        $boundClosure($this);
+    }
 
     /**
      * extract all blocks of the template
@@ -508,7 +492,7 @@ class SimpleTemplate
      *
      * @throws SimpleTemplateException
      */
-	private function extractBlocks (): void
+    private function extractBlocks(): void
     {
         preg_match_all(self::EXTEND_REX, ltrim($this->rawContents), $matches, PREG_OFFSET_CAPTURE);
 
@@ -530,16 +514,14 @@ class SimpleTemplate
 
             $this->parentTemplateFilename = $matches[1][0][0];
 
-            $blocks = array_filter(preg_split (self::EXTEND_REX, $this->rawContents), 'trim');
+            $blocks = array_filter(preg_split(self::EXTEND_REX, $this->rawContents), 'trim');
 
             if (count($matches[2]) !== count($blocks)) {
                 throw new SimpleTemplateException('Mismatch of block markers and block contents. Block contents must not be empty.');
             }
 
             $this->blocks = array_combine(array_column($matches[2], 0), array_map('trim', $blocks));
-        }
-
-        // no blocks
+        } // no blocks
 
         else {
             $this->blocks = [trim($this->rawContents)];

@@ -20,12 +20,12 @@ use vxPHP\Application\Application;
  * 
  * no validation of email addresses is performed
  *
- * @version 0.6.1 2023-10-14
+ * @version 0.6.2 2025-01-13
  */
 
 class Email
 {
-	public const CRLF = "\r\n";
+	public const string CRLF = "\r\n";
 
     /**
      * @var \vxPHP\Mail\MailerInterface|null
@@ -97,7 +97,7 @@ class Email
      *
      * @var string
      */
-	private $msg;
+	private string $msg;
 
     /**
      * @var bool
@@ -118,7 +118,7 @@ class Email
      * @param string $sig
      * @param boolean $htmlMail
      */
-	public function __construct($receiver = null, string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], string $sig = '', bool $htmlMail = false)
+	public function __construct(string|array $receiver = [], string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], string $sig = '', bool $htmlMail = false)
     {
 		$this->receiver	= (array) $receiver;
 		$this->subject = $subject;
@@ -149,7 +149,7 @@ class Email
 	 * @param mixed $receiver
 	 * @return \vxPHP\Mail\Email
 	 */
-	public function setReceiver($receiver): Email
+	public function setReceiver(array|string $receiver): Email
     {
 		$this->receiver = (array) $receiver;
 		return $this;
@@ -229,7 +229,7 @@ class Email
 	}
 
 	/**
-	 * set flag to indicate a HTML mail
+	 * set flag to indicate an HTML mail
 	 * will be observed upon mail body generation
 	 * 
 	 * @param boolean $flag
@@ -294,7 +294,7 @@ class Email
 			$headers[] = "$k: $v";
 		}
 		echo '<div style="border: solid 2px #888; background:#efe; font-family: monospace; font-size: 1em; padding: 1em; margin: 1em;">';
-		echo is_array($this->receiver) ? implode(', ', $this->receiver) : $this->receiver, '<hr>';
+		echo implode(', ', $this->receiver), '<hr>';
 		echo implode('<br>', $headers), '<hr>', $this->subject, '<hr>', nl2br($this->msg);
 		echo '</div>';
 
@@ -393,12 +393,12 @@ class Email
 		$this->mailer = $mailer;
 		return $this;
 	}
-	
-	/**
-	 * get previously set mailer
-	 * 
-	 * @return MailerInterface
-	 */
+
+    /**
+     * get previously set mailer
+     *
+     * @return MailerInterface|null
+     */
 	public function getMailer(): ?MailerInterface
     {
 		return $this->mailer;

@@ -14,7 +14,7 @@ use vxPHP\Database\ConnectionInterface;
 /**
  * @author Gregor Kofler, info@gregorkofler.com
  * 
- * @version 0.3.3, 2022-11-24
+ * @version 0.3.4, 2025-01-13
  */
 class Propel2ConnectionWrapper implements ConnectionInterface
 {
@@ -50,7 +50,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
     /**
      * get name of database of the wrapped connection
      *
-     * @return string
+     * @return string|null
      */
     public function getDbName(): ?string
     {
@@ -130,7 +130,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      * @param int $attribute
      * @return mixed
      */
-    public function getAttribute(int $attribute)
+    public function getAttribute(int $attribute): mixed
     {
         return $this->connection->getAttribute($attribute);
     }
@@ -142,7 +142,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      * @param mixed $value
      * @return bool
      */
-    public function setAttribute(int $attribute, $value): bool
+    public function setAttribute(int $attribute, mixed $value): bool
     {
         return $this->connection->setAttribute($attribute, $value);
     }
@@ -153,7 +153,7 @@ class Propel2ConnectionWrapper implements ConnectionInterface
      * @see \PDO::lastInsertId()
      *
      */
-    public function lastInsertId(string $name = null): string
+    public function lastInsertId(?string $name = null): string
     {
         return $this->connection->lastInsertId($name);
     }

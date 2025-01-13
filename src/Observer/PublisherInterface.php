@@ -10,5 +10,6 @@
 
 namespace vxPHP\Observer;
 
-interface PublisherInterface {
+interface PublisherInterface
+{
 }
