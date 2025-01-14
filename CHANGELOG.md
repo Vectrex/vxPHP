@@ -1,3 +1,6 @@
+## 3.0.0
+- Updated to PHP8.3+ compatibility 
+
 ## 2.9.3
 - DotEnvReader received a getKeysInFile() method which lists all keys in the parsed env file
 
