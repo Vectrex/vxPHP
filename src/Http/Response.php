@@ -1051,12 +1051,11 @@ class Response
             return [];
         }
 
-        $ret = [];
+        $items = [];
         foreach ($vary as $item) {
-            $ret = array_merge($ret, preg_split('/[\s,]+/', $item));
+            $items[] = preg_split('/[\s,]+/', $item);
         }
-
-        return $ret;
+        return array_merge([], ...$items);
     }
 
     /**
