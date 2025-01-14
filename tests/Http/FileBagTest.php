@@ -38,6 +38,7 @@ class FileBagTest extends TestCase
             'name' => basename($tmpFile),
             'type' => 'text/plain',
             'tmp_name' => $tmpFile,
+            'full_path' => $tmpFile,
             'error' => 0,
             'size' => null,
         ]]);
@@ -51,6 +52,7 @@ class FileBagTest extends TestCase
             'name' => '',
             'type' => '',
             'tmp_name' => '',
+            'full_path' => '',
             'error' => UPLOAD_ERR_NO_FILE,
             'size' => 0,
         ]]);
@@ -64,6 +66,7 @@ class FileBagTest extends TestCase
             'name' => [''],
             'type' => [''],
             'tmp_name' => [''],
+            'full_path' => [''],
             'error' => [UPLOAD_ERR_NO_FILE],
             'size' => [0],
         ]]);
@@ -77,6 +80,7 @@ class FileBagTest extends TestCase
             'name' => ['file1' => ''],
             'type' => ['file1' => ''],
             'tmp_name' => ['file1' => ''],
+            'full_path' => ['file1' => ''],
             'error' => ['file1' => UPLOAD_ERR_NO_FILE],
             'size' => ['file1' => 0],
         ]]);
@@ -98,6 +102,9 @@ class FileBagTest extends TestCase
                     'file' => 'text/plain',
                 ],
                 'tmp_name' => [
+                    'file' => $tmpFile,
+                ],
+                'full_path' => [
                     'file' => $tmpFile,
                 ],
                 'error' => [
@@ -127,6 +134,9 @@ class FileBagTest extends TestCase
                     'sub' => ['file' => 'text/plain'],
                 ],
                 'tmp_name' => [
+                    'sub' => ['file' => $tmpFile],
+                ],
+                'full_path' => [
                     'sub' => ['file' => $tmpFile],
                 ],
                 'error' => [
