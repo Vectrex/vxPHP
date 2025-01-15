@@ -21,29 +21,29 @@ namespace vxPHP\Template\Filter;
  */
 class ShortenText extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
 {
-	/**
-	 * {@inheritDoc}
-	 * @see \vxPHP\Template\Filter\SimpleTemplateFilter::apply()
-	 */
-	public function apply(&$templateString): void
+    /**
+     * {@inheritDoc}
+     * @see \vxPHP\Template\Filter\SimpleTemplateFilter::apply()
+     */
+    public function apply(&$templateString): void
     {
 
-		$templateString = preg_replace_callback(
-			'~<(\w+)\s+(.*?)class=(\'|")?([a-z0-9_]*\s*)shortened_(\d+)(.*?)>(?s)(.*?)(?-s)</\s*\1>~i',
-			function($matches) {
-				$prefix = sprintf("<%s %sclass=%s%sshortened%s>", $matches[1], $matches[2], $matches[3], $matches[4], $matches[6]);
-				$suffix = sprintf("</%s>", $matches[1]);
-				$len = (int) $matches[5];
-				$src = $matches[7];
-				
-				if(strlen(strip_tags($src)) <= $len) {
-					return $prefix . $src . $suffix;
-				}
-				
-				$ret = substr(strip_tags($src), 0, $len + 1);
-				return $prefix . substr($ret,0,strrpos($ret,' ')) . '&hellip;' . $suffix;
-			},
-			$templateString
-		);
-	}
+        $templateString = preg_replace_callback(
+            '~<(\w+)\s+(.*?)class=([\'"])?([a-z0-9_]*\s*)shortened_(\d+)(.*?)>(?s)(.*?)(?-s)</\s*>~i',
+            static function ($matches) {
+                $prefix = sprintf("<%s %sclass=%s%sshortened%s>", $matches[1], $matches[2], $matches[3], $matches[4], $matches[6]);
+                $suffix = sprintf("</%s>", $matches[1]);
+                $len = (int)$matches[5];
+                $src = $matches[7];
+
+                if (strlen(strip_tags($src)) <= $len) {
+                    return $prefix . $src . $suffix;
+                }
+
+                $ret = substr(strip_tags($src), 0, $len + 1);
+                return $prefix . substr($ret, 0, strrpos($ret, ' ')) . '&hellip;' . $suffix;
+            },
+            $templateString
+        );
+    }
 }

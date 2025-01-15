@@ -22,71 +22,70 @@ use vxPHP\Application\Application;
  */
 class LocalizedPhrases extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
 {
-	/**
-	 * (non-PHPdoc)
-	 *
-	 * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
-	 *
-	 */
-	public function apply(&$templateString): void
+    /**
+     * (non-PHPdoc)
+     *
+     * @see \vxPHP\Template\Filter\SimpleTemplateFilterInterface::parse()
+     *
+     */
+    public function apply(&$templateString): void
     {
-		$locale = Application::getInstance()->getCurrentLocale();
+        $locale = Application::getInstance()->getCurrentLocale();
 
-		// without locale replace placeholders with their identifier
+        // without locale replace placeholders with their identifier
 
-		if($locale === null)
-		{
-			$templateString = preg_replace(
-				array(
-					'@\{![a-z0-9_]+\}@i',
-					'@\{![a-z0-9_]+:(.*?)\}@i'
-				),
-				array(
-					'',
-					'$1'
-				),
-				$templateString
-			);
-			return;
-		}
+        if ($locale === null) {
+            $templateString = preg_replace(
+                [
+                    '@\{![a-z0-9_]+}@i',
+                    '@\{![a-z0-9_]+:(.*?)}@i'
+                ],
+                [
+                    '',
+                    '$1'
+                ],
+                $templateString
+            );
+            return;
+        }
 
-		$this->getPhrases($locale);
+        $this->getPhrases($locale);
 
-		$templateString = preg_replace_callback(
-			'@\{!([a-z0-9_]+)(:(.*?))?\}@i',
-			array($this, 'translatePhraseCallback'),
-			$templateString
-		);
-	}
+        $templateString = preg_replace_callback(
+            '@\{!([a-z0-9_]+)(:(.*?))?}@i',
+            [$this, 'translatePhraseCallback'],
+            $templateString
+        );
+    }
 
-	/**
-	 * @todo locales handling in Application class
-	 *
-	 * @param unknown $matches
-	 */
-	private function translatePhraseCallback($matches)
+    /**
+     * @param array $matches
+     * @todo locales handling in Application class
+     *
+     */
+    private function translatePhraseCallback(array $matches): void
     {
-	    /*
-		if(!empty($GLOBALS['phrases'][$config->site->current_locale][$matches[1]])) {
-			return $GLOBALS['phrases'][$config->site->current_locale][$matches[1]];
-		}
+        /*
+        if(!empty($GLOBALS['phrases'][$config->site->current_locale][$matches[1]])) {
+            return $GLOBALS['phrases'][$config->site->current_locale][$matches[1]];
+        }
 
-		if(isset($matches[3])) {
-			return $this->storePhrase($matches[3], $matches[1]);
-		}
-		else {
-			return $this->storePhrase($matches[1]);
-		}
-	    */
-	}
+        if(isset($matches[3])) {
+            return $this->storePhrase($matches[3], $matches[1]);
+        }
+        else {
+            return $this->storePhrase($matches[1]);
+        }
+        */
+    }
 
-	private function getPhrases($locale)
+    private function getPhrases(string $locale): void
     {
-		if(
+        if (
             !isset($GLOBALS['phrases'][$locale]) &&
-            file_exists((defined('LOCALE_PATH') ? LOCALE_PATH : '').$locale.'.phrases')
-		) {
-			$GLOBALS['phrases'][$locale] = parse_ini_file(LOCALE_PATH.$locale.'.phrases');
-		}
-	}
+            file_exists((defined('LOCALE_PATH') ? LOCALE_PATH : '') . $locale . '.phrases')
+        ) {
+            $GLOBALS['phrases'][$locale] = parse_ini_file(LOCALE_PATH . $locale . '.phrases');
+        }
+    }
 }

@@ -22,15 +22,15 @@ abstract class SimpleTemplateFilter
      */
     protected array $parameters;
 
-	public function __construct($parameters = [])
+    public function __construct($parameters = [])
     {
-	    $this->parameters = $parameters;
-	}
+        $this->parameters = $parameters;
+    }
 
-	public static function create(array $paramters = []): SimpleTemplateFilter
+    public static function create(array $paramters = []): SimpleTemplateFilter
     {
-		return new static($paramters);
-	}
+        return new static($paramters);
+    }
 
-	abstract public function apply(&$templateString);
+    abstract public function apply(&$templateString);
 }

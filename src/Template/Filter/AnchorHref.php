@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace vxPHP\Template\Filter;
 
 use vxPHP\Webpage\Menu\Menu;
@@ -27,23 +26,23 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * (non-PHPdoc)
      *
      * @param $templateString
-     * @see \vxPHP\SimpleTemplate\Filter\SimpleTemplateFilterInterface::parse()
+     * @see \vxPHP\Template\Filter\SimpleTemplateFilterInterface::parse()
      */
-	public function apply(&$templateString): void
+    public function apply(&$templateString): void
     {
-		$templateString = preg_replace_callback(
-			'~<a(.*?)\s+href=(["\'])\$([a-z0-9_]+[a-z0-9_./-]*)(.*?)\2(.*?)>~i',
-			array($this, 'filterHrefWithPath'),
-			$templateString
-		);
+        $templateString = preg_replace_callback(
+            '~<a(.*?)\s+href=(["\'])\$([a-z0-9_]+[a-z0-9_./-]*)(.*?)\2(.*?)>~i',
+            [$this, 'filterHrefWithPath'],
+            $templateString
+        );
 
-		$templateString = preg_replace_callback(
-			'~<a(.*?)\s+href=(["\'])\$/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
-			array($this, 'filterHref'),
-			$templateString
-		);
+        $templateString = preg_replace_callback(
+            '~<a(.*?)\s+href=(["\'])\$/([a-z0-9_.-]+)(.*?)\2(.*?)>~i',
+            [$this, 'filterHref'],
+            $templateString
+        );
 
-	}
+    }
 
     /**
      * callback to turn href shortcuts into site conform valid URLs
@@ -51,84 +50,80 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      *
      * $foo/bar?baz=1 becomes /level1/level2/foo/bar?baz=1 or index.php/level1/level2/foo/bar?baz=1
      *
-     * @param array $matches
-     * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function filterHrefWithPath(array $matches): string
+    private function filterHrefWithPath(array $matches): string
     {
-		static $script;
-		static $observeRewrite;
-		static $config;
-		static $assetsPath;
+        static $script;
+        static $observeRewrite;
+        static $config;
+        static $assetsPath;
 
-		if(is_null($config)) {
-			$application = Application::getInstance();
+        if (is_null($config)) {
+            $application = Application::getInstance();
 
-			$config = $application->getConfig();
-			$observeRewrite = $application->getRouter()->getServerSideRewrite();
-		}
+            $config = $application->getConfig();
+            $observeRewrite = $application->getRouter()->getServerSideRewrite();
+        }
 
-		if(is_null($script)) {
-			$script = basename(trim(Request::createFromGlobals()->getScriptName(), '/'));
-		}
+        if (is_null($script)) {
+            $script = basename(trim(Request::createFromGlobals()->getScriptName(), '/'));
+        }
 
-		$matchSegments = explode('/', $matches[3]);
-		$pathToFind = array_shift($matchSegments);
-		
-		$recursiveFind = static function(Menu $m) use (&$recursiveFind, $pathToFind)
-        {
-			foreach($m->getEntries() as $e) {
+        $matchSegments = explode('/', $matches[3]);
+        $pathToFind = array_shift($matchSegments);
 
-				if($e->getPath() === $pathToFind || (($sm = $e->getSubMenu()) && $sm->getType() !== 'dynamic' && $e = $recursiveFind($sm))) {
+        $recursiveFind = static function (Menu $m) use (&$recursiveFind, $pathToFind) {
+            foreach ($m->getEntries() as $e) {
+
+                if ($e->getPath() === $pathToFind || (($sm = $e->getSubMenu()) && $sm->getType() !== 'dynamic' && $e = $recursiveFind($sm))) {
                     return $e;
                 }
-			}
+            }
 
-			return null;
-		};
+            return null;
+        };
 
-		foreach($config->menus as $menu) {
-			if(($menu->getScript() === $script) && ($e = $recursiveFind($menu))) {
+        foreach ($config->menus as $menu) {
+            if (($menu->getScript() === $script) && ($e = $recursiveFind($menu))) {
                 break;
             }
-		}
+        }
 
-		if(isset($e)) {
+        if (isset($e)) {
 
-			$pathSegments = [$e->getPath()];
+            $pathSegments = [$e->getPath()];
 
-			while($e = $e->getMenu()->getParentEntry()) {
-				$pathSegments[] = $e->getPath();
-			}
+            while ($e = $e->getMenu()->getParentEntry()) {
+                $pathSegments[] = $e->getPath();
+            }
 
-			$uriParts = [];
+            $uriParts = [];
 
-			if($observeRewrite) {
-				if($script !== 'index.php') {
-					$uriParts[] = basename($script, '.php');
-				}
-			}
-			else {
-				if(is_null($assetsPath)) {
-					$assetsPath = Application::getInstance()->getRelativeAssetsPath();
-				}
+            if ($observeRewrite) {
+                if ($script !== 'index.php') {
+                    $uriParts[] = basename($script, '.php');
+                }
+            } else {
+                if (is_null($assetsPath)) {
+                    $assetsPath = Application::getInstance()->getRelativeAssetsPath();
+                }
 
-				$uriParts[] = ltrim($assetsPath, '/') . $script;
-			}
-			if(count($pathSegments)) {
-				$uriParts[] = implode('/', array_reverse($pathSegments));
-			}
-			if(count($matchSegments)) {
-				$uriParts[] = implode('/', $matchSegments);
-			}
+                $uriParts[] = ltrim($assetsPath, '/') . $script;
+            }
+            if (count($pathSegments)) {
+                $uriParts[] = implode('/', array_reverse($pathSegments));
+            }
+            if (count($matchSegments)) {
+                $uriParts[] = implode('/', $matchSegments);
+            }
 
-			$uri = implode('/', $uriParts) . $matches[4];
+            $uri = implode('/', $uriParts) . $matches[4];
 
-			return sprintf('<a%s href=%s/%s%s%s>', $matches[1], $matches[2], $uri, $matches[2], $matches[5]);
-		}
-        return sprintf('<a%s href=%s$%s%s%s>', $matches[1], $matches[2], $matches[3], $matches[4]. $matches[2], $matches[5]);
-	}
+            return sprintf('<a%s href=%s/%s%s%s>', $matches[1], $matches[2], $uri, $matches[2], $matches[5]);
+        }
+        return sprintf('<a%s href=%s$%s%s%s>', $matches[1], $matches[2], $matches[3], $matches[4] . $matches[2], $matches[5]);
+    }
 
     /**
      * callback to turn href shortcuts into site conform valid URLs
@@ -139,38 +134,35 @@ class AnchorHref extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @return string
      * @throws \vxPHP\Application\Exception\ApplicationException
      */
-	private function filterHref(array $matches): string
+    private function filterHref(array $matches): string
     {
-		static $script;
-		static $observeRewrite;
+        static $script;
+        static $observeRewrite;
 
-		if(is_null($script)) {
-			$script = trim(Request::createFromGlobals()->getScriptName(), '/');
-		}
+        if (is_null($script)) {
+            $script = trim(Request::createFromGlobals()->getScriptName(), '/');
+        }
 
-		if(is_null($observeRewrite)) {
+        if (is_null($observeRewrite)) {
             $observeRewrite = Application::getInstance()->getRouter()->getServerSideRewrite();
-		}
+        }
 
-		$matches[4] = html_entity_decode($matches[4]);
+        $matches[4] = html_entity_decode($matches[4]);
 
-		$uriParts = [];
+        $uriParts = [];
 
-		if($observeRewrite) {
-			if($script !== 'index.php') {
-				$uriParts[] = basename($script, '.php');
-			}
-		}
-		else {
-			$uriParts[] = $script;
-		}
+        if ($observeRewrite) {
+            if ($script !== 'index.php') {
+                $uriParts[] = basename($script, '.php');
+            }
+        } else {
+            $uriParts[] = $script;
+        }
 
-		if($matches[3] !== '') {
-			$uriParts[] = $matches[3];
-		}
+        if ($matches[3] !== '') {
+            $uriParts[] = $matches[3];
+        }
 
-		$uri = implode('/', $uriParts) . $matches[4];
-
-		return "<a{$matches[1]} href={$matches[2]}/$uri{$matches[2]}{$matches[5]}>";
-	}
+        return sprintf("<a%s href=%s/%s%s%s>", $matches[1], $matches[2], implode('/', $uriParts) . $matches[4], $matches[2], $matches[5]);
+    }
 }

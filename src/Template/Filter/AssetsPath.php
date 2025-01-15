@@ -7,6 +7,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace vxPHP\Template\Filter;
 
 use vxPHP\Application\Application;
@@ -27,40 +28,40 @@ class AssetsPath extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @see SimpleTemplateFilterInterface::apply()
      */
-	public function apply(&$templateString): void
+    public function apply(&$templateString): void
     {
-		$application = Application::getInstance();
+        $application = Application::getInstance();
 
-		if($application->getRelativeAssetsPath()) {
+        if ($application->getRelativeAssetsPath()) {
 
-			// src attributes
+            // src attributes
 
             $assetsPath = '/' . $application->getRelativeAssetsPath();
 
-			$templateString = preg_replace_callback(
-				'~<(.*?)\s+src=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
-				function($matches) use ($assetsPath) {
-					return '<' . $matches[1] . ' src='. $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
-				},
-				$templateString
-			);
+            $templateString = preg_replace_callback(
+                '~<(.*?)\s+src=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
+                static function ($matches) use ($assetsPath) {
+                    return '<' . $matches[1] . ' src=' . $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
+                },
+                $templateString
+            );
 
-			// href attributes
+            // href attributes
 
-			$templateString = preg_replace_callback(
-				'~<(.*?)\s+href=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
-				function($matches) use ($assetsPath) {
+            $templateString = preg_replace_callback(
+                '~<(.*?)\s+href=("|\')(?![a-z]+://)([^"\']+)\2(.*?)>~i',
+                static function ($matches) use ($assetsPath) {
 
-					// check whether this URL has already the assets path prefixed and contains a script - in this case don't change the URL
+                    // check whether this URL has already the assets path prefixed and contains a script - in this case don't change the URL
 
-					if(preg_match('~^' . $assetsPath . '\w+\.php~', $matches[3])) {
-						return $matches[0];
-					}
+                    if (preg_match('~^' . $assetsPath . '\w+\.php~', $matches[3])) {
+                        return $matches[0];
+                    }
 
-					return '<' . $matches[1] . ' href='. $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
-				},
-				$templateString
-			);
-		}
-	}
+                    return '<' . $matches[1] . ' href=' . $matches[2] . $assetsPath . ltrim($matches[3], '/') . $matches[2] . $matches[4] . '>';
+                },
+                $templateString
+            );
+        }
+    }
 }

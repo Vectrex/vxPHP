@@ -25,16 +25,16 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
     /**
      * indicates, whether the protocol is displayed in link texts
      *
-     * @var boolean
+     * @var ?boolean
      */
-	private	$showProtocol;
+    private ?bool $showProtocol;
 
     /**
-     * current encoding of web site, returned by Application
+     * current encoding of website, returned by Application
      *
-     * @var string
+     * @var ?string
      */
-    private $encoding;
+    private ?string $encoding;
 
     /**
      * (non-PHPdoc)
@@ -43,76 +43,75 @@ class TextToLinks extends SimpleTemplateFilter implements SimpleTemplateFilterIn
      * @throws \vxPHP\Application\Exception\ApplicationException
      * @see SimpleTemplateFilterInterface::apply()
      */
-	public function apply(&$templateString): void
+    public function apply(&$templateString): void
     {
-		$this->encoding = strtoupper(Application::getInstance()->getConfig()->site->default_encoding);
+        $this->encoding = strtoupper(Application::getInstance()->getConfig()->site->default_encoding);
 
-		$templateString = preg_replace_callback(
-			'~(^|\s|>|<a [^>]*?>.*?)' . Rex::URI_STRICT . '(<|\s|$)~i',
-			array($this, 'urlAnchors'),
-			$templateString
-		);
+        $templateString = preg_replace_callback(
+            '~(^|\s|>|<a [^>]*?>.*?)' . Rex::URI_STRICT . '(<|\s|$)~i',
+            [$this, 'urlAnchors'],
+            $templateString
+        );
 
-		$templateString = preg_replace_callback(
-			'~(<a [^>]*?>.*?|)(' . Rex::EMAIL . ')([^<]*</a>|)~i',
-			array($this, 'obfuscatedMailAnchors'),
-			$templateString
-		);
-	}
+        $templateString = preg_replace_callback(
+            '~(<a [^>]*?>.*?|)(' . Rex::EMAIL . ')([^<]*</a>|)~i',
+            [$this, 'obfuscatedMailAnchors'],
+            $templateString
+        );
+    }
 
-	/**
-	 * enable or disable display of protocol in link texts
-	 *
-	 * @param boolean $showProtocol
-	 */
-	public function setShowProtocol(bool $showProtocol): void
+    /**
+     * enable or disable display of protocol in link texts
+     *
+     * @param boolean $showProtocol
+     */
+    public function setShowProtocol(bool $showProtocol): void
     {
-		$this->showProtocol = $showProtocol;
-	}
+        $this->showProtocol = $showProtocol;
+    }
 
-	private function urlAnchors($matches): string
+    private function urlAnchors($matches): string
     {
-		if(strpos($matches[1], '<a') === 0) {
-			return $matches[0];
-		}
+        if (str_starts_with($matches[1], '<a')) {
+            return $matches[0];
+        }
 
-		return
-			$matches[1] .
-			'<a class="link_http" href="' . $matches[2] . $matches[3] . $matches[6] . '" rel="noreferrer">' .
-			($this->showProtocol ? $matches[2] : '') . $matches[3] . $matches[6] .
-			'</a>' .
-			$matches[9];
-	}
+        return
+            $matches[1] .
+            '<a class="link_http" href="' . $matches[2] . $matches[3] . $matches[6] . '" rel="noreferrer">' .
+            ($this->showProtocol ? $matches[2] : '') . $matches[3] . $matches[6] .
+            '</a>' .
+            $matches[9];
+    }
 
-	private function obfuscatedMailAnchors($matches): string
+    private function obfuscatedMailAnchors($matches): string
     {
-		if($matches[1] !== '' || $matches[5] !== '') {
-			return $matches[0];
-		}
+        if ($matches[1] !== '' || $matches[5] !== '') {
+            return $matches[0];
+        }
 
-		$pref = 'mailto:';
-		$text = '';
-		$href = '';
+        $pref = 'mailto:';
+        $text = '';
+        $href = '';
 
-		$len = strlen($pref);
+        $len = strlen($pref);
 
-		for($i = 0; $i < $len; ++$i) {
-			$href .= random_int(0, 1) ? '&#x'.dechex(ord($pref[$i])).';' : '&#'.ord($pref[$i]).';';
-		}
+        for ($i = 0; $i < $len; ++$i) {
+            $href .= random_int(0, 1) ? '&#x' . dechex(ord($pref[$i])) . ';' : '&#' . ord($pref[$i]) . ';';
+        }
 
-		$len = mb_strlen($matches[2], $this->encoding);
+        $len = mb_strlen($matches[2], $this->encoding);
 
-		for($i = 0; $i < $len; ++$i) {
-			$t = mb_substr($matches[2], $i, 1, $this->encoding);
-			if(ord($t) > 127) {
-				$text .= $t;
-			}
-			else {
-				$text .= random_int(0, 1) ? '&#x'.dechex(ord($t)).';' : '&#'.ord($t).';';
-			}
-		}
-		$href .= $text;
+        for ($i = 0; $i < $len; ++$i) {
+            $t = mb_substr($matches[2], $i, 1, $this->encoding);
+            if (ord($t) > 127) {
+                $text .= $t;
+            } else {
+                $text .= random_int(0, 1) ? '&#x' . dechex(ord($t)) . ';' : '&#' . ord($t) . ';';
+            }
+        }
+        $href .= $text;
 
-		return '<a href="' . $href . '">' . $text . '</a>';
-	}
+        return '<a href="' . $href . '">' . $text . '</a>';
+    }
 }

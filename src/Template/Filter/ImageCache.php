@@ -22,14 +22,14 @@ use vxPHP\Image\ImageModifierFactory;
  * This filter replaces images which are set to specific sizes by optimized resized images in caches
  * in addition cropping and turning into B/W can be added to the src attribute of the image
  *
- * @version 1.7.0 2021-05-29
+ * @version 1.7.1 2025-01-15
  * @author Gregor Kofler
  *
  * @todo parse inline url() style rule
  */
 class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInterface
 {
-    public const MODIFIER_CLASS = 'Gd';
+    public const string MODIFIER_CLASS = 'Gd';
 
     /**
      * (non-PHPdoc)
@@ -72,10 +72,10 @@ class ImageCache extends SimpleTemplateFilter implements SimpleTemplateFilterInt
      * $matches[2] the src attribute value
      *
      * @param array $matches
-     * @return string
-     * @throws SimpleTemplateException
+     * @return string|null
      * @throws ApplicationException
      * @throws ImageModifierException
+     * @throws SimpleTemplateException
      */
     private function imgSrcCallback(array $matches): ?string
     {
