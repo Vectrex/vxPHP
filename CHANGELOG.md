@@ -1,3 +1,7 @@
+## 3.0.1
+- Fix: Access to typed property before initialization when accessing a parent folder of a FilesystemFolder instance
+- Refactor: Use PHP8.3 language features throughout; ensure PHP8.4 compatibility
+
 ## 3.0.0
 - Updated to PHP8.3+ compatibility 
 

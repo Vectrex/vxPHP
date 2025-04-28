@@ -19,7 +19,7 @@ use vxPHP\Application\Application;
  *
  * @author Gregor Kofler
  *
- * @version 0.7.4 2025-01-13
+ * @version 0.7.5 2025-04-28
  */
 
 class FilesystemFolder
@@ -54,7 +54,7 @@ class FilesystemFolder
      * the folder containing the current instance
 	 * @var FilesystemFolder|null|false
      */
-	private FilesystemFolder|null|false $parentFolder;
+	private FilesystemFolder|null|false $parentFolder = null;
 
     /**
      * get the filesystem folder instance belonging to a given path
