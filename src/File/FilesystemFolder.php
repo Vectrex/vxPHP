@@ -35,11 +35,7 @@
          * absolute path
          * @var string
          */
-        public string $path {
-            get {
-                return $this->path;
-            }
-        }
+        private string $path;
 
         /**
          * flags presence of a cache folder
@@ -108,6 +104,15 @@
             } else {
                 throw new FilesystemFolderException(sprintf('Directory %s does not exist or is no directory.', $path));
             }
+        }
+        /**
+         * returns path of filesystem folder
+         *
+         * @return string
+         */
+        public function getPath(): string
+        {
+            return $this->path;
         }
 
         /**

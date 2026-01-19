@@ -33,8 +33,8 @@ class UploadedFile extends FilesystemFile
     private string $originalName;
 
     /**
-     * when TRUE the file has already been uploaded
-     * a move() is then handled by parent class
+     * when TRUE the file has already been uploaded,
+     * a move() is then handled by the parent class
      *
      * @var boolean
      */
@@ -59,7 +59,7 @@ class UploadedFile extends FilesystemFile
     /**
      * renames an uploaded file by
      * either overwriting the original filename (pre-move)
-     * or redirecting to parent method
+     * or redirecting to the parent method
      *
      * (non-PHPdoc)
      * @see \vxPHP\File\FilesystemFile::rename()
@@ -79,7 +79,7 @@ class UploadedFile extends FilesystemFile
      * performs an initial move of an uploaded file
      * from its temporary folder to a destination folder
      * and renames it to the original filename
-     * once completed a flag is set and subsequent
+     * once completed, a flag is set, and subsequent
      * moves are redirected to the parent method
      *
      * (non-PHPdoc)
@@ -91,9 +91,9 @@ class UploadedFile extends FilesystemFile
             return parent::move($destination);
         }
 
-        $oldpath = $this->folder . $this->filename;
+        $oldpath = $this->folder->getPath() . $this->filename;
         $filename = self::sanitizeFilename($this->originalName, $destination);
-        $newpath = $destination->path . $filename;
+        $newpath = $destination->getPath() . $filename;
 
         // ensure that only uploaded files are handled
 
@@ -107,11 +107,11 @@ class UploadedFile extends FilesystemFile
 
                 $this->alreadyUploaded = true;
 
-                // set new folder reference
+                // set a new folder reference
 
                 $this->folder = $destination;
 
-                // set new filename
+                // set a new filename
 
                 $this->filename = $filename;
 
@@ -119,7 +119,7 @@ class UploadedFile extends FilesystemFile
 
                 $this->fileInfo = new \SplFileInfo($newpath);
 
-                // set cached instance
+                // set the cached instance
 
                 self::$instances[$newpath] = $this;
 

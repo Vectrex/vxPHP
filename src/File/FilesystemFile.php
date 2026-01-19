@@ -88,7 +88,7 @@
         public function __construct(string $path, ?FilesystemFolder $folder = null)
         {
             if ($folder) {
-                $path = $folder->path . $path;
+                $path = $folder->getPath() . $path;
             } else {
                 $path = realpath($path);
             }
@@ -120,7 +120,7 @@
         public function getMimetype(bool $force = false): string
         {
             if ($this->mimetype === null || $force) {
-                $this->mimetype = MimeTypeGetter::get($this->folder->path . $this->filename);
+                $this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
             }
             return $this->mimetype;
         }
@@ -135,7 +135,7 @@
         public function isWebImage(bool $force = false): bool
         {
             if (!isset($this->mimetype) || $force) {
-                $this->mimetype = MimeTypeGetter::get($this->folder->path . $this->filename);
+                $this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
             }
             return in_array($this->mimetype, self::WEBIMAGE_MIMETYPES, true);
         }
@@ -153,7 +153,7 @@
          */
         public function getPath(): string
         {
-            return $this->folder->path . $this->filename;
+            return $this->folder->getPath() . $this->filename;
         }
 
         /**
@@ -191,8 +191,8 @@
 
             if ($from !== $to) {
 
-                $oldpath = $this->folder->path . $from;
-                $newpath = $this->folder->path . $to;
+                $oldpath = $this->folder->getPath() . $from;
+                $newpath = $this->folder->getPath() . $to;
 
                 if (file_exists($newpath)) {
                     throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
@@ -235,8 +235,8 @@
 
             if ($destination !== $this->folder) {
 
-                $oldpath = $this->folder->path . $this->filename;
-                $newpath = $destination->path . $this->filename;
+                $oldpath = $this->folder->getPath() . $this->filename;
+                $newpath = $destination->getPath() . $this->filename;
 
                 if (@rename($oldpath, $newpath)) {
 
@@ -379,7 +379,7 @@
         {
             $files = [];
 
-            $glob = glob($folder->path . '*', GLOB_NOSORT);
+            $glob = glob($folder->getPath() . '*', GLOB_NOSORT);
 
             if ($glob !== false) {
 
@@ -414,7 +414,7 @@
 
             $filename = Text::toSanitizedFilename($filename);
 
-            if (!file_exists($folder->path . $filename)) {
+            if (!file_exists($folder->getPath() . $filename)) {
                 return $filename;
             }
 
@@ -422,7 +422,7 @@
 
             $pathinfo['extension'] = !empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
 
-            while (file_exists($folder->path . sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
+            while (file_exists($folder->getPath() . sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
                 ++$ndx;
             }
 
