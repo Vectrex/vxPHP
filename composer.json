@@ -4,7 +4,7 @@
   "description": "lean PHP framework for web applications",
   "homepage": "https://github.com/Vectrex/vxPHP",
   "license": "MIT",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "keywords": [
     "framework",
     "PHP",
