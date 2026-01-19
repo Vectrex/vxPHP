@@ -23,9 +23,11 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.4.1 2025-01-13
+ * @version 2.4.2 2026-01-19
  *
  */
+
+#[\AllowDynamicProperties]
 class SimpleTemplate
 {
     /**

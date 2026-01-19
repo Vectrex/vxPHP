@@ -91,9 +91,9 @@ class UploadedFile extends FilesystemFile
             return parent::move($destination);
         }
 
-        $oldpath = $this->folder->getPath() . $this->filename;
+        $oldpath = $this->folder . $this->filename;
         $filename = self::sanitizeFilename($this->originalName, $destination);
-        $newpath = $destination->getPath() . $filename;
+        $newpath = $destination->path . $filename;
 
         // ensure that only uploaded files are handled
 

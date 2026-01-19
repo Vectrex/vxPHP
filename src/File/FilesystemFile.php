@@ -89,7 +89,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	public function __construct(string $path, ?FilesystemFolder $folder = null)
     {
 		if($folder) {
-			$path = $folder->getPath() . $path;
+			$path = $folder->path . $path;
 		}
 		else {
 			$path = realpath($path);
@@ -122,7 +122,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	public function getMimetype(bool $force = false): string
     {
 		if($this->mimetype === null || $force) {
-			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
+			$this->mimetype = MimeTypeGetter::get($this->folder . $this->filename);
 		}
 		return $this->mimetype;
 	}
@@ -137,7 +137,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	public function isWebImage(bool $force = false): bool
     {
 		if(!isset($this->mimetype) || $force) {
-			$this->mimetype = MimeTypeGetter::get($this->folder->getPath() . $this->filename);
+			$this->mimetype = MimeTypeGetter::get($this->folder . $this->filename);
 		}
 		return in_array($this->mimetype, self::WEBIMAGE_MIMETYPES, true);
 	}
@@ -155,7 +155,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 	 */
 	public function getPath(): string
     {
-		return $this->folder->getPath() . $this->filename;
+		return $this->folder . $this->filename;
 	}
 
     /**
@@ -193,8 +193,8 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 		if($from !== $to) {
 
-			$oldpath = $this->folder->getPath() . $from;
-			$newpath = $this->folder->getPath() . $to;
+			$oldpath = $this->folder . $from;
+			$newpath = $this->folder . $to;
 
 			if(file_exists($newpath)) {
 				throw new FilesystemFileException("Rename from '$oldpath' to '$newpath' failed. '$newpath' already exists.", FilesystemFileException::FILE_RENAME_FAILED);
@@ -239,8 +239,8 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 		if($destination !== $this->folder) {
 
-			$oldpath = $this->folder->getPath() . $this->filename;
-			$newpath = $destination->getPath() . $this->filename;
+			$oldpath = $this->folder . $this->filename;
+			$newpath = $destination->path . $this->filename;
 	
 			if(@rename($oldpath, $newpath)) {
 
@@ -386,7 +386,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
     {
 		$files = [];
 
-		$glob = glob($folder->getPath() . '*', GLOB_NOSORT);
+		$glob = glob($folder->path . '*', GLOB_NOSORT);
 
 		if($glob !== false) {
 
@@ -421,7 +421,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 		$filename = Text::toSanitizedFilename($filename);
 
-		if(!file_exists($dir->getPath() . $filename)) {
+		if(!file_exists($dir->path . $filename)) {
 			return $filename;
 		}
 
@@ -429,7 +429,7 @@ class FilesystemFile implements PublisherInterface, FilesystemFileInterface
 
 		$pathinfo['extension'] = !empty($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
 
-		while(file_exists($dir->getPath() . sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
+		while(file_exists($dir->path . sprintf('%s(%d)%s', $pathinfo['filename'], $ndx, $pathinfo['extension']))) {
 			++$ndx;
 		}
 
