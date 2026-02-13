@@ -28,7 +28,7 @@ class Route
 {
     /**
      * the router the route is assigned to
-     * required to access router related options when generating URLs, etc.
+     * required accessing router-related options when generating URLs, etc.
      *
      * @var Router|null
      */
@@ -79,7 +79,7 @@ class Route
     private ?string $redirect = null;
 
     /**
-     * authentication attribute which will be parsed by router
+     * authentication attribute, which the router will parse
      *
      * @var string|null $auth
      */
@@ -100,7 +100,7 @@ class Route
     private string $url = '';
 
     /**
-     * match expression which matches route
+     * match expression which matches the route
      * used by router
      *
      * @var string $match
@@ -117,7 +117,7 @@ class Route
     private array $placeholders = [];
 
     /**
-     * holds all values of placeholders of current path
+     * holds all values of placeholders of the current path
      *
      * @var array
      */
@@ -144,7 +144,7 @@ class Route
      * Constructor.
      *
      * @param string $routeId the route identifier
-     * @param string $scriptName name of assigned script
+     * @param string $scriptName name of the assigned script
      * @param array $parameters collection of route parameters
      * @throws \InvalidArgumentException
      */
@@ -157,7 +157,7 @@ class Route
 
         if (isset($parameters['path'])) {
 
-            // check for relative paths, i.e. path does not start with a slash
+            // check for relative paths, i.e. the path does not start with a slash
 
             if (str_starts_with($parameters['path'], '/')) {
                 $this->path = substr($parameters['path'], 1);
@@ -189,7 +189,7 @@ class Route
                             ];
                         }
 
-                        // parse optional placeholder attributes which can overrule default option
+                        // parse optional placeholder attributes which can overrule the default option
 
                         if (isset($parameters['placeholders'])) {
                             if (!is_array($parameters['placeholders']) || count(array_column($parameters['placeholders'], 'name')) !== count($parameters['placeholders'])) {
@@ -292,7 +292,7 @@ class Route
     }
 
     /**
-     * return name of script the route is assigned to
+     * return name of the script the route is assigned to
      *
      * @return string $scriptName
      */
@@ -358,7 +358,7 @@ class Route
     }
 
     /**
-     * set name of invoked controller method
+     * set the name of the invoked controller method
      *
      * @param string $methodName
      * @return Route
@@ -370,7 +370,7 @@ class Route
     }
 
     /**
-     * get name of method which is invoked after instancing the
+     * get the name of the method which is invoked after instancing the
      * controller
      *
      * @return string|null
@@ -381,16 +381,16 @@ class Route
     }
 
     /**
-     * get path of route
+     * Get the path of route
      *
-     * When path parameters are passed on to method a path using these
+     * When path parameters are passed on to a method, a path using these
      * parameter values is generated, but path parameters are not
      * stored and do not overwrite previously set path parameters.
      *
      * When no (or only some) path parameters are passed on previously
      * set path parameters are considered when generating the path.
      *
-     * expects path parameters when required by route
+     * Expects path parameters when required by route
      *
      * @param array|null $pathParameters
      * @return string
@@ -405,13 +405,13 @@ class Route
 
             foreach ($this->placeholders as $placeholder) {
 
-                // use path parameter if it was passed on
+                // use the path parameter if it was passed on
 
                 $regExp = '~\{' . $placeholder['name'] . '(=.*?)?\}~';
 
                 if ($pathParameters && array_key_exists($placeholder['name'], $pathParameters)) {
                     $path = preg_replace($regExp, $pathParameters[$placeholder['name']], $path);
-                } // try to use previously set path parameter
+                } // try to use a previously set path parameter
 
                 else if (array_key_exists($placeholder['name'], $this->pathParameters)) {
                     $path = preg_replace($regExp, $this->pathParameters[$placeholder['name']], $path);
@@ -432,18 +432,18 @@ class Route
     }
 
     /**
-     * get URL of this route
-     * considers mod_rewrite settings (nice_uri)
+     * Get the URL of this route
+     * considers server-side rewrite settings
      *
-     * When path parameters are passed on to method a URL using these
+     * When path parameters are passed on to the method, a URL using these
      * parameter values is generated, but path parameters are not
      * stored and do not overwrite previously set path parameters.
      *
      * When no (or only some) path parameters are passed on previously
      * set parameters are considered when generating the URL.
      *
-     * an optional prefix can be supplied to extend the path to the left
-     * an exception will be triggered, when the route has an absolute path
+     * An optional prefix can be supplied to extend the path to the left
+     * an exception will be triggered when the route has an absolute path
      * configured
      *
      * @param array|null $pathParameters
@@ -460,7 +460,7 @@ class Route
             throw new \RuntimeException(sprintf("Route '%s' has no router configured. Generating an URL is not possible.", $this->routeId));
         }
 
-        // avoid building URL in subsequent calls
+        // avoid building URL in later calls
 
         if (!$this->url) {
             $urlSegments = [];
@@ -504,7 +504,7 @@ class Route
     }
 
     /**
-     * set controller class name of route
+     * set the controller class name of the route
      *
      * @param string $className
      * @return Route
@@ -590,8 +590,8 @@ class Route
     }
 
     /**
-     * get an array with all possible placeholders of route
-     * once retrieved array with placeholder names is cached
+     * get an array with all possible placeholders of the route
+     * the retrieved array with placeholder names is cached
      *
      * @return array
      */
@@ -691,7 +691,7 @@ class Route
 
     /**
      * set path parameter $name
-     * will only accept parameter names which have been previously defined
+     * will only accept parameter names, which have been previously defined
      * and are matched by an optional match expression of the parameter
      *
      * @param string $name
@@ -727,7 +727,7 @@ class Route
 
     /**
      * redirect using configured redirect information
-     * if route has no redirect set, redirect will lead to "start page"
+     * if the route has no redirect set, redirect will lead to "start page"
      *
      * @param array $queryParams
      * @param int $statusCode
@@ -764,7 +764,7 @@ class Route
     }
 
     /**
-     * get information whether path can be prefixed by other path segments
+     * get information whether the path can be prefixed by other path segments
      *
      * @return bool
      */
