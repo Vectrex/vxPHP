@@ -23,8 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.4.2 2026-01-19
- *
+ * @version 2.5.0 2026-05-05
  */
 
 #[\AllowDynamicProperties]
@@ -47,10 +46,18 @@ class SimpleTemplate
 
     /**
      * associative array of blocks
+     * contains the result of parsing the <!-- { extend:<parent-template-file>@<block-name> } --> comments
+     * with <block-name> as key and the file content between such comments (or the end of file) as values
      *
      * @var array|null
      */
     private ?array $blocks;
+
+    /**
+     * array with slot names provided by a template
+     * contains the result of parsing <!-- { block:<block-name> } --> comments
+     */
+    private ?array $slots;
 
     /**
      * @var string|null
@@ -99,7 +106,7 @@ class SimpleTemplate
     /**
      * the regular expression format to search for "block" directives
      */
-    protected const string BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*%s\s*}\s*-->~';
+    protected const string BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*(%s)\s*}\s*-->~';
 
     /**
      * initialize template based on $file
@@ -160,7 +167,7 @@ class SimpleTemplate
     public function setRawContents(string $contents): self
     {
         $this->rawContents = $contents;
-        $this->extractBlocks();
+        $this->parseTemplate();
         return $this;
     }
 
@@ -185,6 +192,27 @@ class SimpleTemplate
     public function getRawContents(): string
     {
         return $this->rawContents;
+    }
+
+    /**
+     * return an associative array of template blocks
+     * the key indicates the block name, the value the actual content
+     *
+     * @return array|null
+     */
+    public function getBlocks(): ?array
+    {
+        return $this->blocks;
+    }
+
+    /**
+     * return an array of slot names found in the template
+     *
+     * @return array|null
+     */
+    public function getSlots(): ?array
+    {
+        return $this->slots;
     }
 
     /**
@@ -489,13 +517,21 @@ class SimpleTemplate
     }
 
     /**
-     * extract all blocks of the template
+     * extract all slots of the template and
+     * all blocks of the template
      * all blocks must point to the same parent template
      *
      * @throws SimpleTemplateException
      */
-    private function extractBlocks(): void
+    private function parseTemplate(): void
     {
+        // retrieve all block names
+
+        preg_match_all(self::BLOCK_REX_FORMAT, $this->contents, $matches);
+        $this->slots = $matches[1] ?? [];
+
+        // retrieve all blocks, checking for common parent template name
+
         preg_match_all(self::EXTEND_REX, ltrim($this->rawContents), $matches, PREG_OFFSET_CAPTURE);
 
         // blocks got identified
