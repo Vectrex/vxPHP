@@ -23,7 +23,7 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.5.0 2026-05-05
+ * @version 2.5.1 2026-05-07
  */
 
 #[\AllowDynamicProperties]
@@ -104,9 +104,15 @@ class SimpleTemplate
     protected const string EXTEND_REX = '~<!--\s*{\s*extend:\s*([\w./-]+)\s*@\s*([\w-]+)\s*}\s*-->~';
 
     /**
-     * the regular expression format to search for "block" directives
+     * the regular expression to extract block/slot names from a template
      */
-    protected const string BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*(%s)\s*}\s*-->~';
+    protected const string BLOCK_REX = '~<!--\s*{\s*block\s*:\s*(.*?)\s*}\s*-->~';
+
+    /**
+     * the regular expression format to search for given "block" directives
+     */
+    protected const string BLOCK_REX_FORMAT = '~<!--\s*{\s*block\s*:\s*%s\s*}\s*-->~';
+
 
     /**
      * initialize template based on $file
@@ -527,7 +533,7 @@ class SimpleTemplate
     {
         // retrieve all block names
 
-        preg_match_all(self::BLOCK_REX_FORMAT, $this->contents, $matches);
+        preg_match_all(self::BLOCK_REX, $this->rawContents, $matches);
         $this->slots = $matches[1] ?? [];
 
         // retrieve all blocks, checking for common parent template name
