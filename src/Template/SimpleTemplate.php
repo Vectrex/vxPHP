@@ -23,10 +23,9 @@ use vxPHP\Template\Filter\Spaceless;
  * A simple templating system
  *
  * @author Gregor Kofler
- * @version 2.5.1 2026-05-07
+ * @version 2.5.2 2026-06-08
  */
 
-#[\AllowDynamicProperties]
 class SimpleTemplate
 {
     /**
@@ -45,7 +44,7 @@ class SimpleTemplate
     private string $rawContents;
 
     /**
-     * associative array of blocks
+     * an associative array of blocks
      * contains the result of parsing the <!-- { extend:<parent-template-file>@<block-name> } --> comments
      * with <block-name> as key and the file content between such comments (or the end of file) as values
      *
@@ -83,7 +82,7 @@ class SimpleTemplate
 
     /**
      * ids of blocked filters
-     * allows turning of configured filters temporarily
+     * allow turning of configured filters temporarily
      *
      * @var array
      */
@@ -97,7 +96,7 @@ class SimpleTemplate
     private ?string $parentTemplateFilename = null;
 
     /**
-     * the regular expression employed to search for an "extend@..." directive
+     * the regular expression used to search for an "extend@..." directive
      *
      * @var string
      */
@@ -115,8 +114,8 @@ class SimpleTemplate
 
 
     /**
-     * initialize template based on $file
-     * if $file is omitted the content can be set with setRawContents() later
+     * initialize a template based on $file
+     * if $file is omitted, the content can be set with setRawContents() later
      *
      * @param string|null $file
      * @throws ApplicationException
@@ -178,7 +177,7 @@ class SimpleTemplate
     }
 
     /**
-     * check whether template file contains PHP code
+     * check whether the template file contains PHP code
      * does this by searching for opening PHP tags:
      * <? <?= <?php
      * no checks for ASP notation are applied
@@ -191,7 +190,7 @@ class SimpleTemplate
     }
 
     /**
-     * return the plain file content of template file
+     * return the plain file content of the template file
      *
      * @return string
      */
@@ -222,7 +221,7 @@ class SimpleTemplate
     }
 
     /**
-     * get filename of parent template
+     * get the filename of the parent template
      *
      * @return string|null
      */
@@ -232,14 +231,14 @@ class SimpleTemplate
     }
 
     /**
-     * explicitly insert template at $blockName position
+     * explicitly insert the template at the $ blockName position
      *
      * @param SimpleTemplate $childTemplate
      * @param string $blockName
      * @return SimpleTemplate
      * @throws SimpleTemplateException
      */
-    public function insertTemplateAt(SimpleTemplate $childTemplate, string $blockName): self
+    public function insertTemplateAt(self $childTemplate, string $blockName): self
     {
         $blockRegExp = sprintf(self::BLOCK_REX_FORMAT, $blockName);
 
@@ -253,7 +252,7 @@ class SimpleTemplate
     }
 
     /**
-     * assign value to variable, which is then available within template
+     * assign value to a variable, which is then available within the template
      *
      * @param array|string $var
      * @param mixed|null $value
@@ -372,7 +371,7 @@ class SimpleTemplate
     /**
      * output parsed template
      *
-     * if an array of filters is passed it will replace any previously
+     * if an array of filters is passed, it will replace any previously
      * configured or added filters including the default filters
      *
      * @param SimpleTemplateFilterInterface [] $filters
@@ -441,14 +440,14 @@ class SimpleTemplate
     }
 
     /**
-     * allow extension of a parent template with current template
+     * allow extension of a parent template with the current template
      *
      * searches in current rawContents for
      * <!-- { extend: parent_template.php @ content_block } -->
      * and in template to extend for
      * <!-- { block: content_block } -->
      *
-     * current rawContents is then replaced by parent rawContents with current rawContents filled in
+     * current raw content is then replaced by parent rawContents with current rawContents filled in
      *
      * @throws SimpleTemplateException
      * @throws ApplicationException
@@ -481,7 +480,7 @@ class SimpleTemplate
     }
 
     /**
-     * apply filters to template before output
+     * apply filters to the template before output
      *
      * @param SimpleTemplateFilterInterface[] $filters
      */
@@ -501,7 +500,7 @@ class SimpleTemplate
     }
 
     /**
-     * fetches template file and evaluates content
+     * fetches the template file and evaluates content
      * immediate output suppressed by output buffering
      */
     private function fillBuffer(): void
@@ -523,8 +522,8 @@ class SimpleTemplate
     }
 
     /**
-     * extract all slots of the template and
-     * all blocks of the template
+     * to extract all slots of the template and
+     * all blocks of the template,
      * all blocks must point to the same parent template
      *
      * @throws SimpleTemplateException

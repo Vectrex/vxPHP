@@ -21,11 +21,12 @@ use vxPHP\Controller\Controller;
  * capturing the output buffer
  *
  * @author Gregor Kofler
- * @version 1.1.1 2021-11-28
+ * @version 1.1.2 2026-06-08
  *
  * @package vxPHP\Template
  */
-class TemplateBuffer
+
+class TemplateBuffer extends \stdClass
 {
     public const array INVALID_PROPERTIES = ['__rawContents'];
 
@@ -62,11 +63,11 @@ class TemplateBuffer
      * @param string|null $methodName
      * @param array|null $constructorArguments
      *
-     * @return string|null
+     * @return void
      * @throws ApplicationException
      * @throws ConfigException
      */
-    public function includeControllerResponse(string $controllerPath, ?string $methodName = null, ?array $constructorArguments = null): ?string
+    public function includeControllerResponse(string $controllerPath, ?string $methodName = null, ?array $constructorArguments = null): void
     {
         $namespaces = explode('\\', ltrim(str_replace('/', '\\', $controllerPath), '/\\'));
 
@@ -92,9 +93,6 @@ class TemplateBuffer
             $instance = new $controllerClass(...$constructorArguments);
         }
 
-        if($methodName) {
-            return $instance->setExecutedMethod($methodName)->render();
-        }
-        return $instance->setExecutedMethod('execute')->render();
+        $instance->setExecutedMethod($methodName ?: 'execute')->render();
     }
 }
