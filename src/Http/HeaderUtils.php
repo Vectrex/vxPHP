@@ -24,9 +24,7 @@ class HeaderUtils
     /**
      * This class should not be instantiated.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * Splits an HTTP header by one or more separators.

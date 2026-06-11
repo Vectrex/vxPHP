@@ -16,29 +16,23 @@ namespace vxPHP\Application\Config;
  * heavily influenced by
  * https://github.com/devcoder-xyz/php-dotenv
  *
- * @version 0.2.0 2024-01-20
+ * @version 0.2.1 2026-06-11
  */
 class DotEnvReader
 {
-    /**
-     * @var string path to env file
-     */
-    protected string $path;
-    protected array $keysInFile;
+    protected array $keysInFile = [];
 
     /**
-     * @param string $path
+     * @param string $path path to env file
      */
-    public function __construct(string $path)
+    public function __construct(protected readonly string $path)
     {
-        if (!file_exists($path)) {
+        if (!file_exists($this->path)) {
             throw new \InvalidArgumentException(sprintf("File '%s' does not exist.", $path));
         }
-        if (!is_readable($path)) {
+        if (!is_readable($this->path)) {
             throw new \InvalidArgumentException(sprintf("File '%s' is not readable.", $path));
         }
-
-        $this->path = $path;
         $this->keysInFile = [];
     }
 

@@ -17,7 +17,7 @@ use vxPHP\Mail\Exception\SmtpMailerException;
  * simple SMTP mailer
  *
  * @author Gregor Kofler
- * @version 0.5.3 2025-01-13
+ * @version 0.5.4 2026-06-11
  *
  * validity of email addresses is not checked
  * only encoding where necessary is applied
@@ -59,19 +59,6 @@ class SmtpMailer implements MailerInterface
      */
     public const array AUTH_METHODS = ['NONE', 'LOGIN', 'PLAIN', 'CRAM-MD5'];
 
-
-    /**
-     * host address of SMTP server
-     * @var string
-     */
-    private string $host;
-
-    /**
-     * port of SMTP server
-     * @var integer
-     */
-    private int $port;
-
     /**
      * username for authentication
      * @var string
@@ -89,12 +76,6 @@ class SmtpMailer implements MailerInterface
      * @var string
      */
     private string $authMethod = 'NONE';
-
-    /**
-     * encryption method used for connection
-     * @var string|null
-     */
-    private ?string $smtpEncryption = null;
 
     /**
      * supported encryption methods
@@ -168,23 +149,20 @@ class SmtpMailer implements MailerInterface
      * configures only basic server settings
      * and default mime encoding
      *
-     * @param string $host
-     * @param int $port
-     * @param string|null $smtpEncryption
+     * @param string $host host address of SMTP server
+     * @param int $port port of SMTP server
+     * @param string|null $smtpEncryption encryption method used for connection
      * @throws SmtpMailerException
      */
-    public function __construct(string $host, int $port = self::DEFAULT_PORT, ?string $smtpEncryption = null)
+    public function __construct(private readonly string $host, private readonly int $port = self::DEFAULT_PORT, private ?string $smtpEncryption = null)
     {
-        if ($smtpEncryption) {
-            if (!in_array(strtoupper($smtpEncryption), $this->smtpEncryptions, true)) {
-                throw new SmtpMailerException(sprintf("Invalid encryption type '%s'.", $smtpEncryption), SmtpMailerException::INVALID_ENCRYPTION_TYPE);
+        if ($this->smtpEncryption) {
+            if (!in_array(strtoupper($this->smtpEncryption), $this->smtpEncryptions, true)) {
+                throw new SmtpMailerException(sprintf("Invalid encryption type '%s'.", $this->smtpEncryption), SmtpMailerException::INVALID_ENCRYPTION_TYPE);
             }
 
-            $this->smtpEncryption = strtolower($smtpEncryption);
+            $this->smtpEncryption = strtolower($this->smtpEncryption);
         }
-
-        $this->port = $port;
-        $this->host = $host;
 
         mb_internal_encoding(self::MIME_ENCODING_PREFERENCES['output-charset']);
     }

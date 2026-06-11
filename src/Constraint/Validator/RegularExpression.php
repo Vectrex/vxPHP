@@ -15,32 +15,24 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check against an arbitrary regular expression
  * 
- * @version 0.1.3 2021-11-28
+ * @version 0.1.4 2026-06-11
  * @author Gregor Kofler
  */
 class RegularExpression extends AbstractConstraint
 {
 	/**
-	 * regular expression the value is matched against
-	 * 
-	 * @var string
-	 */
-	private string $regExp;
-	
-	/**
 	 * constructor
 	 * checks whether passed regular expression appears valid
 	 *
-	 * @param string $regExp
+	 * @param string $regExp regular expression the value is matched against
 	 * @throws \InvalidArgumentException
 	 * 
 	 */
-	public function __construct(string $regExp)
+	public function __construct(private readonly string $regExp)
     {
-		if(@preg_match($regExp, '') === false) {
-			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $regExp));
+		if(@preg_match($this->regExp, '') === false) {
+			throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $this->regExp));
 		}
-		$this->regExp = $regExp;
 	}
 
 	/**

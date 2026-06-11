@@ -7,7 +7,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace vxPHP\Form;
 
 /**
@@ -16,19 +15,10 @@ namespace vxPHP\Form;
 class ValuesBag implements \IteratorAggregate, \Countable, \ArrayAccess
 {
     /**
-     * the value
-     * @var array
-     */
-    protected array $values;
-
-    /**
      * Constructor
      * @param array $values
      */
-    public function __construct(array $values = [])
-    {
-        $this->values = $values;
-    }
+    public function __construct(protected array $values = []) {}
 
     /**
      * returns all values

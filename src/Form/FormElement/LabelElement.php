@@ -13,7 +13,7 @@ namespace vxPHP\Form\FormElement;
 /**
  * class wrapping a label element
  *
- * @version 0.3.2 2025-01-13
+ * @version 0.3.3 2026-06-11
  * @author Gregor Kofler
  *
  */
@@ -21,31 +21,13 @@ namespace vxPHP\Form\FormElement;
 class LabelElement
 {
     /**
-     * all attributes which will be rendered with the attribute element
-     *
-     * @var array
-     */
-    protected array $attributes = [];
-
-    /**
-     * label text
-     *
-     * @var string
-     */
-    protected string $labelText;
-
-    /**
      * LabelElement constructor.
      * optionally assign a form element to this label
      *
      * @param string $labelText
-     * @param array $attributes
+     * @param array $attributes all attributes which will be rendered with the attribute element
      */
-    public function __construct(string $labelText, array $attributes = [])
-    {
-        $this->labelText = $labelText;
-        $this->attributes = $attributes;
-    }
+    public function __construct(protected string $labelText, protected array $attributes = []) {}
 
     /**
      * get the label text

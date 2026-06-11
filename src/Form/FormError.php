@@ -14,16 +14,18 @@ namespace vxPHP\Form;
  * A form error class
  * currently only wraps an error message
  *
- * @version 0.1.1 2021-11-28
+ * @version 0.1.2 2026-06-11
  * @author Gregor Kofler
  *
  */
 class FormError
 {
     /**
-     * @var string|null
+     * FormError constructor.
+     *
+     * @param string|null $errorMessage
      */
-    private ?string $errorMessage;
+    public function __construct(private ?string $errorMessage = null) {}
 
     /**
      * set error message
@@ -35,16 +37,6 @@ class FormError
     {
         $this->errorMessage = $errorMessage;
         return $this;
-    }
-
-    /**
-     * FormError constructor.
-     *
-     * @param $errorMessage
-     */
-    public function __construct($errorMessage = null)
-    {
-        $this->errorMessage = $errorMessage;
     }
 
     /**

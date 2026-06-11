@@ -543,10 +543,10 @@ class SimpleTemplate
 
         if ($matches[0]) {
 
-            // first extend is preceeded by chars
+            // first extend is preceded by chars
 
             if ($matches[0][0][1]) {
-                throw new SimpleTemplateException('First extend directive preceeded by non-whitespace characters.');
+                throw new SimpleTemplateException('First extend directive preceded by non-whitespace characters.');
             }
 
             // check for single parent template name

@@ -20,56 +20,16 @@
      *
      * no validation of email addresses is performed
      *
-     * @version 0.6.3 2026-05-31
+     * @version 0.6.4 2026-06-11
      */
     class Email
     {
         public const string CRLF = "\r\n";
 
         /**
-         * @var \vxPHP\Mail\MailerInterface|null
+         * @var MailerInterface|null
          */
         private ?MailerInterface $mailer = null;
-
-        /**
-         * @var string
-         */
-        private string $sender;
-
-        /**
-         * @var string
-         */
-        private string $subject;
-
-        /**
-         * @var array
-         */
-        private array $bcc;
-
-        /**
-         * @var array
-         */
-        private array $cc;
-
-        /**
-         * @var array
-         */
-        private array $receiver;
-
-        /**
-         * @var string
-         */
-        private string $mailText;
-
-        /**
-         * @var string
-         */
-        private string $sig;
-
-        /**
-         * @var bool
-         */
-        private bool $htmlMail;
 
         /**
          * @var string|null
@@ -117,17 +77,10 @@
          * @param string $sig
          * @param boolean $htmlMail
          */
-        public function __construct(string|array $receiver = [], string $subject = '(no subject)', string $mailText = '', string $sender = '', array $cc = [], array $bcc = [], string $sig = '', bool $htmlMail = false)
+        public function __construct(private string|array $receiver = [], private string $subject = '(no subject)', private string $mailText = '', private string $sender = '', private array $cc = [], private array $bcc = [], private string $sig = '', private bool $htmlMail = false)
         {
-            $this->receiver = (array)$receiver;
-            $this->subject = $subject;
-            $this->mailText = $mailText;
-            $this->sender = $sender ?: (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
-            $this->cc = $cc;
-            $this->bcc = $bcc;
-            $this->sig = $sig;
-            $this->htmlMail = $htmlMail;
-
+            $this->receiver = (array) $this->receiver;
+            $this->sender = $this->sender ?: (defined('DEFAULT_MAIL_SENDER') ? DEFAULT_MAIL_SENDER : 'mail@net.invalid');
             $this->encoding = defined('DEFAULT_ENCODING') ? strtoupper(DEFAULT_ENCODING) : 'UTF-8';
         }
 
@@ -146,7 +99,7 @@
          * set receiving email address (string) or addresses (array)
          *
          * @param mixed $receiver
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setReceiver(array|string $receiver): self
         {
@@ -158,7 +111,7 @@
          * set sending email address
          *
          * @param string $sender
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setSender(string $sender): self
         {
@@ -170,7 +123,7 @@
          * set mail text
          *
          * @param string $text
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setMailText(string $text): self
         {
@@ -183,7 +136,7 @@
          * will be appended to mail text with the correct delimiter
          *
          * @param string $signature
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setSig(string $signature): self
         {
@@ -195,7 +148,7 @@
          * set subject
          *
          * @param string $subject
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setSubject(string $subject): self
         {
@@ -207,7 +160,7 @@
          * set BCC receivers
          *
          * @param array $bcc
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setBcc(array $bcc): self
         {
@@ -219,7 +172,7 @@
          * set CC receivers
          *
          * @param array $cc
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setCc(array $cc): self
         {
@@ -232,7 +185,7 @@
          * will be observed upon mail body generation
          *
          * @param boolean $flag
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setHtmlMail(bool $flag): self
         {
@@ -246,7 +199,7 @@
          * @param string $filePath
          * @param string $filename
          *
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function addAttachment(string $filePath, string $filename = ''): self
         {
@@ -262,7 +215,7 @@
          *
          * @param string $data
          * @param string $filename
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function addAttachmentData(string $data, string $filename): self
         {
@@ -381,7 +334,7 @@
          * explicitly set mailer
          *
          * @param MailerInterface $mailer
-         * @return \vxPHP\Mail\Email
+         * @return Email
          */
         public function setMailer(MailerInterface $mailer): self
         {

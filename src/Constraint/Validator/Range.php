@@ -19,7 +19,7 @@ use vxPHP\Constraint\AbstractConstraint;
  * integer or a string representing either; scientific notation is
  * not supported
  *
- * @version 0.1.2 2021-11-28
+ * @version 0.1.3 2026-06-11
  * @author Gregor Kofler
  */
 class Range extends AbstractConstraint
@@ -30,25 +30,13 @@ class Range extends AbstractConstraint
     private bool $exclusive;
 
     /**
-     * @var float|int
-     */
-    private int|float $min;
-
-    /**
-     * @var float|int
-     */
-    private int|float $max;
-
-    /**
      * Range constructor.
-     * @param $min
-     * @param $max
+     * @param int|float $min
+     * @param int|float $max
      * @param array $options
      */
-    public function __construct($min, $max, array $options = [])
+    public function __construct(private readonly int|float $min, private readonly int|float $max, array $options = [])
     {
-        $this->min = $min;
-        $this->max = $max;
         $this->exclusive = array_key_exists('exclusive', $options) && $options['exclusive'];
     }
 

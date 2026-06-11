@@ -13,23 +13,15 @@ namespace vxPHP\Template\Filter;
 
 /**
  * @author Gregor Kofler
- * @version 0.1.1 2022-11-25
+ * @version 0.1.2 2026-06-11
  */
 abstract class SimpleTemplateFilter
 {
-    /**
-     * @var array
-     */
-    protected array $parameters;
+    public function __construct(protected array $parameters = [])  {}
 
-    public function __construct($parameters = [])
+    public static function create(array $parameters = []): SimpleTemplateFilter
     {
-        $this->parameters = $parameters;
-    }
-
-    public static function create(array $paramters = []): SimpleTemplateFilter
-    {
-        return new static($paramters);
+        return new static($parameters);
     }
 
     abstract public function apply(&$templateString);

@@ -19,7 +19,7 @@
      *
      * @author Gregor Kofler
      *
-     * @version 0.7.5 2025-04-28
+     * @version 0.7.6 2026-11-06
      */
     class FilesystemFolder
     {
@@ -30,12 +30,6 @@
          * @var FilesystemFolder[]
          */
         private static array $instances = [];
-
-        /**
-         * absolute path
-         * @var string
-         */
-        private string $path;
 
         /**
          * flags presence of a cache folder
@@ -94,14 +88,12 @@
         /**
          * FilesystemFolder constructor.
          *
-         * @param string $path
+         * @param string $path the absolute path
          * @throws FilesystemFolderException
          */
-        private function __construct(string $path)
+        private function __construct(private readonly string $path)
         {
-            if (is_dir($path)) {
-                $this->path = $path;
-            } else {
+            if (!is_dir($this->path)) {
                 throw new FilesystemFolderException(sprintf('Directory %s does not exist or is no directory.', $path));
             }
         }

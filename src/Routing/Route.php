@@ -21,7 +21,7 @@ use vxPHP\Http\RedirectResponse;
  *
  * @author Gregor Kofler, info@gregorkofler.com
  *
- * @version 2.1.3 2025-01-13
+ * @version 2.1.4 2026-06-11
  *
  */
 class Route
@@ -35,26 +35,12 @@ class Route
     private ?Router $router = null;
 
     /**
-     * unique id of route
-     *
-     * @var string
-     */
-    private string $routeId;
-
-    /**
      * path which will trigger route if no path is configured, the path
      * defaults to routeId
      *
      * @var string
      */
     private string $path;
-
-    /**
-     * the script with which a route becomes active
-     *
-     * @var string
-     */
-    private string $scriptName;
 
     /**
      * the name of the controller class, which will handle the route
@@ -143,16 +129,13 @@ class Route
     /**
      * Constructor.
      *
-     * @param string $routeId the route identifier
-     * @param string $scriptName name of the assigned script
+     * @param string $routeId unique id of route
+     * @param string $scriptName the name of the script with which a route becomes active
      * @param array $parameters collection of route parameters
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
-    public function __construct(string $routeId, string $scriptName, array $parameters = [])
+    public function __construct(private readonly string $routeId, private readonly string $scriptName, array $parameters = [])
     {
-        $this->routeId = $routeId;
-        $this->scriptName = $scriptName;
-
         $this->setRequestMethods(isset($parameters['requestMethods']) ? (array)$parameters['requestMethods'] : self::KNOWN_REQUEST_METHODS);
 
         if (isset($parameters['path'])) {
@@ -193,7 +176,7 @@ class Route
 
                         if (isset($parameters['placeholders'])) {
                             if (!is_array($parameters['placeholders']) || count(array_column($parameters['placeholders'], 'name')) !== count($parameters['placeholders'])) {
-                                throw new \InvalidArgumentException("Invalid placeholders array. Every item requires a 'name' attribute.");
+                                throw new InvalidArgumentException("Invalid placeholders array. Every item requires a 'name' attribute.");
                             }
 
                             $ndx = array_search($name, array_column($parameters['placeholders'], 'name'), true);
@@ -201,7 +184,7 @@ class Route
                             if (false !== $ndx) {
                                 if ($match = ($parameters['placeholders'][$ndx]['match'] ?? null)) {
                                     if (@preg_match('/' . $match . '/', '') === false) {
-                                        throw new \InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $match));
+                                        throw new InvalidArgumentException(sprintf("'%s' is not a valid regular expression.", $match));
                                     }
                                     $this->placeholders[$name]['match'] = '/' . $match . '/';
                                 }

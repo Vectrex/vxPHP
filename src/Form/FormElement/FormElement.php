@@ -20,7 +20,7 @@ use vxPHP\Template\SimpleTemplate;
 /**
  * abstract base class for "simple" form elements
  * 
- * @version 0.13.2 2024-01-04
+ * @version 0.13.3 2026-06-11
  * @author Gregor Kofler
  * 
  */
@@ -65,13 +65,6 @@ abstract class FormElement implements FormElementInterface
 	 * @var boolean
 	 */
 	protected bool $required = false;
-	
-	/**
-	 * name of the element
-	 * 
-	 * @var string
-	 */
-	protected string $name;
 	
 	/**
 	 * the value of the element
@@ -119,12 +112,11 @@ abstract class FormElement implements FormElementInterface
 	 * initialize form element
 	 * only name and an optional value are processed
 	 * 
-	 * @param string $name
+	 * @param string $name the name of the element
 	 * @param mixed|null $value
 	 */
-	public function __construct(string $name, mixed $value = null)
+	public function __construct(protected string $name, mixed $value = null)
     {
-		$this->name = $name;
 		$this->setValue($value);
 	}
 

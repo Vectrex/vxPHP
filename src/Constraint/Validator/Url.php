@@ -15,7 +15,7 @@ use vxPHP\Constraint\AbstractConstraint;
 /**
  * check a URL for validity
  * 
- * @version 0.1.3 2025-01-13
+ * @version 0.1.4 2026-06-11
  * @author Gregor Kofler
  */
 class Url extends AbstractConstraint
@@ -36,14 +36,6 @@ class Url extends AbstractConstraint
 		(/?|/\S+|\?\S*|\#\S*)                   					# optional slash with string or query or fragment
 	$~ixu';
 
-	
-	/**
-	 * indicate whether DNS records should be checked 
-	 *
-	 * @var bool
-	 */
-	private bool $checkDns;
-
 	/**
 	 * allowed schemes
 	 * 
@@ -54,13 +46,11 @@ class Url extends AbstractConstraint
     /**
      * constructor, parses options
      *
-     * @param bool $checkDns
+     * @param bool $checkDns indicate whether DNS records should be checked
      * @param array|null $schemes
      */
-	public function __construct(bool $checkDns = false, ?array $schemes = null)
+	public function __construct(private readonly bool $checkDns = false, ?array $schemes = null)
     {
-		$this->checkDns = $checkDns;
-
 		if($schemes) {
 			$this->schemes = $schemes;
 		}

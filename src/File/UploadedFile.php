@@ -12,6 +12,7 @@
 namespace vxPHP\File;
 
 use vxPHP\File\Exception\FilesystemFileException;
+use vxPHP\File\Exception\FilesystemFolderException;
 
 /**
  * extend FilesystemFile to meet requirements of uploaded files
@@ -21,17 +22,10 @@ use vxPHP\File\Exception\FilesystemFileException;
  *
  * @author Gregor Kofler
  *
- * @version 1.0.1 2021-12-01
+ * @version 1.0.2 2026-06-11
  */
 class UploadedFile extends FilesystemFile
 {
-    /**
-     * the original file name
-     *
-     * @var string
-     */
-    private string $originalName;
-
     /**
      * when TRUE the file has already been uploaded,
      * a move() is then handled by the parent class
@@ -40,9 +34,14 @@ class UploadedFile extends FilesystemFile
      */
     private bool $alreadyUploaded = false;
 
-    public function __construct(string $path, string $originalName)
+    /**
+     * @param string $path
+     * @param string $originalName the original file name
+     * @throws FilesystemFolderException
+     * @throws FilesystemFileException
+     */
+    public function __construct(string $path, private string $originalName)
     {
-        $this->originalName = $originalName;
         parent::__construct($path);
     }
 

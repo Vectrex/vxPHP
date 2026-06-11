@@ -26,14 +26,9 @@ namespace vxPHP\Http;
 class ParameterBag implements \IteratorAggregate, \Countable
 {
     /**
-     * Parameter storage.
+     * @param array $parameters the parameter storage
      */
-    protected array $parameters;
-
-    public function __construct(array $parameters = [])
-    {
-        $this->parameters = $parameters;
-    }
+    public function __construct(protected array $parameters = []) {}
 
     /**
      * Returns the parameters.
