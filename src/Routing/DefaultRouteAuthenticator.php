@@ -12,7 +12,9 @@
 
     use vxPHP\Application\Application;
     use vxPHP\Application\Exception\ApplicationException;
+    use vxPHP\Http\Exception\HttpException;
     use vxPHP\Http\Request;
+    use vxPHP\Http\Response;
     use vxPHP\Session\Session;
     use vxPHP\User\User;
     use vxPHP\User\UserInterface;
@@ -23,7 +25,7 @@
      * the auth attribute of the route
      *
      * @author Gregor Kofler, info@gregorkofler.com
-     * @version 0.3.1, 2021-11-28
+     * @version 0.3.2, 2026-07-11
      *
      */
     class DefaultRouteAuthenticator implements RouteAuthenticatorInterface
@@ -91,7 +93,7 @@
          *
          * @param Route $route
          * @return Route
-         * @throws \vxPHP\Application\Exception\ApplicationException
+         * @throws ApplicationException|HttpException
          */
         public function handleViolation(Route $route): Route
         {
@@ -108,6 +110,6 @@
             if (($redirect = $route->getRedirect()) && ($router = Application::getInstance()->getRouter())) {
                 return $router->getRoute($redirect);
             }
-            throw new \RuntimeException(sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
+            throw new HttpException(Response::HTTP_FORBIDDEN, sprintf("No redirect configured for route '%s', which cannot be authenticated.", $route->getRouteId()));
         }
     }
